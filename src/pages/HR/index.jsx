@@ -11,7 +11,7 @@ import HrAttendance from './HrAttendance';
 function roleLabel(r) { return ROLES[r] || r || '—'; }
 const isSpec = r => SPECIALIST_ROLES.includes(r);
 const WORK_DAYS = [['sun','الأحد'],['mon','الإثنين'],['tue','الثلاثاء'],['wed','الأربعاء'],['thu','الخميس'],['fri','الجمعة'],['sat','السبت']];
-const EMPTY_EMP = { name:'',role:'',phone:'',dob:'',gender:'',nationality:'',idNumber:'',email:'',address:'',hireDate:'',contractType:'',contractEnd:'',salary:'',allowanceHousing:'',allowanceTransport:'',annualLeave:21,workHours:40,iban:'',workStart:'08:00',workEnd:'16:00',workDays:[],education:'',major:'',experience:'',certs:'',notes:'',photo:'',status:'active' };
+const EMPTY_EMP = { name:'',role:'',phone:'',dob:'',gender:'',nationality:'',idNumber:'',email:'',address:'',hireDate:'',contractType:'',contractEnd:'',salary:'',allowanceHousing:'',allowanceTransport:'',annualLeave:21,workHours:40,iban:'',workStart:'08:00',workEnd:'16:00',workDays:[],education:'',major:'',experience:'',certs:'',notes:'',photo:'',status:'active',attachments:[] };
 
 export default function HRPage() {
   const { go, toast, currentUser, activeView } = useApp();
@@ -43,8 +43,8 @@ export default function HRPage() {
   });
 
   function openForm(emp=null) {
-    if(emp){setForm({...EMPTY_EMP,...emp});setEditId(emp.id);}
-    else{setForm({...EMPTY_EMP,hireDate:todayStr()});setEditId(null);}
+    if(emp){setForm({...EMPTY_EMP,...emp,attachments:emp.attachments||[]});setEditId(emp.id);}
+    else{setForm({...EMPTY_EMP,hireDate:todayStr(),attachments:[]});setEditId(null);}
     setShowForm(true);
   }
   const fld = k => e => setForm(f=>({...f,[k]:e.target.value}));
@@ -58,10 +58,17 @@ export default function HRPage() {
     setShowForm(false);reload();
   }
   function deleteEmp(id){
-    if(!window.confirm('هل أنت متأكد من حذف هذا الموظف نهائياً؟'))return;
+    if(!window.confirm('⚠️ تحذير نهائي: حذف الموظف نهائياً من النظام على هذا الجهاز.\nهل تريد المتابعة؟'))return;
+    if(!window.confirm('تأكيد أخير: لا يمكن التراجع. حذف الموظف؟'))return;
     lsDel('employees',id);toast('🗑️ تم الحذف','ok');reload();setDetailId(null);setShowForm(false);
   }
   function handlePhoto(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setForm(fm=>({...fm,photo:ev.target.result}));r.readAsDataURL(f);}
+  function addEmpAttachments(e){
+    const files=e.target.files;if(!files?.length)return;
+    Array.from(files).forEach(f=>{const r=new FileReader();r.onload=ev=>setForm(fm=>({...fm,attachments:[...(fm.attachments||[]),{id:uid(),name:f.name,data:ev.target.result,label:'مرفق'}]}));r.readAsDataURL(f);});
+    e.target.value='';
+  }
+  function removeEmpAtt(aid){setForm(f=>({...f,attachments:(f.attachments||[]).filter(a=>a.id!==aid)}));}
 
   const detailEmp = detailId ? emps.find(e=>e.id===detailId) : null;
 
@@ -116,7 +123,7 @@ export default function HRPage() {
           <div className="fhd" style={{padding:'16px 20px',borderRadius:0}}>
             <h2>{editId?'✏️ تعديل بيانات الموظف':'➕ موظف جديد'}</h2><p>بيانات شاملة للموظف</p>
           </div>
-          <div style={{padding:'18px 20px',overflowY:'auto',maxHeight:'72vh'}}>
+          <div className="modal-body-scroll" style={{padding:'18px 20px'}}>
             <div className="fs"><div className="fsh">👤 البيانات الأساسية</div><div className="fsb">
               <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14}}>
                 <div style={{width:70,height:70,borderRadius:'50%',border:'3px dashed var(--g3)',background:'var(--g1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.4rem',cursor:'pointer',overflow:'hidden'}} onClick={()=>document.getElementById('emp-photo-inp2').click()}>
@@ -188,11 +195,20 @@ export default function HRPage() {
                 <div className="fl"><label>ملاحظات</label><textarea value={form.notes} onChange={fld('notes')} rows={2}/></div>
               </div>
             </div></div>
+            <div className="fs"><div className="fsh">📎 المرفقات (عقد، هوية، شهادات)</div><div className="fsb">
+              <div className="fl full"><label>إضافة ملفات</label><input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,image/*" onChange={addEmpAttachments}/></div>
+              {(form.attachments||[]).length>0&&<ul style={{margin:'10px 0 0',padding:0,listStyle:'none',fontSize:'.84rem'}}>
+                {(form.attachments||[]).map(a=><li key={a.id} style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                  <a href={a.data} download={a.name} className="btn btn-xs btn-g">📥 {a.name}</a>
+                  <button type="button" className="btn btn-xs btn-d" onClick={()=>removeEmpAtt(a.id)}>إزالة</button>
+                </li>)}
+              </ul>}
+            </div></div>
           </div>
           <div className="fa">
             <button className="btn btn-p" onClick={save}>💾 حفظ</button>
             <button className="btn btn-g" onClick={()=>setShowForm(false)}>إلغاء</button>
-            {editId&&<button className="btn btn-d btn-sm" style={{marginRight:'auto'}} onClick={()=>deleteEmp(editId)}>⛔ حذف الموظف</button>}
+            {editId&&<button type="button" className="btn btn-d btn-sm" style={{marginRight:'auto'}} onClick={()=>deleteEmp(editId)}>⛔ حذف الموظف نهائياً</button>}
           </div>
         </div>
       </div>
@@ -240,7 +256,6 @@ export default function HRPage() {
             <div className="c-acts" onClick={ev=>ev.stopPropagation()}>
               {e.phone&&<a href={`https://wa.me/${e.phone.replace(/[^0-9+]/g,'').replace(/^0/,'966')}`} target="_blank" rel="noreferrer" className="btn btn-xs btn-bl">💬</a>}
               {canEdit&&<button className="btn btn-xs btn-g" onClick={()=>openForm(e)}>✏️</button>}
-              {canEdit&&<button className="btn btn-xs btn-d" onClick={()=>deleteEmp(e.id)}>🗑️</button>}
             </div>
           </div>
         ))

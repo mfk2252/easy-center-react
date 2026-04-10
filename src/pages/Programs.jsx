@@ -4,116 +4,229 @@ import { lsGet, lsAdd, lsUpd, lsDel } from '../hooks/useStorage';
 import { todayStr, uid } from '../utils/dateHelpers';
 import EmptyState from '../components/ui/EmptyState';
 
-const EMPTY_PROG = { name:'', type:'', description:'', schedule:'', instructor:'', capacity:10, enrolledCount:0, status:'active', notes:'' };
+const EMPTY_ACT = {
+  name: '',
+  date: '',
+  year: '',
+  image: '',
+  participantIds: [],
+  notes: '',
+  fileData: '',
+  fileName: '',
+};
 
 export default function Programs() {
   const { toast, currentUser } = useApp();
-  const [programs, setPrograms] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [students, setStudents] = useState([]);
-  const [emps, setEmps] = useState([]);
+  const [filterYear, setFilterYear] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState(EMPTY_PROG);
-  const canEdit = ['manager','vice'].includes(currentUser?.role);
+  const [form, setForm] = useState(EMPTY_ACT);
+  const canEdit = ['manager', 'vice', 'reception'].includes(currentUser?.role);
 
-  useEffect(() => { setPrograms(lsGet('programs')); setStudents(lsGet('students')); setEmps(lsGet('employees')); }, []);
-  function reload() { setPrograms(lsGet('programs')); }
-  const fld = k => e => setForm(f=>({...f,[k]:e.target.value}));
+  useEffect(() => {
+    setActivities(lsGet('centerActivities'));
+    setStudents(lsGet('students'));
+    const y = String(new Date().getFullYear());
+    setFilterYear(y);
+  }, []);
+
+  function reload() {
+    setActivities(lsGet('centerActivities'));
+  }
+
+  const years = [...new Set(activities.map(a => a.year || (a.date && a.date.slice(0, 4)) || '').filter(Boolean))].sort((a, b) => b.localeCompare(a));
+  const displayYear = filterYear || years[0] || String(new Date().getFullYear());
+  const filtered = activities
+    .filter(a => {
+      const y = a.year || (a.date && a.date.slice(0, 4)) || '';
+      return !displayYear || y === displayYear;
+    })
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  const fld = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
+
+  function toggleParticipant(id) {
+    setForm(f => {
+      const p = f.participantIds || [];
+      return { ...f, participantIds: p.includes(id) ? p.filter(x => x !== id) : [...p, id] };
+    });
+  }
+
+  function handleImage(e) {
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => setForm(fm => ({ ...fm, image: ev.target.result }));
+    r.readAsDataURL(f);
+  }
+
+  function handleFile(e) {
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => setForm(fm => ({ ...fm, fileData: ev.target.result, fileName: f.name }));
+    r.readAsDataURL(f);
+  }
 
   function save() {
-    if (!form.name.trim()) { toast('⚠️ أدخل اسم النشاط','er'); return; }
-    if (editId) lsUpd('programs',editId,form); else lsAdd('programs',{...form,id:uid()});
-    toast('✅ تم الحفظ','ok'); setShowForm(false); reload();
+    if (!form.name.trim() || !form.date) {
+      toast('⚠️ أدخل اسم النشاط والتاريخ', 'er');
+      return;
+    }
+    const y = form.year || form.date.slice(0, 4);
+    const row = { ...form, year: y, participantIds: form.participantIds || [] };
+    if (editId) lsUpd('centerActivities', editId, row);
+    else lsAdd('centerActivities', { ...row, id: uid() });
+    toast('✅ تم الحفظ', 'ok');
+    setShowForm(false);
+    reload();
   }
-  function del(id) { if(!window.confirm('حذف هذا النشاط؟'))return; lsDel('programs',id); reload(); toast('🗑️','ok'); }
 
-  // built-in program stats from student data
-  const builtIn = [
-    { id:'morning', icon:'☀️', label:'القسم الصباحي', count: students.filter(s=>s.progMorning?.enabled&&s.status==='active').length, color:'var(--warn)' },
-    { id:'evening', icon:'🌙', label:'القسم المسائي', count: students.filter(s=>s.progEvening?.enabled&&s.status==='active').length, color:'var(--pur)' },
-    { id:'sessions', icon:'🩺', label:'الجلسات العلاجية', count: students.filter(s=>s.progSessions?.enabled&&s.status==='active').length, color:'var(--ok)' },
-    { id:'online', icon:'🌐', label:'الجلسات أونلاين', count: students.filter(s=>s.progOnline?.enabled&&s.status==='active').length, color:'var(--cyan)' },
-  ];
+  function del(id) {
+    if (!window.confirm('حذف هذا النشاط؟')) return;
+    lsDel('centerActivities', id);
+    reload();
+    toast('🗑️ تم الحذف', 'ok');
+  }
+
+  function openNew() {
+    const y = String(new Date().getFullYear());
+    setForm({ ...EMPTY_ACT, date: todayStr(), year: y, participantIds: [] });
+    setEditId(null);
+    setShowForm(true);
+  }
 
   return (
     <div>
       <div className="ph">
-        <div className="ph-t"><h2>🎯 الأنشطة والبرامج</h2><p>الأقسام الرئيسية وأنشطة المركز</p></div>
+        <div className="ph-t">
+          <h2>🎯 الأنشطة والفعاليات</h2>
+          <p>تسجيل الفعاليات والأنشطة اللامنهجية مع التاريخ والعام والمشاركين</p>
+        </div>
         <div className="ph-a">
-          {canEdit&&<button className="btn btn-p" onClick={()=>{setForm({...EMPTY_PROG});setEditId(null);setShowForm(true);}}>➕ نشاط جديد</button>}
+          {canEdit && (
+            <button type="button" className="btn btn-p" onClick={openNew}>
+              ➕ فعالية جديدة
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="stats" style={{gridTemplateColumns:'repeat(4,1fr)'}}>
-        {builtIn.map(p=>(
-          <div key={p.id} className="sc" style={{borderRightColor:p.color}}>
-            <div className="lb">{p.icon} {p.label}</div>
-            <div className="vl">{p.count}</div>
-            <div className="sb">طالب نشط</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="wg" style={{marginBottom:14}}>
-        <div className="wg-h"><h3>🗂️ الأقسام الرئيسية</h3></div>
-        <div className="wg-b">
-          {builtIn.map(p=>(
-            <div key={p.id} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:'1px solid var(--border-color)'}}>
-              <div style={{fontSize:'1.4rem'}}>{p.icon}</div>
-              <div style={{flex:1}}>
-                <div style={{fontWeight:700}}>{p.label}</div>
-                <div style={{fontSize:'.78rem',color:'var(--g5)'}}>عدد الطلاب النشطين: {p.count}</div>
-              </div>
-              <span style={{fontWeight:900,color:p.color,fontSize:'1.2rem'}}>{p.count}</span>
-            </div>
+      <div className="tb" style={{ marginBottom: 12 }}>
+        <label style={{ fontSize: '.8rem', fontWeight: 700, color: 'var(--g5)', marginLeft: 8 }}>العام:</label>
+        <select className="fsel" value={displayYear} onChange={e => setFilterYear(e.target.value)}>
+          {years.length === 0 && <option value={String(new Date().getFullYear())}>{new Date().getFullYear()}</option>}
+          {years.map(y => (
+            <option key={y} value={y}>
+              {y}
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
-      {programs.length > 0 && (
-        <div className="wg">
-          <div className="wg-h"><h3>📋 الأنشطة الإضافية</h3></div>
-          <div className="wg-b p0">
-            {programs.map(p=>(
-              <div key={p.id} className="card" style={{marginBottom:0,borderRadius:0,border:'none',borderBottom:'1px solid var(--border-color)'}}>
-                <div className="av">🎯</div>
-                <div className="ci">
-                  <div className="cn">{p.name}</div>
-                  <div className="cm">{p.type&&p.type+' · '}{p.schedule&&p.schedule}{p.description&&' — '+p.description}</div>
-                </div>
-                <div className="c-badges">
-                  <span className={`bdg ${p.status==='active'?'b-gr':'b-gy'}`}>{p.status==='active'?'نشط':'متوقف'}</span>
-                </div>
-                {canEdit&&<div className="c-acts">
-                  <button className="btn btn-xs btn-g" onClick={()=>{setForm({...p});setEditId(p.id);setShowForm(true);}}>✏️</button>
-                  <button className="btn btn-xs btn-d" onClick={()=>del(p.id)}>🗑️</button>
-                </div>}
+      {filtered.length === 0 && <EmptyState icon="🎯" title="لا توجد فعاليات لهذا العام" sub={canEdit ? 'أضف فعالية مع صورة ومرفق ومشاركين' : ''} />}
+
+      {filtered.map(act => {
+        const parts = (act.participantIds || []).map(id => students.find(s => s.id === id)?.name).filter(Boolean);
+        return (
+          <div key={act.id} className="card" style={{ marginBottom: 10 }}>
+            <div className="av" style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0 }}>
+              {act.image ? <img src={act.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🎯'}
+            </div>
+            <div className="ci">
+              <div className="cn">{act.name}</div>
+              <div className="cm">
+                📅 {act.date} · العام {act.year || act.date?.slice(0, 4)}
               </div>
-            ))}
+              {parts.length > 0 && <div className="cm">👥 {parts.join('، ')}</div>}
+              {act.notes && <div className="cm">{act.notes}</div>}
+            </div>
+            <div className="c-badges">
+              {act.fileName && <span className="bdg b-gr">📎 مرفق</span>}
+            </div>
+            {canEdit && (
+              <div className="c-acts">
+                {act.fileData && (
+                  <a href={act.fileData} download={act.fileName || 'file'} className="btn btn-xs btn-g">
+                    📥
+                  </a>
+                )}
+                <button type="button" className="btn btn-xs btn-g" onClick={() => { setForm({ ...EMPTY_ACT, ...act, participantIds: act.participantIds || [] }); setEditId(act.id); setShowForm(true); }}>
+                  ✏️
+                </button>
+                <button type="button" className="btn btn-xs btn-d" onClick={() => del(act.id)}>
+                  🗑️
+                </button>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })}
 
-      {programs.length===0&&!showForm&&<EmptyState icon="🎯" title="لا توجد أنشطة إضافية" sub={canEdit?"يمكنك إضافة أنشطة وبرامج خاصة بالمركز":""}/>}
-
-      {showForm&&(
-        <div className="mbg" onClick={e=>{if(e.target===e.currentTarget)setShowForm(false);}}>
-          <div className="mb" style={{padding:0,overflow:'hidden',borderRadius:16}}>
-            <div className="fhd" style={{padding:'14px 20px',borderRadius:0}}><h2>{editId?'✏️ تعديل النشاط':'🎯 نشاط جديد'}</h2></div>
-            <div style={{padding:'18px 20px'}}>
+      {showForm && (
+        <div className="mbg" onClick={e => e.target === e.currentTarget && setShowForm(false)}>
+          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
+            <div className="fhd" style={{ padding: '14px 20px', borderRadius: 0 }}>
+              <h2>{editId ? '✏️ تعديل فعالية' : '🎯 فعالية جديدة'}</h2>
+            </div>
+            <div className="modal-body-scroll" style={{ padding: '18px 20px' }}>
               <div className="fg c2">
-                <div className="fl full"><label>اسم النشاط <span className="req">*</span></label><input value={form.name} onChange={fld('name')} autoFocus/></div>
-                <div className="fl"><label>النوع</label><input value={form.type} onChange={fld('type')} placeholder="تعليمي، ترفيهي، تأهيلي..."/></div>
-                <div className="fl"><label>الجدول الزمني</label><input value={form.schedule} onChange={fld('schedule')} placeholder="السبت 10-12..."/></div>
-                <div className="fl"><label>الطاقة الاستيعابية</label><input type="number" value={form.capacity} onChange={fld('capacity')} min="1"/></div>
-                <div className="fl"><label>الحالة</label><select value={form.status} onChange={fld('status')}><option value="active">نشط</option><option value="paused">متوقف</option></select></div>
-                <div className="fl full"><label>الوصف</label><textarea value={form.description} onChange={fld('description')} rows={2}/></div>
-                <div className="fl full"><label>ملاحظات</label><textarea value={form.notes} onChange={fld('notes')} rows={2}/></div>
+                <div className="fl full">
+                  <label>
+                    اسم النشاط <span className="req">*</span>
+                  </label>
+                  <input value={form.name} onChange={fld('name')} />
+                </div>
+                <div className="fl">
+                  <label>
+                    التاريخ <span className="req">*</span>
+                  </label>
+                  <input type="date" value={form.date} onChange={fld('date')} />
+                </div>
+                <div className="fl">
+                  <label>العام الدراسي / التقويمي</label>
+                  <input value={form.year} onChange={fld('year')} placeholder="مثال: 2026" />
+                </div>
+                <div className="fl full">
+                  <label>صورة النشاط</label>
+                  <input type="file" accept="image/*" onChange={handleImage} />
+                </div>
+                {form.image && (
+                  <div className="fl full">
+                    <img src={form.image} alt="" style={{ maxHeight: 120, borderRadius: 8 }} />
+                  </div>
+                )}
+                <div className="fl full">
+                  <label>المشاركون (طلاب)</label>
+                  <div style={{ maxHeight: 160, overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: 8, padding: 8 }}>
+                    {students.filter(s => !['inactive', 'transferred', 'rejected'].includes(s.status)).map(s => (
+                      <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '.84rem', marginBottom: 4 }}>
+                        <input type="checkbox" checked={(form.participantIds || []).includes(s.id)} onChange={() => toggleParticipant(s.id)} />
+                        {s.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="fl full">
+                  <label>مرفق (ملف)</label>
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onChange={handleFile} />
+                  {form.fileName && <span style={{ fontSize: '.8rem', marginRight: 8 }}>{form.fileName}</span>}
+                </div>
+                <div className="fl full">
+                  <label>ملاحظات</label>
+                  <textarea value={form.notes} onChange={fld('notes')} rows={3} />
+                </div>
               </div>
             </div>
             <div className="fa">
-              <button className="btn btn-p" onClick={save}>💾 حفظ</button>
-              <button className="btn btn-g" onClick={()=>setShowForm(false)}>إلغاء</button>
+              <button type="button" className="btn btn-p" onClick={save}>
+                💾 حفظ
+              </button>
+              <button type="button" className="btn btn-g" onClick={() => setShowForm(false)}>
+                إلغاء
+              </button>
             </div>
           </div>
         </div>

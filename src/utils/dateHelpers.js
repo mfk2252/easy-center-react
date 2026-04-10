@@ -45,3 +45,40 @@ export function nowTimeStr() {
 export function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
+
+/** ISO date yyyy-mm-dd + n days */
+export function addDays(isoDate, n) {
+  if (!isoDate) return '';
+  const d = new Date(isoDate + 'T12:00:00');
+  d.setDate(d.getDate() + n);
+  return d.toISOString().split('T')[0];
+}
+
+export function daysFromToday(isoDate) {
+  if (!isoDate) return null;
+  const a = new Date(todayStr() + 'T12:00:00');
+  const b = new Date(isoDate + 'T12:00:00');
+  return Math.round((b - a) / 864e5);
+}
+
+/** Next calendar occurrence of month-day from dob (for birthday this/next year) */
+export function nextAnnualOccurrenceDate(dobIso) {
+  if (!dobIso || dobIso.length < 10) return null;
+  const [, mm, dd] = dobIso.split('-').map(Number);
+  if (!mm || !dd) return null;
+  const now = new Date();
+  const y = now.getFullYear();
+  let t = new Date(y, mm - 1, dd);
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (t < startOfToday) t = new Date(y + 1, mm - 1, dd);
+  return t;
+}
+
+export function daysUntilDate(d) {
+  if (!d) return null;
+  const a = new Date();
+  a.setHours(0, 0, 0, 0);
+  const b = new Date(d);
+  b.setHours(0, 0, 0, 0);
+  return Math.round((b - a) / 864e5);
+}

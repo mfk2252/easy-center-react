@@ -84,7 +84,7 @@ export default function Salaries() {
           <button className="btn btn-p btn-sm" onClick={() => setMonth(new Date())}>الشهر الحالي</button>
           <button className="btn btn-g btn-sm" onClick={() => setMonth(d => { const n=new Date(d); n.setMonth(n.getMonth()+1); return n; })}>التالي ←</button>
           {canEdit && <button className="btn btn-g" onClick={genAll}>⚡ توليد رواتب الشهر</button>}
-          <button className="btn btn-g" onClick={() => go('hr')}>← رجوع</button>
+          <button type="button" className="btn btn-g" onClick={() => go('center')}>← رجوع لإدارة المركز</button>
         </div>
       </div>
 

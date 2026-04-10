@@ -14,9 +14,25 @@ const EMPTY_INC = { desc:'', cat:'fees', amount:'', date:'', notes:'' };
 const EMPTY_PARTNER = { name:'', type:'', contact:'', phone:'', email:'', startDate:'', notes:'' };
 const EMPTY_CUSTODY = { name:'', category:'', quantity:1, location:'', condition:'جيد', notes:'' };
 const EMPTY_VISIT = { name:'', date:'', type:'', delegation:'', purpose:'', result:'', notes:'' };
+const EMPTY_PARENT_LOG = { parentKey:'', type:'visit', date:'', notes:'' };
+const EMPTY_BUS = { busNumber:'', driverPhone:'', route:'', notes:'', studentIds:[] };
+const PARENT_TYPE_LABEL = { visit:'زيارة', call:'مكالمة', guidance:'جلسة إرشادية' };
+
+function extractParents(students) {
+  const map = new Map();
+  students.forEach(s => {
+    const name = (s.parentName || '').trim();
+    const phone = (s.parentPhone || '').trim();
+    if (!name && !phone) return;
+    const key = `${phone}__${name}`;
+    if (!map.has(key)) map.set(key, { key, name, phone, studentIds: [] });
+    if (!map.get(key).studentIds.includes(s.id)) map.get(key).studentIds.push(s.id);
+  });
+  return [...map.values()].sort((a, b) => (a.name || a.phone).localeCompare(b.name || b.phone, 'ar'));
+}
 
 export default function CenterPage() {
-  const { toast, currentUser, go } = useApp();
+  const { toast, currentUser, go, activeView } = useApp();
   const [tab, setTab] = useState('partners');
   const isManager = currentUser?.role === 'manager';
   const canView = ['manager','vice'].includes(currentUser?.role);
@@ -49,6 +65,15 @@ export default function CenterPage() {
   const [visitForm, setVisitForm] = useState(EMPTY_VISIT);
   const [visitEditId, setVisitEditId] = useState(null);
   const [docTab, setDocTab] = useState('all');
+  const [students, setStudents] = useState([]);
+  const [parentLogs, setParentLogs] = useState([]);
+  const [buses, setBuses] = useState([]);
+  const [selParent, setSelParent] = useState(null);
+  const [showParentLogForm, setShowParentLogForm] = useState(false);
+  const [parentLogForm, setParentLogForm] = useState(EMPTY_PARENT_LOG);
+  const [showBusForm, setShowBusForm] = useState(false);
+  const [busForm, setBusForm] = useState(EMPTY_BUS);
+  const [busEditId, setBusEditId] = useState(null);
 
   function reload() {
     setDocs(lsGet('centerDocs'));
@@ -57,8 +82,21 @@ export default function CenterPage() {
     setPartners(lsGet('partners'));
     setCustody(lsGet('custody'));
     setVisits(lsGet('centerVisits'));
+    setStudents(lsGet('students'));
+    setParentLogs(lsGet('parentInteractions'));
+    setBuses(lsGet('buses'));
   }
   useEffect(() => { reload(); }, []);
+  useEffect(() => {
+    if (activeView !== 'center') return;
+    const t = sessionStorage.getItem('scs_center_tab');
+    if (t) { setTab(t); sessionStorage.removeItem('scs_center_tab'); }
+  }, [activeView]);
+
+  function openSalaries() {
+    sessionStorage.setItem('scs_center_tab', 'finance');
+    go('hr-salary');
+  }
 
   const fldD = k => e => setDocForm(f=>({...f,[k]:e.target.value}));
   const fldE = k => e => setExpForm(f=>({...f,[k]:e.target.value}));
@@ -66,6 +104,27 @@ export default function CenterPage() {
   const fldP = k => e => setPartnerForm(f=>({...f,[k]:e.target.value}));
   const fldC = k => e => setCustodyForm(f=>({...f,[k]:e.target.value}));
   const fldV = k => e => setVisitForm(f=>({...f,[k]:e.target.value}));
+  const fldPL = k => e => setParentLogForm(f=>({...f,[k]:e.target.value}));
+  const fldB = k => e => setBusForm(f=>({...f,[k]:e.target.value}));
+
+  function saveParentLog() {
+    if (!parentLogForm.parentKey || !parentLogForm.date) { toast('⚠️ أكمل البيانات','er'); return; }
+    lsAdd('parentInteractions', { ...parentLogForm, id: uid() });
+    toast('✅ تم التسجيل','ok'); setShowParentLogForm(false); reload();
+  }
+  function toggleBusStudent(id) {
+    setBusForm(f => {
+      const p = f.studentIds || [];
+      return { ...f, studentIds: p.includes(id) ? p.filter(x => x !== id) : [...p, id] };
+    });
+  }
+  function saveBus() {
+    if (!busForm.busNumber.trim()) { toast('⚠️ أدخل رقم الباص','er'); return; }
+    if (busEditId) lsUpd('buses', busEditId, { ...busForm, studentIds: busForm.studentIds || [] });
+    else lsAdd('buses', { ...busForm, id: uid(), studentIds: busForm.studentIds || [] });
+    toast('✅ تم الحفظ','ok'); setShowBusForm(false); reload();
+  }
+  function delBus(id) { if(!window.confirm('حذف هذا الباص؟'))return; lsDel('buses',id); reload(); toast('🗑️','ok'); }
 
   // Docs
   function saveDoc() {
@@ -115,14 +174,11 @@ export default function CenterPage() {
   return (
     <div>
       <div className="ph">
-        <div className="ph-t"><h2>🏢 إدارة المركز</h2><p>الشراكات والمالية والوثائق والعهدة والزيارات</p></div>
-        <div className="ph-a">
-          <button className="btn btn-g btn-sm no-print" onClick={()=>go('hr-salary')}>💰 الرواتب</button>
-        </div>
+        <div className="ph-t"><h2>🏢 إدارة المركز</h2><p>الشراكات والمالية والوثائق وأولياء الأمور والنقل والعهدة</p></div>
       </div>
-      <div className="tabs">
-        {[['partners','🤝 الشراكات'],['finance','💳 المالية'],['docs','📄 الوثائق'],['custody','🗄️ العهدة'],['visits','🏛️ الزيارات']].map(([v,l])=>(
-          <button key={v} className={`tab ${tab===v?'on':''}`} onClick={()=>setTab(v)}>{l}</button>
+      <div className="tabs" style={{ flexWrap:'wrap' }}>
+        {[['partners','🤝 الشراكات'],['finance','💳 المالية'],['parents','👨‍👩‍👧 أولياء الأمور'],['bus','🚌 خدمة الباص'],['docs','📄 الوثائق'],['custody','🗄️ العهدة'],['visits','🏛️ الزيارات']].map(([v,l])=>(
+          <button key={v} type="button" className={`tab ${tab===v?'on':''}`} onClick={()=>setTab(v)}>{l}</button>
         ))}
       </div>
 
@@ -182,9 +238,10 @@ export default function CenterPage() {
             <div style={{padding:'40px',textAlign:'center',color:'var(--err)'}}>🔒 المالية متاحة للمدير الرئيسي فقط</div>
           ) : (
             <>
-              <div style={{display:'flex',gap:8,marginBottom:12}}>
-                <button className="btn btn-s" onClick={()=>{setIncForm({...EMPTY_INC,date:todayStr()});setIncEditId(null);setShowIncForm(true);}}>➕ إيراد</button>
-                <button className="btn btn-w" onClick={()=>{setExpForm({...EMPTY_EXP,date:todayStr()});setExpEditId(null);setShowExpForm(true);}}>➕ مصروف</button>
+              <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+                <button type="button" className="btn btn-s" onClick={()=>{setIncForm({...EMPTY_INC,date:todayStr()});setIncEditId(null);setShowIncForm(true);}}>➕ إيراد</button>
+                <button type="button" className="btn btn-w" onClick={()=>{setExpForm({...EMPTY_EXP,date:todayStr()});setExpEditId(null);setShowExpForm(true);}}>➕ مصروف</button>
+                <button type="button" className="btn btn-p" onClick={openSalaries}>💰 الرواتب</button>
               </div>
               <div className="stats" style={{gridTemplateColumns:'repeat(3,1fr)'}}>
                 <div className="sc g"><div className="lb">إجمالي الإيرادات</div><div className="vl" style={{fontSize:'1.2rem'}}>{totalIncome.toLocaleString()} ر</div></div>
@@ -258,6 +315,128 @@ export default function CenterPage() {
                       </div>
                     </div>
                     <div className="fa"><button className="btn btn-p" onClick={saveExp}>💾 حفظ</button><button className="btn btn-g" onClick={()=>setShowExpForm(false)}>إلغاء</button></div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* PARENTS */}
+      {tab==='parents' && (
+        <div>
+          {!canView ? (
+            <div style={{padding:'40px',textAlign:'center',color:'var(--err)'}}>🔒 القسم متاح للإدارة فقط</div>
+          ) : (
+            <>
+              {selParent && (
+                <div className="wg" style={{ marginBottom:12 }}>
+                  <div className="wg-h"><h3>📇 {selParent.name || 'ولي أمر'} · {selParent.phone}</h3><button type="button" className="btn btn-g btn-sm" onClick={()=>setSelParent(null)}>إغلاق</button></div>
+                  <div className="wg-b">
+                    <div style={{ fontSize:'.84rem', marginBottom:10 }}>طلاب مرتبطون: {(selParent.studentIds||[]).map(id=>students.find(s=>s.id===id)?.name).filter(Boolean).join('، ')}</div>
+                    <div style={{ fontSize:'.78rem', fontWeight:800, color:'var(--pr)', marginBottom:8 }}>سجل التواصل</div>
+                    {parentLogs.filter(l=>l.parentKey===selParent.key).length===0
+                      ? <div style={{ color:'var(--g4)' }}>لا توجد سجلات بعد</div>
+                      : parentLogs.filter(l=>l.parentKey===selParent.key).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(l=>(
+                        <div key={l.id} style={{ padding:'8px 0', borderBottom:'1px solid var(--border-color)', fontSize:'.86rem' }}>
+                          <b>{PARENT_TYPE_LABEL[l.type]||l.type}</b> · {l.date}{l.notes&&<> — {l.notes}</>}
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+              <div className="stats" style={{ gridTemplateColumns:'repeat(2,1fr)' }}>
+                <div className="sc"><div className="lb">أولياء الأمور</div><div className="vl">{extractParents(students).length}</div></div>
+                <div className="sc g"><div className="lb">تفاعلات مسجلة</div><div className="vl">{parentLogs.length}</div></div>
+              </div>
+              {extractParents(students).length===0
+                ? <EmptyState icon="👨‍👩‍👧" title="لا يوجد بيانات أولياء أمور" sub="أضف أسماء وجوالات في ملفات الطلاب"/>
+                : extractParents(students).map(p=>(
+                  <div key={p.key} className="card">
+                    <div className="av cyan">👤</div>
+                    <div className="ci clickable" style={{ cursor:'pointer' }} onClick={()=>setSelParent(p)}>
+                      <div className="cn">{p.name || '—'}</div>
+                      <div className="cm">{p.phone || 'لا يوجد جوال'}</div>
+                    </div>
+                    <div className="c-acts" onClick={e=>e.stopPropagation()}>
+                      {p.phone&&<a href={`https://wa.me/${p.phone.replace(/[^0-9+]/g,'').replace(/^0/,'966')}`} target="_blank" rel="noreferrer" className="btn btn-xs btn-bl">💬</a>}
+                      <button type="button" className="btn btn-xs btn-g" onClick={()=>{ setParentLogForm({...EMPTY_PARENT_LOG, parentKey:p.key, type:'visit', date:todayStr() }); setShowParentLogForm(true); }}>زيارة</button>
+                      <button type="button" className="btn btn-xs btn-g" onClick={()=>{ setParentLogForm({...EMPTY_PARENT_LOG, parentKey:p.key, type:'call', date:todayStr() }); setShowParentLogForm(true); }}>مكالمة</button>
+                      <button type="button" className="btn btn-xs btn-s" onClick={()=>{ setParentLogForm({...EMPTY_PARENT_LOG, parentKey:p.key, type:'guidance', date:todayStr() }); setShowParentLogForm(true); }}>إرشاد</button>
+                    </div>
+                  </div>
+                ))}
+              {showParentLogForm&&(
+                <div className="mbg" onClick={e=>{if(e.target===e.currentTarget)setShowParentLogForm(false);}}>
+                  <div className="mb mb-sm" style={{padding:0,overflow:'hidden',borderRadius:16}}>
+                    <div className="fhd" style={{padding:'14px 20px',borderRadius:0}}><h2>تسجيل {PARENT_TYPE_LABEL[parentLogForm.type]}</h2></div>
+                    <div className="modal-body-scroll" style={{padding:'18px 20px'}}>
+                      <div className="fg c2">
+                        <div className="fl"><label>التاريخ</label><input type="date" value={parentLogForm.date} onChange={fldPL('date')}/></div>
+                        <div className="fl full"><label>ملاحظات</label><textarea value={parentLogForm.notes} onChange={fldPL('notes')} rows={3}/></div>
+                      </div>
+                    </div>
+                    <div className="fa"><button type="button" className="btn btn-p" onClick={saveParentLog}>💾 حفظ</button><button type="button" className="btn btn-g" onClick={()=>setShowParentLogForm(false)}>إلغاء</button></div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* BUS */}
+      {tab==='bus' && (
+        <div>
+          {!isManager ? (
+            <div style={{padding:'40px',textAlign:'center',color:'var(--err)'}}>🔒 خدمة الباص للمدير فقط</div>
+          ) : (
+            <>
+              <div style={{display:'flex',justifyContent:'flex-end',marginBottom:12}}>
+                <button type="button" className="btn btn-p" onClick={()=>{ setBusForm({...EMPTY_BUS, studentIds:[] }); setBusEditId(null); setShowBusForm(true); }}>➕ باص جديد</button>
+              </div>
+              {buses.length===0 ? <EmptyState icon="🚌" title="لا توجد باصات مسجلة"/> : buses.map(b=>{
+                const names = (b.studentIds||[]).map(id=>students.find(s=>s.id===id)?.name).filter(Boolean);
+                return (
+                  <div key={b.id} className="card">
+                    <div className="av">🚌</div>
+                    <div className="ci">
+                      <div className="cn">باص رقم {b.busNumber}</div>
+                      <div className="cm">السائق: {b.driverPhone||'—'} · {names.length} طالب</div>
+                      {b.route&&<div className="cm">خط السير: {b.route}</div>}
+                      {b.notes&&<div className="cm">{b.notes}</div>}
+                      {names.length>0&&<div className="cm" style={{fontSize:'.78rem'}}>👥 {names.join('، ')}</div>}
+                    </div>
+                    <div className="c-acts">
+                      <button type="button" className="btn btn-xs btn-g" onClick={()=>{ setBusForm({...EMPTY_BUS, ...b, studentIds:b.studentIds||[] }); setBusEditId(b.id); setShowBusForm(true); }}>✏️</button>
+                      <button type="button" className="btn btn-xs btn-d" onClick={()=>delBus(b.id)}>🗑️</button>
+                    </div>
+                  </div>
+                );
+              })}
+              {showBusForm&&(
+                <div className="mbg" onClick={e=>{if(e.target===e.currentTarget)setShowBusForm(false);}}>
+                  <div className="mb mb-xl" style={{padding:0,overflow:'hidden',borderRadius:16}}>
+                    <div className="fhd" style={{padding:'14px 20px',borderRadius:0}}><h2>{busEditId?'✏️ تعديل باص':'🚌 باص جديد'}</h2></div>
+                    <div className="modal-body-scroll" style={{padding:'18px 20px'}}>
+                      <div className="fg c2">
+                        <div className="fl"><label>رقم الباص <span className="req">*</span></label><input value={busForm.busNumber} onChange={fldB('busNumber')}/></div>
+                        <div className="fl"><label>جوال السائق</label><input type="tel" value={busForm.driverPhone} onChange={fldB('driverPhone')}/></div>
+                        <div className="fl full"><label>خط السير</label><textarea value={busForm.route} onChange={fldB('route')} rows={2} placeholder="المناطق / المحطات..."/></div>
+                        <div className="fl full"><label>ملاحظات</label><textarea value={busForm.notes} onChange={fldB('notes')} rows={2}/></div>
+                        <div className="fl full"><label>الطلاب المشتركون</label>
+                          <div style={{ maxHeight:180, overflowY:'auto', border:'1px solid var(--border-color)', borderRadius:8, padding:8 }}>
+                            {students.filter(s=>!['inactive','transferred','rejected'].includes(s.status)).map(s=>(
+                              <label key={s.id} style={{display:'flex',alignItems:'center',gap:8,fontSize:'.84rem',marginBottom:4}}>
+                                <input type="checkbox" checked={(busForm.studentIds||[]).includes(s.id)} onChange={()=>toggleBusStudent(s.id)}/> {s.name}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="fa"><button type="button" className="btn btn-p" onClick={saveBus}>💾 حفظ</button><button type="button" className="btn btn-g" onClick={()=>setShowBusForm(false)}>إلغاء</button></div>
                   </div>
                 </div>
               )}

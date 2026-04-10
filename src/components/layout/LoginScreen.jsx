@@ -52,7 +52,28 @@ export default function LoginScreen() {
   const bgImg = localStorage.getItem('scs_login_bg');
 
   return (
-    <div className="login-overlay" style={bgImg ? {backgroundImage:`url(${bgImg})`,backgroundSize:'cover',backgroundPosition:'center'} : {}}>
+    <div
+      className="login-overlay"
+      style={
+        bgImg
+          ? {
+              backgroundImage: `linear-gradient(120deg,rgba(12,25,41,.92),rgba(30,27,75,.88)),url(${bgImg})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }
+          : {}
+      }
+    >
+      <div className="login-shell">
+        <div className="login-hero">
+          <span className="login-hero-badge">🎓 بيئة تعليمية وتربوية</span>
+          <h1>نظام موحّد لإدارة المراكز التعليمية والتربية الخاصة</h1>
+          <p>تسجيل دخول آمن إلى لوحة التحكم: الطلاب، الجلسات، الموارد البشرية، والتقارير في مكان واحد.</p>
+          <div className="login-hero-dots" aria-hidden>
+            <span className="login-hero-dot" /><span className="login-hero-dot" /><span className="login-hero-dot" />
+          </div>
+        </div>
+        <div className="login-panel">
       <div className="login-box">
         <div className="login-hd">
           {center.logo
@@ -101,6 +122,8 @@ export default function LoginScreen() {
           <div className="login-footer">
             <span style={{color:'var(--g4)',fontSize:'.72rem'}}>نظام إدارة المركز المتكامل v2.0</span>
           </div>
+        </div>
+      </div>
         </div>
       </div>
     </div>
