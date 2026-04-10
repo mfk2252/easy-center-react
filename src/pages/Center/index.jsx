@@ -16,7 +16,7 @@ const EMPTY_CUSTODY = { name:'', category:'', quantity:1, location:'', condition
 const EMPTY_VISIT = { name:'', date:'', type:'', delegation:'', purpose:'', result:'', notes:'' };
 
 export default function CenterPage() {
-  const { toast, currentUser } = useApp();
+  const { toast, currentUser, go } = useApp();
   const [tab, setTab] = useState('partners');
   const isManager = currentUser?.role === 'manager';
   const canView = ['manager','vice'].includes(currentUser?.role);
@@ -116,6 +116,9 @@ export default function CenterPage() {
     <div>
       <div className="ph">
         <div className="ph-t"><h2>🏢 إدارة المركز</h2><p>الشراكات والمالية والوثائق والعهدة والزيارات</p></div>
+        <div className="ph-a">
+          <button className="btn btn-g btn-sm no-print" onClick={()=>go('hr-salary')}>💰 الرواتب</button>
+        </div>
       </div>
       <div className="tabs">
         {[['partners','🤝 الشراكات'],['finance','💳 المالية'],['docs','📄 الوثائق'],['custody','🗄️ العهدة'],['visits','🏛️ الزيارات']].map(([v,l])=>(
