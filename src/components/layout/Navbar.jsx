@@ -25,12 +25,7 @@ export default function Navbar() {
           ? <img src={center.logo} alt="logo" style={{height:36,borderRadius:8,objectFit:'cover'}}/>
           : <div className="nav-brand-ph">🏥</div>
         }
-        <div>
-          <div className="nav-cname">{center.name || 'المركز'}</div>
-          <div className="nav-uname">{currentUser?.name || ''}{currentUser?.title ? ' — ' + currentUser.title : ''}</div>
-        </div>
-      </div>
-
+      
       {/* Nav buttons */}
       {NAV_ITEMS.filter(item => canSeeTab(role, item.id)).map(item => (
         <button
