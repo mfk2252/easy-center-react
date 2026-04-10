@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap');
+:root{--fs:15px;--fw:600;--pr:#1a56db;--pr-d:#1e40af;--pr-l:rgba(26,86,219,.1);--ok:#059669;--ok-l:#ecfdf5;--ok-d:#047857;--warn:#d97706;--warn-l:#fffbeb;--err:#dc2626;--err-l:#fef2f2;--pur:#7c3aed;--pur-l:#f5f3ff;--cyan:#0891b2;--cyan-l:#ecfeff;--pink:#db2777;--pink-l:#fdf2f8;--g0:#f8fafc;--g1:#f1f5f9;--g2:#e2e8f0;--g3:#cbd5e1;--g4:#94a3b8;--g5:#64748b;--g6:#475569;--g7:#334155;--g8:#1e293b;--g9:#0f172a;--r:12px;--r2:8px;--r3:6px;--sh:0 1px 3px rgba(0,0,0,.07);--sh2:0 4px 20px rgba(0,0,0,.10);--sh3:0 12px 40px rgba(0,0,0,.16);--bg-page:var(--g1);--bg-card:white;--bg-input:white;--border-color:var(--g2);--text-main:var(--g8);--text-sub:var(--g6);}
+body.dark{--g0:#1e2736;--g1:#151d2b;--g2:#253347;--g3:#334560;--g4:#5a7a9a;--g5:#7a9ab8;--g6:#9ab8d0;--g7:#b8cfe0;--g8:#ddeeff;--g9:#eef6ff;--bg-page:#151d2b;--bg-card:#1e2736;--bg-input:#253347;--border-color:#2d4060;--text-main:#ddeeff;--text-sub:#7a9ab8;--ok-l:#052e1c;--warn-l:#2d1b00;--err-l:#2d0a0a;--pur-l:#1a0d3a;--cyan-l:#041f2d;--sh:0 1px 3px rgba(0,0,0,.3);--sh2:0 4px 20px rgba(0,0,0,.4);--sh3:0 12px 40px rgba(0,0,0,.5);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Tajawal',sans-serif;background:var(--bg-page);color:var(--text-main);min-height:100vh;font-size:var(--fs);font-weight:var(--fw);transition:background .25s,color .25s;direction:rtl;}
+body.dark .card{background:var(--bg-card);border-color:var(--border-color);}
+body.dark .wg{background:var(--bg-card);border-color:var(--border-color);}
+body.dark .sc{background:var(--bg-card);border-color:var(--border-color);}
+body.dark .fs{border-color:var(--border-color);}
+body.dark .fsh{background:var(--g0);border-color:var(--border-color);}
+body.dark input:not([type=color]):not([type=file]):not([type=range]):not([type=checkbox]),body.dark select,body.dark textarea{background:var(--bg-input);border-color:var(--border-color);color:var(--text-main);}
+body.dark .fl label{color:var(--g6);}
+body.dark .login-box{background:var(--bg-card);}
+body.dark .login-body{background:var(--bg-card);}
+body.dark .tabs{background:var(--bg-input);}
+body.dark .tab{color:var(--text-sub);}
+body.dark .tab.on{background:var(--bg-card);color:var(--pr);}
+body.dark .mb{background:var(--bg-card);}
+body.dark .srch,.dark .fsel{background:var(--bg-input);border-color:var(--border-color);color:var(--text-main);}
+body.dark .wg-h{border-color:var(--border-color);}
+body.dark .wg-b{background:var(--bg-card);}
+body.dark table{background:var(--bg-card);}
+body.dark th{background:var(--bg-input);}
+body.dark tr:hover td{background:var(--g0);}
+body.dark .ic{background:var(--bg-input);}
+body.dark .det-hd{background:var(--bg-card);}
+body.dark .nav{background:#0d1625;box-shadow:0 2px 16px rgba(0,0,0,.5);}
+body.dark .nav-cname{color:#e8f4ff;}
+body.dark .nav-uname{color:var(--g4);}
+body.dark .nb{color:#7a9ab8;}
+body.dark .nb:hover{background:rgba(255,255,255,.1);color:#e8f4ff;}
+body.dark .nb.on{background:var(--pr);color:white;}
+body.dark .nav-logout{border-color:rgba(255,255,255,.1);color:#7a9ab8;}
+body.dark .nav-logout:hover{background:var(--err-l);color:var(--err);border-color:var(--err);}
+body.dark .fa{background:var(--bg-input);border-color:var(--border-color);}
+body.dark .fhd{background:linear-gradient(135deg,#1a2e4a,#1e3a5f);}
+body.dark select option{background:var(--bg-card);color:var(--text-main);}
+body.dark .mbg input:not([type=color]):not([type=file]):not([type=range]):not([type=checkbox]):not([type=radio]),body.dark .mb input:not([type=color]):not([type=file]):not([type=range]):not([type=checkbox]):not([type=radio]),body.dark .mbg textarea,body.dark .mb textarea{background:var(--bg-input)!important;color:var(--text-main)!important;border-color:var(--border-color)!important;}
+body.dark .mbg label,body.dark .mb label{color:var(--g6);}
+body.dark .fsb{background:var(--bg-card);}
+body.dark .sw-sec{background:var(--bg-input);border-color:var(--border-color);}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--g3);border-radius:3px}
+@media print{.no-print{display:none!important}.nav{display:none!important}body{background:white!important}}
