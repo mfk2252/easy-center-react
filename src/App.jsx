@@ -7,7 +7,7 @@ import Toast from './components/layout/Toast';
 import AppRouter from './router/AppRouter';
 
 export default function App() {
-  const { screen } = useApp();
+  const { screen, center } = useApp();
 
   if (screen === 'loading') {
     return (
@@ -25,6 +25,10 @@ export default function App() {
 
   return (
     <>
+      <div className="print-brand" aria-hidden="true">
+        {center.logo ? <img src={center.logo} alt="" /> : <span style={{ fontSize: '1.75rem' }}>🏥</span>}
+        <span className="print-brand-name">{center.name || 'المركز'}</span>
+      </div>
       <Navbar/>
       <div className="page">
         <AppRouter/>

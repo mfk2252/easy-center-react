@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { lsGet, lsAdd, lsDel } from '../hooks/useStorage';
-import { todayStr, uid } from '../utils/dateHelpers';
+import { todayStr, uid, formatHijriDate } from '../utils/dateHelpers';
 import { collectSystemAlerts } from '../utils/alertEngine';
 
 const EMPTY_MANUAL = { title: '', details: '', date: '', time: '', severity: 'info' };
@@ -76,6 +76,7 @@ export default function Dashboard() {
 
   const timeStr = clockData.time.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   const dateStr = clockData.time.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const hijriStr = formatHijriDate(clockData.time);
 
   function saveManual() {
     if (!manualForm.title.trim() || !manualForm.date) {
@@ -114,7 +115,7 @@ export default function Dashboard() {
           display: 'flex',
           alignItems: 'center',
           gap: 16,
-          padding: '14px 20px',
+          padding: 'clamp(10px, 2vw, 16px) clamp(12px, 3vw, 22px)',
           background: 'var(--bg-card)',
           borderRadius: 'var(--r)',
           border: '1px solid var(--border-color)',
@@ -123,14 +124,17 @@ export default function Dashboard() {
           flexWrap: 'wrap',
         }}
       >
-        <div style={{ fontSize: '1.7rem', fontVariantNumeric: 'tabular-nums', letterSpacing: 1, fontWeight: 900 }}>{timeStr}</div>
+        <div style={{ fontSize: 'clamp(1.15rem, 4vw, 1.75rem)', fontVariantNumeric: 'tabular-nums', letterSpacing: 1, fontWeight: 900 }}>{timeStr}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: '.82rem', color: 'var(--g5)', fontWeight: 500 }}>{clockData.greeting}</div>
-          <div style={{ fontSize: '.95rem', fontWeight: 700, color: 'var(--text-main)' }}>{dateStr}</div>
+          <div style={{ fontSize: 'clamp(0.72rem, 2.2vw, 0.84rem)', color: 'var(--g5)', fontWeight: 500 }}>{clockData.greeting}</div>
+          {hijriStr && (
+            <div style={{ fontSize: 'clamp(0.78rem, 2.4vw, 0.92rem)', fontWeight: 800, color: 'var(--text-main)', marginTop: 2, lineHeight: 1.35 }}>{hijriStr}</div>
+          )}
+          <div style={{ fontSize: 'clamp(0.8rem, 2.5vw, 0.98rem)', fontWeight: 600, color: 'var(--g6)', marginTop: 2, lineHeight: 1.35 }}>{dateStr}</div>
         </div>
-        <div style={{ borderRight: '2px solid var(--border-color)', paddingRight: 16, textAlign: 'right' }}>
-          <div style={{ fontSize: '.85rem', fontWeight: 900, color: 'var(--pr)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 200 }}>{center.name}</div>
-          <div style={{ fontSize: '.75rem', color: 'var(--g5)', marginTop: 2 }}>
+        <div style={{ borderRight: '2px solid var(--border-color)', paddingRight: 16, textAlign: 'right', minWidth: 0 }}>
+          <div style={{ fontSize: 'clamp(0.78rem, 2.2vw, 0.88rem)', fontWeight: 900, color: 'var(--pr)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 'min(220px, 40vw)' }}>{center.name}</div>
+          <div style={{ fontSize: 'clamp(0.68rem, 2vw, 0.78rem)', color: 'var(--g5)', marginTop: 2 }}>
             {currentUser?.name} — {currentUser?.title || ''}
           </div>
         </div>

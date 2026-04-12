@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel } from '../hooks/useStorage';
-import { todayStr, uid, daysUntilDate, nextAnnualOccurrenceDate } from '../utils/dateHelpers';
+import { todayStr, uid, daysUntilDate, nextAnnualOccurrenceDate, nowTimeStr } from '../utils/dateHelpers';
+import { SPECIALIST_ROLES } from '../utils/constants';
 
 const DAYS_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 const MONTHS_AR = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
@@ -12,10 +13,18 @@ const EV_COLORS = [
   ['rd', 'أحمر'],
 ];
 const EMPTY_EV = { title: '', date: '', time: '', color: 'bl', type: 'event', notes: '' };
+const EMPTY_STU_APPT = { stuId: '', type: 'تخاطب ونطق', date: '', time: '', duration: '45 دقيقة', mode: 'inperson', link: '', empId: '', notes: '' };
+const EMPTY_STU_SESS = { stuId: '', type: 'تخاطب ونطق', date: '', time: '', duration: 45, empId: '', status: 'done', notes: '', goals: '', attachData: '', attachName: '' };
+const SESS_TYPES = ['تخاطب ونطق', 'تعديل سلوك', 'علاج فيزيائي', 'علاج وظيفي', 'تكامل حسي', 'تعليمي وتربوي', 'مهارات اجتماعية', 'أخرى'];
 
 function isEvalType(type) {
   const t = (type || '').toLowerCase();
   return t.includes('تقييم') || t.includes('evaluation');
+}
+
+/** طالب جديد في التقويم: قائمة انتظار = لون مميز */
+function isCalendarNewStudent(st) {
+  return st && st.status === 'waitlist';
 }
 
 function buildCalendarItems() {
@@ -41,14 +50,15 @@ function buildCalendarItems() {
 
   lsGet('appointments').forEach(a => {
     const st = stuMap[a.stuId];
+    const col = isEvalType(a.type) ? 'or' : isCalendarNewStudent(st) ? 'pu' : 'gr';
     items.push({
       id: `ap-${a.id}`,
       source: isEvalType(a.type) ? 'تقييم' : 'موعد',
       date: a.date,
       time: a.time || '',
-      title: `${st?.name || 'طالب'} — ${a.type || 'موعد'}`,
+      title: `${st?.name || 'طالب'} — ${a.type || 'موعد'}${isCalendarNewStudent(st) ? ' ⭐' : ''}`,
       detail: [a.duration, a.mode === 'online' ? '🌐 أونلاين' : '', a.notes].filter(Boolean).join(' · '),
-      color: isEvalType(a.type) ? 'or' : 'gr',
+      color: col,
       raw: a,
       editable: false,
     });
@@ -58,14 +68,15 @@ function buildCalendarItems() {
     if (!s.date) return;
     const st = stuMap[s.stuId];
     const emp = empMap[s.empId];
+    const col = isCalendarNewStudent(st) ? 'pu' : s.status === 'done' ? 'gr' : 'bl';
     items.push({
       id: `se-${s.id}`,
       source: 'جلسة',
       date: s.date,
       time: s.time || '',
-      title: `جلسة ${s.type || ''} — ${st?.name || 'طالب'}`,
+      title: `جلسة ${s.type || ''} — ${st?.name || 'طالب'}${isCalendarNewStudent(st) ? ' ⭐' : ''}`,
       detail: [emp?.name, s.status === 'done' ? '✅ منجزة' : '⏳ مجدولة', s.notes].filter(Boolean).join(' · '),
-      color: s.status === 'done' ? 'gr' : 'bl',
+      color: col,
       raw: s,
       editable: false,
     });
@@ -162,13 +173,21 @@ export default function Calendar() {
   const { toast, activeView } = useApp();
   const [cur, setCur] = useState(new Date());
   const [allItems, setAllItems] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [emps, setEmps] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState(EMPTY_EV);
+  const [showStuAppt, setShowStuAppt] = useState(false);
+  const [stuApptForm, setStuApptForm] = useState(EMPTY_STU_APPT);
+  const [showStuSess, setShowStuSess] = useState(false);
+  const [stuSessForm, setStuSessForm] = useState(EMPTY_STU_SESS);
   const [selDay, setSelDay] = useState(null);
   const [selItem, setSelItem] = useState(null);
 
   function reload() {
+    setStudents(lsGet('students'));
+    setEmps(lsGet('employees'));
     setAllItems(buildCalendarItems());
   }
 
@@ -221,7 +240,60 @@ export default function Calendar() {
     setSelItem(null);
   }
   const fld = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
+  const fldA = k => e => setStuApptForm(f => ({ ...f, [k]: e.target.value }));
+  const fldS = k => e => setStuSessForm(f => ({ ...f, [k]: e.target.value }));
+  const specialists = emps.filter(e => SPECIALIST_ROLES.includes(e.role));
   const today = todayStr();
+
+  function openStuAppt(d = null) {
+    setStuApptForm({ ...EMPTY_STU_APPT, date: d ? dateStr(d) : todayStr(), time: nowTimeStr() });
+    setShowStuAppt(true);
+  }
+  function saveStuAppt() {
+    if (!stuApptForm.stuId || !stuApptForm.date || !stuApptForm.time) {
+      toast('⚠️ اختر الطالب والتاريخ والوقت', 'er');
+      return;
+    }
+    lsAdd('appointments', { ...stuApptForm, id: uid() });
+    toast('✅ تم تسجيل الموعد', 'ok');
+    setShowStuAppt(false);
+    reload();
+  }
+  function openStuSess(d = null) {
+    setStuSessForm({ ...EMPTY_STU_SESS, date: d ? dateStr(d) : todayStr(), time: nowTimeStr() });
+    setShowStuSess(true);
+  }
+  function sessAttach(e) {
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => setStuSessForm(fm => ({ ...fm, attachData: ev.target.result, attachName: f.name }));
+    r.readAsDataURL(f);
+    e.target.value = '';
+  }
+  function saveStuSess() {
+    if (!stuSessForm.stuId || !stuSessForm.date) {
+      toast('⚠️ اختر الطالب والتاريخ', 'er');
+      return;
+    }
+    lsAdd('sessions', {
+      id: uid(),
+      stuId: stuSessForm.stuId,
+      type: stuSessForm.type,
+      date: stuSessForm.date,
+      time: stuSessForm.time,
+      duration: Number(stuSessForm.duration) || 45,
+      empId: stuSessForm.empId,
+      status: stuSessForm.status,
+      notes: stuSessForm.notes,
+      goals: stuSessForm.goals || '',
+      attachmentData: stuSessForm.attachData || '',
+      attachmentName: stuSessForm.attachName || '',
+    });
+    toast('✅ تم تسجيل الجلسة', 'ok');
+    setShowStuSess(false);
+    reload();
+  }
 
   const selDateStr = selDay ? dateStr(selDay) : null;
   const dayItems = selDay ? itemsOnDay(selDay) : [];
@@ -251,6 +323,12 @@ export default function Calendar() {
           </button>
           <button type="button" className="btn btn-p" onClick={() => openForm()}>
             ➕ حدث
+          </button>
+          <button type="button" className="btn btn-s btn-sm" onClick={() => openStuAppt()}>
+            📅 موعد طالب
+          </button>
+          <button type="button" className="btn btn-s btn-sm" onClick={() => openStuSess()}>
+            🩺 جلسة طالب
           </button>
         </div>
       </div>
@@ -310,9 +388,17 @@ export default function Calendar() {
             <h3>
               📅 {selDay} {MONTHS_AR[month]} {year}
             </h3>
-            <button type="button" className="btn btn-p btn-sm" onClick={() => openForm(selDay)}>
-              ➕ إضافة للتقويم
-            </button>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button type="button" className="btn btn-p btn-sm" onClick={() => openForm(selDay)}>
+                ➕ إضافة للتقويم
+              </button>
+              <button type="button" className="btn btn-s btn-sm" onClick={() => openStuAppt(selDay)}>
+                📅 موعد
+              </button>
+              <button type="button" className="btn btn-s btn-sm" onClick={() => openStuSess(selDay)}>
+                🩺 جلسة
+              </button>
+            </div>
           </div>
           <div className="wg-b">
             {dayItems.length === 0 ? (
@@ -448,6 +534,190 @@ export default function Calendar() {
                 💾 حفظ
               </button>
               <button type="button" className="btn btn-g" onClick={() => setShowForm(false)}>
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showStuAppt && (
+        <div className="mbg" onClick={e => e.target === e.currentTarget && setShowStuAppt(false)}>
+          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
+            <div className="fhd" style={{ padding: '14px 20px', borderRadius: 0 }}>
+              <h2>📅 تسجيل موعد مرتبط بطالب</h2>
+              <p style={{ fontSize: '.8rem', opacity: 0.9 }}>طلبة قائمة الانتظار يظهرون بلون مميز في التقويم</p>
+            </div>
+            <div className="modal-body-scroll" style={{ padding: '18px 20px' }}>
+              <div className="fg c2">
+                <div className="fl full">
+                  <label>
+                    الطالب <span className="req">*</span>
+                  </label>
+                  <select value={stuApptForm.stuId} onChange={fldA('stuId')}>
+                    <option value="">— اختر من قاعدة البيانات —</option>
+                    {students.map(s => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                        {s.status === 'waitlist' ? ' (انتظار)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="fl">
+                  <label>
+                    نوع الموعد <span className="req">*</span>
+                  </label>
+                  <select value={stuApptForm.type} onChange={fldA('type')}>
+                    {SESS_TYPES.map(t => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="fl">
+                  <label>
+                    التاريخ <span className="req">*</span>
+                  </label>
+                  <input type="date" value={stuApptForm.date} onChange={fldA('date')} />
+                </div>
+                <div className="fl">
+                  <label>
+                    الوقت <span className="req">*</span>
+                  </label>
+                  <input type="time" value={stuApptForm.time} onChange={fldA('time')} />
+                </div>
+                <div className="fl">
+                  <label>الأخصائي</label>
+                  <select value={stuApptForm.empId} onChange={fldA('empId')}>
+                    <option value="">—</option>
+                    {specialists.map(e => (
+                      <option key={e.id} value={e.id}>
+                        {e.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="fl">
+                  <label>المدة</label>
+                  <select value={stuApptForm.duration} onChange={fldA('duration')}>
+                    <option>30 دقيقة</option>
+                    <option>45 دقيقة</option>
+                    <option>60 دقيقة</option>
+                  </select>
+                </div>
+                <div className="fl">
+                  <label>نوع الحضور</label>
+                  <select value={stuApptForm.mode} onChange={fldA('mode')}>
+                    <option value="inperson">حضوري</option>
+                    <option value="online">أونلاين</option>
+                  </select>
+                </div>
+                {stuApptForm.mode === 'online' && (
+                  <div className="fl full">
+                    <label>رابط الاجتماع</label>
+                    <input type="url" value={stuApptForm.link} onChange={fldA('link')} placeholder="https://..." />
+                  </div>
+                )}
+                <div className="fl full">
+                  <label>ملاحظات</label>
+                  <textarea value={stuApptForm.notes} onChange={fldA('notes')} rows={2} />
+                </div>
+              </div>
+            </div>
+            <div className="fa">
+              <button type="button" className="btn btn-p" onClick={saveStuAppt}>
+                💾 حفظ الموعد
+              </button>
+              <button type="button" className="btn btn-g" onClick={() => setShowStuAppt(false)}>
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showStuSess && (
+        <div className="mbg" onClick={e => e.target === e.currentTarget && setShowStuSess(false)}>
+          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
+            <div className="fhd" style={{ padding: '14px 20px', borderRadius: 0 }}>
+              <h2>🩺 تسجيل جلسة مرتبطة بطالب</h2>
+            </div>
+            <div className="modal-body-scroll" style={{ padding: '18px 20px' }}>
+              <div className="fg c2">
+                <div className="fl full">
+                  <label>
+                    الطالب <span className="req">*</span>
+                  </label>
+                  <select value={stuSessForm.stuId} onChange={fldS('stuId')}>
+                    <option value="">— اختر من قاعدة البيانات —</option>
+                    {students.map(s => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                        {s.status === 'waitlist' ? ' (انتظار)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="fl">
+                  <label>نوع الجلسة</label>
+                  <select value={stuSessForm.type} onChange={fldS('type')}>
+                    {SESS_TYPES.map(t => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="fl">
+                  <label>
+                    التاريخ <span className="req">*</span>
+                  </label>
+                  <input type="date" value={stuSessForm.date} onChange={fldS('date')} />
+                </div>
+                <div className="fl">
+                  <label>الوقت</label>
+                  <input type="time" value={stuSessForm.time} onChange={fldS('time')} />
+                </div>
+                <div className="fl">
+                  <label>الأخصائي</label>
+                  <select value={stuSessForm.empId} onChange={fldS('empId')}>
+                    <option value="">—</option>
+                    {specialists.map(e => (
+                      <option key={e.id} value={e.id}>
+                        {e.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="fl">
+                  <label>المدة (دقيقة)</label>
+                  <input type="number" min={15} value={stuSessForm.duration} onChange={fldS('duration')} />
+                </div>
+                <div className="fl">
+                  <label>الحالة</label>
+                  <select value={stuSessForm.status} onChange={fldS('status')}>
+                    <option value="done">منجزة</option>
+                    <option value="scheduled">مجدولة</option>
+                  </select>
+                </div>
+                <div className="fl full">
+                  <label>ملاحظات</label>
+                  <textarea value={stuSessForm.notes} onChange={fldS('notes')} rows={2} />
+                </div>
+                <div className="fl full">
+                  <label>مرفق توثيق (صورة أو ملف)</label>
+                  <input type="file" accept="image/*,.pdf,.doc,.docx" onChange={sessAttach} />
+                  {stuSessForm.attachName && <span style={{ fontSize: '.8rem', marginRight: 8 }}>{stuSessForm.attachName}</span>}
+                </div>
+              </div>
+            </div>
+            <div className="fa">
+              <button type="button" className="btn btn-p" onClick={saveStuSess}>
+                💾 حفظ الجلسة
+              </button>
+              <button type="button" className="btn btn-g" onClick={() => setShowStuSess(false)}>
                 إلغاء
               </button>
             </div>

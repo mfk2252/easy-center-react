@@ -119,8 +119,10 @@ export default function LoginScreen() {
           </div>
 
           <button className="login-btn" onClick={doLogin}>دخول ←</button>
-          <div className="login-footer">
-            <span style={{color:'var(--g4)',fontSize:'.72rem'}}>نظام إدارة المركز المتكامل v2.0</span>
+          <div className="login-footer" style={{ display:'flex', flexDirection:'column', gap:4, alignItems:'center' }}>
+            <span style={{color:'var(--g4)',fontSize:'.72rem'}}>نظام إدارة المركز المتكامل — v1</span>
+            <span style={{color:'var(--g4)',fontSize:'.68rem'}}>صمم بواسطة محمد فكري</span>
+            <a href="mailto:mfekry225@outlook.com" style={{color:'var(--pr)',fontSize:'.68rem'}}>mfekry225@outlook.com</a>
           </div>
         </div>
       </div>

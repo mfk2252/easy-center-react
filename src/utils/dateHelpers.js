@@ -82,3 +82,21 @@ export function daysUntilDate(d) {
   b.setHours(0, 0, 0, 0);
   return Math.round((b - a) / 864e5);
 }
+
+/** التاريخ الهجري (تقريبي عبر التقويم الإسلامي في المتصفح) */
+export function formatHijriDate(d = new Date()) {
+  try {
+    return new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(d);
+  } catch {
+    try {
+      return new Intl.DateTimeFormat('ar-SA', { calendar: 'islamic', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+    } catch {
+      return '';
+    }
+  }
+}

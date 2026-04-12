@@ -5,7 +5,7 @@ import { calcAge, formatDate, todayStr, uid, nowTimeStr } from '../../utils/date
 
 const IEP_DOMAINS = ['التواصل واللغة','المهارات الاجتماعية','السلوك والانتباه','المهارات الحركية','الرعاية الذاتية','الأكاديمي','أخرى'];
 const EMPTY_IEP = { domain:'', goal:'', priority:'medium', start:'', review:'', progress:0, notes:'' };
-const EMPTY_SESSION = { type:'تخاطب ونطق', date:'', time:'', duration:45, empId:'', status:'done', notes:'', goals:'' };
+const EMPTY_SESSION = { type:'تخاطب ونطق', date:'', time:'', duration:45, empId:'', status:'done', notes:'', goals:'', attachmentData:'', attachmentName:'' };
 const EMPTY_APPT = { type:'تخاطب ونطق', date:'', time:'', duration:'45 دقيقة', mode:'inperson', link:'', empId:'', notes:'' };
 const EMPTY_REPORT = { period:'month', title:'', summary:'', content:'', date:'' };
 const EMPTY_BIP = { title:'', targetBehaviors:'', strategies:'', reviewDate:'', notes:'', active:true };
@@ -109,6 +109,14 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
 
   const fldI = k => e => setIepForm(f=>({...f,[k]:e.target.value}));
   const fldS = k => e => setSessForm(f=>({...f,[k]:e.target.value}));
+  function sessAttach(e) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => setSessForm(fm => ({ ...fm, attachmentData: ev.target.result, attachmentName: f.name }));
+    r.readAsDataURL(f);
+    e.target.value = '';
+  }
   const fldA = k => e => setApptForm(f=>({...f,[k]:e.target.value}));
   const fldR = k => e => setRepForm(f=>({...f,[k]:e.target.value}));
   const fldB = k => e => setBipForm(f=>({...f,[k]:e.target.value}));
@@ -259,11 +267,12 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
                   <div className="av ok">🩺</div>
                   <div className="ci">
                     <div className="cn">{s.type} {s.date && '· ' + s.date} {s.time && s.time}</div>
-                    <div className="cm">{emp?.name||'—'} · {s.duration} دقيقة{s.notes&&' · '+s.notes}</div>
+                    <div className="cm">{emp?.name||'—'} · {s.duration != null ? `${s.duration} دقيقة` : ''}{s.notes && ` · ${s.notes}`}</div>
                   </div>
-                  <div className="c-badges"><span className={`bdg ${s.status==='done'?'b-gr':'b-or'}`}>{s.status==='done'?'✅ منجزة':'⏳ مجدولة'}</span></div>
+                  <div className="c-badges"><span className={`bdg ${s.status==='done'?'b-gr':'b-or'}`}>{s.status==='done'?'✅ منجزة':'⏳ مجدولة'}</span>{s.attachmentData && <span className="bdg b-cy">📎 مرفق</span>}</div>
                   <div className="c-acts">
-                    {canEdit && <button className="btn btn-xs btn-g" onClick={()=>{ setSessForm({...s}); setSessEditId(s.id); setShowSessForm(true); }}>✏️</button>}
+                    {s.attachmentData && <a href={s.attachmentData} download={s.attachmentName || 'مرفق'} className="btn btn-xs btn-bl">📥</a>}
+                    {canEdit && <button className="btn btn-xs btn-g" onClick={()=>{ setSessForm({...EMPTY_SESSION, ...s, duration: s.duration ?? 45}); setSessEditId(s.id); setShowSessForm(true); }}>✏️</button>}
                     {canEdit && <button className="btn btn-xs btn-d" onClick={()=>delSess(s.id)}>🗑️</button>}
                   </div>
                 </div>
@@ -280,10 +289,11 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
                     <div className="fl"><label>الأخصائي</label><select value={sessForm.empId} onChange={fldS('empId')}><option value="">-- اختر --</option>{specialists.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select></div>
                     <div className="fl"><label>التاريخ <span className="req">*</span></label><input type="date" value={sessForm.date} onChange={fldS('date')}/></div>
                     <div className="fl"><label>الوقت</label><input type="time" value={sessForm.time} onChange={fldS('time')}/></div>
-                    <div className="fl"><label>المدة (دقيقة)</label><input type="number" value={sessForm.duration} onChange={fldS('duration')} min="1"/></div>
+                    <div className="fl"><label>المدة (دقيقة)</label><input type="number" value={sessForm.duration} onChange={e=>setSessForm(f=>({...f,duration:Number(e.target.value)}))} min="1"/></div>
                     <div className="fl"><label>الحالة</label><select value={sessForm.status} onChange={fldS('status')}><option value="done">✅ منجزة</option><option value="scheduled">⏳ مجدولة</option><option value="cancelled">❌ ملغاة</option></select></div>
                     <div className="fl full"><label>الأهداف / محتوى الجلسة</label><textarea value={sessForm.goals} onChange={fldS('goals')} rows={2} placeholder="ما تم العمل عليه..."/></div>
                     <div className="fl full"><label>ملاحظات</label><textarea value={sessForm.notes} onChange={fldS('notes')} rows={2}/></div>
+                    <div className="fl full"><label>مرفق توثيق (صورة أو ملف)</label><input type="file" accept="image/*,.pdf,.doc,.docx" onChange={sessAttach}/>{sessForm.attachmentName && <span style={{ fontSize:'.78rem', marginRight:8 }}>{sessForm.attachmentName}</span>}{sessForm.attachmentData && <button type="button" className="btn btn-xs btn-d" style={{ marginRight:6 }} onClick={()=>setSessForm(f=>({...f,attachmentData:'',attachmentName:''}))}>إزالة المرفق</button>}</div>
                   </div>
                 </div>
                 <div className="fa">

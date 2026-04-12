@@ -145,20 +145,23 @@ export function collectSystemAlerts() {
     });
   }
 
-  // 7) Salaries unpaid this month
-  const unpaid = emps.filter(e => {
-    const sal = salaries.find(s => s.empId === e.id && s.month === mk);
-    return !sal || sal.status !== 'paid';
-  });
-  if (emps.length && unpaid.length) {
-    alerts.push({
-      id: 'salary-month',
-      category: 'الرواتب',
-      severity: unpaid.length > emps.length * 0.3 ? 'urgent' : 'warn',
-      title: `${unpaid.length} موظف لم يُصرف راتبه هذا الشهر`,
-      detail: 'راجع قسم المالية ← الرواتب',
-      action: 'hr-salary',
+  // 7) Salaries unpaid this month — يظهر من بداية يوم 26 من كل شهر
+  const dayOfMonth = new Date().getDate();
+  if (dayOfMonth >= 26) {
+    const unpaid = emps.filter(e => {
+      const sal = salaries.find(s => s.empId === e.id && s.month === mk);
+      return !sal || sal.status !== 'paid';
     });
+    if (emps.length && unpaid.length) {
+      alerts.push({
+        id: 'salary-month',
+        category: 'الرواتب',
+        severity: unpaid.length > emps.length * 0.3 ? 'urgent' : 'warn',
+        title: `${unpaid.length} موظف لم يُصرف راتبه هذا الشهر`,
+        detail: 'راجع قسم المالية ← الرواتب',
+        action: 'hr-salary',
+      });
+    }
   }
 
   // 8) Contracts ending

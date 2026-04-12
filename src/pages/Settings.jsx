@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel } from '../hooks/useStorage';
 import { uid } from '../utils/dateHelpers';
@@ -14,10 +14,16 @@ export default function Settings() {
   const [showUserForm, setShowUserForm] = useState(false);
   const [editUserId, setEditUserId] = useState(null);
   const [userForm, setUserForm] = useState({ username:'', password:'', name:'', role:'specialist', title:'', empId:'' });
-  const [centerForm, setCenterForm] = useState({ name:center.name||'', type:center.type||'', phone:center.phone||'' });
+  const [centerForm, setCenterForm] = useState({ name:center.name||'', type:center.type||'', phone:center.phone||'', logo:center.logo||'' });
   const [selColor, setSelColor] = useState(center.color||'#1a56db');
 
   const isManager = currentUser?.role === 'manager';
+
+  useEffect(() => {
+    if (tab === 'center') {
+      setCenterForm({ name: center.name || '', type: center.type || '', phone: center.phone || '', logo: center.logo || '' });
+    }
+  }, [tab, center.name, center.type, center.phone, center.logo]);
   const isTech = currentUser?.role === 'technician';
   const fldU = k => e => setUserForm(f=>({...f,[k]:e.target.value}));
 
@@ -27,6 +33,15 @@ export default function Settings() {
     const updated = { ...center, ...centerForm };
     persistConfig(updated, fbCfg);
     toast('✅ تم حفظ بيانات المركز', 'ok');
+  }
+
+  function handleCenterLogo(e) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => setCenterForm(fm => ({ ...fm, logo: ev.target.result }));
+    r.readAsDataURL(f);
+    e.target.value = '';
   }
 
   function saveColor() {
@@ -95,6 +110,19 @@ export default function Settings() {
             <div className="fl full"><label>اسم المركز</label><input value={centerForm.name} onChange={e=>setCenterForm(f=>({...f,name:e.target.value}))}/></div>
             <div className="fl"><label>نوع المركز</label><select value={centerForm.type} onChange={e=>setCenterForm(f=>({...f,type:e.target.value}))}><option value="">--</option><option>مركز تربية خاصة</option><option>مركز تخاطب ونطق</option><option>مركز علاج طبيعي</option><option>مركز تأهيل شامل</option><option>روضة دمج</option></select></div>
             <div className="fl"><label>رقم التواصل</label><input type="tel" value={centerForm.phone} onChange={e=>setCenterForm(f=>({...f,phone:e.target.value}))}/></div>
+            <div className="fl full">
+              <label>شعار المؤسسة</label>
+              <div style={{ display:'flex', alignItems:'center', gap:14, flexWrap:'wrap' }}>
+                <div style={{ width:72, height:72, borderRadius:12, border:'1px solid var(--border-color)', overflow:'hidden', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--g0)' }}>
+                  {centerForm.logo ? <img src={centerForm.logo} alt="" style={{ width:'100%', height:'100%', objectFit:'contain' }} /> : <span style={{ fontSize:'1.5rem' }}>🏥</span>}
+                </div>
+                <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                  <input type="file" accept="image/*" onChange={handleCenterLogo} />
+                  {centerForm.logo && <button type="button" className="btn btn-xs btn-d" onClick={()=>setCenterForm(f=>({...f,logo:''}))}>إزالة الشعار</button>}
+                </div>
+              </div>
+              <p style={{ fontSize:'.75rem', color:'var(--g4)', marginTop:8 }}>يُعرض الشعار عند تسجيل الدخول، في الشريط العلوي، وفي رأس الطباعة (تقارير، رواتب، إلخ).</p>
+            </div>
           </div>
           <div style={{marginTop:16,display:'flex',gap:10}}>
             {isManager&&<button className="btn btn-p" onClick={saveCenter}>💾 حفظ</button>}
@@ -201,8 +229,9 @@ export default function Settings() {
           <div style={{textAlign:'center',padding:'20px 0'}}>
             <div style={{fontSize:'3rem',marginBottom:12}}>🏥</div>
             <h2 style={{fontSize:'1.2rem',fontWeight:900,marginBottom:6}}>نظام إدارة المركز المتكامل</h2>
-            <p style={{color:'var(--g5)',fontSize:'.86rem',marginBottom:4}}>الإصدار 2.0 — React + Vite</p>
-            <p style={{color:'var(--g4)',fontSize:'.8rem'}}>بناء احترافي قابل للنشر على Vercel</p>
+            <p style={{color:'var(--g5)',fontSize:'.86rem',marginBottom:4}}>الإصدار v1</p>
+            <p style={{color:'var(--g4)',fontSize:'.8rem',marginBottom:2}}>صمم بواسطة محمد فكري</p>
+            <p style={{color:'var(--g4)',fontSize:'.78rem'}}><a href="mailto:mfekry225@outlook.com">mfekry225@outlook.com</a></p>
           </div>
         </div></div>
       )}

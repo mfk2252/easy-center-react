@@ -8,8 +8,10 @@ const EMPTY_ACT = {
   name: '',
   date: '',
   year: '',
+  section: '',
   image: '',
   participantIds: [],
+  responsibleEmpIds: [],
   notes: '',
   fileData: '',
   fileName: '',
@@ -19,6 +21,7 @@ export default function Programs() {
   const { toast, currentUser } = useApp();
   const [activities, setActivities] = useState([]);
   const [students, setStudents] = useState([]);
+  const [emps, setEmps] = useState([]);
   const [filterYear, setFilterYear] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -28,12 +31,14 @@ export default function Programs() {
   useEffect(() => {
     setActivities(lsGet('centerActivities'));
     setStudents(lsGet('students'));
+    setEmps(lsGet('employees'));
     const y = String(new Date().getFullYear());
     setFilterYear(y);
   }, []);
 
   function reload() {
     setActivities(lsGet('centerActivities'));
+    setEmps(lsGet('employees'));
   }
 
   const years = [...new Set(activities.map(a => a.year || (a.date && a.date.slice(0, 4)) || '').filter(Boolean))].sort((a, b) => b.localeCompare(a));
@@ -51,6 +56,13 @@ export default function Programs() {
     setForm(f => {
       const p = f.participantIds || [];
       return { ...f, participantIds: p.includes(id) ? p.filter(x => x !== id) : [...p, id] };
+    });
+  }
+
+  function toggleResponsibleEmp(id) {
+    setForm(f => {
+      const p = f.responsibleEmpIds || [];
+      return { ...f, responsibleEmpIds: p.includes(id) ? p.filter(x => x !== id) : [...p, id] };
     });
   }
 
@@ -76,7 +88,12 @@ export default function Programs() {
       return;
     }
     const y = form.year || form.date.slice(0, 4);
-    const row = { ...form, year: y, participantIds: form.participantIds || [] };
+    const row = {
+      ...form,
+      year: y,
+      participantIds: form.participantIds || [],
+      responsibleEmpIds: form.responsibleEmpIds || [],
+    };
     if (editId) lsUpd('centerActivities', editId, row);
     else lsAdd('centerActivities', { ...row, id: uid() });
     toast('✅ تم الحفظ', 'ok');
@@ -93,7 +110,7 @@ export default function Programs() {
 
   function openNew() {
     const y = String(new Date().getFullYear());
-    setForm({ ...EMPTY_ACT, date: todayStr(), year: y, participantIds: [] });
+    setForm({ ...EMPTY_ACT, date: todayStr(), year: y, participantIds: [], responsibleEmpIds: [] });
     setEditId(null);
     setShowForm(true);
   }
@@ -130,6 +147,7 @@ export default function Programs() {
 
       {filtered.map(act => {
         const parts = (act.participantIds || []).map(id => students.find(s => s.id === id)?.name).filter(Boolean);
+        const respNames = (act.responsibleEmpIds || []).map(id => emps.find(e => e.id === id)?.name).filter(Boolean);
         return (
           <div key={act.id} className="card" style={{ marginBottom: 10 }}>
             <div className="av" style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0 }}>
@@ -140,7 +158,9 @@ export default function Programs() {
               <div className="cm">
                 📅 {act.date} · العام {act.year || act.date?.slice(0, 4)}
               </div>
-              {parts.length > 0 && <div className="cm">👥 {parts.join('، ')}</div>}
+              {act.section?.trim() && <div className="cm">📂 {act.section}</div>}
+              {respNames.length > 0 && <div className="cm">👷 مسؤولون: {respNames.join('، ')}</div>}
+              {parts.length > 0 && <div className="cm">👥 مشاركون: {parts.join('، ')}</div>}
               {act.notes && <div className="cm">{act.notes}</div>}
             </div>
             <div className="c-badges">
@@ -153,7 +173,7 @@ export default function Programs() {
                     📥
                   </a>
                 )}
-                <button type="button" className="btn btn-xs btn-g" onClick={() => { setForm({ ...EMPTY_ACT, ...act, participantIds: act.participantIds || [] }); setEditId(act.id); setShowForm(true); }}>
+                <button type="button" className="btn btn-xs btn-g" onClick={() => { setForm({ ...EMPTY_ACT, ...act, participantIds: act.participantIds || [], responsibleEmpIds: act.responsibleEmpIds || [] }); setEditId(act.id); setShowForm(true); }}>
                   ✏️
                 </button>
                 <button type="button" className="btn btn-xs btn-d" onClick={() => del(act.id)}>
@@ -190,6 +210,10 @@ export default function Programs() {
                   <input value={form.year} onChange={fld('year')} placeholder="مثال: 2026" />
                 </div>
                 <div className="fl full">
+                  <label>القسم / التصنيف (مثال)</label>
+                  <input value={form.section} onChange={fld('section')} placeholder="مثال: قسم التدخل المبكر" />
+                </div>
+                <div className="fl full">
                   <label>صورة النشاط</label>
                   <input type="file" accept="image/*" onChange={handleImage} />
                 </div>
@@ -198,6 +222,17 @@ export default function Programs() {
                     <img src={form.image} alt="" style={{ maxHeight: 120, borderRadius: 8 }} />
                   </div>
                 )}
+                <div className="fl full">
+                  <label>المسؤولون عن الفعالية (موظفون)</label>
+                  <div style={{ maxHeight: 140, overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: 8, padding: 8 }}>
+                    {emps.filter(e => e.role !== 'parent').map(e => (
+                      <label key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '.84rem', marginBottom: 4 }}>
+                        <input type="checkbox" checked={(form.responsibleEmpIds || []).includes(e.id)} onChange={() => toggleResponsibleEmp(e.id)} />
+                        {e.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
                 <div className="fl full">
                   <label>المشاركون (طلاب)</label>
                   <div style={{ maxHeight: 160, overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: 8, padding: 8 }}>

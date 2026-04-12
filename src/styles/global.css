@@ -40,4 +40,12 @@ body.dark .mbg label,body.dark .mb label{color:var(--g6);}
 body.dark .fsb{background:var(--bg-card);}
 body.dark .sw-sec{background:var(--bg-input);border-color:var(--border-color);}
 ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--g3);border-radius:3px}
-@media print{.no-print{display:none!important}.nav{display:none!important}body{background:white!important}}
+@media print{
+  .no-print{display:none!important}
+  .nav{display:none!important}
+  body{background:white!important}
+  .print-brand{display:flex!important;align-items:center;justify-content:center;gap:12px;padding:12px 0 16px;margin-bottom:12px;border-bottom:2px solid #e2e8f0;page-break-inside:avoid}
+  .print-brand img{height:44px;max-width:120px;object-fit:contain;border-radius:8px}
+  .print-brand .print-brand-name{font-size:1.1rem;font-weight:900;color:#0f172a}
+}
+.print-brand{display:none}
