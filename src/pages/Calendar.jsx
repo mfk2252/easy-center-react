@@ -182,6 +182,8 @@ export default function Calendar() {
   const [stuApptForm, setStuApptForm] = useState(EMPTY_STU_APPT);
   const [showStuSess, setShowStuSess] = useState(false);
   const [stuSessForm, setStuSessForm] = useState(EMPTY_STU_SESS);
+  const [showEval, setShowEval] = useState(false);
+  const [evalForm, setEvalForm] = useState({ childName:'', parentName:'', diagnosis:'', date:'', time:'', notes:'' });
   const [selDay, setSelDay] = useState(null);
   const [selItem, setSelItem] = useState(null);
 
@@ -298,6 +300,30 @@ export default function Calendar() {
   const selDateStr = selDay ? dateStr(selDay) : null;
   const dayItems = selDay ? itemsOnDay(selDay) : [];
 
+  function openEval(d = null) {
+    setEvalForm({ childName:'', parentName:'', diagnosis:'', date: d ? dateStr(d) : todayStr(), time:'', notes:'' });
+    setShowEval(true);
+  }
+  function saveEval() {
+    if (!evalForm.childName.trim() || !evalForm.date || !evalForm.time) {
+      toast('⚠️ أدخل اسم الطفل والموعد والساعة', 'er'); return;
+    }
+    lsAdd('evaluations', { ...evalForm, id: uid() });
+    // Smart alert: add notification to register child data
+    lsAdd('manualAlerts', {
+      id: uid(),
+      title: `📋 تذكير: تسجيل بيانات ${evalForm.childName} كاملة`,
+      details: `لديه موعد تقييم بتاريخ ${evalForm.date} الساعة ${evalForm.time} — يُنصح بتسجيل بياناته كطالب عند حضور الموعد`,
+      date: evalForm.date,
+      time: evalForm.time,
+      severity: 'warn',
+    });
+    toast('✅ تم تسجيل موعد التقييم وإضافة تنبيه ذكي', 'ok');
+    setShowEval(false);
+    reload();
+  }
+  const fldEv = k => e => setEvalForm(f => ({ ...f, [k]: e.target.value }));
+
   useEffect(() => {
     setSelItem(null);
   }, [selDay]);
@@ -329,6 +355,9 @@ export default function Calendar() {
           </button>
           <button type="button" className="btn btn-s btn-sm" onClick={() => openStuSess()}>
             🩺 جلسة طالب
+          </button>
+          <button type="button" className="btn btn-s btn-sm" onClick={() => openEval()} style={{background:'var(--or-l)',color:'var(--or)',border:'1px solid var(--or)'}}>
+            📋 تقييم جديد
           </button>
         </div>
       </div>
@@ -397,6 +426,9 @@ export default function Calendar() {
               </button>
               <button type="button" className="btn btn-s btn-sm" onClick={() => openStuSess(selDay)}>
                 🩺 جلسة
+              </button>
+              <button type="button" className="btn btn-sm" onClick={() => openEval(selDay)} style={{background:'var(--or-l)',color:'var(--or)',border:'1px solid var(--or)'}}>
+                📋 تقييم
               </button>
             </div>
           </div>
@@ -720,6 +752,35 @@ export default function Calendar() {
               <button type="button" className="btn btn-g" onClick={() => setShowStuSess(false)}>
                 إلغاء
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Evaluation Modal */}
+      {showEval && (
+        <div className="mbg" onClick={e => e.target === e.currentTarget && setShowEval(false)}>
+          <div className="mb mb-large" style={{ padding:0, overflow:'hidden', borderRadius:16 }}>
+            <div className="fhd" style={{ padding:'14px 20px', borderRadius:0 }}>
+              <h2>📋 تقييم جديد</h2>
+              <p style={{ fontSize:'.82rem', opacity:0.85 }}>موعد تقييم لمستفيد جديد — سيُضاف تنبيه ذكي لتسجيل بياناته</p>
+            </div>
+            <div className="modal-body-scroll" style={{ padding:'18px 20px' }}>
+              <div className="fg c2">
+                <div className="fl"><label>اسم الطفل <span className="req">*</span></label><input value={evalForm.childName} onChange={fldEv('childName')} placeholder="الاسم الكامل"/></div>
+                <div className="fl"><label>اسم ولي الأمر</label><input value={evalForm.parentName} onChange={fldEv('parentName')} placeholder="اسم ولي الأمر"/></div>
+                <div className="fl full"><label>التشخيص / السبب</label><input value={evalForm.diagnosis} onChange={fldEv('diagnosis')} placeholder="مثال: تأخر لغوي، توحد..."/></div>
+                <div className="fl"><label>تاريخ الموعد <span className="req">*</span></label><input type="date" value={evalForm.date} onChange={fldEv('date')}/></div>
+                <div className="fl"><label>الساعة <span className="req">*</span></label><input type="time" value={evalForm.time} onChange={fldEv('time')}/></div>
+                <div className="fl full"><label>ملاحظات</label><textarea value={evalForm.notes} onChange={fldEv('notes')} rows={3} placeholder="أي معلومات إضافية..."/></div>
+              </div>
+              <div style={{ marginTop:14, padding:'10px 14px', background:'var(--warn-l)', border:'1px solid #fde68a', borderRadius:'var(--r2)', fontSize:'.82rem', color:'var(--warn)' }}>
+                💡 سيُضاف تلقائياً تنبيه ذكي في لوحة التحكم يُذكّر بتسجيل بيانات الطفل كاملة عند حضور الموعد
+              </div>
+            </div>
+            <div className="fa">
+              <button type="button" className="btn btn-p" onClick={saveEval}>💾 حفظ موعد التقييم</button>
+              <button type="button" className="btn btn-g" onClick={() => setShowEval(false)}>إلغاء</button>
             </div>
           </div>
         </div>

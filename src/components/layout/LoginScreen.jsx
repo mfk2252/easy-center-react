@@ -119,6 +119,19 @@ export default function LoginScreen() {
           </div>
 
           <button className="login-btn" onClick={doLogin}>دخول ←</button>
+          <div style={{textAlign:'center',marginTop:8}}>
+            <details style={{cursor:'pointer'}}>
+              <summary style={{fontSize:'.78rem',color:'var(--g5)',listStyle:'none',userSelect:'none'}}>
+                🔑 نسيت كلمة المرور؟
+              </summary>
+              <div style={{marginTop:10,padding:'12px 14px',background:'var(--g0)',borderRadius:10,fontSize:'.8rem',color:'var(--g6)',textAlign:'right',lineHeight:1.9}}>
+                <b style={{color:'var(--pr)'}}>الحلول المتاحة:</b><br/>
+                <b>1.</b> اطلب من <b>المدير</b> تغيير كلمة مرورك من الإعدادات → المستخدمون ✏️<br/>
+                <b>2.</b> إذا كنت المدير: اذهب لـ <b>الإعدادات → النسخ الاحتياطي → نسيت كلمة المرور</b><br/>
+                <b>3.</b> تواصل مع الدعم الفني: <a href="mailto:mfekry225@outlook.com" style={{color:'var(--pr)'}}>mfekry225@outlook.com</a>
+              </div>
+            </details>
+          </div>
           <div className="login-footer" style={{ display:'flex', flexDirection:'column', gap:4, alignItems:'center' }}>
             <span style={{color:'var(--g4)',fontSize:'.72rem'}}>نظام إدارة المركز المتكامل — v1</span>
             <span style={{color:'var(--g4)',fontSize:'.68rem'}}>صمم بواسطة محمد فكري</span>

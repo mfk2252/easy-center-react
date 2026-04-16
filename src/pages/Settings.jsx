@@ -16,6 +16,8 @@ export default function Settings() {
   const [userForm, setUserForm] = useState({ username:'', password:'', name:'', role:'specialist', title:'', empId:'' });
   const [centerForm, setCenterForm] = useState({ name:center.name||'', type:center.type||'', phone:center.phone||'', logo:center.logo||'' });
   const [selColor, setSelColor] = useState(center.color||'#1a56db');
+  const [fbForm, setFbForm] = useState({ apiKey: fbCfg?.apiKey||'', authDomain: fbCfg?.authDomain||'', projectId: fbCfg?.projectId||'', storageBucket: fbCfg?.storageBucket||'', messagingSenderId: fbCfg?.messagingSenderId||'', appId: fbCfg?.appId||'' });
+  const [showResetPwInfo, setShowResetPwInfo] = useState(false);
 
   const isManager = currentUser?.role === 'manager';
 
@@ -88,6 +90,36 @@ export default function Settings() {
     };
     r.readAsText(f);
     e.target.value='';
+  }
+
+  function importExcel(e, dataKey) {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => {
+      try {
+        const text = ev.target.result;
+        const rows = text.split('\n').filter(l=>l.trim());
+        const headers = rows[0].split(',').map(h=>h.trim().replace(/"/g,''));
+        const data = rows.slice(1).map(row => {
+          const vals = row.split(',').map(v=>v.trim().replace(/"/g,''));
+          const obj = { id: uid() };
+          headers.forEach((h,i) => { obj[h] = vals[i] || ''; });
+          return obj;
+        }).filter(o => Object.values(o).some(v => v && v !== o.id));
+        const pfx = (center.projectId || 'local') + '_';
+        const existing = lsGet(dataKey);
+        localStorage.setItem(pfx + dataKey, JSON.stringify([...existing, ...data]));
+        toast(`✅ تم استيراد ${data.length} سجل — أعد تحميل الصفحة لرؤية البيانات`, 'ok');
+      } catch(err) { toast('❌ خطأ في قراءة الملف — تأكد أنه CSV', 'er'); }
+    };
+    r.readAsText(f, 'UTF-8');
+    e.target.value = '';
+  }
+
+  function saveFbConfig() {
+    if (!fbForm.apiKey.trim() || !fbForm.projectId.trim()) { toast('⚠️ أدخل apiKey و projectId على الأقل','er'); return; }
+    persistConfig({ ...center }, fbForm);
+    toast('✅ تم حفظ إعدادات Firebase — أعد تحميل الصفحة لتفعيلها','ok');
   }
 
   function saveFontSize(v) { document.documentElement.style.setProperty('--fs',v+'px'); localStorage.setItem('scs_fontsize',v); }
@@ -209,19 +241,142 @@ export default function Settings() {
       )}
 
       {tab==='backup' && (
-        <div className="wg"><div className="wg-h"><h3>💾 النسخ الاحتياطي</h3></div><div className="wg-b">
-          <p style={{fontSize:'.86rem',color:'var(--g5)',marginBottom:16}}>تصدير واستيراد بيانات المركز. يُنصح بأخذ نسخة احتياطية أسبوعياً.</p>
-          <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
-            <button className="btn btn-p" onClick={exportData}>📥 تصدير البيانات (JSON)</button>
-            <label className="btn btn-s" style={{cursor:'pointer'}}>
-              📤 استيراد بيانات
-              <input type="file" accept=".json" style={{display:'none'}} onChange={importData}/>
-            </label>
+        <div>
+          {/* JSON Backup */}
+          <div className="wg" style={{marginBottom:14}}>
+            <div className="wg-h"><h3>💾 النسخ الاحتياطي (JSON)</h3></div>
+            <div className="wg-b">
+              <p style={{fontSize:'.86rem',color:'var(--g5)',marginBottom:16}}>تصدير واستيراد جميع بيانات المركز. يُنصح بأخذ نسخة أسبوعياً.</p>
+              <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+                <button className="btn btn-p" onClick={exportData}>📥 تصدير البيانات (JSON)</button>
+                <label className="btn btn-s" style={{cursor:'pointer'}}>
+                  📤 استيراد بيانات
+                  <input type="file" accept=".json" style={{display:'none'}} onChange={importData}/>
+                </label>
+              </div>
+              <div style={{marginTop:12,padding:'10px 14px',background:'var(--warn-l)',border:'1px solid #fde68a',borderRadius:'var(--r2)',fontSize:'.82rem',color:'var(--warn)'}}>
+                ⚠️ الاستيراد سيستبدل البيانات الحالية — تأكد من أخذ نسخة احتياطية أولاً.
+              </div>
+            </div>
           </div>
-          <div style={{marginTop:16,padding:'12px 16px',background:'var(--warn-l)',border:'1px solid #fde68a',borderRadius:'var(--r2)',fontSize:'.82rem',color:'var(--warn)'}}>
-            ⚠️ الاستيراد سيستبدل البيانات الحالية — تأكد من أخذ نسخة احتياطية أولاً.
+
+          {/* Excel Import */}
+          <div className="wg" style={{marginBottom:14}}>
+            <div className="wg-h"><h3>📊 استيراد من Excel (CSV)</h3></div>
+            <div className="wg-b">
+              <p style={{fontSize:'.86rem',color:'var(--g5)',marginBottom:12}}>استيراد قوائم الطلاب أو الموظفين من ملف Excel محوّل إلى CSV.</p>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
+                <div style={{border:'1px solid var(--border-color)',borderRadius:10,padding:14}}>
+                  <div style={{fontWeight:800,fontSize:'.88rem',marginBottom:6}}>👦 استيراد طلاب</div>
+                  <div style={{fontSize:'.78rem',color:'var(--g5)',marginBottom:10}}>أعمدة مطلوبة: name, dob, diagnosis, parentName, parentPhone</div>
+                  <label className="btn btn-s btn-sm" style={{cursor:'pointer',display:'inline-block'}}>
+                    📂 اختر ملف CSV
+                    <input type="file" accept=".csv" style={{display:'none'}} onChange={e=>importExcel(e,'students')}/>
+                  </label>
+                </div>
+                <div style={{border:'1px solid var(--border-color)',borderRadius:10,padding:14}}>
+                  <div style={{fontWeight:800,fontSize:'.88rem',marginBottom:6}}>👥 استيراد موظفين</div>
+                  <div style={{fontSize:'.78rem',color:'var(--g5)',marginBottom:10}}>أعمدة مطلوبة: name, role, phone, hireDate, salary</div>
+                  <label className="btn btn-s btn-sm" style={{cursor:'pointer',display:'inline-block'}}>
+                    📂 اختر ملف CSV
+                    <input type="file" accept=".csv" style={{display:'none'}} onChange={e=>importExcel(e,'employees')}/>
+                  </label>
+                </div>
+              </div>
+              {/* Template explanation */}
+              <div style={{background:'var(--g0)',borderRadius:10,padding:14,fontSize:'.82rem'}}>
+                <div style={{fontWeight:800,marginBottom:8,color:'var(--pr)'}}>📋 طريقة إعداد ملف Excel للاستيراد</div>
+                <ol style={{margin:0,padding:'0 18px',lineHeight:2,color:'var(--g6)'}}>
+                  <li>افتح Excel وأنشئ جدولاً جديداً</li>
+                  <li>السطر الأول: أسماء الأعمدة بالإنجليزية (مثال: <code style={{background:'var(--g1)',padding:'1px 5px',borderRadius:4}}>name,dob,diagnosis,parentName,parentPhone</code>)</li>
+                  <li>من السطر الثاني: أدخل البيانات، كل سطر = طالب أو موظف</li>
+                  <li>احفظ الملف بتنسيق <b>CSV UTF-8</b> (ملف → حفظ باسم → CSV UTF-8)</li>
+                  <li>ارفع الملف هنا باستخدام زر "اختر ملف CSV" أعلاه</li>
+                </ol>
+                <div style={{marginTop:10,padding:'8px 12px',background:'var(--pr-l)',borderRadius:8,color:'var(--pr)',fontWeight:700,fontSize:'.8rem'}}>
+                  💡 مثال على سطر بيانات طالب:<br/>
+                  <code style={{fontWeight:400,fontSize:'.78rem'}}>أحمد محمد,2019-05-10,توحد,محمد علي,0501234567</code>
+                </div>
+              </div>
+            </div>
           </div>
-        </div></div>
+
+          {/* Firebase Config */}
+          {(isManager || currentUser?.role==='technician') && (
+            <div className="wg" style={{marginBottom:14}}>
+              <div className="wg-h"><h3>🔥 إعدادات Firebase Cloud</h3></div>
+              <div className="wg-b">
+                <p style={{fontSize:'.86rem',color:'var(--g5)',marginBottom:14}}>
+                  بيانات الاتصال بقاعدة البيانات السحابية. احصل عليها من <b>Firebase Console → Project Settings → Your apps</b>.
+                </p>
+                <div className="fg c2">
+                  <div className="fl"><label>API Key</label><input value={fbForm.apiKey} onChange={e=>setFbForm(f=>({...f,apiKey:e.target.value}))} placeholder="AIzaSy..."/></div>
+                  <div className="fl"><label>Auth Domain</label><input value={fbForm.authDomain} onChange={e=>setFbForm(f=>({...f,authDomain:e.target.value}))} placeholder="project.firebaseapp.com"/></div>
+                  <div className="fl"><label>Project ID</label><input value={fbForm.projectId} onChange={e=>setFbForm(f=>({...f,projectId:e.target.value}))} placeholder="my-project-id"/></div>
+                  <div className="fl"><label>Storage Bucket</label><input value={fbForm.storageBucket} onChange={e=>setFbForm(f=>({...f,storageBucket:e.target.value}))} placeholder="project.appspot.com"/></div>
+                  <div className="fl"><label>Messaging Sender ID</label><input value={fbForm.messagingSenderId} onChange={e=>setFbForm(f=>({...f,messagingSenderId:e.target.value}))} placeholder="123456789"/></div>
+                  <div className="fl"><label>App ID</label><input value={fbForm.appId} onChange={e=>setFbForm(f=>({...f,appId:e.target.value}))} placeholder="1:123:web:abc..."/></div>
+                </div>
+                <div style={{marginTop:14,display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
+                  <button className="btn btn-p" onClick={saveFbConfig}>💾 حفظ إعدادات Firebase</button>
+                  {fbCfg?.projectId && <span style={{fontSize:'.8rem',color:'var(--ok)',fontWeight:700}}>✅ متصل بـ {fbCfg.projectId}</span>}
+                </div>
+                <div style={{marginTop:12,padding:'10px 14px',background:'var(--pr-l)',border:'1px solid var(--pr)',borderRadius:'var(--r2)',fontSize:'.8rem',color:'var(--pr)'}}>
+                  🔒 تُحفظ هذه البيانات محلياً على جهازك فقط ولا تُرسل لأي طرف ثالث.
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Password Reset Info */}
+          <div className="wg">
+            <div className="wg-h">
+              <h3>🔑 نسيت كلمة المرور؟</h3>
+              <button className="btn btn-g btn-sm" onClick={()=>setShowResetPwInfo(v=>!v)}>{showResetPwInfo?'إخفاء':'عرض الحلول'}</button>
+            </div>
+            {showResetPwInfo && (
+              <div className="wg-b">
+                <p style={{fontSize:'.86rem',color:'var(--g5)',marginBottom:14}}>
+                  النظام يعتمد على localStorage ولا توجد بريد إلكتروني لإعادة التعيين. إليك الحلول المتاحة:
+                </p>
+                <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                  <div style={{border:'1px solid var(--border-color)',borderRadius:10,padding:14}}>
+                    <div style={{fontWeight:800,marginBottom:4}}>✅ الحل الأسهل — المدير يعيد تعيين كلمة المرور</div>
+                    <div style={{fontSize:'.84rem',color:'var(--g5)'}}>المدير يذهب إلى <b>الإعدادات → المستخدمون</b> ويضغط ✏️ على المستخدم المطلوب ويكتب كلمة مرور جديدة.</div>
+                  </div>
+                  <div style={{border:'1px solid var(--border-color)',borderRadius:10,padding:14}}>
+                    <div style={{fontWeight:800,marginBottom:4}}>🔧 إذا نسي المدير نفسه كلمة المرور</div>
+                    <ol style={{fontSize:'.84rem',color:'var(--g5)',margin:0,padding:'0 18px',lineHeight:1.9}}>
+                      <li>افتح المتصفح وادخل للموقع</li>
+                      <li>افتح <b>أدوات المطور (F12)</b></li>
+                      <li>اذهب لتبويب <b>Application → Local Storage</b></li>
+                      <li>ابحث عن المفتاح الذي يحتوي <code style={{background:'var(--g1)',padding:'1px 5px',borderRadius:4}}>_users</code></li>
+                      <li>انسخ القيمة، عدّل كلمة المرور، واحفظ</li>
+                    </ol>
+                  </div>
+                  {isManager && (
+                    <div style={{border:'1px solid #fde68a',borderRadius:10,padding:14,background:'var(--warn-l)'}}>
+                      <div style={{fontWeight:800,marginBottom:6,color:'var(--warn)'}}>⚡ إعادة تعيين سريعة للمستخدمين</div>
+                      <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                        {lsGet('users').map(u=>(
+                          <div key={u.id} style={{display:'flex',alignItems:'center',gap:8,fontSize:'.84rem'}}>
+                            <span style={{flex:1}}>{u.name} (@{u.username})</span>
+                            <button className="btn btn-xs btn-g" onClick={()=>{
+                              const np = window.prompt(`كلمة المرور الجديدة لـ ${u.name}:`);
+                              if (!np) return;
+                              lsUpd('users', u.id, { ...u, password: np });
+                              toast('✅ تم تغيير كلمة المرور', 'ok');
+                            }}>🔑 تغيير</button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {tab==='about' && (

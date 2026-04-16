@@ -179,7 +179,6 @@ export default function AttendancePage() {
             </div>
             <div className="fa">
               <button className="btn btn-p" onClick={()=>{ if(timeModal.type==='emp') saveEmpStatus(timeModal.id,timeModal.status,timeIn,timeOut); else saveStuStatus(timeModal.id,timeModal.session,timeModal.status,timeIn,timeOut); toast('✅ تم التسجيل','ok'); }}>💾 حفظ</button>
-              <button className="btn btn-g btn-sm" onClick={()=>{ if(timeModal.type==='emp') saveEmpStatus(timeModal.id,timeModal.status,timeIn,''); else saveStuStatus(timeModal.id,timeModal.session,timeModal.status,timeIn,''); toast('✅ تم','ok'); }}>⚡ بدون وقت خروج</button>
               <button className="btn btn-g" onClick={()=>setTimeModal(null)}>إلغاء</button>
             </div>
           </div>

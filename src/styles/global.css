@@ -49,3 +49,19 @@ body.dark .sw-sec{background:var(--bg-input);border-color:var(--border-color);}
   .print-brand .print-brand-name{font-size:1.1rem;font-weight:900;color:#0f172a}
 }
 .print-brand{display:none}
+
+/* ===== Mobile Modal & Form Responsiveness ===== */
+@media(max-width:600px){
+  .fg.c2{grid-template-columns:1fr!important}
+  .fg.c3{grid-template-columns:1fr!important}
+  .fg .fl.full{grid-column:1!important}
+  .stats{grid-template-columns:repeat(2,1fr)!important}
+  .ph{flex-direction:column;align-items:flex-start;gap:8px}
+  .ph-a{flex-wrap:wrap;gap:6px}
+  .ph-a .btn{font-size:.78rem;padding:6px 10px}
+  .tabs{gap:4px}
+  .tab{font-size:.78rem;padding:6px 10px}
+  input,select,textarea{font-size:16px!important}
+  .card{flex-wrap:wrap}
+  .c-acts{flex-wrap:wrap}
+}

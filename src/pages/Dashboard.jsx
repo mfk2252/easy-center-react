@@ -412,8 +412,17 @@ export default function Dashboard() {
                       <span>🩺</span>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: '.84rem', fontWeight: 700 }}>{stu?.name || '—'}</div>
-                        <div style={{ fontSize: '.72rem', color: 'var(--pur)' }}>
-                          {s.type} · {s.date}
+                        <div style={{ fontSize: '.72rem', color: 'var(--pur)', display:'flex', gap:4, flexWrap:'wrap' }}>
+                          <span>{s.type}</span>
+                          <span>·</span>
+                          <span>{s.date}</span>
+                          {s.time && (() => {
+                            const [h, m] = (s.time || '').split(':').map(Number);
+                            if (isNaN(h)) return null;
+                            const ampm = h >= 12 ? 'م' : 'ص';
+                            const h12 = h % 12 || 12;
+                            return <span>· {h12}:{String(m).padStart(2,'0')} {ampm}</span>;
+                          })()}
                         </div>
                       </div>
                       <span className={`bdg ${s.status === 'done' ? 'b-gr' : 'b-or'}`}>{s.status === 'done' ? '✅ منجزة' : '⏳ مجدولة'}</span>

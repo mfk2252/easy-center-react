@@ -12,6 +12,7 @@ const STATUS_BADGE = { active:'b-gr', inactive:'b-gy', graduated:'b-cy', transfe
 
 const EMPTY_STU = { name:'', dob:'', gender:'', nationality:'سعودي', joinDate:'', status:'active', specialistId:'', sessionTypes:[], diagnosis:'', diagnosis2:'', hospital:'', doctor:'', medications:'', medNotes:'', parentName:'', parentPhone:'', parentPhone2:'', parentRelation:'', parentJob:'', parentEmail:'', address:'', progMorning:{enabled:false}, progEvening:{enabled:false}, progSessions:{enabled:false,emp:'',type:'',freq:'أسبوعي'}, progOnline:{enabled:false,emp:'',type:'',dur:'45 دقيقة',link:''}, notes:'', photo:'', attachments:[] };
 const EMPTY_QS = { stuId:'', type:'تخاطب ونطق', date:'', time:'', duration:45, empId:'', notes:'', attachData:'', attachName:'' };
+const EMPTY_CONSULT = { beneficiaryName:'', parentName:'', date:'', time:'', empId:'', duration:45, notes:'', attachData:'', attachName:'' };
 
 export default function StudentsPage() {
   const { go, toast, currentUser, activeView } = useApp();
@@ -27,6 +28,8 @@ export default function StudentsPage() {
   const [detailId, setDetailId] = useState(null);
   const [showQuickSession, setShowQuickSession] = useState(false);
   const [qsForm, setQsForm] = useState(EMPTY_QS);
+  const [showConsult, setShowConsult] = useState(false);
+  const [consultForm, setConsultForm] = useState(EMPTY_CONSULT);
 
   const canAdd = ['manager','vice','reception'].includes(currentUser?.role);
   const canEdit = ['manager','vice','reception'].includes(currentUser?.role);
@@ -131,6 +134,36 @@ export default function StudentsPage() {
     reload();
   }
 
+  const fldCo = k => e => setConsultForm(f => ({ ...f, [k]: e.target.value }));
+  function openConsult() {
+    setConsultForm({ ...EMPTY_CONSULT, date: todayStr(), time: nowTimeStr() });
+    setShowConsult(true);
+  }
+  function coAttach(e) {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => setConsultForm(fm => ({ ...fm, attachData: ev.target.result, attachName: f.name }));
+    r.readAsDataURL(f);
+    e.target.value = '';
+  }
+  function saveConsult() {
+    if (!consultForm.beneficiaryName.trim() || !consultForm.date) { toast('⚠️ أدخل اسم المستفيد والتاريخ', 'er'); return; }
+    lsAdd('consultations', {
+      id: uid(),
+      beneficiaryName: consultForm.beneficiaryName,
+      parentName: consultForm.parentName,
+      date: consultForm.date,
+      time: consultForm.time,
+      duration: Number(consultForm.duration) || 45,
+      empId: consultForm.empId,
+      notes: consultForm.notes,
+      attachmentData: consultForm.attachData || '',
+      attachmentName: consultForm.attachName || '',
+    });
+    toast('✅ تم تسجيل الاستشارة', 'ok');
+    setShowConsult(false);
+  }
+
   if (detailId) return <StudentDetail stuId={detailId} onBack={() => { setDetailId(null); reload(); }} onEdit={stu => openForm(stu)} onDelete={deleteStu}/>;
 
   const activeCount = students.filter(s=>s.status==='active').length;
@@ -143,6 +176,7 @@ export default function StudentsPage() {
         <div className="ph-a" style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
           {canAdd && <button type="button" className="btn btn-p" onClick={() => openForm()}>➕ طالب جديد</button>}
           {canEdit && <button type="button" className="btn btn-s" onClick={openQuickSession}>🩺 تسجيل جلسة</button>}
+          {canEdit && <button type="button" className="btn btn-sm" onClick={openConsult} style={{background:'var(--cyan-l,#ecfeff)',color:'var(--cyan)',border:'1px solid var(--cyan)'}}>💬 تسجيل استشارة</button>}
         </div>
       </div>
 
@@ -388,6 +422,39 @@ export default function StudentsPage() {
             <div className="fa">
               <button type="button" className="btn btn-p" onClick={saveQuickSession}>💾 حفظ الجلسة</button>
               <button type="button" className="btn btn-g" onClick={() => setShowQuickSession(false)}>إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Consultation Modal */}
+      {showConsult && (
+        <div className="mbg" onClick={e => e.target === e.currentTarget && setShowConsult(false)}>
+          <div className="mb mb-xl" style={{ padding:0, overflow:'hidden', borderRadius:16 }}>
+            <div className="fhd" style={{ padding:'16px 20px', borderRadius:0 }}>
+              <h2>💬 تسجيل استشارة</h2>
+              <p style={{ fontSize:'.82rem', opacity:0.9 }}>للمستفيدين غير المسجلين — يمكن كتابة الاسم يدوياً</p>
+            </div>
+            <div className="modal-body-scroll" style={{ padding:'18px 20px' }}>
+              <div className="fg c2">
+                <div className="fl"><label>اسم المستفيد <span className="req">*</span></label><input value={consultForm.beneficiaryName} onChange={fldCo('beneficiaryName')} placeholder="اكتب الاسم يدوياً"/></div>
+                <div className="fl"><label>اسم ولي الأمر</label><input value={consultForm.parentName} onChange={fldCo('parentName')} placeholder="اسم ولي الأمر"/></div>
+                <div className="fl"><label>التاريخ <span className="req">*</span></label><input type="date" value={consultForm.date} onChange={fldCo('date')}/></div>
+                <div className="fl"><label>الساعة</label><input type="time" value={consultForm.time} onChange={fldCo('time')}/></div>
+                <div className="fl"><label>الأخصائي</label>
+                  <select value={consultForm.empId} onChange={fldCo('empId')}>
+                    <option value="">— اختر —</option>
+                    {specialists.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+                  </select>
+                </div>
+                <div className="fl"><label>المدة (دقيقة)</label><input type="number" min={15} value={consultForm.duration} onChange={e => setConsultForm(f => ({ ...f, duration: Number(e.target.value) }))}/></div>
+                <div className="fl full"><label>ملاحظات</label><textarea value={consultForm.notes} onChange={fldCo('notes')} rows={3} placeholder="ملخص الاستشارة والتوصيات..."/></div>
+                <div className="fl full"><label>مرفق</label><input type="file" accept="image/*,.pdf,.doc,.docx" onChange={coAttach}/>{consultForm.attachName && <span style={{ fontSize:'.8rem', marginRight:8 }}>{consultForm.attachName}</span>}</div>
+              </div>
+            </div>
+            <div className="fa">
+              <button type="button" className="btn btn-p" onClick={saveConsult}>💾 حفظ الاستشارة</button>
+              <button type="button" className="btn btn-g" onClick={() => setShowConsult(false)}>إلغاء</button>
             </div>
           </div>
         </div>

@@ -110,7 +110,11 @@ export default function CenterPage() {
   function saveParentLog() {
     if (!parentLogForm.parentKey || !parentLogForm.date) { toast('⚠️ أكمل البيانات','er'); return; }
     lsAdd('parentInteractions', { ...parentLogForm, id: uid() });
-    toast('✅ تم التسجيل','ok'); setShowParentLogForm(false); reload();
+    toast('✅ تم التسجيل','ok');
+    setShowParentLogForm(false);
+    // reload logs without resetting selParent
+    const updatedLogs = lsGet('parentInteractions');
+    setParentLogs(updatedLogs);
   }
   function toggleBusStudent(id) {
     setBusForm(f => {
@@ -242,6 +246,7 @@ export default function CenterPage() {
                 <button type="button" className="btn btn-s" onClick={()=>{setIncForm({...EMPTY_INC,date:todayStr()});setIncEditId(null);setShowIncForm(true);}}>➕ إيراد</button>
                 <button type="button" className="btn btn-w" onClick={()=>{setExpForm({...EMPTY_EXP,date:todayStr()});setExpEditId(null);setShowExpForm(true);}}>➕ مصروف</button>
                 <button type="button" className="btn btn-p" onClick={openSalaries}>💰 الرواتب</button>
+                <button type="button" className="btn btn-g btn-sm no-print" onClick={()=>window.print()} style={{marginRight:'auto'}}>🖨️ طباعة</button>
               </div>
               <div className="stats" style={{gridTemplateColumns:'repeat(3,1fr)'}}>
                 <div className="sc g"><div className="lb">إجمالي الإيرادات</div><div className="vl" style={{fontSize:'1.2rem'}}>{totalIncome.toLocaleString()} ر</div></div>
@@ -332,17 +337,36 @@ export default function CenterPage() {
             <>
               {selParent && (
                 <div className="wg" style={{ marginBottom:12 }}>
-                  <div className="wg-h"><h3>📇 {selParent.name || 'ولي أمر'} · {selParent.phone}</h3><button type="button" className="btn btn-g btn-sm" onClick={()=>setSelParent(null)}>إغلاق</button></div>
+                  <div className="wg-h">
+                    <h3>📇 {selParent.name || 'ولي أمر'} · {selParent.phone}</h3>
+                    <div style={{display:'flex',gap:8}}>
+                      <button type="button" className="btn btn-p btn-sm" onClick={()=>{ setParentLogForm({...EMPTY_PARENT_LOG, parentKey:selParent.key, type:'visit', date:todayStr()}); setShowParentLogForm(true); }}>➕ تسجيل</button>
+                      <button type="button" className="btn btn-g btn-sm" onClick={()=>setSelParent(null)}>إغلاق</button>
+                    </div>
+                  </div>
                   <div className="wg-b">
-                    <div style={{ fontSize:'.84rem', marginBottom:10 }}>طلاب مرتبطون: {(selParent.studentIds||[]).map(id=>students.find(s=>s.id===id)?.name).filter(Boolean).join('، ')}</div>
-                    <div style={{ fontSize:'.78rem', fontWeight:800, color:'var(--pr)', marginBottom:8 }}>سجل التواصل</div>
+                    <div style={{ fontSize:'.84rem', marginBottom:10, color:'var(--g5)' }}>
+                      👨‍👩‍👧 طلاب مرتبطون: <b>{(selParent.studentIds||[]).map(id=>students.find(s=>s.id===id)?.name).filter(Boolean).join('، ') || '—'}</b>
+                    </div>
+                    <div style={{ fontSize:'.78rem', fontWeight:800, color:'var(--pr)', marginBottom:8 }}>
+                      📋 سجل التواصل ({parentLogs.filter(l=>l.parentKey===selParent.key).length} سجل)
+                    </div>
                     {parentLogs.filter(l=>l.parentKey===selParent.key).length===0
-                      ? <div style={{ color:'var(--g4)' }}>لا توجد سجلات بعد</div>
+                      ? <div style={{ color:'var(--g4)', padding:'12px 0', textAlign:'center' }}>لا توجد سجلات بعد — استخدم الأزرار أدناه لإضافة تفاعل</div>
                       : parentLogs.filter(l=>l.parentKey===selParent.key).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(l=>(
-                        <div key={l.id} style={{ padding:'8px 0', borderBottom:'1px solid var(--border-color)', fontSize:'.86rem' }}>
-                          <b>{PARENT_TYPE_LABEL[l.type]||l.type}</b> · {l.date}{l.notes&&<> — {l.notes}</>}
+                        <div key={l.id} style={{ padding:'10px 12px', borderBottom:'1px solid var(--border-color)', fontSize:'.86rem', display:'flex', alignItems:'flex-start', gap:10 }}>
+                          <span style={{ fontSize:'1.1rem' }}>
+                            {l.type==='visit'?'🏠':l.type==='call'?'📞':l.type==='guidance'?'🧑‍💼':'💬'}
+                          </span>
+                          <div style={{ flex:1 }}>
+                            <div style={{ fontWeight:800 }}>{PARENT_TYPE_LABEL[l.type]||l.type}</div>
+                            <div style={{ color:'var(--g5)', fontSize:'.78rem' }}>{l.date}</div>
+                            {l.notes && <div style={{ marginTop:4, color:'var(--g6)' }}>{l.notes}</div>}
+                          </div>
+                          {isManager && <button type="button" className="btn btn-xs btn-d" onClick={()=>{ if(!window.confirm('حذف هذا السجل؟'))return; lsDel('parentInteractions',l.id); setParentLogs(lsGet('parentInteractions')); toast('🗑️ تم الحذف','ok'); }}>🗑️</button>}
                         </div>
-                      ))}
+                      ))
+                    }
                   </div>
                 </div>
               )}
