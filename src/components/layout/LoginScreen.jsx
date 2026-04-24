@@ -43,6 +43,11 @@ export default function LoginScreen() {
     if (remember === 'both') localStorage.setItem('scs_saved_login', JSON.stringify({ username: user.username, password }));
     else if (remember === 'user') localStorage.setItem('scs_saved_login', JSON.stringify({ username: user.username }));
     else localStorage.removeItem('scs_saved_login');
+    
+    // Store user permissions
+    const userPerms = user.permissions || {dash:true, students:true};
+    localStorage.setItem('userPerms', JSON.stringify(userPerms));
+    
     toast('✅ مرحباً ' + user.name, 'ok');
     login(user);
   }

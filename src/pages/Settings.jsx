@@ -1,11 +1,25 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel } from '../hooks/useStorage';
-import { uid } from '../utils/dateHelpers';
+import { uid, todayStr } from '../utils/dateHelpers';
 import { ROLES } from '../utils/constants';
 
 const PRESET_COLORS=['#1a56db','#7c3aed','#059669','#dc2626','#d97706','#0891b2','#db2777','#0f172a'];
 const ROLE_OPTIONS=[['manager','مدير'],['vice','نائب المدير'],['specialist_speech','أخصائي تخاطب'],['specialist_physio','أخصائي علاج فيزيائي'],['specialist_behavior','أخصائي تعديل سلوك'],['specialist_occupational','أخصائي علاج وظيفي'],['specialist','أخصائي عام'],['reception','استقبال'],['admin','إداري'],['technician','فني النظام'],['parent','ولي أمر']];
+
+const PERMISSIONS = [
+  {name:'الرئيسية',key:'dash',icon:'📊'},
+  {name:'الطلاب',key:'students',icon:'👦'},
+  {name:'الموظفون',key:'hr',icon:'👥'},
+  {name:'المالية',key:'finance',icon:'💳'},
+  {name:'التقارير',key:'reports',icon:'📊'},
+  {name:'الإعدادات',key:'settings',icon:'⚙️'},
+  {name:'الوثائق',key:'docs',icon:'📄'},
+  {name:'أولياء الأمور',key:'parents',icon:'👨‍👩‍👧'},
+  {name:'الشراكات',key:'partnerships',icon:'🤝'},
+  {name:'الزيارات',key:'visits',icon:'🏛️'},
+  {name:'التقويم',key:'calendar',icon:'📅'},
+];
 
 export default function Settings() {
   const { center, currentUser, persistConfig, fbCfg, resetCenter, updateCenterColor, toast } = useApp();
@@ -13,7 +27,7 @@ export default function Settings() {
   const [users, setUsers] = useState(()=>lsGet('users'));
   const [showUserForm, setShowUserForm] = useState(false);
   const [editUserId, setEditUserId] = useState(null);
-  const [userForm, setUserForm] = useState({ username:'', password:'', name:'', role:'specialist', title:'', empId:'' });
+  const [userForm, setUserForm] = useState({ username:'', password:'', name:'', email:'', role:'specialist', title:'', empId:'', permissions:{} });
   const [centerForm, setCenterForm] = useState({ name:center.name||'', type:center.type||'', phone:center.phone||'', logo:center.logo||'' });
   const [selColor, setSelColor] = useState(center.color||'#1a56db');
   const [fbForm, setFbForm] = useState({ apiKey: fbCfg?.apiKey||'', authDomain: fbCfg?.authDomain||'', projectId: fbCfg?.projectId||'', storageBucket: fbCfg?.storageBucket||'', messagingSenderId: fbCfg?.messagingSenderId||'', appId: fbCfg?.appId||'' });
@@ -56,9 +70,19 @@ export default function Settings() {
     const existing = users.find(u=>u.username===userForm.username.trim() && u.id !== editUserId);
     if (existing) { toast('⚠️ اسم المستخدم موجود مسبقاً','er'); return; }
     if (!editUserId && !userForm.password) { toast('⚠️ أدخل كلمة المرور','er'); return; }
-    if (editUserId) { lsUpd('users',editUserId,{...userForm}); toast('✅ تم التحديث','ok'); }
-    else { lsAdd('users',{...userForm,id:uid()}); toast('✅ تم إضافة المستخدم','ok'); }
-    setShowUserForm(false); reloadUsers();
+    const userData = {
+      ...userForm,
+      permissions: userForm.permissions || {dash:true, students:true}
+    };
+    if (editUserId) { 
+      lsUpd('users',editUserId,userData); 
+      toast('✅ تم التحديث','ok'); 
+    } else { 
+      lsAdd('users',{...userData,id:uid()}); 
+      toast('✅ تم إضافة المستخدم','ok'); 
+    }
+    setShowUserForm(false); 
+    reloadUsers();
   }
 
   function delUser(id) {
@@ -215,18 +239,48 @@ export default function Settings() {
           ))}
           {showUserForm&&(
             <div className="mbg" onClick={e=>{if(e.target===e.currentTarget)setShowUserForm(false);}}>
-              <div className="mb" style={{padding:0,overflow:'hidden',borderRadius:16}}>
+              <div className="mb mb-xl" style={{padding:0,overflow:'hidden',borderRadius:16}}>
                 <div className="fhd" style={{padding:'14px 20px',borderRadius:0}}><h2>{editUserId?'✏️ تعديل المستخدم':'➕ مستخدم جديد'}</h2></div>
-                <div style={{padding:'18px 20px'}}>
-                  <div className="fg c2">
-                    <div className="fl"><label>الاسم الكامل <span className="req">*</span></label><input value={userForm.name} onChange={fldU('name')}/></div>
-                    <div className="fl"><label>المسمى الوظيفي</label><input value={userForm.title} onChange={fldU('title')}/></div>
-                    <div className="fl"><label>اسم المستخدم <span className="req">*</span></label><input value={userForm.username} onChange={fldU('username')} autoComplete="off"/></div>
-                    <div className="fl"><label>كلمة المرور {!editUserId&&<span className="req">*</span>}</label><input type="password" value={userForm.password} onChange={fldU('password')} placeholder={editUserId?'اتركها فارغة للإبقاء':'••••••••'}/></div>
-                    <div className="fl full"><label>الدور / الصلاحية</label>
-                      <select value={userForm.role} onChange={fldU('role')}>
-                        {ROLE_OPTIONS.map(([v,l])=><option key={v} value={v}>{l}</option>)}
-                      </select>
+                <div className="modal-body-scroll" style={{padding:'18px 20px'}}>
+                  {/* Basic Info */}
+                  <div className="fs">
+                    <div className="fsh">👤 البيانات الأساسية</div>
+                    <div className="fsb">
+                      <div className="fg c2">
+                        <div className="fl"><label>الاسم الكامل <span className="req">*</span></label><input value={userForm.name} onChange={fldU('name')}/></div>
+                        <div className="fl"><label>المسمى الوظيفي</label><input value={userForm.title} onChange={fldU('title')}/></div>
+                        <div className="fl"><label>اسم المستخدم <span className="req">*</span></label><input value={userForm.username} onChange={fldU('username')} autoComplete="off"/></div>
+                        <div className="fl"><label>كلمة المرور {!editUserId&&<span className="req">*</span>}</label><input type="password" value={userForm.password} onChange={fldU('password')} placeholder={editUserId?'اتركها فارغة للإبقاء':'••••••••'}/></div>
+                        <div className="fl full"><label>البريد الإلكتروني</label><input type="email" value={userForm.email||''} onChange={e=>setUserForm(f=>({...f,email:e.target.value}))}/></div>
+                        <div className="fl full"><label>الدور الأساسي</label>
+                          <select value={userForm.role} onChange={fldU('role')}>
+                            {ROLE_OPTIONS.map(([v,l])=><option key={v} value={v}>{l}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Permissions */}
+                  <div className="fs" style={{marginTop:20}}>
+                    <div className="fsh">🔐 الصلاحيات التفصيلية</div>
+                    <div className="fsb">
+                      <div style={{padding:'12px',background:'var(--g0)',borderRadius:8,marginBottom:12}}>
+                        <p style={{margin:0,fontSize:'.8rem',color:'var(--g5)'}}>✓ اختر الصلاحيات التي سيحصل عليها هذا المستخدم. الصلاحيات غير المختارة ستكون غير متاحة له.</p>
+                      </div>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                        {PERMISSIONS.map(perm=>(
+                          <label key={perm.key} style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',border:'1px solid var(--border-color)',borderRadius:8,cursor:'pointer',background:(userForm.permissions||{})[perm.key]?'var(--ok-l)':'transparent',transition:'background 0.2s'}}>
+                            <input type="checkbox" checked={(userForm.permissions||{})[perm.key]||false} onChange={e=>{
+                              setUserForm(f=>({
+                                ...f,
+                                permissions:{...(f.permissions||{}), [perm.key]:e.target.checked}
+                              }));
+                            }} style={{cursor:'pointer'}}/>
+                            <span style={{fontSize:'.84rem',fontWeight:700}}>{perm.icon} {perm.name}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -237,6 +291,7 @@ export default function Settings() {
               </div>
             </div>
           )}
+
         </div>
       )}
 

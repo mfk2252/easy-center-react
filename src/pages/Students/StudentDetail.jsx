@@ -9,6 +9,8 @@ const EMPTY_SESSION = { type:'تخاطب ونطق', date:'', time:'', duration:4
 const EMPTY_APPT = { type:'تخاطب ونطق', date:'', time:'', duration:'45 دقيقة', mode:'inperson', link:'', empId:'', notes:'' };
 const EMPTY_REPORT = { period:'month', title:'', summary:'', content:'', date:'' };
 const EMPTY_BIP = { title:'', targetBehaviors:'', strategies:'', reviewDate:'', notes:'', active:true };
+const EMPTY_FEE = { totalAmount:0, paidAmount:0, notes:'' };
+const EMPTY_PAYMENT = { amount:0, date:'', method:'تحويل بنكي', notes:'' };
 const PRIORITY_BADGE = { high:'b-rd', medium:'b-or', low:'b-gr' };
 const PRIORITY_LABEL = { high:'عالية', medium:'متوسطة', low:'منخفضة' };
 
@@ -21,6 +23,14 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
   const [sessions, setSessions] = useState([]);
   const [appts, setAppts] = useState([]);
   const [attStu, setAttStu] = useState([]);
+  
+  // Fees and Payments
+  const [studentFees, setStudentFees] = useState(null);
+  const [payments, setPayments] = useState([]);
+  const [showFeeForm, setShowFeeForm] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [feeForm, setFeeForm] = useState(EMPTY_FEE);
+  const [paymentForm, setPaymentForm] = useState(EMPTY_PAYMENT);
 
   // Form states
   const [showIepForm, setShowIepForm] = useState(false);
@@ -53,6 +63,14 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
     setAttStu(lsGet('attStu').filter(a => a.kidId === stuId));
     setReports(lsGet('stuReports').filter(r => r.stuId === stuId).sort((a,b)=>(b.date||'').localeCompare(a.date||'')));
     setBipList(lsGet('behaviorPlans').filter(b => b.stuId === stuId).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||'')));
+    
+    // Load fees and payments
+    const allFees = lsGet('studentFees') || [];
+    const stuFee = allFees.find(f => f.stuId === stuId);
+    setStudentFees(stuFee || { stuId, totalAmount: 0, paidAmount: 0, notes: '' });
+    
+    const allPayments = lsGet('payments') || [];
+    setPayments(allPayments.filter(p => p.stuId === stuId).sort((a,b) => (b.date||'').localeCompare(a.date||'')));
   }
 
   useEffect(() => { load(); }, [stuId]);
@@ -63,6 +81,66 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
   const progs = [stu.progMorning?.enabled&&'☀️ صباحي', stu.progEvening?.enabled&&'🌙 مسائي', stu.progSessions?.enabled&&'🩺 جلسات', stu.progOnline?.enabled&&'🌐 أونلاين'].filter(Boolean);
   const recentAtt = attStu.filter(a=>a.date===today);
   const attendanceRate = attStu.length ? Math.round(attStu.filter(a=>a.status==='present').length / attStu.length * 100) : 0;
+
+  // Fees and Payments
+  function saveFee() {
+    if (!feeForm.totalAmount || feeForm.totalAmount <= 0) { toast('⚠️ أدخل المبلغ الكلي','er'); return; }
+    const allFees = lsGet('studentFees') || [];
+    const exists = allFees.find(f => f.stuId === stuId);
+    
+    if (exists) {
+      const updated = allFees.map(f => f.stuId === stuId ? {...feeForm, stuId, id:f.id} : f);
+      localStorage.setItem('studentFees', JSON.stringify(updated));
+    } else {
+      allFees.push({...feeForm, stuId, id: uid()});
+      localStorage.setItem('studentFees', JSON.stringify(allFees));
+    }
+    toast('✅ تم حفظ الرسوم','ok');
+    setShowFeeForm(false);
+    load();
+  }
+
+  function savePayment() {
+    if (!paymentForm.amount || paymentForm.amount <= 0) { toast('⚠️ أدخل المبلغ','er'); return; }
+    if (!paymentForm.date) { toast('⚠️ أدخل التاريخ','er'); return; }
+    
+    const allPayments = lsGet('payments') || [];
+    allPayments.push({...paymentForm, stuId, id: uid()});
+    localStorage.setItem('payments', JSON.stringify(allPayments));
+    
+    // Update fees - increase paid amount
+    const allFees = lsGet('studentFees') || [];
+    const stuFee = allFees.find(f => f.stuId === stuId);
+    if (stuFee) {
+      stuFee.paidAmount = (stuFee.paidAmount || 0) + Number(paymentForm.amount);
+      localStorage.setItem('studentFees', JSON.stringify(allFees));
+    }
+    
+    toast('✅ تم تسجيل الدفعة','ok');
+    setShowPaymentForm(false);
+    setPaymentForm(EMPTY_PAYMENT);
+    load();
+  }
+
+  function deletePayment(id) {
+    if (!window.confirm('حذف هذه الدفعة؟')) return;
+    const allPayments = lsGet('payments') || [];
+    const payment = allPayments.find(p => p.id === id);
+    
+    if (payment) {
+      const allFees = lsGet('studentFees') || [];
+      const stuFee = allFees.find(f => f.stuId === stuId);
+      if (stuFee) {
+        stuFee.paidAmount = Math.max(0, (stuFee.paidAmount || 0) - Number(payment.amount));
+        localStorage.setItem('studentFees', JSON.stringify(allFees));
+      }
+      
+      const updated = allPayments.filter(p => p.id !== id);
+      localStorage.setItem('payments', JSON.stringify(updated));
+      toast('🗑️ تم حذف الدفعة','ok');
+      load();
+    }
+  }
 
   // IEP
   function saveIep() {
@@ -157,7 +235,7 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
 
       {/* Tabs */}
       <div className="tabs" style={{ flexWrap:'wrap' }}>
-        {[['info','📋 المعلومات'],['iep','🎯 خطة IEP'],['sessions','🩺 الجلسات'],['appts','📅 المواعيد'],['attendance','📅 الحضور'],['reports','📑 التقارير'],['behavior','📐 خطة تعديل سلوك']].map(([v,l])=>(
+        {[['info','📋 المعلومات'],['iep','🎯 خطة IEP'],['sessions','🩺 الجلسات'],['appts','📅 المواعيد'],['attendance','📅 الحضور'],['fees','💳 الرسوم والدفعات'],['reports','📑 التقارير'],['behavior','📐 خطة تعديل سلوك']].map(([v,l])=>(
           <button key={v} type="button" className={`tab ${tab===v?'on':''}`} onClick={()=>setTab(v)}>{l}</button>
         ))}
       </div>
@@ -424,6 +502,205 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
                   </div>
                 </div>
                 <div className="fa"><button type="button" className="btn btn-p" onClick={saveRep}>💾 حفظ</button><button type="button" className="btn btn-g" onClick={()=>setShowRepForm(false)}>إلغاء</button></div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* FEES AND PAYMENTS */}
+      {tab === 'fees' && (
+        <div>
+          <div style={{ display:'flex', justifyContent:'flex-end', gap:8, marginBottom:12, flexWrap:'wrap' }}>
+            {canEdit && <button type="button" className="btn btn-p" onClick={()=>setShowFeeForm(true)}>💳 تعديل الرسوم</button>}
+            {canEdit && <button type="button" className="btn btn-s" onClick={()=>{setPaymentForm({...EMPTY_PAYMENT, date:today}); setShowPaymentForm(true);}}>➕ تسجيل دفعة</button>}
+          </div>
+
+          {/* Fee Summary */}
+          {studentFees && (
+            <div className="wg" style={{ marginBottom:20 }}>
+              <div className="wg-h"><h3>💰 ملخص الرسوم</h3></div>
+              <div className="wg-b">
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:15 }}>
+                  <div style={{ padding:'15px', background:'var(--pr-l)', borderRadius:8, borderRight:'4px solid var(--pr)' }}>
+                    <div style={{ fontSize:'.8rem', color:'var(--pr)', marginBottom:5 }}>المبلغ الكلي</div>
+                    <div style={{ fontSize:'1.8rem', fontWeight:900, color:'var(--pr)' }}>{(studentFees.totalAmount || 0).toLocaleString()} ر</div>
+                  </div>
+                  <div style={{ padding:'15px', background:'var(--ok-l)', borderRadius:8, borderRight:'4px solid var(--ok)' }}>
+                    <div style={{ fontSize:'.8rem', color:'var(--ok)', marginBottom:5 }}>المبلغ المدفوع</div>
+                    <div style={{ fontSize:'1.8rem', fontWeight:900, color:'var(--ok)' }}>{(studentFees.paidAmount || 0).toLocaleString()} ر</div>
+                  </div>
+                  <div style={{ padding:'15px', background:'var(--warn-l)', borderRadius:8, borderRight:'4px solid var(--warn)' }}>
+                    <div style={{ fontSize:'.8rem', color:'var(--warn)', marginBottom:5 }}>المتبقي</div>
+                    <div style={{ fontSize:'1.8rem', fontWeight:900, color:'var(--warn)' }}>{((studentFees.totalAmount || 0) - (studentFees.paidAmount || 0)).toLocaleString()} ر</div>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div style={{ marginTop:15 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                    <span style={{ fontSize:'.85rem', fontWeight:700 }}>نسبة الدفع</span>
+                    <span style={{ fontSize:'.85rem', fontWeight:700, color:'var(--pr)' }}>
+                      {studentFees.totalAmount > 0 ? Math.round((studentFees.paidAmount / studentFees.totalAmount) * 100) : 0}%
+                    </span>
+                  </div>
+                  <div style={{ width:'100%', height:'12px', background:'var(--g0)', borderRadius:'6px', overflow:'hidden' }}>
+                    <div style={{ 
+                      width: studentFees.totalAmount > 0 ? `${(studentFees.paidAmount / studentFees.totalAmount) * 100}%` : '0%',
+                      height:'100%',
+                      background: 'linear-gradient(90deg, var(--ok), var(--pr))',
+                      transition: 'width 0.3s ease'
+                    }}></div>
+                  </div>
+                </div>
+
+                {studentFees.notes && (
+                  <div style={{ marginTop:15, padding:'10px', background:'var(--g0)', borderRadius:6, fontSize:'.85rem', color:'var(--g5)' }}>
+                    <strong>📝 ملاحظات:</strong> {studentFees.notes}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Payments List */}
+          <div className="wg">
+            <div className="wg-h"><h3>💳 سجل الدفعات ({payments.length})</h3></div>
+            <div className="wg-b p0">
+              {payments.length === 0 ? (
+                <div style={{ padding:30, textAlign:'center', color:'var(--g4)' }}>
+                  <div style={{ fontSize:'2rem', marginBottom:10 }}>💳</div>
+                  لا توجد دفعات مسجلة
+                </div>
+              ) : (
+                <div>
+                  {payments.map((p, i) => (
+                    <div key={p.id} style={{ 
+                      padding:'12px 14px', 
+                      borderBottom: i < payments.length - 1 ? '1px solid var(--border-color)' : 'none',
+                      display:'flex',
+                      alignItems:'center',
+                      gap:10
+                    }}>
+                      <div style={{ 
+                        width:40, 
+                        height:40, 
+                        borderRadius:'50%', 
+                        background:'var(--ok-l)',
+                        display:'flex',
+                        alignItems:'center',
+                        justifyContent:'center',
+                        color:'var(--ok)',
+                        fontSize:'1.2rem',
+                        fontWeight:700
+                      }}>✓</div>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontWeight:700, fontSize:'.9rem' }}>{p.amount.toLocaleString()} ريال</div>
+                        <div style={{ fontSize:'.75rem', color:'var(--g5)' }}>
+                          {p.date} • {p.method} {p.notes && `• ${p.notes}`}
+                        </div>
+                      </div>
+                      {canEdit && (
+                        <button 
+                          className="btn btn-xs btn-d" 
+                          onClick={() => deletePayment(p.id)}
+                          style={{ padding:'4px 8px' }}
+                        >
+                          🗑️
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Fee Form Modal */}
+          {showFeeForm && (
+            <div className="mbg" onClick={e => e.target === e.currentTarget && setShowFeeForm(false)}>
+              <div className="mb" style={{ padding:0, borderRadius:12, overflow:'hidden' }}>
+                <div className="fhd" style={{ padding:'14px 20px' }}><h2>💳 تعديل الرسوم</h2></div>
+                <div style={{ padding:'18px 20px' }}>
+                  <div className="fg c2">
+                    <div className="fl full">
+                      <label>المبلغ الكلي <span className="req">*</span></label>
+                      <input 
+                        type="number" 
+                        value={feeForm.totalAmount} 
+                        onChange={e=>setFeeForm(f=>({...f, totalAmount:Number(e.target.value)}))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="fl full">
+                      <label>ملاحظات</label>
+                      <textarea 
+                        value={feeForm.notes} 
+                        onChange={e=>setFeeForm(f=>({...f, notes:e.target.value}))}
+                        rows={2}
+                        placeholder="مثال: رسوم شهرية، رسوم برامج خاصة، إلخ"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="fa">
+                  <button className="btn btn-p" onClick={saveFee}>💾 حفظ</button>
+                  <button className="btn btn-g" onClick={()=>setShowFeeForm(false)}>إلغاء</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Payment Form Modal */}
+          {showPaymentForm && (
+            <div className="mbg" onClick={e => e.target === e.currentTarget && setShowPaymentForm(false)}>
+              <div className="mb" style={{ padding:0, borderRadius:12, overflow:'hidden' }}>
+                <div className="fhd" style={{ padding:'14px 20px' }}><h2>💳 تسجيل دفعة جديدة</h2></div>
+                <div style={{ padding:'18px 20px' }}>
+                  <div className="fg c2">
+                    <div className="fl full">
+                      <label>المبلغ <span className="req">*</span></label>
+                      <input 
+                        type="number" 
+                        value={paymentForm.amount} 
+                        onChange={e=>setPaymentForm(f=>({...f, amount:Number(e.target.value)}))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="fl full">
+                      <label>التاريخ <span className="req">*</span></label>
+                      <input 
+                        type="date" 
+                        value={paymentForm.date} 
+                        onChange={e=>setPaymentForm(f=>({...f, date:e.target.value}))}
+                      />
+                    </div>
+                    <div className="fl full">
+                      <label>طريقة الدفع</label>
+                      <select value={paymentForm.method} onChange={e=>setPaymentForm(f=>({...f, method:e.target.value}))}>
+                        <option>تحويل بنكي</option>
+                        <option>نقداً</option>
+                        <option>شيك</option>
+                        <option>بطاقة ائتمان</option>
+                        <option>محفظة رقمية</option>
+                        <option>أخرى</option>
+                      </select>
+                    </div>
+                    <div className="fl full">
+                      <label>ملاحظات</label>
+                      <textarea 
+                        value={paymentForm.notes} 
+                        onChange={e=>setPaymentForm(f=>({...f, notes:e.target.value}))}
+                        rows={2}
+                        placeholder="ملاحظات إضافية عن الدفعة"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="fa">
+                  <button className="btn btn-p" onClick={savePayment}>💾 حفظ الدفعة</button>
+                  <button className="btn btn-g" onClick={()=>setShowPaymentForm(false)}>إلغاء</button>
+                </div>
               </div>
             </div>
           )}

@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { lsGet } from '../hooks/useStorage';
 import { todayStr } from '../utils/dateHelpers';
 import { ROLES } from '../utils/constants';
+import { printItem } from '../utils/printUtils';
 
 function roleLabel(r) { return ROLES[r] || r || '—'; }
 
@@ -113,7 +114,7 @@ export default function Reports() {
         </div>
         <div className="ph-a">
           <button type="button" className="btn btn-g no-print" onClick={() => window.print()}>
-            🖨️ طباعة
+            🖨️ طباعة التقرير الكامل
           </button>
         </div>
       </div>

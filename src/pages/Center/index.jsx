@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { todayStr, uid } from '../../utils/dateHelpers';
+import { printItem } from '../../utils/printUtils';
 import EmptyState from '../../components/ui/EmptyState';
 
 const DOC_TYPES = { stats:'إحصائية وزارية', policy:'لائحة / سياسة', report:'تقرير', strategy:'استراتيجية', circular:'تعميم', memo:'📝 مذكرة داخلية', other:'أخرى' };
@@ -36,6 +37,18 @@ export default function CenterPage() {
   const [tab, setTab] = useState('partners');
   const isManager = currentUser?.role === 'manager';
   const canView = ['manager','vice'].includes(currentUser?.role);
+  
+  // Finance protection
+  const [financePassword, setFinancePassword] = useState(
+    localStorage.getItem('financePassword') || null
+  );
+  const [financePwInput, setFinancePwInput] = useState('');
+  const [reportType, setReportType] = useState('monthly');
+  const [showFinanceProtect, setShowFinanceProtect] = useState(false);
+  const [viewPartner, setViewPartner] = useState(null);
+  const [selParent, setSelParent] = useState(null);
+  const [showParentLogForm, setShowParentLogForm] = useState(false);
+  const [parentLogForm, setParentLogForm] = useState(EMPTY_PARENT_LOG);
 
   // State for each section
   const [docs, setDocs] = useState([]);
@@ -44,6 +57,7 @@ export default function CenterPage() {
   const [partners, setPartners] = useState([]);
   const [custody, setCustody] = useState([]);
   const [visits, setVisits] = useState([]);
+  const [warnings, setWarnings] = useState(lsGet('warnings') || []);
 
   // Form states
   const [showDocForm, setShowDocForm] = useState(false);
@@ -68,12 +82,11 @@ export default function CenterPage() {
   const [students, setStudents] = useState([]);
   const [parentLogs, setParentLogs] = useState([]);
   const [buses, setBuses] = useState([]);
-  const [selParent, setSelParent] = useState(null);
-  const [showParentLogForm, setShowParentLogForm] = useState(false);
-  const [parentLogForm, setParentLogForm] = useState(EMPTY_PARENT_LOG);
   const [showBusForm, setShowBusForm] = useState(false);
   const [busForm, setBusForm] = useState(EMPTY_BUS);
   const [busEditId, setBusEditId] = useState(null);
+  const [showWarningForm, setShowWarningForm] = useState(false);
+  const [warningForm, setWarningForm] = useState({ recipient:'', type:'warning', reason:'', date:todayStr(), notes:'' });
 
   function reload() {
     setDocs(lsGet('centerDocs'));
@@ -85,6 +98,7 @@ export default function CenterPage() {
     setStudents(lsGet('students'));
     setParentLogs(lsGet('parentInteractions'));
     setBuses(lsGet('buses'));
+    setWarnings(lsGet('warnings') || []);
   }
   useEffect(() => { reload(); }, []);
   useEffect(() => {
@@ -106,16 +120,26 @@ export default function CenterPage() {
   const fldV = k => e => setVisitForm(f=>({...f,[k]:e.target.value}));
   const fldPL = k => e => setParentLogForm(f=>({...f,[k]:e.target.value}));
   const fldB = k => e => setBusForm(f=>({...f,[k]:e.target.value}));
+  const fldW = k => e => setWarningForm(f=>({...f,[k]:e.target.value}));
+
+  function verifyFinancePassword() {
+    if (financePwInput === financePassword) {
+      setShowFinanceProtect(false);
+      toast('✅ تم التحقق','ok');
+    } else {
+      toast('❌ كلمة السر غير صحيحة','er');
+    }
+  }
 
   function saveParentLog() {
     if (!parentLogForm.parentKey || !parentLogForm.date) { toast('⚠️ أكمل البيانات','er'); return; }
     lsAdd('parentInteractions', { ...parentLogForm, id: uid() });
     toast('✅ تم التسجيل','ok');
     setShowParentLogForm(false);
-    // reload logs without resetting selParent
     const updatedLogs = lsGet('parentInteractions');
     setParentLogs(updatedLogs);
   }
+
   function toggleBusStudent(id) {
     setBusForm(f => {
       const p = f.studentIds || [];
@@ -197,19 +221,83 @@ export default function CenterPage() {
             <div className="sc g"><div className="lb">الشراكات النشطة</div><div className="vl">{partners.length}</div></div>
           </div>
           {partners.length===0 ? <EmptyState icon="🤝" title="لا يوجد شركاء"/> : partners.map(p=>(
-            <div key={p.id} className="card">
+            <div key={p.id} className="card clickable" onClick={()=>setViewPartner(p)}>
               <div className="av cyan">🤝</div>
               <div className="ci">
                 <div className="cn">{p.name}</div>
                 <div className="cm">{p.type&&p.type+' · '}{p.contact&&p.contact}{p.phone&&' · '+p.phone}</div>
               </div>
-              <div className="c-acts">
+              <div className="c-acts" onClick={ev=>ev.stopPropagation()}>
                 {p.phone&&<a href={`https://wa.me/${p.phone.replace(/[^0-9+]/g,'').replace(/^0/,'966')}`} target="_blank" rel="noreferrer" className="btn btn-xs btn-bl">💬</a>}
+                <button className="btn btn-xs btn-bl" onClick={()=>printItem(p,'partnership',center.logo,center.name)}>🖨️</button>
                 {isManager&&<button className="btn btn-xs btn-g" onClick={()=>{setPartnerForm({...p});setPartnerEditId(p.id);setShowPartnerForm(true);}}>✏️</button>}
                 {isManager&&<button className="btn btn-xs btn-d" onClick={()=>{lsDel('partners',p.id);reload();toast('🗑️ تم الحذف','ok');}}>🗑️</button>}
               </div>
             </div>
           ))}
+
+          {/* Partner Detail View Modal */}
+          {viewPartner && (
+            <div className="mbg" onClick={e=>e.target===e.currentTarget && setViewPartner(null)}>
+              <div className="mb mb-large" style={{padding:0,overflow:'hidden',borderRadius:16}}>
+                <div className="fhd" style={{padding:'14px 20px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                  <h2>🤝 {viewPartner.name}</h2>
+                  <div style={{display:'flex',gap:8}}>
+                    <button className="btn btn-g btn-sm" onClick={()=>printItem(viewPartner,'partnership',center.logo,center.name)}>🖨️ طباعة</button>
+                    <button className="btn btn-g btn-sm" onClick={()=>setViewPartner(null)}>✕</button>
+                  </div>
+                </div>
+                <div className="modal-body-scroll" style={{padding:'18px 20px'}}>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
+                    <div style={{background:'var(--g0)',borderRadius:8,padding:'10px 14px'}}>
+                      <div style={{fontSize:'.72rem',color:'var(--g5)',marginBottom:2}}>النوع</div>
+                      <div style={{fontWeight:700}}>{viewPartner.type || '—'}</div>
+                    </div>
+                    <div style={{background:'var(--g0)',borderRadius:8,padding:'10px 14px'}}>
+                      <div style={{fontSize:'.72rem',color:'var(--g5)',marginBottom:2}}>جهة الاتصال</div>
+                      <div style={{fontWeight:700}}>{viewPartner.contact || '—'}</div>
+                    </div>
+                    {viewPartner.phone && (
+                      <div style={{background:'var(--g0)',borderRadius:8,padding:'10px 14px',gridColumn:'1/-1'}}>
+                        <div style={{fontSize:'.72rem',color:'var(--g5)',marginBottom:2}}>الهاتف</div>
+                        <div style={{fontWeight:700,direction:'ltr'}}>{viewPartner.phone}</div>
+                      </div>
+                    )}
+                    {viewPartner.email && (
+                      <div style={{background:'var(--g0)',borderRadius:8,padding:'10px 14px',gridColumn:'1/-1'}}>
+                        <div style={{fontSize:'.72rem',color:'var(--g5)',marginBottom:2}}>الإيميل</div>
+                        <div style={{fontWeight:700,direction:'ltr'}}>{viewPartner.email}</div>
+                      </div>
+                    )}
+                    {viewPartner.startDate && (
+                      <div style={{background:'var(--g0)',borderRadius:8,padding:'10px 14px',gridColumn:'1/-1'}}>
+                        <div style={{fontSize:'.72rem',color:'var(--g5)',marginBottom:2}}>تاريخ البدء</div>
+                        <div style={{fontWeight:700}}>{viewPartner.startDate}</div>
+                      </div>
+                    )}
+                  </div>
+                  {viewPartner.notes && (
+                    <div style={{padding:'12px',background:'var(--pr-l)',borderRadius:8}}>
+                      <div style={{fontSize:'.78rem',color:'var(--pr)',fontWeight:700,marginBottom:4}}>📝 الملاحظات</div>
+                      <div style={{fontSize:'.86rem'}}>{viewPartner.notes}</div>
+                    </div>
+                  )}
+                </div>
+                <div className="fa">
+                  {isManager && (
+                    <button className="btn btn-p" onClick={()=>{
+                      setPartnerForm({...viewPartner});
+                      setPartnerEditId(viewPartner.id);
+                      setShowPartnerForm(true);
+                      setViewPartner(null);
+                    }}>✏️ تعديل</button>
+                  )}
+                  <button className="btn btn-g" onClick={()=>setViewPartner(null)}>إغلاق</button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {showPartnerForm&&(
             <div className="mbg" onClick={e=>{if(e.target===e.currentTarget)setShowPartnerForm(false);}}>
               <div className="mb" style={{padding:0,overflow:'hidden',borderRadius:16}}>
@@ -472,15 +560,47 @@ export default function CenterPage() {
       {/* DOCS */}
       {tab==='docs' && (
         <div>
-          <div style={{display:'flex',justifyContent:'flex-end',marginBottom:12}}>
+          <div style={{display:'flex',justifyContent:'flex-end',marginBottom:12,gap:8,flexWrap:'wrap'}}>
             {isManager&&<button className="btn btn-p" onClick={()=>{setDocForm({...EMPTY_DOC,date:todayStr()});setDocEditId(null);setShowDocForm(true);}}>➕ إضافة وثيقة</button>}
+            {isManager&&<button className="btn btn-s" onClick={()=>setShowWarningForm(true)}>⚠️ إنذار جديد</button>}
           </div>
           <div className="tabs">
-            {[['all','الكل'],['stats','إحصائية'],['policy','لائحة'],['report','تقرير'],['memo','مذكرة'],['other','أخرى']].map(([v,l])=>(
+            {[['all','الكل'],['warnings','⚠️ إنذارات'],['stats','إحصائية'],['policy','لائحة'],['report','تقرير'],['memo','مذكرة']].map(([v,l])=>(
               <button key={v} className={`tab ${docTab===v?'on':''}`} onClick={()=>setDocTab(v)}>{l}</button>
             ))}
           </div>
-          {filteredDocs.length===0 ? <EmptyState icon="📄" title="لا توجد وثائق"/> : filteredDocs.sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(d=>(
+
+          {/* Warnings Section */}
+          {(docTab==='all' || docTab==='warnings') && warnings.length > 0 && (
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:'.9rem',fontWeight:800,color:'var(--err)',marginBottom:8}}>⚠️ الإنذارات ({warnings.length})</div>
+              {warnings.map(w=>(
+                <div key={w.id} className="card" style={{borderRight:'4px solid var(--err)',borderRadius:8}}>
+                  <div className="av" style={{background:'var(--err-l)',color:'var(--err)'}}>⚠️</div>
+                  <div className="ci">
+                    <div className="cn">{w.recipient}</div>
+                    <div className="cm">
+                      {w.type==='warning'?'⚠️ إنذار':w.type==='suspension'?'🚫 إيقاف':'❌ إنهاء'} · {w.date}
+                    </div>
+                    <div className="cm" style={{color:'var(--g5)'}}>{w.reason}</div>
+                  </div>
+                  <div className="c-acts" onClick={ev=>ev.stopPropagation()}>
+                    {w.recipient && (
+                      <button className="btn btn-xs btn-bl" onClick={()=>{
+                        const msg = `⚠️ إنذار رسمي\n\nالاسم: ${w.recipient}\nالنوع: ${w.type==='warning'?'إنذار':w.type==='suspension'?'إيقاف':'إنهاء'}\nالسبب: ${w.reason}\n\nالتاريخ: ${w.date}`;
+                        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
+                      }}>💬 واتس</button>
+                    )}
+                    <button className="btn btn-xs btn-g" onClick={()=>{printItem(w,'warning',center.logo,center.name);}}>🖨️</button>
+                    {isManager&&<button className="btn btn-xs btn-d" onClick={()=>{lsDel('warnings',w.id);setWarnings(lsGet('warnings')||[]);toast('🗑️ تم الحذف','ok');}}>🗑️</button>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Documents Section */}
+          {filteredDocs.length===0 && warnings.length===0 ? <EmptyState icon="📄" title="لا توجد وثائق"/> : filteredDocs.sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(d=>(
             <div key={d.id} className="card clickable">
               <div className="av cyan">📄</div>
               <div className="ci">
@@ -496,10 +616,12 @@ export default function CenterPage() {
               <div className="c-acts">
                 {d.url&&<a href={d.url} target="_blank" rel="noreferrer" className="btn btn-xs btn-v">🔗</a>}
                 {d.fileData&&<a href={d.fileData} download={d.fileName||'file'} className="btn btn-xs btn-g">📥</a>}
+                <button className="btn btn-xs btn-bl" onClick={()=>printItem(d,'document',center.logo,center.name)}>🖨️</button>
                 {isManager&&<button className="btn btn-xs btn-g" onClick={()=>{setDocForm({...d});setDocEditId(d.id);setShowDocForm(true);}}>✏️</button>}
                 {isManager&&<button className="btn btn-xs btn-d" onClick={()=>{lsDel('centerDocs',d.id);reload();toast('🗑️ تم الحذف','ok');}}>🗑️</button>}
               </div>
             </div>
+
           ))}
           {showDocForm&&(
             <div className="mbg" onClick={e=>{if(e.target===e.currentTarget)setShowDocForm(false);}}>
@@ -573,7 +695,59 @@ export default function CenterPage() {
         </div>
       )}
 
+      {/* Warning Modal */}
+      {showWarningForm && (
+        <div className="mbg" onClick={e=>e.target===e.currentTarget && setShowWarningForm(false)}>
+          <div className="mb mb-large" style={{padding:0,overflow:'hidden',borderRadius:16}}>
+            <div className="fhd" style={{padding:'14px 20px'}}>
+              <h2>⚠️ إنذار جديد</h2>
+            </div>
+            <div className="modal-body-scroll" style={{padding:'18px 20px'}}>
+              <div className="fg c2">
+                <div className="fl full"><label>الموجه إليه (الموظف/الإداري) <span className="req">*</span></label>
+                  <select value={warningForm.recipient} onChange={fldW('recipient')}>
+                    <option value="">اختر</option>
+                    {lsGet('employees').map(e=><option key={e.id}>{e.name}</option>)}
+                  </select>
+                </div>
+                <div className="fl"><label>نوع الإنذار</label>
+                  <select value={warningForm.type} onChange={fldW('type')}>
+                    <option value="warning">⚠️ إنذار</option>
+                    <option value="suspension">🚫 إيقاف</option>
+                    <option value="termination">❌ إنهاء</option>
+                  </select>
+                </div>
+                <div className="fl"><label>التاريخ</label>
+                  <input type="date" value={warningForm.date} onChange={fldW('date')}/>
+                </div>
+                <div className="fl full"><label>السبب <span className="req">*</span></label>
+                  <textarea value={warningForm.reason} onChange={fldW('reason')} rows={3} placeholder="اشرح أسباب الإنذار بشكل تفصيلي..."/>
+                </div>
+                <div className="fl full"><label>ملاحظات إضافية</label>
+                  <textarea value={warningForm.notes} onChange={fldW('notes')} rows={2}/>
+                </div>
+              </div>
+            </div>
+            <div className="fa">
+              <button className="btn btn-p" onClick={()=>{
+                if(!warningForm.recipient || !warningForm.reason) {
+                  toast('⚠️ أدخل البيانات المطلوبة','er');
+                  return;
+                }
+                lsAdd('warnings', {...warningForm, id:uid()});
+                setWarnings(lsGet('warnings')||[]);
+                setShowWarningForm(false);
+                setWarningForm({recipient:'',type:'warning',reason:'',date:todayStr(),notes:''});
+                toast('✅ تم حفظ الإنذار','ok');
+              }}>💾 حفظ الإنذار</button>
+              <button className="btn btn-g" onClick={()=>setShowWarningForm(false)}>إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* VISITS */}
+
       {tab==='visits' && (
         <div>
           <div style={{display:'flex',justifyContent:'flex-end',marginBottom:12}}>
@@ -595,7 +769,8 @@ export default function CenterPage() {
           ))}
           {showVisitForm&&(
             <div className="mbg" onClick={e=>{if(e.target===e.currentTarget)setShowVisitForm(false);}}>
-              <div className="mb" style={{padding:0,overflow:'hidden',borderRadius:16}}>
+              
+            <div className="mb mb-large" style={{padding:0,overflow:'hidden',borderRadius:16,maxHeight:'95vh',display:'flex',flexDirection:'column'}}>
                 <div className="fhd" style={{padding:'14px 20px',borderRadius:0}}><h2>{visitEditId?'✏️ تعديل الزيارة':'🏛️ تسجيل زيارة'}</h2></div>
                 <div style={{padding:'18px 20px'}}>
                   <div className="fg c2">
