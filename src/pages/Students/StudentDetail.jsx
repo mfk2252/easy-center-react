@@ -30,7 +30,7 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
   const [showFeeForm, setShowFeeForm] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [feeForm, setFeeForm] = useState({ totalAmount: 0, notes: '' });
-  const [paymentForm, setPaymentForm] = useState({ amount: 0, date: today, method: 'تحويل بنكي', notes: '' });
+  const [paymentForm, setPaymentForm] = useState({ amount: 0, date: todayStr(), method: 'تحويل بنكي', notes: '' });
 
   // Form states
   const [showIepForm, setShowIepForm] = useState(false);
@@ -59,12 +59,11 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
     setEmps(lsGet('employees'));
     setIepGoals(lsGet('iepGoals').filter(g => g.stuId === stuId));
     setSessions(lsGet('sessions').filter(s => s.stuId === stuId).sort((a,b)=>(b.date||'').localeCompare(a.date||'')));
-    setAppts(lsGet('appointments').filter(a => a.stuId === stuId).sort((a,b)=>a.date.localeCompare(b.date)));
+    setAppts(lsGet('appointments').filter(a => a.stuId === stuId).sort((a,b)=>(a.date||'').localeCompare(b.date||'')));
     setAttStu(lsGet('attStu').filter(a => a.kidId === stuId));
     setReports(lsGet('stuReports').filter(r => r.stuId === stuId).sort((a,b)=>(b.date||'').localeCompare(a.date||'')));
     setBipList(lsGet('behaviorPlans').filter(b => b.stuId === stuId).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||'')));
     
-    // Load fees and payments
     const allFees = lsGet('studentFees') || [];
     const stuFee = allFees.find(f => f.stuId === stuId);
     setStudentFees(stuFee || { stuId, totalAmount: 0, paidAmount: 0, notes: '' });
@@ -72,15 +71,6 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
     const allPayments = lsGet('payments') || [];
     setPayments(allPayments.filter(p => p.stuId === stuId).sort((a,b) => (b.date||'').localeCompare(a.date||'')));
   }
-
-  useEffect(() => { load(); }, [stuId]);
-  if (!stu) return <div style={{padding:40,textAlign:'center',color:'var(--g4)'}}>جاري التحميل...</div>;
-
-  const spec = emps.find(e => e.id === stu.specialistId);
-  const today = todayStr();
-  const progs = [stu.progMorning?.enabled&&'☀️ صباحي', stu.progEvening?.enabled&&'🌙 مسائي', stu.progSessions?.enabled&&'🩺 جلسات', stu.progOnline?.enabled&&'🌐 أونلاين'].filter(Boolean);
-  const recentAtt = attStu.filter(a=>a.date===today);
-  const attendanceRate = attStu.length ? Math.round(attStu.filter(a=>a.status==='present').length / attStu.length * 100) : 0;
 
   // Fees and Payments
   function saveFee() {
@@ -163,6 +153,16 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
       load();
     }
   }
+
+
+  useEffect(() => { load(); }, [stuId]);
+  if (!stu) return <div style={{padding:40,textAlign:'center',color:'var(--g4)'}}>جاري التحميل...</div>;
+
+  const spec = emps.find(e => e.id === stu.specialistId);
+  const today = todayStr();
+  const progs = [stu.progMorning?.enabled&&'☀️ صباحي', stu.progEvening?.enabled&&'🌙 مسائي', stu.progSessions?.enabled&&'🩺 جلسات', stu.progOnline?.enabled&&'🌐 أونلاين'].filter(Boolean);
+  const recentAtt = attStu.filter(a=>a.date===today);
+  const attendanceRate = attStu.length ? Math.round(attStu.filter(a=>a.status==='present').length / attStu.length * 100) : 0;
 
   // IEP
   function saveIep() {
