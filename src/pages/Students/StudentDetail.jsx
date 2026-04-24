@@ -25,12 +25,12 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
   const [attStu, setAttStu] = useState([]);
   
   // Fees and Payments
-  const [studentFees, setStudentFees] = useState(null);
+  const [studentFees, setStudentFees] = useState({ stuId, totalAmount: 0, paidAmount: 0, notes: '' });
   const [payments, setPayments] = useState([]);
   const [showFeeForm, setShowFeeForm] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [feeForm, setFeeForm] = useState(EMPTY_FEE);
-  const [paymentForm, setPaymentForm] = useState(EMPTY_PAYMENT);
+  const [feeForm, setFeeForm] = useState({ totalAmount: 0, notes: '' });
+  const [paymentForm, setPaymentForm] = useState({ amount: 0, date: today, method: 'تحويل بنكي', notes: '' });
 
   // Form states
   const [showIepForm, setShowIepForm] = useState(false);
@@ -84,59 +84,81 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
 
   // Fees and Payments
   function saveFee() {
-    if (!feeForm.totalAmount || feeForm.totalAmount <= 0) { toast('⚠️ أدخل المبلغ الكلي','er'); return; }
-    const allFees = lsGet('studentFees') || [];
-    const exists = allFees.find(f => f.stuId === stuId);
-    
-    if (exists) {
-      const updated = allFees.map(f => f.stuId === stuId ? {...feeForm, stuId, id:f.id} : f);
-      localStorage.setItem('studentFees', JSON.stringify(updated));
-    } else {
-      allFees.push({...feeForm, stuId, id: uid()});
-      localStorage.setItem('studentFees', JSON.stringify(allFees));
+    if (!feeForm.totalAmount || feeForm.totalAmount <= 0) { 
+      toast('⚠️ أدخل المبلغ الكلي','er'); 
+      return; 
     }
+    
+    // Update or create fee record
+    const allFees = lsGet('studentFees') || [];
+    const existingFee = allFees.find(f => f.stuId === stuId);
+    
+    if (existingFee) {
+      lsUpd('studentFees', existingFee.id, { ...feeForm, stuId, id: existingFee.id });
+    } else {
+      lsAdd('studentFees', { ...feeForm, stuId, paidAmount: 0, id: uid() });
+    }
+    
     toast('✅ تم حفظ الرسوم','ok');
     setShowFeeForm(false);
+    setFeeForm({ totalAmount: 0, notes: '' });
     load();
   }
 
   function savePayment() {
-    if (!paymentForm.amount || paymentForm.amount <= 0) { toast('⚠️ أدخل المبلغ','er'); return; }
-    if (!paymentForm.date) { toast('⚠️ أدخل التاريخ','er'); return; }
+    if (!paymentForm.amount || paymentForm.amount <= 0) { 
+      toast('⚠️ أدخل المبلغ','er'); 
+      return; 
+    }
+    if (!paymentForm.date) { 
+      toast('⚠️ أدخل التاريخ','er'); 
+      return; 
+    }
     
-    const allPayments = lsGet('payments') || [];
-    allPayments.push({...paymentForm, stuId, id: uid()});
-    localStorage.setItem('payments', JSON.stringify(allPayments));
+    // Add payment
+    lsAdd('payments', { ...paymentForm, stuId, id: uid() });
     
-    // Update fees - increase paid amount
+    // Update student fees - increase paid amount
     const allFees = lsGet('studentFees') || [];
     const stuFee = allFees.find(f => f.stuId === stuId);
+    
     if (stuFee) {
-      stuFee.paidAmount = (stuFee.paidAmount || 0) + Number(paymentForm.amount);
-      localStorage.setItem('studentFees', JSON.stringify(allFees));
+      const newPaidAmount = (stuFee.paidAmount || 0) + Number(paymentForm.amount);
+      lsUpd('studentFees', stuFee.id, { ...stuFee, paidAmount: newPaidAmount });
+    } else {
+      // إذا لم توجد رسوم مسجلة، أنشئ سجل جديد
+      lsAdd('studentFees', { 
+        stuId, 
+        totalAmount: 0, 
+        paidAmount: Number(paymentForm.amount),
+        notes: 'تم إضافة دفعة بدون رسوم مسجلة',
+        id: uid()
+      });
     }
     
     toast('✅ تم تسجيل الدفعة','ok');
     setShowPaymentForm(false);
-    setPaymentForm(EMPTY_PAYMENT);
+    setPaymentForm({ amount: 0, date: today, method: 'تحويل بنكي', notes: '' });
     load();
   }
 
   function deletePayment(id) {
     if (!window.confirm('حذف هذه الدفعة؟')) return;
+    
     const allPayments = lsGet('payments') || [];
     const payment = allPayments.find(p => p.id === id);
     
     if (payment) {
+      // Decrease paid amount from student fees
       const allFees = lsGet('studentFees') || [];
       const stuFee = allFees.find(f => f.stuId === stuId);
+      
       if (stuFee) {
-        stuFee.paidAmount = Math.max(0, (stuFee.paidAmount || 0) - Number(payment.amount));
-        localStorage.setItem('studentFees', JSON.stringify(allFees));
+        const newPaidAmount = Math.max(0, (stuFee.paidAmount || 0) - Number(payment.amount));
+        lsUpd('studentFees', stuFee.id, { ...stuFee, paidAmount: newPaidAmount });
       }
       
-      const updated = allPayments.filter(p => p.id !== id);
-      localStorage.setItem('payments', JSON.stringify(updated));
+      lsDel('payments', id);
       toast('🗑️ تم حذف الدفعة','ok');
       load();
     }
@@ -513,7 +535,7 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
         <div>
           <div style={{ display:'flex', justifyContent:'flex-end', gap:8, marginBottom:12, flexWrap:'wrap' }}>
             {canEdit && <button type="button" className="btn btn-p" onClick={()=>setShowFeeForm(true)}>💳 تعديل الرسوم</button>}
-            {canEdit && <button type="button" className="btn btn-s" onClick={()=>{setPaymentForm({...EMPTY_PAYMENT, date:today}); setShowPaymentForm(true);}}>➕ تسجيل دفعة</button>}
+            {canEdit && <button type="button" className="btn btn-s" onClick={()=>{setPaymentForm({ amount: 0, date: today, method: 'تحويل بنكي', notes: '' }); setShowPaymentForm(true);}}>➕ تسجيل دفعة</button>}
           </div>
 
           {/* Fee Summary */}
