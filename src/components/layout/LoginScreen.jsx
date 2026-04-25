@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { lsGet } from '../../hooks/useStorage';
 import { CFG_KEY } from '../../utils/constants';
+import { signInWithGoogle, getGoogleUser, signOutGoogle, initGoogle } from '../../utils/googleDrive';
 
 export default function LoginScreen() {
   const { center, login, toast } = useApp();
@@ -11,17 +12,24 @@ export default function LoginScreen() {
   const [err, setErr] = useState('');
   const [remember, setRemember] = useState('none');
   const [savedAccount, setSavedAccount] = useState(null);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleUser, setGoogleUser] = useState(null);
 
   useEffect(() => {
     const sa = (() => { try { return JSON.parse(localStorage.getItem('scs_saved_login') || 'null'); } catch(e) { return null; } })();
     if (sa) { setSavedAccount(sa); if (sa.username) setUsername(sa.username); if (sa.password) setPassword(sa.password); }
+    
+    // Check if already signed in with Google
+    const gu = getGoogleUser();
+    if (gu) setGoogleUser(gu);
+    
+    // Preload Google scripts
+    initGoogle().catch(() => {});
   }, []);
 
   function getUsers() {
-    // try localStorage users
     let users = lsGet('users');
     if (!users.length) {
-      // fallback: try with projectId prefix directly
       try {
         const cfg = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
         const pid = cfg.center?.projectId || 'local';
@@ -39,17 +47,49 @@ export default function LoginScreen() {
     const users = getUsers();
     const user = users.find(u => u.username === username.trim() && u.password === password);
     if (!user) { setErr('اسم المستخدم أو كلمة المرور غير صحيحة'); return; }
-    // handle remember
     if (remember === 'both') localStorage.setItem('scs_saved_login', JSON.stringify({ username: user.username, password }));
     else if (remember === 'user') localStorage.setItem('scs_saved_login', JSON.stringify({ username: user.username }));
     else localStorage.removeItem('scs_saved_login');
-    
-    // Store user permissions
     const userPerms = user.permissions || {dash:true, students:true};
     localStorage.setItem('userPerms', JSON.stringify(userPerms));
-    
     toast('✅ مرحباً ' + user.name, 'ok');
     login(user);
+  }
+
+  async function handleGoogleSignIn() {
+    setGoogleLoading(true);
+    setErr('');
+    try {
+      const gUser = await signInWithGoogle();
+      setGoogleUser(gUser);
+      
+      // Check if this Google account has a matching user
+      const users = getUsers();
+      const matchedUser = users.find(u => u.email === gUser.email || u.googleId === gUser.sub);
+      
+      if (matchedUser) {
+        // Auto login
+        const userPerms = matchedUser.permissions || {dash:true, students:true};
+        localStorage.setItem('userPerms', JSON.stringify(userPerms));
+        toast('✅ مرحباً ' + matchedUser.name, 'ok');
+        login(matchedUser);
+      } else {
+        // First time - create/link account
+        toast('✅ تم ربط حساب Google بنجاح!', 'ok');
+        setErr('');
+      }
+    } catch(e) {
+      console.error(e);
+      setErr('فشل تسجيل الدخول بـ Google. حاول مرة أخرى.');
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
+
+  function handleGoogleSignOut() {
+    signOutGoogle();
+    setGoogleUser(null);
+    toast('تم تسجيل الخروج من Google', 'ok');
   }
 
   function clearSaved() { localStorage.removeItem('scs_saved_login'); setSavedAccount(null); setUsername(''); setPassword(''); }
@@ -124,6 +164,68 @@ export default function LoginScreen() {
           </div>
 
           <button className="login-btn" onClick={doLogin}>دخول ←</button>
+
+          {/* Google Sign-In */}
+          <div style={{margin:'16px 0',display:'flex',alignItems:'center',gap:10}}>
+            <div style={{flex:1,height:1,background:'var(--g2)'}}/>
+            <span style={{fontSize:'.75rem',color:'var(--g4)'}}>أو</span>
+            <div style={{flex:1,height:1,background:'var(--g2)'}}/>
+          </div>
+
+          {googleUser ? (
+            <div style={{padding:'10px 14px',background:'var(--ok-l)',border:'1px solid var(--ok)',borderRadius:10,marginBottom:8}}>
+              <div style={{display:'flex',alignItems:'center',gap:10}}>
+                {googleUser.picture && <img src={googleUser.picture} alt="" style={{width:36,height:36,borderRadius:'50%'}}/>}
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,fontSize:'.85rem'}}>{googleUser.name}</div>
+                  <div style={{fontSize:'.72rem',color:'var(--g5)'}}>{googleUser.email}</div>
+                </div>
+                <button onClick={handleGoogleSignOut} style={{background:'none',border:'1px solid var(--g3)',borderRadius:6,padding:'4px 8px',cursor:'pointer',fontSize:'.72rem',color:'var(--g5)'}}>خروج</button>
+              </div>
+              <div style={{marginTop:8,fontSize:'.75rem',color:'var(--ok)',textAlign:'center'}}>
+                ✅ حساب Google مرتبط — يمكنك الآن النسخ الاحتياطي من الإعدادات
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={handleGoogleSignIn}
+              disabled={googleLoading}
+              style={{
+                width:'100%',
+                padding:'11px 16px',
+                background:'white',
+                border:'1px solid #dadce0',
+                borderRadius:10,
+                cursor: googleLoading ? 'wait' : 'pointer',
+                display:'flex',
+                alignItems:'center',
+                justifyContent:'center',
+                gap:10,
+                fontSize:'.88rem',
+                fontFamily:'Tajawal,sans-serif',
+                fontWeight:600,
+                color:'#3c4043',
+                marginBottom:8,
+                boxShadow:'0 1px 3px rgba(0,0,0,0.1)',
+                transition:'box-shadow 0.2s',
+                opacity: googleLoading ? 0.7 : 1
+              }}
+            >
+              {googleLoading ? (
+                <span>جارٍ التحميل...</span>
+              ) : (
+                <>
+                  <svg width="20" height="20" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                  </svg>
+                  تسجيل الدخول بـ Google
+                </>
+              )}
+            </button>
+          )}
           <div style={{textAlign:'center',marginTop:8}}>
             <details style={{cursor:'pointer'}}>
               <summary style={{fontSize:'.78rem',color:'var(--g5)',listStyle:'none',userSelect:'none'}}>

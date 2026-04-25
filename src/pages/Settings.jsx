@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel } from '../hooks/useStorage';
 import { uid, todayStr } from '../utils/dateHelpers';
 import { ROLES } from '../utils/constants';
+import { signInWithGoogle, signOutGoogle, saveBackupToDrive, loadBackupFromDrive, collectAllData, restoreAllData, getGoogleUser, isGoogleSignedIn } from '../utils/googleDrive';
 
 const PRESET_COLORS=['#1a56db','#7c3aed','#059669','#dc2626','#d97706','#0891b2','#db2777','#0f172a'];
 const ROLE_OPTIONS=[['manager','مدير'],['vice','نائب المدير'],['specialist_speech','أخصائي تخاطب'],['specialist_physio','أخصائي علاج فيزيائي'],['specialist_behavior','أخصائي تعديل سلوك'],['specialist_occupational','أخصائي علاج وظيفي'],['specialist','أخصائي عام'],['reception','استقبال'],['admin','إداري'],['technician','فني النظام'],['parent','ولي أمر']];
@@ -32,6 +33,11 @@ export default function Settings() {
   const [selColor, setSelColor] = useState(center.color||'#1a56db');
   const [fbForm, setFbForm] = useState({ apiKey: fbCfg?.apiKey||'', authDomain: fbCfg?.authDomain||'', projectId: fbCfg?.projectId||'', storageBucket: fbCfg?.storageBucket||'', messagingSenderId: fbCfg?.messagingSenderId||'', appId: fbCfg?.appId||'' });
   const [showResetPwInfo, setShowResetPwInfo] = useState(false);
+  
+  // Google Drive states
+  const [googleUser, setGoogleUser] = useState(()=>getGoogleUser());
+  const [driveLoading, setDriveLoading] = useState(false);
+  const [lastBackup, setLastBackup] = useState(()=>localStorage.getItem('last_drive_backup') || null);
 
   const isManager = currentUser?.role === 'manager';
 
@@ -89,6 +95,61 @@ export default function Settings() {
     if (id === currentUser?.id) { toast('⚠️ لا يمكنك حذف حسابك الحالي','er'); return; }
     if (!window.confirm('حذف هذا المستخدم؟')) return;
     lsDel('users',id); reloadUsers(); toast('🗑️ تم الحذف','ok');
+  }
+
+  // Google Drive functions
+  async function handleGoogleConnect() {
+    setDriveLoading(true);
+    try {
+      const gUser = await signInWithGoogle();
+      setGoogleUser(gUser);
+      toast('✅ تم ربط Google Drive بنجاح!', 'ok');
+    } catch(e) {
+      toast('❌ فشل الاتصال بـ Google', 'er');
+    } finally {
+      setDriveLoading(false);
+    }
+  }
+
+  function handleGoogleDisconnect() {
+    signOutGoogle();
+    setGoogleUser(null);
+    toast('تم فصل Google Drive', 'ok');
+  }
+
+  async function handleDriveBackup() {
+    if (!googleUser) { toast('⚠️ سجّل دخول بـ Google أولاً', 'er'); return; }
+    setDriveLoading(true);
+    try {
+      const allData = collectAllData();
+      await saveBackupToDrive(allData);
+      const now = new Date().toLocaleString('ar-SA');
+      localStorage.setItem('last_drive_backup', now);
+      setLastBackup(now);
+      toast('✅ تم حفظ النسخة الاحتياطية على Google Drive!', 'ok');
+    } catch(e) {
+      toast('❌ فشل حفظ النسخة الاحتياطية', 'er');
+    } finally {
+      setDriveLoading(false);
+    }
+  }
+
+  async function handleDriveRestore() {
+    if (!googleUser) { toast('⚠️ سجّل دخول بـ Google أولاً', 'er'); return; }
+    if (!window.confirm('⚠️ سيتم استبدال جميع البيانات الحالية بالنسخة الاحتياطية. هل أنت متأكد؟')) return;
+    setDriveLoading(true);
+    try {
+      const result = await loadBackupFromDrive();
+      if (!result) { toast('⚠️ لا توجد نسخة احتياطية على Drive', 'er'); return; }
+      restoreAllData(result.data);
+      const backupDate = result.data.backupDate ? new Date(result.data.backupDate).toLocaleString('ar-SA') : 'غير معروف';
+      toast(`✅ تم استعادة البيانات! (نسخة: ${backupDate})`, 'ok');
+      setTimeout(() => window.location.reload(), 1500);
+    } catch(e) {
+      toast('❌ فشل استعادة البيانات', 'er');
+    } finally {
+      setDriveLoading(false);
+    }
   }
 
   function exportData() {
@@ -297,6 +358,82 @@ export default function Settings() {
 
       {tab==='backup' && (
         <div>
+          {/* Google Drive Backup */}
+          <div className="wg" style={{marginBottom:14}}>
+            <div className="wg-h"><h3>☁️ النسخ الاحتياطي على Google Drive</h3></div>
+            <div className="wg-b">
+              <p style={{fontSize:'.86rem',color:'var(--g5)',marginBottom:16}}>
+                احفظ بياناتك على Google Drive الخاص بك. يمكنك استعادتها على أي جهاز أو متصفح عند تسجيل الدخول بنفس حساب Google.
+              </p>
+              
+              {googleUser ? (
+                <div>
+                  {/* Connected Account */}
+                  <div style={{padding:'12px 14px',background:'var(--ok-l)',border:'1px solid var(--ok)',borderRadius:10,marginBottom:14,display:'flex',alignItems:'center',gap:12}}>
+                    {googleUser.picture && <img src={googleUser.picture} alt="" style={{width:40,height:40,borderRadius:'50%'}}/>}
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:700,fontSize:'.9rem'}}>{googleUser.name}</div>
+                      <div style={{fontSize:'.75rem',color:'var(--g5)'}}>{googleUser.email}</div>
+                      {lastBackup && <div style={{fontSize:'.72rem',color:'var(--ok)',marginTop:2}}>✅ آخر نسخة: {lastBackup}</div>}
+                    </div>
+                    <button className="btn btn-g" onClick={handleGoogleDisconnect} style={{fontSize:'.78rem'}}>فصل</button>
+                  </div>
+                  
+                  <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+                    <button 
+                      className="btn btn-p" 
+                      onClick={handleDriveBackup}
+                      disabled={driveLoading}
+                      style={{display:'flex',alignItems:'center',gap:8}}
+                    >
+                      {driveLoading ? '⏳ جارٍ...' : '☁️ حفظ نسخة على Drive'}
+                    </button>
+                    <button 
+                      className="btn btn-s" 
+                      onClick={handleDriveRestore}
+                      disabled={driveLoading}
+                    >
+                      📥 استعادة من Drive
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <button
+                    onClick={handleGoogleConnect}
+                    disabled={driveLoading}
+                    style={{
+                      padding:'11px 20px',
+                      background:'white',
+                      border:'1px solid #dadce0',
+                      borderRadius:10,
+                      cursor: driveLoading ? 'wait' : 'pointer',
+                      display:'flex',
+                      alignItems:'center',
+                      gap:10,
+                      fontSize:'.88rem',
+                      fontFamily:'Tajawal,sans-serif',
+                      fontWeight:600,
+                      color:'#3c4043',
+                      boxShadow:'0 1px 3px rgba(0,0,0,0.1)',
+                    }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 48 48">
+                      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    </svg>
+                    {driveLoading ? 'جارٍ الاتصال...' : 'ربط Google Drive'}
+                  </button>
+                  <p style={{fontSize:'.78rem',color:'var(--g4)',marginTop:10}}>
+                    💡 ستحتاج لتسجيل الدخول بحساب Google وإعطاء إذن الوصول لـ Drive
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* JSON Backup */}
           <div className="wg" style={{marginBottom:14}}>
             <div className="wg-h"><h3>💾 النسخ الاحتياطي (JSON)</h3></div>
