@@ -1,83 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { lsGet } from '../../hooks/useStorage';
-import { CFG_KEY } from '../../utils/constants';
-import { signInWithGoogle, getGoogleUser, signOutGoogle, initGoogle } from '../../utils/googleDrive';
+import { signInWithGoogle, signInWithCredentials } from '../../firebase/auth';
 
 export default function LoginScreen() {
-  const { center, login, toast } = useApp();
+  const { login, toast } = useApp();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [err, setErr] = useState('');
-  const [remember, setRemember] = useState('none');
-  const [savedAccount, setSavedAccount] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [googleUser, setGoogleUser] = useState(null);
 
-  useEffect(() => {
-    const sa = (() => { try { return JSON.parse(localStorage.getItem('scs_saved_login') || 'null'); } catch(e) { return null; } })();
-    if (sa) { setSavedAccount(sa); if (sa.username) setUsername(sa.username); if (sa.password) setPassword(sa.password); }
-    
-    // Check if already signed in with Google
-    const gu = getGoogleUser();
-    if (gu) setGoogleUser(gu);
-    
-    // Preload Google scripts
-    initGoogle().catch(() => {});
-  }, []);
-
-  function getUsers() {
-    let users = lsGet('users');
-    if (!users.length) {
-      try {
-        const cfg = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
-        const pid = cfg.center?.projectId || 'local';
-        const raw = localStorage.getItem(pid + '_users');
-        if (raw) users = JSON.parse(raw);
-      } catch(e) {}
-    }
-    return users;
-  }
-
-  function doLogin() {
-    setErr('');
-    if (!username.trim()) { setErr('يرجى إدخال اسم المستخدم'); return; }
-    if (!password) { setErr('يرجى إدخال كلمة المرور'); return; }
-    const users = getUsers();
-    const user = users.find(u => u.username === username.trim() && u.password === password);
-    if (!user) { setErr('اسم المستخدم أو كلمة المرور غير صحيحة'); return; }
-    if (remember === 'both') localStorage.setItem('scs_saved_login', JSON.stringify({ username: user.username, password }));
-    else if (remember === 'user') localStorage.setItem('scs_saved_login', JSON.stringify({ username: user.username }));
-    else localStorage.removeItem('scs_saved_login');
-    const userPerms = user.permissions || {dash:true, students:true};
-    localStorage.setItem('userPerms', JSON.stringify(userPerms));
-    toast('✅ مرحباً ' + user.name, 'ok');
-    login(user);
-  }
-
+  // تسجيل الدخول بـ Google (للمدير)
   async function handleGoogleSignIn() {
     setGoogleLoading(true);
     setErr('');
     try {
-      const gUser = await signInWithGoogle();
-      setGoogleUser(gUser);
-      
-      // Check if this Google account has a matching user
-      const users = getUsers();
-      const matchedUser = users.find(u => u.email === gUser.email || u.googleId === gUser.sub);
-      
-      if (matchedUser) {
-        // Auto login
-        const userPerms = matchedUser.permissions || {dash:true, students:true};
-        localStorage.setItem('userPerms', JSON.stringify(userPerms));
-        toast('✅ مرحباً ' + matchedUser.name, 'ok');
-        login(matchedUser);
-      } else {
-        // First time - create/link account
-        toast('✅ تم ربط حساب Google بنجاح!', 'ok');
-        setErr('');
-      }
+      const user = await signInWithGoogle();
+      toast('✅ مرحباً ' + user.name, 'ok');
+      login(user);
     } catch(e) {
       console.error(e);
       setErr('فشل تسجيل الدخول بـ Google. حاول مرة أخرى.');
@@ -86,166 +27,127 @@ export default function LoginScreen() {
     }
   }
 
-  function handleGoogleSignOut() {
-    signOutGoogle();
-    setGoogleUser(null);
-    toast('تم تسجيل الخروج من Google', 'ok');
+  // تسجيل الدخول بـ username/password (للموظفين)
+  async function handleLogin() {
+    setErr('');
+    if (!username.trim()) { setErr('يرجى إدخال اسم المستخدم'); return; }
+    if (!password) { setErr('يرجى إدخال كلمة المرور'); return; }
+    setLoading(true);
+    try {
+      const user = await signInWithCredentials(username, password);
+      const userPerms = user.permissions || {};
+      localStorage.setItem('userPerms', JSON.stringify(userPerms));
+      toast('✅ مرحباً ' + user.name, 'ok');
+      login(user);
+    } catch(e) {
+      setErr(e.message || 'بيانات الدخول غير صحيحة');
+    } finally {
+      setLoading(false);
+    }
   }
-
-  function clearSaved() { localStorage.removeItem('scs_saved_login'); setSavedAccount(null); setUsername(''); setPassword(''); }
 
   const bgImg = localStorage.getItem('scs_login_bg');
 
   return (
-    <div
-      className="login-overlay"
-      style={
-        bgImg
-          ? {
-              backgroundImage: `linear-gradient(120deg,rgba(12,25,41,.92),rgba(30,27,75,.88)),url(${bgImg})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }
-          : {}
-      }
-    >
-      <div className="login-shell">
-        <div className="login-hero">
-          <span className="login-hero-badge">🎓 بيئة تعليمية وتربوية</span>
-          <h1>نظام موحّد لإدارة المراكز التعليمية والتربية الخاصة</h1>
-          <p>تسجيل دخول آمن إلى لوحة التحكم: الطلاب، الجلسات، الموارد البشرية، والتقارير في مكان واحد.</p>
-          <div className="login-hero-dots" aria-hidden>
-            <span className="login-hero-dot" /><span className="login-hero-dot" /><span className="login-hero-dot" />
-          </div>
+    <div className="login-wrap" style={bgImg ? { backgroundImage:`url(${bgImg})`, backgroundSize:'cover', backgroundPosition:'center' } : {}}>
+      <div className="login-card">
+        {/* Logo */}
+        <div className="login-logo">
+          {(() => { const logo = localStorage.getItem('scs_center_logo'); return logo ? <img src={logo} alt="logo" style={{height:64, borderRadius:12, marginBottom:4}} /> : <div style={{fontSize:'2.5rem', marginBottom:4}}>🏥</div>; })()}
         </div>
-        <div className="login-panel">
-      <div className="login-box">
-        <div className="login-hd">
-          {center.logo
-            ? <img src={center.logo} className="login-logo" alt="logo"/>
-            : <div className="login-logo-ph">🏥</div>
-          }
-          <h2>{center.name || 'مركز التربية الخاصة'}</h2>
-          <p>نظام إدارة المركز المتكامل</p>
+
+        <h1 className="login-title">نظام إدارة المركز</h1>
+        <p className="login-sub">منصة إدارية متكاملة للمراكز التعليمية والتأهيلية</p>
+
+        {/* Google Sign In - للمدير */}
+        <div style={{marginBottom:20}}>
+          <p style={{textAlign:'center', fontSize:'.8rem', color:'var(--g4)', marginBottom:10}}>
+            🔑 للمديرين: سجّل دخولك بـ Google
+          </p>
+          <button
+            onClick={handleGoogleSignIn}
+            disabled={googleLoading}
+            style={{
+              width:'100%', padding:'12px 16px',
+              background:'white', border:'1px solid #dadce0',
+              borderRadius:10, cursor: googleLoading ? 'wait' : 'pointer',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              gap:10, fontSize:'.9rem', fontFamily:'Tajawal,sans-serif',
+              fontWeight:700, color:'#3c4043',
+              boxShadow:'0 1px 4px rgba(0,0,0,0.12)',
+              transition:'box-shadow 0.2s',
+              opacity: googleLoading ? 0.7 : 1
+            }}
+          >
+            {googleLoading ? (
+              <span>⏳ جارٍ التحميل...</span>
+            ) : (
+              <>
+                <svg width="20" height="20" viewBox="0 0 48 48">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+                تسجيل الدخول بـ Google
+              </>
+            )}
+          </button>
         </div>
-        <div className="login-body">
-          {err && <div className="login-err">{err}</div>}
 
-          {savedAccount && (
-            <div style={{marginBottom:12,padding:'10px 13px',background:'var(--pr-l)',border:'1px solid var(--pr)',borderRadius:10}}>
-              <div style={{fontSize:'.76rem',color:'var(--g5)',marginBottom:2}}>الحساب المحفوظ في هذا الجهاز 🔒</div>
-              <div style={{fontSize:'.9rem',fontWeight:700,color:'var(--pr)'}}>{savedAccount.username}</div>
-              <div style={{fontSize:'.72rem',color:'var(--g4)',marginTop:4,display:'flex',gap:8}}>
-                <button onClick={doLogin} style={{background:'var(--pr)',color:'white',border:'none',padding:'5px 12px',borderRadius:6,cursor:'pointer',fontSize:'.78rem',fontFamily:'Tajawal,sans-serif'}}>⚡ دخول تلقائي</button>
-                <button onClick={clearSaved} style={{background:'none',border:'1px solid var(--err)',color:'var(--err)',padding:'5px 10px',borderRadius:6,cursor:'pointer',fontSize:'.78rem',fontFamily:'Tajawal,sans-serif'}}>🗑️ نسيان الجهاز</button>
-              </div>
-            </div>
-          )}
-
-          <div className="lf">
-            <label>اسم المستخدم</label>
-            <input value={username} onChange={e=>setUsername(e.target.value)} placeholder="أدخل اسم المستخدم" autoComplete="username"/>
-          </div>
-          <div className="lf" style={{position:'relative'}}>
-            <label>كلمة المرور</label>
-            <input value={password} onChange={e=>setPassword(e.target.value)} type={showPass?'text':'password'} placeholder="••••••••" autoComplete="current-password" onKeyDown={e=>e.key==='Enter'&&doLogin()} style={{paddingLeft:40}}/>
-            <button onClick={()=>setShowPass(p=>!p)} style={{position:'absolute',left:10,top:32,background:'none',border:'none',cursor:'pointer',fontSize:'1rem',color:'var(--g4)'}}>
-              {showPass ? '🙈' : '👁️'}
-            </button>
-          </div>
-
-          <div style={{marginBottom:14,padding:12,background:'var(--g0)',borderRadius:10,border:'1px solid var(--g2)'}}>
-            <div style={{fontSize:'.75rem',fontWeight:700,color:'var(--g6)',marginBottom:8}}>🔒 تذكّر بياناتي في هذا الجهاز</div>
-            {[['none','لا تذكّر'],['user','تذكّر اسم المستخدم فقط'],['both','تذكّر اسم المستخدم وكلمة المرور']].map(([v,l])=>(
-              <label key={v} style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:'.82rem',marginBottom:4}}>
-                <input type="radio" name="remember" value={v} checked={remember===v} onChange={()=>setRemember(v)} style={{accentColor:'var(--pr)'}}/> {l}
-              </label>
-            ))}
-          </div>
-
-          <button className="login-btn" onClick={doLogin}>دخول ←</button>
-
-          {/* Google Sign-In */}
-          <div style={{margin:'16px 0',display:'flex',alignItems:'center',gap:10}}>
-            <div style={{flex:1,height:1,background:'var(--g2)'}}/>
-            <span style={{fontSize:'.75rem',color:'var(--g4)'}}>أو</span>
-            <div style={{flex:1,height:1,background:'var(--g2)'}}/>
-          </div>
-
-          {googleUser ? (
-            <div style={{padding:'10px 14px',background:'var(--ok-l)',border:'1px solid var(--ok)',borderRadius:10,marginBottom:8}}>
-              <div style={{display:'flex',alignItems:'center',gap:10}}>
-                {googleUser.picture && <img src={googleUser.picture} alt="" style={{width:36,height:36,borderRadius:'50%'}}/>}
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:700,fontSize:'.85rem'}}>{googleUser.name}</div>
-                  <div style={{fontSize:'.72rem',color:'var(--g5)'}}>{googleUser.email}</div>
-                </div>
-                <button onClick={handleGoogleSignOut} style={{background:'none',border:'1px solid var(--g3)',borderRadius:6,padding:'4px 8px',cursor:'pointer',fontSize:'.72rem',color:'var(--g5)'}}>خروج</button>
-              </div>
-              <div style={{marginTop:8,fontSize:'.75rem',color:'var(--ok)',textAlign:'center'}}>
-                ✅ حساب Google مرتبط — يمكنك الآن النسخ الاحتياطي من الإعدادات
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={handleGoogleSignIn}
-              disabled={googleLoading}
-              style={{
-                width:'100%',
-                padding:'11px 16px',
-                background:'white',
-                border:'1px solid #dadce0',
-                borderRadius:10,
-                cursor: googleLoading ? 'wait' : 'pointer',
-                display:'flex',
-                alignItems:'center',
-                justifyContent:'center',
-                gap:10,
-                fontSize:'.88rem',
-                fontFamily:'Tajawal,sans-serif',
-                fontWeight:600,
-                color:'#3c4043',
-                marginBottom:8,
-                boxShadow:'0 1px 3px rgba(0,0,0,0.1)',
-                transition:'box-shadow 0.2s',
-                opacity: googleLoading ? 0.7 : 1
-              }}
-            >
-              {googleLoading ? (
-                <span>جارٍ التحميل...</span>
-              ) : (
-                <>
-                  <svg width="20" height="20" viewBox="0 0 48 48">
-                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                  </svg>
-                  تسجيل الدخول بـ Google
-                </>
-              )}
-            </button>
-          )}
-          <div style={{textAlign:'center',marginTop:8}}>
-            <details style={{cursor:'pointer'}}>
-              <summary style={{fontSize:'.78rem',color:'var(--g5)',listStyle:'none',userSelect:'none'}}>
-                🔑 نسيت كلمة المرور؟
-              </summary>
-              <div style={{marginTop:10,padding:'12px 14px',background:'var(--g0)',borderRadius:10,fontSize:'.8rem',color:'var(--g6)',textAlign:'right',lineHeight:1.9}}>
-                <b style={{color:'var(--pr)'}}>الحلول المتاحة:</b><br/>
-                <b>1.</b> اطلب من <b>المدير</b> تغيير كلمة مرورك من الإعدادات → المستخدمون ✏️<br/>
-                <b>2.</b> إذا كنت المدير: اذهب لـ <b>الإعدادات → النسخ الاحتياطي → نسيت كلمة المرور</b><br/>
-                <b>3.</b> تواصل مع الدعم الفني: <a href="mailto:mfekry225@outlook.com" style={{color:'var(--pr)'}}>mfekry225@outlook.com</a>
-              </div>
-            </details>
-          </div>
-          <div className="login-footer" style={{ display:'flex', flexDirection:'column', gap:4, alignItems:'center' }}>
-            <span style={{color:'var(--g4)',fontSize:'.72rem'}}>نظام إدارة المركز المتكامل — v1</span>
-            <span style={{color:'var(--g4)',fontSize:'.68rem'}}>صمم بواسطة محمد فكري</span>
-            <a href="mailto:mfekry225@outlook.com" style={{color:'var(--pr)',fontSize:'.68rem'}}>mfekry225@outlook.com</a>
-          </div>
+        {/* Divider */}
+        <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:20}}>
+          <div style={{flex:1, height:1, background:'var(--g2)'}}/>
+          <span style={{fontSize:'.75rem', color:'var(--g4)'}}>أو للموظفين وأولياء الأمور</span>
+          <div style={{flex:1, height:1, background:'var(--g2)'}}/>
         </div>
-      </div>
+
+        {/* Username/Password - للموظفين */}
+        {err && <div className="login-err">⚠️ {err}</div>}
+
+        <div className="fl" style={{marginBottom:12}}>
+          <label>اسم المستخدم</label>
+          <input
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            placeholder="أدخل اسم المستخدم"
+            autoComplete="username"
+            onKeyDown={e => e.key === 'Enter' && handleLogin()}
+          />
+        </div>
+
+        <div className="fl" style={{position:'relative', marginBottom:16}}>
+          <label>كلمة المرور</label>
+          <input
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            type={showPass ? 'text' : 'password'}
+            placeholder="••••••••"
+            autoComplete="current-password"
+            onKeyDown={e => e.key === 'Enter' && handleLogin()}
+            style={{paddingLeft:40}}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPass(s => !s)}
+            style={{position:'absolute', left:10, bottom:8, background:'none', border:'none', cursor:'pointer', color:'var(--g4)', fontSize:'1rem'}}
+          >
+            {showPass ? '🙈' : '👁️'}
+          </button>
+        </div>
+
+        <button
+          className="login-btn"
+          onClick={handleLogin}
+          disabled={loading}
+        >
+          {loading ? '⏳ جارٍ الدخول...' : 'دخول ←'}
+        </button>
+
+        {/* Info */}
+        <div style={{marginTop:20, padding:'12px', background:'var(--g0)', borderRadius:8, fontSize:'.75rem', color:'var(--g5)', textAlign:'center', lineHeight:1.8}}>
+          <strong>للمدير:</strong> استخدم تسجيل الدخول بـ Google<br/>
+          <strong>للموظفين:</strong> استخدم اسم المستخدم وكلمة المرور
         </div>
       </div>
     </div>

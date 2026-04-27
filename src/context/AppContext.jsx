@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { CFG_KEY } from '../utils/constants';
-import { initFirebase } from '../hooks/useFirestore';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../firebase/config';
+import { getCenterSettings } from '../firebase/db';
+import { signOutUser } from '../firebase/auth';
 
 const AppContext = createContext(null);
 
@@ -14,58 +16,98 @@ function applyTheme(color) {
 }
 
 export function AppProvider({ children }) {
-  const [screen, setScreen] = useState('loading'); // 'loading' | 'setup' | 'login' | 'app'
+  const [screen, setScreen] = useState('loading');
   const [center, setCenter] = useState({ name:'', logo:'', color:'#1a56db', configured:false });
-  const [fbCfg, setFbCfg] = useState({});
   const [currentUser, setCurrentUser] = useState(null);
   const [activeView, setActiveView] = useState('dash');
   const [darkMode, setDarkMode] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [fbReady, setFbReady] = useState(false);
   const toastTimers = useRef({});
 
-  // Boot: load config from localStorage
   useEffect(() => {
-    const saved = (() => { try { const r = localStorage.getItem(CFG_KEY); return r ? JSON.parse(r) : null; } catch(e) { return null; } })();
     const dm = localStorage.getItem('darkMode') === '1';
     if (dm) { document.body.classList.add('dark'); setDarkMode(true); }
-    
-    // font size/weight
     const fs = localStorage.getItem('scs_fontsize');
     const fw = localStorage.getItem('scs_fontweight');
     if (fs) document.documentElement.style.setProperty('--fs', fs + 'px');
     if (fw) document.documentElement.style.setProperty('--fw', fw);
-
-    if (saved?.center?.configured) {
-      const c = saved.center;
-      setCenter(c);
-      setFbCfg(saved.firebase || {});
-      applyTheme(c.color);
-      document.title = c.name || 'نظام إدارة المركز المتكامل';
-      // init firebase
-      if (saved.firebase?.apiKey) {
-        initFirebase(saved.firebase).then(ok => setFbReady(ok));
-      }
-      setScreen('login');
-    } else {
-      setScreen('setup');
-    }
   }, []);
 
-  // Ctrl+K global search
   useEffect(() => {
-    const handler = (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); setSearchOpen(true); } if (e.key === 'Escape') setSearchOpen(false); };
+    const savedSession = (() => {
+      try { return JSON.parse(localStorage.getItem('scs_session') || 'null'); }
+      catch(e) { return null; }
+    })();
+
+    if (savedSession && savedSession.centerId) {
+      setCurrentUser(savedSession);
+      loadCenterData(savedSession.centerId);
+      setScreen('app');
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const centerData = await getCenterSettings(firebaseUser.uid);
+        const user = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          name: firebaseUser.displayName || 'المدير',
+          photo: firebaseUser.photoURL,
+          role: 'manager',
+          centerId: firebaseUser.uid,
+        };
+        setCurrentUser(user);
+        if (centerData) {
+          const c = {
+            name: centerData.name || '',
+            logo: centerData.logo || '',
+            color: centerData.color || '#1a56db',
+            type: centerData.type || '',
+            phone: centerData.phone || '',
+            configured: centerData.isSetup || false
+          };
+          setCenter(c);
+          applyTheme(c.color);
+          document.title = c.name || 'نظام إدارة المركز';
+          setScreen(centerData.isSetup ? 'app' : 'setup');
+        } else {
+          setScreen('setup');
+        }
+      } else {
+        setCurrentUser(null);
+        setScreen('login');
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  async function loadCenterData(centerId) {
+    const centerData = await getCenterSettings(centerId);
+    if (centerData) {
+      const c = {
+        name: centerData.name || '',
+        logo: centerData.logo || '',
+        color: centerData.color || '#1a56db',
+        type: centerData.type || '',
+        phone: centerData.phone || '',
+        configured: centerData.isSetup || false
+      };
+      setCenter(c);
+      applyTheme(c.color);
+      document.title = c.name || 'نظام إدارة المركز';
+    }
+  }
+
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); setSearchOpen(true); }
+      if (e.key === 'Escape') setSearchOpen(false);
+    };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []);
-
-  const persistConfig = useCallback((newCenter, newFb) => {
-    localStorage.setItem(CFG_KEY, JSON.stringify({ center: newCenter, firebase: newFb || {} }));
-    setCenter(newCenter);
-    setFbCfg(newFb || {});
-    applyTheme(newCenter.color);
-    document.title = newCenter.name || 'نظام إدارة المركز المتكامل';
   }, []);
 
   const toast = useCallback((msg, type = 'ok') => {
@@ -87,41 +129,58 @@ export function AppProvider({ children }) {
   }, []);
 
   const login = useCallback((user) => {
+    if (user.role !== 'manager') {
+      localStorage.setItem('scs_session', JSON.stringify(user));
+    }
     setCurrentUser(user);
     setScreen('app');
     setActiveView('dash');
+    loadCenterData(user.centerId);
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try { await signOutUser(); } catch(e) {}
+    localStorage.removeItem('scs_session');
+    localStorage.removeItem('userPerms');
     setCurrentUser(null);
+    setCenter({ name:'', logo:'', color:'#1a56db', configured:false });
     setScreen('login');
   }, []);
 
-  const go = useCallback((view) => {
-    setActiveView(view);
-  }, []);
+  const go = useCallback((view) => setActiveView(view), []);
 
-  const resetCenter = useCallback(() => {
-    if (currentUser?.role !== 'manager') { toast('⚠️ إعادة الإعداد متاحة للمدير الرئيسي فقط', 'er'); return; }
-    if (!window.confirm('⚠️ تحذير: هل أنت متأكد من إعادة إعداد المركز؟\nسيتم مسح إعدادات المركز فقط — البيانات ستبقى في Firebase.')) return;
-    if (!window.confirm('🔴 تأكيد نهائي: هل تريد المتابعة؟\nلا يمكن التراجع عن هذا الإجراء.')) return;
-    localStorage.removeItem(CFG_KEY);
-    window.location.reload();
-  }, [currentUser, toast]);
+  const updateCenterData = useCallback((newCenter) => {
+    setCenter(newCenter);
+    applyTheme(newCenter.color);
+    document.title = newCenter.name || 'نظام إدارة المركز';
+  }, []);
 
   const updateCenterColor = useCallback((color) => {
     applyTheme(color);
-    const updated = { ...center, color };
-    setCenter(updated);
-    persistConfig(updated, fbCfg);
-  }, [center, fbCfg, persistConfig]);
+    setCenter(prev => ({ ...prev, color }));
+  }, []);
+
+  const persistConfig = useCallback((newCenter) => {
+    updateCenterData(newCenter);
+  }, [updateCenterData]);
+
+  const resetCenter = useCallback(() => {
+    if (currentUser?.role !== 'manager') {
+      toast('⚠️ إعادة الإعداد متاحة للمدير الرئيسي فقط', 'er');
+      return;
+    }
+    if (!window.confirm('⚠️ هل أنت متأكد من تسجيل الخروج وإعادة الإعداد؟')) return;
+    logout();
+  }, [currentUser, toast, logout]);
 
   return (
     <AppContext.Provider value={{
-      screen, center, fbCfg, currentUser, activeView, darkMode,
-      toasts, searchOpen, fbReady,
+      screen, center, currentUser, activeView, darkMode,
+      toasts, searchOpen,
+      fbCfg: {}, fbReady: true,
       setScreen, persistConfig, login, logout, go, toast,
-      toggleDark, setSearchOpen, resetCenter, updateCenterColor, applyTheme
+      toggleDark, setSearchOpen, resetCenter, updateCenterColor,
+      updateCenterData, applyTheme, loadCenterData
     }}>
       {children}
     </AppContext.Provider>

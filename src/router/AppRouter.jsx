@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import Dashboard from '../pages/Dashboard';
 import Calendar from '../pages/Calendar';
@@ -11,6 +12,22 @@ import Settings from '../pages/Settings';
 
 export default function AppRouter() {
   const { activeView, currentUser } = useApp();
+  
+  // مزامنة البيانات من Firebase عند الدخول
+  useEffect(() => {
+    if (!currentUser?.centerId) return;
+    const centerId = currentUser.centerId;
+    const keys = [
+      'students','employees','sessions','appointments','iepGoals',
+      'attStu','attEmp','income','expenses','salaries','leaves',
+      'calEvents','centerActivities','parentInteractions','consultations',
+      'evaluations','warnings','stuReports','behaviorPlans',
+      'studentFees','payments','notifs','manualAlerts','users'
+    ];
+    import('../hooks/useStorage').then(({ syncFromFirebase }) => {
+      syncFromFirebase(centerId, keys).catch(console.warn);
+    });
+  }, [currentUser?.centerId]);
   
   // Get user permissions
   const userPerms = JSON.parse(localStorage.getItem('userPerms')||'{}');

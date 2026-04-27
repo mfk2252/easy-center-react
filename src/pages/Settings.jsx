@@ -51,10 +51,26 @@ export default function Settings() {
 
   function reloadUsers() { setUsers(lsGet('users')); }
 
-  function saveCenter() {
-    const updated = { ...center, ...centerForm };
-    persistConfig(updated, fbCfg);
-    toast('✅ تم حفظ بيانات المركز', 'ok');
+  async function saveCenter() {
+    const updated = { ...center, ...centerForm, configured: true };
+    try {
+      const centerId = currentUser?.centerId || currentUser?.uid;
+      if (centerId) {
+        const { updateCenterSettings } = await import('../firebase/db');
+        await updateCenterSettings(centerId, {
+          name: centerForm.name,
+          type: centerForm.type,
+          phone: centerForm.phone,
+          logo: centerForm.logo,
+          isSetup: true
+        });
+        if (centerForm.logo) localStorage.setItem('scs_center_logo', centerForm.logo);
+      }
+      persistConfig(updated);
+      toast('✅ تم حفظ بيانات المركز', 'ok');
+    } catch(e) {
+      toast('❌ حدث خطأ في الحفظ', 'er');
+    }
   }
 
   function handleCenterLogo(e) {
@@ -71,30 +87,53 @@ export default function Settings() {
     toast('✅ تم حفظ اللون', 'ok');
   }
 
-  function saveUser() {
+  async function saveUser() {
     if (!userForm.username.trim() || !userForm.name.trim()) { toast('⚠️ أدخل اسم المستخدم والاسم الكامل','er'); return; }
     const existing = users.find(u=>u.username===userForm.username.trim() && u.id !== editUserId);
     if (existing) { toast('⚠️ اسم المستخدم موجود مسبقاً','er'); return; }
     if (!editUserId && !userForm.password) { toast('⚠️ أدخل كلمة المرور','er'); return; }
+    
+    const centerId = currentUser?.centerId || currentUser?.uid;
     const userData = {
       ...userForm,
-      permissions: userForm.permissions || {dash:true, students:true}
+      centerId,
+      permissions: userForm.permissions || {dash:true, students:true},
+      active: true
     };
-    if (editUserId) { 
-      lsUpd('users',editUserId,userData); 
-      toast('✅ تم التحديث','ok'); 
-    } else { 
-      lsAdd('users',{...userData,id:uid()}); 
-      toast('✅ تم إضافة المستخدم','ok'); 
+    
+    try {
+      if (editUserId) { 
+        // تحديث في Firebase
+        const { updateUser } = await import('../firebase/db');
+        await updateUser(editUserId, userData);
+        lsUpd('users', editUserId, userData); 
+        toast('✅ تم التحديث','ok'); 
+      } else { 
+        // إضافة في Firebase
+        const { createUser } = await import('../firebase/db');
+        const newId = await createUser(centerId, userData);
+        lsAdd('users', {...userData, id: newId}); 
+        toast('✅ تم إضافة المستخدم','ok'); 
+      }
+      setShowUserForm(false); 
+      reloadUsers();
+    } catch(e) {
+      toast('❌ حدث خطأ في الحفظ','er');
     }
-    setShowUserForm(false); 
-    reloadUsers();
   }
 
-  function delUser(id) {
+  async function delUser(id) {
     if (id === currentUser?.id) { toast('⚠️ لا يمكنك حذف حسابك الحالي','er'); return; }
     if (!window.confirm('حذف هذا المستخدم؟')) return;
-    lsDel('users',id); reloadUsers(); toast('🗑️ تم الحذف','ok');
+    try {
+      const { deleteUser } = await import('../firebase/db');
+      await deleteUser(id);
+      lsDel('users', id); 
+      reloadUsers(); 
+      toast('🗑️ تم الحذف','ok');
+    } catch(e) {
+      toast('❌ حدث خطأ في الحذف','er');
+    }
   }
 
   // Google Drive functions
