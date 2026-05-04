@@ -3,16 +3,25 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { getCenterSettings } from '../firebase/db';
 import { signOutUser } from '../firebase/auth';
+import { syncFromFirebase } from '../hooks/useStorage';
 
 const AppContext = createContext(null);
+
+const ALL_KEYS = [
+  'students','employees','sessions','appointments','iepGoals',
+  'attStu','attEmp','income','expenses','salaries','leaves',
+  'calEvents','centerActivities','parentInteractions','consultations',
+  'evaluations','warnings','stuReports','behaviorPlans',
+  'studentFees','payments','notifs','manualAlerts','users'
+];
 
 function applyTheme(color) {
   if (!color) return;
   document.documentElement.style.setProperty('--pr', color);
-  const h = color.replace('#', '');
-  const r = parseInt(h.substr(0,2),16), g = parseInt(h.substr(2,2),16), b = parseInt(h.substr(4,2),16);
-  document.documentElement.style.setProperty('--pr-d', `rgb(${Math.max(0,r-35)},${Math.max(0,g-35)},${Math.max(0,b-35)})`);
-  document.documentElement.style.setProperty('--pr-l', `rgba(${r},${g},${b},0.1)`);
+  const h = color.replace('#','');
+  const r=parseInt(h.substr(0,2),16), g=parseInt(h.substr(2,2),16), b=parseInt(h.substr(4,2),16);
+  document.documentElement.style.setProperty('--pr-d',`rgb(${Math.max(0,r-35)},${Math.max(0,g-35)},${Math.max(0,b-35)})`);
+  document.documentElement.style.setProperty('--pr-l',`rgba(${r},${g},${b},0.1)`);
 }
 
 export function AppProvider({ children }) {
@@ -23,6 +32,7 @@ export function AppProvider({ children }) {
   const [darkMode, setDarkMode] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const toastTimers = useRef({});
 
   useEffect(() => {
@@ -30,52 +40,55 @@ export function AppProvider({ children }) {
     if (dm) { document.body.classList.add('dark'); setDarkMode(true); }
     const fs = localStorage.getItem('scs_fontsize');
     const fw = localStorage.getItem('scs_fontweight');
-    if (fs) document.documentElement.style.setProperty('--fs', fs + 'px');
+    if (fs) document.documentElement.style.setProperty('--fs', fs+'px');
     if (fw) document.documentElement.style.setProperty('--fw', fw);
   }, []);
 
   useEffect(() => {
+    // فحص جلسة موظف محفوظة
     const savedSession = (() => {
       try { return JSON.parse(localStorage.getItem('scs_session') || 'null'); }
       catch(e) { return null; }
     })();
 
-    if (savedSession && savedSession.centerId) {
+    if (savedSession?.centerId) {
       setCurrentUser(savedSession);
+      localStorage.setItem('scs_current_uid', savedSession.centerId);
       loadCenterData(savedSession.centerId);
-      setScreen('app');
+      // مزامنة للموظف
+      syncFromFirebase(savedSession.centerId, ALL_KEYS).then(() => {
+        setScreen('app');
+      }).catch(() => setScreen('app'));
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const centerData = await getCenterSettings(firebaseUser.uid);
+    // مراقبة Google Auth
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        localStorage.setItem('scs_current_uid', fbUser.uid);
+        
         const user = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          name: firebaseUser.displayName || 'المدير',
-          photo: firebaseUser.photoURL,
+          uid: fbUser.uid,
+          email: fbUser.email,
+          name: fbUser.displayName || 'المدير',
+          photo: fbUser.photoURL,
           role: 'manager',
-          centerId: firebaseUser.uid,
+          centerId: fbUser.uid,
         };
         setCurrentUser(user);
-        if (centerData) {
-          const c = {
-            name: centerData.name || '',
-            logo: centerData.logo || '',
-            color: centerData.color || '#1a56db',
-            type: centerData.type || '',
-            phone: centerData.phone || '',
-            configured: centerData.isSetup || false
-          };
-          setCenter(c);
-          applyTheme(c.color);
-          document.title = c.name || 'نظام إدارة المركز';
-          setScreen(centerData.isSetup ? 'app' : 'setup');
+
+        const centerData = await getCenterSettings(fbUser.uid);
+        if (centerData?.isSetup) {
+          applyCenter(centerData);
+          // مزامنة البيانات من Firebase تلقائياً
+          setSyncing(true);
+          syncFromFirebase(fbUser.uid, ALL_KEYS)
+            .finally(() => { setSyncing(false); setScreen('app'); });
         } else {
           setScreen('setup');
         }
       } else {
+        localStorage.removeItem('scs_current_uid');
         setCurrentUser(null);
         setScreen('login');
       }
@@ -84,64 +97,70 @@ export function AppProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
+  function applyCenter(data) {
+    const c = {
+      name: data.name || '',
+      logo: data.logo || '',
+      color: data.color || '#1a56db',
+      type: data.type || '',
+      phone: data.phone || '',
+      configured: data.isSetup || false
+    };
+    setCenter(c);
+    applyTheme(c.color);
+    document.title = c.name || 'نظام إدارة المركز';
+  }
+
   async function loadCenterData(centerId) {
-    const centerData = await getCenterSettings(centerId);
-    if (centerData) {
-      const c = {
-        name: centerData.name || '',
-        logo: centerData.logo || '',
-        color: centerData.color || '#1a56db',
-        type: centerData.type || '',
-        phone: centerData.phone || '',
-        configured: centerData.isSetup || false
-      };
-      setCenter(c);
-      applyTheme(c.color);
-      document.title = c.name || 'نظام إدارة المركز';
-    }
+    const data = await getCenterSettings(centerId);
+    if (data) applyCenter(data);
   }
 
   useEffect(() => {
     const handler = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); setSearchOpen(true); }
-      if (e.key === 'Escape') setSearchOpen(false);
+      if ((e.ctrlKey||e.metaKey)&&e.key==='k') { e.preventDefault(); setSearchOpen(true); }
+      if (e.key==='Escape') setSearchOpen(false);
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  const toast = useCallback((msg, type = 'ok') => {
-    const id = Date.now() + Math.random();
-    setToasts(prev => [...prev, { id, msg, type }]);
+  const toast = useCallback((msg, type='ok') => {
+    const id = Date.now()+Math.random();
+    setToasts(prev=>[...prev,{id,msg,type}]);
     toastTimers.current[id] = setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
+      setToasts(prev=>prev.filter(t=>t.id!==id));
       delete toastTimers.current[id];
     }, 3500);
   }, []);
 
   const toggleDark = useCallback(() => {
     setDarkMode(d => {
-      const next = !d;
-      document.body.classList.toggle('dark', next);
-      localStorage.setItem('darkMode', next ? '1' : '0');
+      const next=!d;
+      document.body.classList.toggle('dark',next);
+      localStorage.setItem('darkMode',next?'1':'0');
       return next;
     });
   }, []);
 
-  const login = useCallback((user) => {
+  const login = useCallback(async (user) => {
     if (user.role !== 'manager') {
       localStorage.setItem('scs_session', JSON.stringify(user));
     }
+    localStorage.setItem('scs_current_uid', user.centerId);
     setCurrentUser(user);
-    setScreen('app');
-    setActiveView('dash');
-    loadCenterData(user.centerId);
+    await loadCenterData(user.centerId);
+    // مزامنة عند الدخول
+    setSyncing(true);
+    syncFromFirebase(user.centerId, ALL_KEYS)
+      .finally(() => { setSyncing(false); setScreen('app'); setActiveView('dash'); });
   }, []);
 
   const logout = useCallback(async () => {
     try { await signOutUser(); } catch(e) {}
     localStorage.removeItem('scs_session');
     localStorage.removeItem('userPerms');
+    localStorage.removeItem('scs_current_uid');
     setCurrentUser(null);
     setCenter({ name:'', logo:'', color:'#1a56db', configured:false });
     setScreen('login');
@@ -149,38 +168,44 @@ export function AppProvider({ children }) {
 
   const go = useCallback((view) => setActiveView(view), []);
 
-  const updateCenterData = useCallback((newCenter) => {
-    setCenter(newCenter);
-    applyTheme(newCenter.color);
-    document.title = newCenter.name || 'نظام إدارة المركز';
+  const updateCenterData = useCallback((c) => {
+    setCenter(c);
+    applyTheme(c.color);
+    document.title = c.name || 'نظام إدارة المركز';
   }, []);
 
   const updateCenterColor = useCallback((color) => {
     applyTheme(color);
-    setCenter(prev => ({ ...prev, color }));
+    setCenter(prev=>({...prev,color}));
   }, []);
 
-  const persistConfig = useCallback((newCenter) => {
-    updateCenterData(newCenter);
-  }, [updateCenterData]);
+  const persistConfig = useCallback((c) => updateCenterData(c), [updateCenterData]);
 
   const resetCenter = useCallback(() => {
-    if (currentUser?.role !== 'manager') {
-      toast('⚠️ إعادة الإعداد متاحة للمدير الرئيسي فقط', 'er');
-      return;
-    }
-    if (!window.confirm('⚠️ هل أنت متأكد من تسجيل الخروج وإعادة الإعداد؟')) return;
+    if (currentUser?.role!=='manager') { toast('⚠️ للمدير فقط','er'); return; }
+    if (!window.confirm('هل تريد تسجيل الخروج؟')) return;
     logout();
   }, [currentUser, toast, logout]);
+
+  // شاشة المزامنة
+  if (syncing) {
+    return (
+      <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',background:'var(--bg)',flexDirection:'column',gap:16}}>
+        <div style={{fontSize:'3rem'}}>☁️</div>
+        <div style={{fontWeight:700,fontSize:'1.1rem'}}>جارٍ مزامنة البيانات...</div>
+        <div style={{color:'var(--g5)',fontSize:'.85rem'}}>يتم جلب بياناتك من Firebase</div>
+      </div>
+    );
+  }
 
   return (
     <AppContext.Provider value={{
       screen, center, currentUser, activeView, darkMode,
-      toasts, searchOpen,
-      fbCfg: {}, fbReady: true,
+      toasts, searchOpen, syncing,
+      fbCfg:{}, fbReady:true,
       setScreen, persistConfig, login, logout, go, toast,
       toggleDark, setSearchOpen, resetCenter, updateCenterColor,
-      updateCenterData, applyTheme, loadCenterData
+      updateCenterData, applyTheme, loadCenterData, syncFromFirebase: () => syncFromFirebase(currentUser?.centerId, ALL_KEYS)
     }}>
       {children}
     </AppContext.Provider>

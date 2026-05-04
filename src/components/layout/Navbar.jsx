@@ -1,5 +1,6 @@
 import { useApp } from '../../context/AppContext';
 import { canSeeTab } from '../../utils/permissions';
+import { syncFromFirebase, getCenterId } from '../../hooks/useStorage';
 
 const NAV_ITEMS = [
   { id:'dash',       label:'📊 الرئيسية' },
@@ -13,9 +14,28 @@ const NAV_ITEMS = [
   { id:'settings',   label:'⚙️ الإعدادات' },
 ];
 
+const ALL_KEYS = [
+  'students','employees','sessions','appointments','iepGoals',
+  'attStu','attEmp','income','expenses','salaries','leaves',
+  'calEvents','centerActivities','parentInteractions','consultations',
+  'evaluations','warnings','stuReports','behaviorPlans',
+  'studentFees','payments','notifs','manualAlerts','users'
+];
+
 export default function Navbar() {
-  const { center, currentUser, activeView, go, logout, toggleDark, darkMode, setSearchOpen, fbReady } = useApp();
+  const { center, currentUser, activeView, go, logout, toggleDark, darkMode, setSearchOpen } = useApp();
   const role = currentUser?.role || '';
+
+  async function handleSync() {
+    const centerId = currentUser?.centerId || getCenterId();
+    if (!centerId) { alert('سجّل دخولك أولاً'); return; }
+    try {
+      await syncFromFirebase(centerId, ALL_KEYS);
+      window.location.reload();
+    } catch(e) {
+      alert('حدث خطأ في المزامنة');
+    }
+  }
 
   return (
     <nav className="nav no-print">
@@ -27,7 +47,7 @@ export default function Navbar() {
         }
       </div>
 
-      {/* Nav buttons */}
+      {/* Nav Items */}
       {NAV_ITEMS.filter(item => canSeeTab(role, item.id)).map(item => (
         <button
           key={item.id}
@@ -40,10 +60,15 @@ export default function Navbar() {
 
       <div className="spacer"/>
 
-      {/* Firebase sync status */}
-      <span className="nav-sync" title={fbReady ? 'متصل بـ Firebase' : 'وضع محلي'}>
-        {fbReady ? '☁️ متزامن' : '💾 محلي'}
-      </span>
+      {/* Sync button */}
+      <button
+        className="nav-sync no-print"
+        title="مزامنة البيانات مع Firebase"
+        onClick={handleSync}
+        style={{cursor:'pointer',background:'none',border:'none',padding:'4px 8px',borderRadius:6,fontSize:'.8rem',color:'var(--g5)'}}
+      >
+        ☁️ متزامن
+      </button>
 
       {/* Search */}
       <button className="nav-icon-btn no-print" onClick={() => setSearchOpen(true)} title="بحث شامل (Ctrl+K)">🔍</button>

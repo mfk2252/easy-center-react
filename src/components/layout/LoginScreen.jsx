@@ -11,7 +11,6 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  // تسجيل الدخول بـ Google (للمدير)
   async function handleGoogleSignIn() {
     setGoogleLoading(true);
     setErr('');
@@ -27,7 +26,6 @@ export default function LoginScreen() {
     }
   }
 
-  // تسجيل الدخول بـ username/password (للموظفين)
   async function handleLogin() {
     setErr('');
     if (!username.trim()) { setErr('يرجى إدخال اسم المستخدم'); return; }
@@ -35,8 +33,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       const user = await signInWithCredentials(username, password);
-      const userPerms = user.permissions || {};
-      localStorage.setItem('userPerms', JSON.stringify(userPerms));
+      localStorage.setItem('userPerms', JSON.stringify(user.permissions || {}));
       toast('✅ مرحباً ' + user.name, 'ok');
       login(user);
     } catch(e) {
@@ -46,42 +43,32 @@ export default function LoginScreen() {
     }
   }
 
-  const bgImg = localStorage.getItem('scs_login_bg');
-
   return (
-    <div className="login-wrap" style={bgImg ? { backgroundImage:`url(${bgImg})`, backgroundSize:'cover', backgroundPosition:'center' } : {}}>
+    <div className="login-wrap">
       <div className="login-card">
-        {/* Logo */}
         <div className="login-logo">
-          {(() => { const logo = localStorage.getItem('scs_center_logo'); return logo ? <img src={logo} alt="logo" style={{height:64, borderRadius:12, marginBottom:4}} /> : <div style={{fontSize:'2.5rem', marginBottom:4}}>🏥</div>; })()}
+          <div style={{fontSize:'2.5rem',marginBottom:4}}>🏥</div>
         </div>
 
         <h1 className="login-title">نظام إدارة المركز</h1>
         <p className="login-sub">منصة إدارية متكاملة للمراكز التعليمية والتأهيلية</p>
 
-        {/* Google Sign In - للمدير */}
+        {/* Google - للمدير */}
         <div style={{marginBottom:20}}>
-          <p style={{textAlign:'center', fontSize:'.8rem', color:'var(--g4)', marginBottom:10}}>
-            🔑 للمديرين: سجّل دخولك بـ Google
+          <p style={{textAlign:'center',fontSize:'.8rem',color:'var(--g4)',marginBottom:10}}>
+            🔑 للمديرين: سجّل دخولك بحساب Google
           </p>
-          <button
-            onClick={handleGoogleSignIn}
-            disabled={googleLoading}
-            style={{
-              width:'100%', padding:'12px 16px',
-              background:'white', border:'1px solid #dadce0',
-              borderRadius:10, cursor: googleLoading ? 'wait' : 'pointer',
-              display:'flex', alignItems:'center', justifyContent:'center',
-              gap:10, fontSize:'.9rem', fontFamily:'Tajawal,sans-serif',
-              fontWeight:700, color:'#3c4043',
-              boxShadow:'0 1px 4px rgba(0,0,0,0.12)',
-              transition:'box-shadow 0.2s',
-              opacity: googleLoading ? 0.7 : 1
-            }}
-          >
-            {googleLoading ? (
-              <span>⏳ جارٍ التحميل...</span>
-            ) : (
+          <button onClick={handleGoogleSignIn} disabled={googleLoading} style={{
+            width:'100%', padding:'12px 16px', background:'white',
+            border:'1px solid #dadce0', borderRadius:10,
+            cursor: googleLoading ? 'wait' : 'pointer',
+            display:'flex', alignItems:'center', justifyContent:'center',
+            gap:10, fontSize:'.9rem', fontFamily:'Tajawal,sans-serif',
+            fontWeight:700, color:'#3c4043',
+            boxShadow:'0 1px 4px rgba(0,0,0,0.12)',
+            opacity: googleLoading ? 0.7 : 1
+          }}>
+            {googleLoading ? '⏳ جارٍ التحميل...' : (
               <>
                 <svg width="20" height="20" viewBox="0 0 48 48">
                   <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -96,58 +83,41 @@ export default function LoginScreen() {
         </div>
 
         {/* Divider */}
-        <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:20}}>
-          <div style={{flex:1, height:1, background:'var(--g2)'}}/>
-          <span style={{fontSize:'.75rem', color:'var(--g4)'}}>أو للموظفين وأولياء الأمور</span>
-          <div style={{flex:1, height:1, background:'var(--g2)'}}/>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20}}>
+          <div style={{flex:1,height:1,background:'var(--g2)'}}/>
+          <span style={{fontSize:'.75rem',color:'var(--g4)'}}>أو للموظفين وأولياء الأمور</span>
+          <div style={{flex:1,height:1,background:'var(--g2)'}}/>
         </div>
 
-        {/* Username/Password - للموظفين */}
         {err && <div className="login-err">⚠️ {err}</div>}
 
         <div className="fl" style={{marginBottom:12}}>
           <label>اسم المستخدم</label>
-          <input
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            placeholder="أدخل اسم المستخدم"
-            autoComplete="username"
-            onKeyDown={e => e.key === 'Enter' && handleLogin()}
-          />
+          <input value={username} onChange={e=>setUsername(e.target.value)}
+            placeholder="أدخل اسم المستخدم" autoComplete="username"
+            onKeyDown={e=>e.key==='Enter'&&handleLogin()}/>
         </div>
 
-        <div className="fl" style={{position:'relative', marginBottom:16}}>
+        <div className="fl" style={{position:'relative',marginBottom:16}}>
           <label>كلمة المرور</label>
-          <input
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            type={showPass ? 'text' : 'password'}
-            placeholder="••••••••"
+          <input value={password} onChange={e=>setPassword(e.target.value)}
+            type={showPass?'text':'password'} placeholder="••••••••"
             autoComplete="current-password"
-            onKeyDown={e => e.key === 'Enter' && handleLogin()}
-            style={{paddingLeft:40}}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPass(s => !s)}
-            style={{position:'absolute', left:10, bottom:8, background:'none', border:'none', cursor:'pointer', color:'var(--g4)', fontSize:'1rem'}}
-          >
-            {showPass ? '🙈' : '👁️'}
+            onKeyDown={e=>e.key==='Enter'&&handleLogin()}
+            style={{paddingLeft:40}}/>
+          <button type="button" onClick={()=>setShowPass(s=>!s)}
+            style={{position:'absolute',left:10,bottom:8,background:'none',border:'none',cursor:'pointer',color:'var(--g4)',fontSize:'1rem'}}>
+            {showPass?'🙈':'👁️'}
           </button>
         </div>
 
-        <button
-          className="login-btn"
-          onClick={handleLogin}
-          disabled={loading}
-        >
+        <button className="login-btn" onClick={handleLogin} disabled={loading}>
           {loading ? '⏳ جارٍ الدخول...' : 'دخول ←'}
         </button>
 
-        {/* Info */}
-        <div style={{marginTop:20, padding:'12px', background:'var(--g0)', borderRadius:8, fontSize:'.75rem', color:'var(--g5)', textAlign:'center', lineHeight:1.8}}>
-          <strong>للمدير:</strong> استخدم تسجيل الدخول بـ Google<br/>
-          <strong>للموظفين:</strong> استخدم اسم المستخدم وكلمة المرور
+        <div style={{marginTop:20,padding:'12px',background:'var(--g0)',borderRadius:8,fontSize:'.75rem',color:'var(--g5)',textAlign:'center',lineHeight:1.8}}>
+          <strong>المدير:</strong> تسجيل الدخول بـ Google<br/>
+          <strong>الموظفون:</strong> اسم المستخدم وكلمة المرور
         </div>
       </div>
     </div>
