@@ -5,6 +5,7 @@ import Navbar from './components/layout/Navbar';
 import GlobalSearch from './components/layout/GlobalSearch';
 import Toast from './components/layout/Toast';
 import AppRouter from './router/AppRouter';
+import InstallPWA from './components/ui/InstallPWA';
 
 export default function App() {
   const { screen, center } = useApp();
@@ -35,6 +36,7 @@ export default function App() {
       </div>
       <GlobalSearch/>
       <Toast/>
+      <InstallPWA/>
     </>
   );
 }

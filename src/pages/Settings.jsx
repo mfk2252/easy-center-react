@@ -159,13 +159,15 @@ export default function Settings() {
   ];
 
   return (
-    <div className="ph">
-      <div className="ph-t">
-        <h2>⚙️ الإعدادات</h2>
-        <p>إدارة النظام والمستخدمين</p>
+    <div>
+      <div className="ph">
+        <div className="ph-t">
+          <h2>⚙️ الإعدادات</h2>
+          <p>إدارة النظام والمستخدمين</p>
+        </div>
       </div>
 
-      <div className="tabs" style={{flexWrap:'wrap',marginBottom:16}}>
+      <div className="tabs" style={{flexWrap:'wrap',marginBottom:20}}>
         {TABS.map(([v,l])=>(
           <button key={v} type="button" className={`tab ${tab===v?'on':''}`} onClick={()=>setTab(v)}>{l}</button>
         ))}

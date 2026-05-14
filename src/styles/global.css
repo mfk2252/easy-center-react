@@ -145,3 +145,110 @@ body.dark .sw-sec{background:var(--bg-input);border-color:var(--border-color);}
     page-break-inside: avoid;
   }
 }
+
+/* ===== تحسينات التجاوب الشاملة ===== */
+
+/* الشاشات الكبيرة */
+@media (min-width: 1200px) {
+  .page { padding: 20px 24px; }
+  .g2 { grid-template-columns: repeat(3, 1fr); }
+  .g3 { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* الشاشات المتوسطة */
+@media (max-width: 900px) {
+  .g2 { grid-template-columns: repeat(2, 1fr); }
+  .g3 { grid-template-columns: repeat(2, 1fr); }
+  .nav { gap: 2px; padding: 6px 8px; }
+  .nb { padding: 6px 8px; font-size: .72rem; }
+}
+
+/* الشاشات الصغيرة (موبايل) */
+@media (max-width: 640px) {
+  .page { padding: 12px 10px; }
+  .g2, .g3 { grid-template-columns: 1fr; }
+  .fg.c2, .fg.c3 { grid-template-columns: 1fr; }
+  
+  /* Header */
+  .ph { flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
+  .ph-t h2 { font-size: 1rem; }
+  .ph-a { width: 100%; }
+  .ph-a .btn { flex: 1; justify-content: center; }
+  
+  /* Tabs */
+  .tabs { gap: 4px; padding: 3px; }
+  .tab { font-size: .72rem; padding: 6px 8px; }
+  
+  /* Cards */
+  .card { padding: 12px; }
+  .c-head { gap: 8px; }
+  .c-av { width: 36px; height: 36px; font-size: .9rem; }
+  .c-name { font-size: .88rem; }
+  .c-sub { font-size: .72rem; }
+  
+  /* Widgets */
+  .wg-h { padding: 10px 14px; }
+  .wg-h h3 { font-size: .9rem; }
+  .wg-b { padding: 12px 14px; }
+  
+  /* Stats */
+  .sc { padding: 12px; }
+  .sc .vl { font-size: 1.6rem; }
+  
+  /* Forms */
+  .fl label { font-size: .8rem; }
+  .fl input, .fl select, .fl textarea { font-size: .88rem; padding: 8px 10px; }
+  
+  /* Modals */
+  .mbg { align-items: flex-end; padding: 0; }
+  .mb, .mb-sm, .mb-large, .mb-xl { 
+    width: 100vw !important;
+    max-width: 100vw !important;
+    border-radius: 16px 16px 0 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Buttons */
+  .btn { padding: 7px 12px; font-size: .8rem; }
+  .fa { padding: 12px 14px; gap: 8px; }
+  .fa .btn { flex: 1; justify-content: center; }
+  
+  /* Nav */
+  .nav { 
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-brand { min-width: 36px; }
+  .nav-logout { padding: 6px 10px; font-size: .75rem; }
+  .dark-toggle { padding: 6px 8px; }
+  
+  /* Tables */
+  table { font-size: .8rem; }
+  th, td { padding: 8px 6px; }
+  
+  /* Settings specific */
+  .settings-grid { grid-template-columns: 1fr !important; }
+}
+
+/* إصلاح Navbar على الموبايل */
+@media (max-width: 768px) {
+  .nav {
+    padding: 6px 8px;
+    gap: 2px;
+  }
+  .nb {
+    padding: 6px 8px;
+    font-size: .72rem;
+    white-space: nowrap;
+  }
+  .nav-sync { display: none; }
+}
+
+/* إصلاح الطباعة */
+@media print {
+  .nav, .no-print, .tabs, .ph-a { display: none !important; }
+  .page { padding: 0; }
+  .wg { box-shadow: none; border: 1px solid #ddd; }
+}
