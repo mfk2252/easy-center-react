@@ -8,6 +8,9 @@ import Programs from '../pages/Programs';
 import Reports from '../pages/Reports';
 import CenterPage from '../pages/Center/index';
 import Settings from '../pages/Settings';
+import AdminSubscriptions from '../pages/AdminSubscriptions';
+
+const ADMIN_EMAIL = 'mfekry225@gmail.com';
 
 const BlockedPage = () => (
   <div style={{padding:'60px 20px',textAlign:'center',color:'var(--err)'}}>
@@ -21,12 +24,17 @@ export default function AppRouter() {
   const { activeView, currentUser } = useApp();
 
   const isManager = currentUser?.role === 'manager' || currentUser?.role === 'vice';
+  const isAdmin = currentUser?.email === ADMIN_EMAIL;
+
   const userPerms = (() => {
     try { return JSON.parse(localStorage.getItem('userPerms') || '{}'); }
     catch(e) { return {}; }
   })();
 
   const can = (key) => isManager || userPerms[key] === true;
+
+  // صفحة المطور - إدارة الاشتراكات
+  if (activeView === 'admin' && isAdmin) return <AdminSubscriptions currentUserEmail={currentUser?.email}/>;
 
   if (activeView === 'dash')       return <Dashboard/>;
   if (activeView === 'calendar')   return can('calendar') ? <Calendar/> : <BlockedPage/>;

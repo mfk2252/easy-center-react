@@ -2,6 +2,8 @@ import { useApp } from '../../context/AppContext';
 import { canSeeTab } from '../../utils/permissions';
 import { syncFromFirebase, getCenterId } from '../../hooks/useStorage';
 
+const ADMIN_EMAIL = 'mfekry225@gmail.com';
+
 const NAV_ITEMS = [
   { id:'dash',       label:'📊 الرئيسية' },
   { id:'calendar',   label:'🗓️ التقويم' },
@@ -25,16 +27,15 @@ const ALL_KEYS = [
 export default function Navbar() {
   const { center, currentUser, activeView, go, logout, toggleDark, darkMode, setSearchOpen } = useApp();
   const role = currentUser?.role || '';
+  const isAdmin = currentUser?.email === ADMIN_EMAIL;
 
   async function handleSync() {
     const centerId = currentUser?.centerId || getCenterId();
-    if (!centerId) { alert('سجّل دخولك أولاً'); return; }
+    if (!centerId) return;
     try {
       await syncFromFirebase(centerId, ALL_KEYS);
       window.location.reload();
-    } catch(e) {
-      alert('حدث خطأ في المزامنة');
-    }
+    } catch(e) {}
   }
 
   return (
@@ -51,19 +52,31 @@ export default function Navbar() {
       {NAV_ITEMS.filter(item => canSeeTab(role, item.id)).map(item => (
         <button
           key={item.id}
-          className={`nb ${activeView === item.id || (item.id !== 'dash' && activeView.startsWith(item.id)) ? 'on' : ''}`}
+          className={`nb ${activeView===item.id || (item.id!=='dash' && activeView.startsWith(item.id)) ? 'on' : ''}`}
           onClick={() => go(item.id)}
         >
           {item.label}
         </button>
       ))}
 
+      {/* Admin button - للمطور فقط */}
+      {isAdmin && (
+        <button
+          className={`nb ${activeView==='admin'?'on':''}`}
+          onClick={() => go('admin')}
+          style={{color:'#f59e0b'}}
+          title="لوحة إدارة الاشتراكات"
+        >
+          👑 المشتركون
+        </button>
+      )}
+
       <div className="spacer"/>
 
-      {/* Sync button */}
+      {/* Sync */}
       <button
         className="nav-sync no-print"
-        title="مزامنة البيانات مع Firebase"
+        title="مزامنة البيانات"
         onClick={handleSync}
         style={{cursor:'pointer',background:'none',border:'none',padding:'4px 8px',borderRadius:6,fontSize:'.8rem',color:'var(--g5)'}}
       >
@@ -71,10 +84,10 @@ export default function Navbar() {
       </button>
 
       {/* Search */}
-      <button className="nav-icon-btn no-print" onClick={() => setSearchOpen(true)} title="بحث شامل (Ctrl+K)">🔍</button>
+      <button className="nav-icon-btn no-print" onClick={() => setSearchOpen(true)} title="بحث (Ctrl+K)">🔍</button>
 
       {/* Dark mode */}
-      <button className="dark-toggle no-print" onClick={toggleDark} title="الوضع الليلي">
+      <button className="dark-toggle no-print" onClick={toggleDark}>
         {darkMode ? '☀️' : '🌙'}
       </button>
 

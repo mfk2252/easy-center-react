@@ -6,9 +6,11 @@ import GlobalSearch from './components/layout/GlobalSearch';
 import Toast from './components/layout/Toast';
 import AppRouter from './router/AppRouter';
 import InstallPWA from './components/ui/InstallPWA';
+import SubscriptionScreen from './components/layout/SubscriptionScreen';
+import TrialBanner from './components/layout/TrialBanner';
 
 export default function App() {
-  const { screen, center } = useApp();
+  const { screen, center, subscriptionStatus } = useApp();
 
   if (screen === 'loading') {
     return (
@@ -21,11 +23,25 @@ export default function App() {
     );
   }
 
-  if (screen === 'setup') return <SetupWizard/>;
   if (screen === 'login') return <LoginScreen/>;
+  if (screen === 'setup') return <SetupWizard/>;
+
+  // اشتراك منتهي
+  if (screen === 'subscription' || (subscriptionStatus && !subscriptionStatus.allowed)) {
+    return (
+      <SubscriptionScreen
+        reason={subscriptionStatus?.reason}
+        daysLeft={subscriptionStatus?.daysLeft}
+        message={subscriptionStatus?.message}
+      />
+    );
+  }
 
   return (
     <>
+      {/* شريط التجربة */}
+      <TrialBanner/>
+
       <div className="print-brand" aria-hidden="true">
         {center.logo ? <img src={center.logo} alt="" /> : <span style={{ fontSize: '1.75rem' }}>🏥</span>}
         <span className="print-brand-name">{center.name || 'المركز'}</span>

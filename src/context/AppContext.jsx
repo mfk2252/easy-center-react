@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { getCenterSettings } from '../firebase/db';
-import { signOutUser } from '../firebase/auth';
+import { signOutUser, checkSubscriptionStatus } from '../firebase/auth';
 import { syncFromFirebase } from '../hooks/useStorage';
 
 const AppContext = createContext(null);
@@ -33,6 +33,7 @@ export function AppProvider({ children }) {
   const [toasts, setToasts] = useState([]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
   const toastTimers = useRef({});
 
   useEffect(() => {
@@ -45,27 +46,30 @@ export function AppProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    // فحص جلسة موظف محفوظة
+    // جلسة موظف محفوظة
     const savedSession = (() => {
       try { return JSON.parse(localStorage.getItem('scs_session') || 'null'); }
       catch(e) { return null; }
     })();
 
     if (savedSession?.centerId) {
-      setCurrentUser(savedSession);
       localStorage.setItem('scs_current_uid', savedSession.centerId);
+      setCurrentUser(savedSession);
+      setSubscriptionStatus(savedSession.subscription || { allowed: true, reason: 'active' });
       loadCenterData(savedSession.centerId);
-      // مزامنة للموظف
-      syncFromFirebase(savedSession.centerId, ALL_KEYS).then(() => {
-        setScreen('app');
-      }).catch(() => setScreen('app'));
+      setSyncing(true);
+      syncFromFirebase(savedSession.centerId, ALL_KEYS)
+        .finally(() => { setSyncing(false); setScreen('app'); });
       return;
     }
 
-    // مراقبة Google Auth
+    // Google Auth
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
         localStorage.setItem('scs_current_uid', fbUser.uid);
+
+        const centerData = await getCenterSettings(fbUser.uid);
+        const subStatus = checkSubscriptionStatus(centerData);
         
         const user = {
           uid: fbUser.uid,
@@ -74,13 +78,20 @@ export function AppProvider({ children }) {
           photo: fbUser.photoURL,
           role: 'manager',
           centerId: fbUser.uid,
+          subscription: subStatus
         };
-        setCurrentUser(user);
 
-        const centerData = await getCenterSettings(fbUser.uid);
+        setCurrentUser(user);
+        setSubscriptionStatus(subStatus);
+
+        // اشتراك منتهي → شاشة الاشتراك
+        if (!subStatus.allowed) {
+          setScreen('subscription');
+          return;
+        }
+
         if (centerData?.isSetup) {
           applyCenter(centerData);
-          // مزامنة البيانات من Firebase تلقائياً
           setSyncing(true);
           syncFromFirebase(fbUser.uid, ALL_KEYS)
             .finally(() => { setSyncing(false); setScreen('app'); });
@@ -90,6 +101,7 @@ export function AppProvider({ children }) {
       } else {
         localStorage.removeItem('scs_current_uid');
         setCurrentUser(null);
+        setSubscriptionStatus(null);
         setScreen('login');
       }
     });
@@ -149,8 +161,14 @@ export function AppProvider({ children }) {
     }
     localStorage.setItem('scs_current_uid', user.centerId);
     setCurrentUser(user);
+    setSubscriptionStatus(user.subscription);
+
+    if (user.subscription && !user.subscription.allowed) {
+      setScreen('subscription');
+      return;
+    }
+
     await loadCenterData(user.centerId);
-    // مزامنة عند الدخول
     setSyncing(true);
     syncFromFirebase(user.centerId, ALL_KEYS)
       .finally(() => { setSyncing(false); setScreen('app'); setActiveView('dash'); });
@@ -162,6 +180,7 @@ export function AppProvider({ children }) {
     localStorage.removeItem('userPerms');
     localStorage.removeItem('scs_current_uid');
     setCurrentUser(null);
+    setSubscriptionStatus(null);
     setCenter({ name:'', logo:'', color:'#1a56db', configured:false });
     setScreen('login');
   }, []);
@@ -182,12 +201,10 @@ export function AppProvider({ children }) {
   const persistConfig = useCallback((c) => updateCenterData(c), [updateCenterData]);
 
   const resetCenter = useCallback(() => {
-    if (currentUser?.role!=='manager') { toast('⚠️ للمدير فقط','er'); return; }
-    if (!window.confirm('هل تريد تسجيل الخروج؟')) return;
+    if (!window.confirm('تسجيل الخروج؟')) return;
     logout();
-  }, [currentUser, toast, logout]);
+  }, [logout]);
 
-  // شاشة المزامنة
   if (syncing) {
     return (
       <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',background:'var(--bg)',flexDirection:'column',gap:16}}>
@@ -201,11 +218,11 @@ export function AppProvider({ children }) {
   return (
     <AppContext.Provider value={{
       screen, center, currentUser, activeView, darkMode,
-      toasts, searchOpen, syncing,
+      toasts, searchOpen, syncing, subscriptionStatus,
       fbCfg:{}, fbReady:true,
       setScreen, persistConfig, login, logout, go, toast,
       toggleDark, setSearchOpen, resetCenter, updateCenterColor,
-      updateCenterData, applyTheme, loadCenterData, syncFromFirebase: () => syncFromFirebase(currentUser?.centerId, ALL_KEYS)
+      updateCenterData, applyTheme, loadCenterData
     }}>
       {children}
     </AppContext.Provider>
