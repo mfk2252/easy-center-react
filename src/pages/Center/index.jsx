@@ -8,49 +8,25 @@ import EmptyState from '../../components/ui/EmptyState';
 const DOC_TYPES = { stats:'إحصائية وزارية', policy:'لائحة / سياسة', report:'تقرير', strategy:'استراتيجية', circular:'تعميم', memo:'📝 مذكرة داخلية', other:'أخرى' };
 const EXPENSE_CATS = { salary:'رواتب', rent:'إيجار', utilities:'فواتير', supplies:'مستلزمات', maintenance:'صيانة', training:'تدريب', other:'أخرى' };
 const INCOME_CATS = { fees:'رسوم طلاب', donation:'تبرعات', grant:'منح', other:'أخرى' };
-const INCOME_GROUPS = [
-  {
-    label: 'الرسوم',
-    items: [
-      'رسوم التسجيل','رسوم القبول','الرسوم الدراسية السنوية','الرسوم الفصلية','رسوم إعادة التسجيل','رسوم الملف',
-      'رسوم اختبار تحديد المستوى','رسوم الاختبارات النهائية','رسوم الشهادات','رسوم التخرج','رسوم تأخير السداد',
-      'رسوم إعادة الاختبار','رسوم إعادة المادة','رسوم الحضور الجزئي','رسوم التعليم الإلكتروني'
-    ]
-  },
-  {
-    label: 'إيرادات الخدمات',
-    items: [
-      'رسوم الباص / النقل المدرسي','اشتراك الباص الشهري','رسوم تغيير خط الباص','رسوم الرحلات','رسوم الأنشطة','رسوم النوادي',
-      'رسوم السوبر ماركت (المقصف)','رسوم الوجبات','رسوم الكتب','رسوم الزي المدرسي','رسوم الأدوات التعليمية',
-      'رسوم المختبرات','رسوم الطباعة والتصوير','رسوم المنصات الإلكترونية','رسوم الدورات الإضافية','رسوم التقوية','رسوم التدريب الصيفي'
-    ]
-  },
-  {
-    label: 'إيرادات أخرى',
-    items: [
-      'تبرعات','رعايات شركات','دعم حكومي','تأجير القاعات','تأجير الملاعب','تأجير الباصات','بيع الكتب','بيع الزي',
-      'أرباح السوبر ماركت (المقصف)','أرباح الفعاليات','غرامات التأخير','غرامات التلفيات'
-    ]
-  }
+const FINANCE_CATEGORIES = [
+  { id:'1', label:'1- رسوم الطلاب', type:'income', items:['رسوم التسجيل','رسوم القبول','الرسوم الدراسية السنوية','الرسوم الفصلية','رسوم إعادة التسجيل','رسوم الملف','رسوم اختبار تحديد المستوى','رسوم الاختبارات النهائية','رسوم الشهادات','رسوم التخرج','رسوم تأخير السداد','رسوم إعادة الاختبار','رسوم إعادة المادة','رسوم الحضور الجزئي','رسوم التعليم الإلكتروني'] },
+  { id:'2', label:'2- إيرادات الخدمات', type:'income', items:['رسوم الباص / النقل المدرسي','اشتراك الباص الشهري','رسوم تغيير خط الباص','رسوم الرحلات','رسوم الأنشطة','رسوم النوادي','رسوم السوبر ماركت (المقصف)','رسوم الوجبات','رسوم الكتب','رسوم الزي المدرسي','رسوم الأدوات التعليمية','رسوم المختبرات','رسوم الطباعة والتصوير','رسوم المنصات الإلكترونية','رسوم الدورات الإضافية','رسوم التقوية','رسوم التدريب الصيفي'] },
+  { id:'3', label:'3- إيرادات أخرى', type:'income', items:['تبرعات','رعايات شركات','دعم حكومي','تأجير القاعات','تأجير الملاعب','تأجير الباصات','بيع الكتب','بيع الزي','أرباح السوبر ماركت (المقصف)','أرباح الفعاليات','غرامات التأخير','غرامات التلفيات'] },
+  { id:'4', label:'4- الرواتب والأجور', type:'expense', items:['رواتب الموظفين','رواتب المعلمين','رواتب الإداريين','رواتب المديرين','رواتب المحاسبين','رواتب موظفي القبول والتسجيل','رواتب موظفي خدمة العملاء','رواتب المشرفين','رواتب الأمن','رواتب العمال','رواتب السائقين','رواتب المراسلين','رواتب عمال النظافة','رواتب فنيي الحاسب','رواتب فنيي المختبر','رواتب الممرضات','رواتب مسؤولي الباصات'] },
+  { id:'5', label:'5- البدلات والمزايا', type:'expense', items:['بدل سكن','بدل نقل','بدل طبيعة عمل','بدل هاتف','بدل طعام','بدل إشراف','بدل ساعات إضافية','بدل انتداب','بدل تذاكر سفر','التأمين الطبي','التأمينات الاجتماعية','مكافآت الأداء','مكافآت نهاية العام','عمولات التسجيل','مكافآت الطلاب المتفوقين','نهاية الخدمة'] },
+  { id:'6', label:'6- مصروفات الباصات والنقل', type:'expense', items:['مصروفات تشغيل الباص','رواتب السائقين','رواتب المشرفات','وقود الباصات','ديزل','بترول','صيانة الباصات','غيار الزيت','الإطارات','البطاريات','قطع الغيار','غسيل الباصات','تجديد الاستمارات','التأمين على الباصات','مخالفات المرور','أجهزة التتبع GPS','رسوم المواقف','عقود النقل الخارجي','إيجار الباصات','استهلاك الباصات'] },
+  { id:'7', label:'7- المصروفات التعليمية', type:'expense', items:['شراء الكتب','المناهج','الوسائل التعليمية','السبورات الذكية','أجهزة العرض','الطابعات','الأحبار','الأوراق','المختبرات','الأدوات العلمية','اشتراكات البرامج التعليمية','اشتراكات Zoom / Teams','تراخيص البرامج','الإنترنت','السيرفرات','الصيانة التقنية','أجهزة الكمبيوتر','أجهزة التابلت'] },
+  { id:'8', label:'8- المصروفات الإدارية والتشغيلية', type:'expense', items:['المبنى والمرافق','إيجار المبنى','إيجار الفصول','الكهرباء','الماء','الغاز','الإنترنت','الهاتف','رسوم البلدية','رسوم الدفاع المدني','رسوم التراخيص','رسوم وزارة التعليم','رسوم الغرفة التجارية','النظافة','التعقيم','مكافحة الحشرات','الأمن والحراسة','الصيانة العامة','صيانة التكييف','صيانة المصاعد','صيانة الكهرباء','صيانة السباكة','صيانة الأثاث','الأدوات المكتبية','القرطاسية','الملفات','الأحبار','أجهزة البصمة','الكاميرات','أنظمة الحضور والانصراف','أنظمة ERP','أنظمة المحاسبة'] },
+  { id:'9', label:'9- التسويق والعلاقات العامة', type:'expense', items:['إعلانات السوشيال ميديا','تصميم الجرافيك','إدارة الحسابات','تصوير الفيديو','تصوير المناسبات','الهدايا الدعائية','البنرات','اللوحات الإعلانية','الحملات التسويقية','العمولات التسويقية','المعارض التعليمية','رعاية الفعاليات'] },
+  { id:'10', label:'10- المصروفات الطلابية والأنشطة', type:'expense', items:['الرحلات','المسابقات','الحفلات','الأنشطة الرياضية','الأنشطة الفنية','الجوائز','الشهادات','الضيافة','الزي الرياضي','أدوات النشاط'] },
+  { id:'11', label:'11- الأصول والمشتريات والبنود المحاسبية والمالية', type:'expense', items:['شراء باصات','شراء سيارات','شراء أثاث','شراء مكاتب','شراء كراسي','شراء تكييفات','شراء كاميرات','شراء أجهزة كمبيوتر','شراء شاشات','إنشاء ملاعب','إنشاء مختبرات','تجهيز الفصول','أعمال الديكور','التوسعات','الذمم المدينة','أقساط الطلاب المستحقة','شيكات آجلة','ديون العملاء','مستحقات النقل','الذمم الدائنة','الموردون','فواتير غير مدفوعة','عقود الصيانة'] },
+  { id:'12', label:'12- الضرائب والالتزامات والمخصصات والتقارير', type:'expense', items:['ضريبة القيمة المضافة','ضريبة الرواتب','الزكاة (في الخليج)','التأمينات الاجتماعية','رسوم الإقامة','رسوم تجديد الإقامات','رسوم التأشيرات','مخصص نهاية الخدمة','مخصص الديون المشكوك فيها','مخصص الصيانة','مخصص الإجازات','الميزانية العمومية','قائمة الدخل','التدفقات النقدية','كشف الرواتب','تقرير الباصات','تقرير المتأخرات','تقرير المصروفات','تقرير الإيرادات','تقرير الأرباح والخسائر','تقرير أعمار الديون','ميزانية تشغيل المدرسة','ميزانية الأنشطة','ميزانية النقل'] }
 ];
-const EXPENSE_GROUPS = [
-  { label:'الرواتب والأجور', items:['رواتب الموظفين','رواتب المعلمين','رواتب الإداريين','رواتب المديرين','رواتب المحاسبين','رواتب موظفي القبول والتسجيل','رواتب موظفي خدمة العملاء','رواتب المشرفين','رواتب الأمن','رواتب العمال','رواتب السائقين','رواتب المراسلين','رواتب عمال النظافة','رواتب فنيي الحاسب','رواتب فنيي المختبر','رواتب الممرضات','رواتب مسؤولي الباصات'] },
-  { label:'البدلات والمزايا', items:['بدل سكن','بدل نقل','بدل طبيعة عمل','بدل هاتف','بدل طعام','بدل إشراف','بدل ساعات إضافية','بدل انتداب','بدل تذاكر سفر','التأمين الطبي','التأمينات الاجتماعية','مكافآت الأداء','مكافآت نهاية العام','عمولات التسجيل','مكافآت الطلاب المتفوقين','نهاية الخدمة'] },
-  { label:'مصروفات الباصات والنقل', items:['مصروفات تشغيل الباص','رواتب السائقين','رواتب المشرفات','وقود الباصات','ديزل','بنزين','صيانة الباصات','غيار الزيت','الإطارات','البطاريات','قطع الغيار','غسيل الباصات','تجديد الاستمارات','التأمين على الباصات','مخالفات المرور','أجهزة التتبع GPS','رسوم المواقف','عقود النقل الخارجي','إيجار الباصات','استهلاك الباصات'] },
-  { label:'المصروفات التعليمية', items:['شراء الكتب','المناهج','الوسائل التعليمية','السبورات الذكية','أجهزة العرض','الطابعات','الأحبار','الأوراق','المختبرات','الأدوات العلمية','اشتراكات البرامج التعليمية','اشتراكات Zoom / Teams','تراخيص البرامج','الإنترنت','السيرفرات','الصيانة التقنية','أجهزة الكمبيوتر','أجهزة التابلت'] },
-  { label:'المصروفات الإدارية والتشغيلية', items:['المبنى والمرافق','إيجار المبنى','إيجار الفصول','الكهرباء','الماء','الغاز','الإنترنت','الهاتف','رسوم البلدية','رسوم الدفاع المدني','رسوم التراخيص','رسوم وزارة التعليم','رسوم الغرفة التجارية','النظافة','التعقيم','مكافحة الحشرات','الأمن والحراسة','الصيانة العامة','صيانة التكييف','صيانة المصاعد','صيانة الكهرباء','صيانة السباكة','صيانة الأثاث','الأدوات المكتبية','القرطاسية','الملفات','الأحبار','أجهزة البصمة','الكاميرات','أنظمة الحضور والانصراف','أنظمة ERP','أنظمة المحاسبة'] },
-  { label:'التسويق والعلاقات العامة', items:['إعلانات السوشيال ميديا','تصميم الجرافيك','إدارة الحسابات','تصوير الفيديو','تصوير المناسبات','الهدايا الدعائية','البنرات','اللوحات الإعلانية','الحملات التسويقية','العمولات التسويقية','المعارض التعليمية','رعاية الفعاليات'] },
-  { label:'المصروفات الطلابية والأنشطة', items:['الرحلات','المسابقات','الحفلات','الأنشطة الرياضية','الأنشطة الفنية','الجوائز','الشهادات','الضيافة','الزي الرياضي','أدوات النشاط'] },
-  { label:'الأصول والمشتريات', items:['شراء باصات','شراء سيارات','شراء أثاث','شراء مكاتب','شراء كراسي','شراء تكييفات','شراء كاميرات','شراء أجهزة كمبيوتر','شراء شاشات','إنشاء ملاعب','إنشاء مختبرات','تجهيز الفصول','أعمال الديكور','التوسعات'] },
-  { label:'البنود المحاسبية والمالية', items:['الذمم المدينة','أقساط الطلاب المستحقة','شيكات آجلة','ديون العملاء','مستحقات النقل','الذمم الدائنة','الموردون','فواتير غير مدفوعة','عقود الصيانة','الضرائب والالتزامات','ضريبة القيمة المضافة','ضريبة الرواتب','الزكاة (في الخليج)','التأمينات الاجتماعية','رسوم الإقامة','رسوم تجديد الإقامات','رسوم التأشيرات','المخصصات','مخصص نهاية الخدمة','مخصص الديون المشكوك فيها','مخصص الصيانة','مخصص الإجازات'] },
-  { label:'التقارير المالية المستخدمة', items:['الميزانية العمومية','قائمة الدخل','التدفقات النقدية','كشف الرواتب','تقرير الباصات','تقرير المتأخرات','تقرير المصروفات','تقرير الإيرادات','تقرير الأرباح والخسائر','تقرير أعمار الديون','ميزانية تشغيل المدرسة','ميزانية الأنشطة','ميزانية النقل'] }
-];
-const FLAT_INCOME_ITEMS = [...INCOME_GROUPS.flatMap(g => g.items), 'أخرى'];
-const FLAT_EXPENSE_ITEMS = [...EXPENSE_GROUPS.flatMap(g => g.items), 'أخرى'];
+const EMPTY_FINANCE = { type:'income', categoryId:'1', categoryLabel:'1- رسوم الطلاب', itemType:'رسوم التسجيل', itemTypeOther:'', desc:'', amount:'', date:'', notes:'', fileData:'', fileName:'' };
 
 const EMPTY_DOC = { name:'', type:'stats', date:'', org:'', url:'', notes:'', fileData:'', fileName:'', audience:['all'] };
-const EMPTY_EXP = { desc:'', cat:'salary', itemType:FLAT_EXPENSE_ITEMS[0], itemTypeOther:'', amount:'', date:'', notes:'' };
-const EMPTY_INC = { desc:'', cat:'fees', itemType:FLAT_INCOME_ITEMS[0], itemTypeOther:'', amount:'', date:'', notes:'' };
+const EMPTY_EXP = { desc:'', cat:'salary', amount:'', date:'', notes:'' };
+const EMPTY_INC = { desc:'', cat:'fees', amount:'', date:'', notes:'' };
 const EMPTY_PARTNER = { name:'', type:'', contact:'', phone:'', email:'', startDate:'', notes:'' };
 const EMPTY_CUSTODY = { name:'', category:'', quantity:1, location:'', condition:'جيد', notes:'' };
 const EMPTY_VISIT = { name:'', date:'', type:'', delegation:'', purpose:'', result:'', notes:'' };
@@ -73,6 +49,7 @@ function extractParents(students) {
 
 export default function CenterPage() {
   const { toast, currentUser, go, activeView } = useApp();
+  const center = lsGet('center') || {};
   const [tab, setTab] = useState('partners');
   const isManager = currentUser?.role === 'manager';
   const canView = ['manager','vice'].includes(currentUser?.role);
@@ -108,6 +85,9 @@ export default function CenterPage() {
   const [showIncForm, setShowIncForm] = useState(false);
   const [incForm, setIncForm] = useState(EMPTY_INC);
   const [incEditId, setIncEditId] = useState(null);
+  const [showFinanceForm, setShowFinanceForm] = useState(false);
+  const [financeForm, setFinanceForm] = useState(EMPTY_FINANCE);
+  const [financeEditId, setFinanceEditId] = useState(null);
   const [showPartnerForm, setShowPartnerForm] = useState(false);
   const [partnerForm, setPartnerForm] = useState(EMPTY_PARTNER);
   const [partnerEditId, setPartnerEditId] = useState(null);
@@ -217,6 +197,72 @@ export default function CenterPage() {
     const payload = { ...incForm, desc: finalDesc };
     if (incEditId) lsUpd('income',incEditId,payload); else lsAdd('income',{...payload,id:uid()});
     toast('✅ تم حفظ الإيراد','ok'); setShowIncForm(false); reload();
+  }
+  function openFinanceByCategory(categoryId) {
+    const cat = FINANCE_CATEGORIES.find(x => x.id === String(categoryId));
+    if (!cat) return;
+    setFinanceForm({
+      ...EMPTY_FINANCE,
+      type: cat.type,
+      categoryId: cat.id,
+      categoryLabel: cat.label,
+      itemType: cat.items[0] || 'أخرى',
+      date: todayStr()
+    });
+    setFinanceEditId(null);
+    setShowFinanceForm(true);
+  }
+  function openFinanceOther() {
+    setFinanceForm({
+      ...EMPTY_FINANCE,
+      type: 'income',
+      categoryId: '13',
+      categoryLabel: '13- أخرى',
+      itemType: 'أخرى',
+      date: todayStr()
+    });
+    setFinanceEditId(null);
+    setShowFinanceForm(true);
+  }
+  function editFinanceEntry(entry, type) {
+    setFinanceForm({
+      ...EMPTY_FINANCE,
+      ...entry,
+      type,
+      categoryId: entry.categoryId || '13',
+      categoryLabel: entry.categoryLabel || '13- أخرى',
+      itemType: entry.itemType || entry.desc || 'أخرى',
+      itemTypeOther: entry.itemTypeOther || ''
+    });
+    setFinanceEditId(entry.id);
+    setShowFinanceForm(true);
+  }
+  function handleFinanceFile(e) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => setFinanceForm(v => ({ ...v, fileData: ev.target.result, fileName: f.name }));
+    r.readAsDataURL(f);
+  }
+  function saveFinanceEntry() {
+    const itemFromList = financeForm.itemType === 'أخرى' ? (financeForm.itemTypeOther || '').trim() : financeForm.itemType;
+    const finalDesc = (financeForm.desc || '').trim() || itemFromList;
+    if (!finalDesc || !financeForm.amount || !financeForm.date) { toast('⚠️ أكمل الحقول المطلوبة','er'); return; }
+    const payload = {
+      ...financeForm,
+      desc: finalDesc,
+      cat: financeForm.type === 'income' ? 'fees' : 'other'
+    };
+    if (financeForm.type === 'income') {
+      if (financeEditId && income.find(x => x.id === financeEditId)) lsUpd('income', financeEditId, payload);
+      else lsAdd('income', { ...payload, id: uid() });
+    } else {
+      if (financeEditId && expenses.find(x => x.id === financeEditId)) lsUpd('expenses', financeEditId, payload);
+      else lsAdd('expenses', { ...payload, id: uid() });
+    }
+    toast('✅ تم حفظ الحركة المالية','ok');
+    setShowFinanceForm(false);
+    reload();
   }
 
   // Partners
@@ -376,10 +422,10 @@ export default function CenterPage() {
           ) : (
             <>
               <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
-                <button type="button" className="btn btn-s" onClick={()=>{setIncForm({...EMPTY_INC,date:todayStr()});setIncEditId(null);setShowIncForm(true);}}>➕ إيراد</button>
-                <button type="button" className="btn btn-bl" onClick={()=>{setIncForm({...EMPTY_INC,cat:'fees',itemType:'رسوم التسجيل',date:todayStr(),desc:''});setIncEditId(null);setShowIncForm(true);}}>🎓 رسوم الطلاب</button>
-                <button type="button" className="btn btn-w" onClick={()=>{setExpForm({...EMPTY_EXP,date:todayStr()});setExpEditId(null);setShowExpForm(true);}}>➕ مصروف</button>
-                <button type="button" className="btn btn-p" onClick={openSalaries}>💰 الرواتب</button>
+                <button type="button" className="btn btn-bl" onClick={openFinanceOther}>➕ الإيرادات والمصاريف</button>
+                {FINANCE_CATEGORIES.map(cat=>(
+                  <button key={cat.id} type="button" className="btn btn-s" onClick={()=>openFinanceByCategory(cat.id)}>{cat.label}</button>
+                ))}
                 <button type="button" className="btn btn-g btn-sm no-print" onClick={()=>window.print()} style={{marginRight:'auto'}}>🖨️ طباعة</button>
               </div>
               <div className="stats" style={{gridTemplateColumns:'repeat(3,1fr)'}}>
@@ -395,10 +441,12 @@ export default function CenterPage() {
                       <div key={x.id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 14px',borderBottom:'1px solid var(--border-color)'}}>
                         <div style={{flex:1}}>
                           <div style={{fontWeight:700,fontSize:'.88rem'}}>{x.desc}</div>
-                          <div style={{fontSize:'.72rem',color:'var(--g5)'}}>{INCOME_CATS[x.cat]||x.cat} · {x.date}</div>
+                          <div style={{fontSize:'.72rem',color:'var(--g5)'}}>{x.categoryLabel || INCOME_CATS[x.cat]||x.cat} · {x.date}</div>
                         </div>
                         <span style={{fontWeight:900,color:'var(--ok)'}}>{Number(x.amount).toLocaleString()} ر</span>
-                        <button className="btn btn-xs btn-g" onClick={()=>{setIncForm({...x});setIncEditId(x.id);setShowIncForm(true);}}>✏️</button>
+                        {x.fileData&&<a href={x.fileData} download={x.fileName||'finance-file'} className="btn btn-xs btn-v">📎</a>}
+                        <button className="btn btn-xs btn-bl" onClick={()=>printItem({ ...x, type:'income' },'finance',center.logo,center.name)}>🖨️</button>
+                        <button className="btn btn-xs btn-g" onClick={()=>editFinanceEntry(x,'income')}>✏️</button>
                         <button className="btn btn-xs btn-d" onClick={()=>{lsDel('income',x.id);reload();}}>🗑️</button>
                       </div>
                     ))}
@@ -411,83 +459,73 @@ export default function CenterPage() {
                       <div key={x.id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 14px',borderBottom:'1px solid var(--border-color)'}}>
                         <div style={{flex:1}}>
                           <div style={{fontWeight:700,fontSize:'.88rem'}}>{x.desc}</div>
-                          <div style={{fontSize:'.72rem',color:'var(--g5)'}}>{EXPENSE_CATS[x.cat]||x.cat} · {x.date}</div>
+                          <div style={{fontSize:'.72rem',color:'var(--g5)'}}>{x.categoryLabel || EXPENSE_CATS[x.cat]||x.cat} · {x.date}</div>
                         </div>
                         <span style={{fontWeight:900,color:'var(--err)'}}>{Number(x.amount).toLocaleString()} ر</span>
-                        <button className="btn btn-xs btn-g" onClick={()=>{setExpForm({...x});setExpEditId(x.id);setShowExpForm(true);}}>✏️</button>
+                        {x.fileData&&<a href={x.fileData} download={x.fileName||'finance-file'} className="btn btn-xs btn-v">📎</a>}
+                        <button className="btn btn-xs btn-bl" onClick={()=>printItem({ ...x, type:'expense' },'finance',center.logo,center.name)}>🖨️</button>
+                        <button className="btn btn-xs btn-g" onClick={()=>editFinanceEntry(x,'expense')}>✏️</button>
                         <button className="btn btn-xs btn-d" onClick={()=>{lsDel('expenses',x.id);reload();}}>🗑️</button>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
-              {/* Income Form */}
-              {showIncForm&&(
-                <div className="mbg" onClick={e=>{if(e.target===e.currentTarget)setShowIncForm(false);}}>
+              {/* Unified Finance Form */}
+              {showFinanceForm&&(
+                <div className="mbg" onClick={e=>{if(e.target===e.currentTarget)setShowFinanceForm(false);}}>
                   <div className="mb mb-sm" style={{padding:0,overflow:'hidden',borderRadius:16}}>
-                    <div className="fhd" style={{padding:'14px 20px',borderRadius:0}}><h2>{incEditId?'✏️ تعديل إيراد':'💰 تسجيل إيراد'}</h2></div>
+                    <div className="fhd" style={{padding:'14px 20px',borderRadius:0}}><h2>{financeEditId?'✏️ تعديل حركة مالية':'💳 تسجيل حركة مالية'}</h2></div>
                     <div style={{padding:'18px 20px'}}>
                       <div className="fg c2">
-                        <div className="fl"><label>الفئة</label><select value={incForm.cat} onChange={e=>setIncForm(f=>({...f,cat:e.target.value}))}>{Object.entries(INCOME_CATS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div>
+                        <div className="fl"><label>نوع الحركة</label>
+                          <select value={financeForm.type} onChange={e=>setFinanceForm(f=>({...f,type:e.target.value}))}>
+                            <option value="income">إيراد</option>
+                            <option value="expense">مصروف</option>
+                          </select>
+                        </div>
+                        <div className="fl"><label>الفئة</label>
+                          <select value={financeForm.categoryId} onChange={e=>{
+                            const cat = FINANCE_CATEGORIES.find(c=>c.id===e.target.value);
+                            setFinanceForm(f=>({
+                              ...f,
+                              categoryId: e.target.value,
+                              categoryLabel: cat?.label || '13- أخرى',
+                              type: e.target.value==='13' ? f.type : (cat?.type || f.type),
+                              itemType: cat?.items?.[0] || 'أخرى',
+                              itemTypeOther:'',
+                              desc:''
+                            }));
+                          }}>
+                            {FINANCE_CATEGORIES.map(cat=><option key={cat.id} value={cat.id}>{cat.label}</option>)}
+                            <option value="13">13- أخرى</option>
+                          </select>
+                        </div>
                         <div className="fl">
                           <label>البند الثابت</label>
-                          <select value={incForm.itemType || FLAT_INCOME_ITEMS[0]} onChange={e=>setIncForm(f=>({...f,itemType:e.target.value,desc:e.target.value==='أخرى'?'':(e.target.value||'')}))}>
-                            {INCOME_GROUPS.map(group=>(
-                              <optgroup key={group.label} label={group.label}>
-                                {group.items.map(opt=><option key={`${group.label}-${opt}`} value={opt}>{opt}</option>)}
-                              </optgroup>
-                            ))}
+                          <select value={financeForm.itemType || 'أخرى'} onChange={e=>setFinanceForm(f=>({...f,itemType:e.target.value,desc:e.target.value==='أخرى'?'':(e.target.value||'')}))}>
+                            {((FINANCE_CATEGORIES.find(c=>c.id===financeForm.categoryId)?.items) || []).map(opt=><option key={opt} value={opt}>{opt}</option>)}
                             <option value="أخرى">أخرى</option>
                           </select>
                         </div>
-                        {incForm.itemType==='أخرى' && (
+                        {financeForm.itemType==='أخرى' && (
                           <div className="fl full">
                             <label>أخرى (يدوي) <span className="req">*</span></label>
-                            <input value={incForm.itemTypeOther || ''} onChange={e=>setIncForm(f=>({...f,itemTypeOther:e.target.value,desc:e.target.value}))} placeholder="اكتب البند هنا..."/>
+                            <input value={financeForm.itemTypeOther || ''} onChange={e=>setFinanceForm(f=>({...f,itemTypeOther:e.target.value,desc:e.target.value}))} placeholder="اكتب البند هنا..."/>
                           </div>
                         )}
-                        <div className="fl full"><label>وصف الإيراد <span className="req">*</span></label><input value={incForm.desc} onChange={fldI('desc')} placeholder="يُملأ تلقائيًا من القائمة ويمكن تعديله"/></div>
-                        <div className="fl"><label>المبلغ (ريال) <span className="req">*</span></label><input type="number" value={incForm.amount} onChange={fldI('amount')} min="0"/></div>
-                        <div className="fl full"><label>التاريخ <span className="req">*</span></label><input type="date" value={incForm.date} onChange={fldI('date')}/></div>
-                        <div className="fl full"><label>ملاحظات</label><textarea value={incForm.notes} onChange={fldI('notes')} rows={2}/></div>
-                      </div>
-                    </div>
-                    <div className="fa"><button className="btn btn-p" onClick={saveInc}>💾 حفظ</button><button className="btn btn-g" onClick={()=>setShowIncForm(false)}>إلغاء</button></div>
-                  </div>
-                </div>
-              )}
-              {/* Expense Form */}
-              {showExpForm&&(
-                <div className="mbg" onClick={e=>{if(e.target===e.currentTarget)setShowExpForm(false);}}>
-                  <div className="mb mb-sm" style={{padding:0,overflow:'hidden',borderRadius:16}}>
-                    <div className="fhd" style={{padding:'14px 20px',borderRadius:0}}><h2>{expEditId?'✏️ تعديل مصروف':'🧾 تسجيل مصروف'}</h2></div>
-                    <div style={{padding:'18px 20px'}}>
-                      <div className="fg c2">
-                        <div className="fl"><label>الفئة</label><select value={expForm.cat} onChange={fldE('cat')}>{Object.entries(EXPENSE_CATS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div>
-                        <div className="fl">
-                          <label>البند الثابت</label>
-                          <select value={expForm.itemType || FLAT_EXPENSE_ITEMS[0]} onChange={e=>setExpForm(f=>({...f,itemType:e.target.value,desc:e.target.value==='أخرى'?'':(e.target.value||'')}))}>
-                            {EXPENSE_GROUPS.map(group=>(
-                              <optgroup key={group.label} label={group.label}>
-                                {group.items.map(opt=><option key={`${group.label}-${opt}`} value={opt}>{opt}</option>)}
-                              </optgroup>
-                            ))}
-                            <option value="أخرى">أخرى</option>
-                          </select>
+                        <div className="fl full"><label>الوصف <span className="req">*</span></label><input value={financeForm.desc} onChange={e=>setFinanceForm(f=>({...f,desc:e.target.value}))} placeholder="يُملأ تلقائيًا من القائمة ويمكن تعديله"/></div>
+                        <div className="fl"><label>المبلغ (ريال) <span className="req">*</span></label><input type="number" value={financeForm.amount} onChange={e=>setFinanceForm(f=>({...f,amount:e.target.value}))} min="0"/></div>
+                        <div className="fl full"><label>التاريخ <span className="req">*</span></label><input type="date" value={financeForm.date} onChange={e=>setFinanceForm(f=>({...f,date:e.target.value}))}/></div>
+                        <div className="fl full">
+                          <label>رفع صورة / PDF</label>
+                          <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={handleFinanceFile}/>
+                          {financeForm.fileName && <div style={{fontSize:'.78rem',marginTop:6,color:'var(--ok)'}}>📎 {financeForm.fileName}</div>}
                         </div>
-                        {expForm.itemType==='أخرى' && (
-                          <div className="fl full">
-                            <label>أخرى (يدوي) <span className="req">*</span></label>
-                            <input value={expForm.itemTypeOther || ''} onChange={e=>setExpForm(f=>({...f,itemTypeOther:e.target.value,desc:e.target.value}))} placeholder="اكتب البند هنا..."/>
-                          </div>
-                        )}
-                        <div className="fl full"><label>وصف المصروف <span className="req">*</span></label><input value={expForm.desc} onChange={fldE('desc')} placeholder="يُملأ تلقائيًا من القائمة ويمكن تعديله"/></div>
-                        <div className="fl"><label>المبلغ (ريال) <span className="req">*</span></label><input type="number" value={expForm.amount} onChange={fldE('amount')} min="0"/></div>
-                        <div className="fl full"><label>التاريخ <span className="req">*</span></label><input type="date" value={expForm.date} onChange={fldE('date')}/></div>
-                        <div className="fl full"><label>ملاحظات</label><textarea value={expForm.notes} onChange={fldE('notes')} rows={2}/></div>
+                        <div className="fl full"><label>ملاحظات</label><textarea value={financeForm.notes} onChange={e=>setFinanceForm(f=>({...f,notes:e.target.value}))} rows={2}/></div>
                       </div>
                     </div>
-                    <div className="fa"><button className="btn btn-p" onClick={saveExp}>💾 حفظ</button><button className="btn btn-g" onClick={()=>setShowExpForm(false)}>إلغاء</button></div>
+                    <div className="fa"><button className="btn btn-p" onClick={saveFinanceEntry}>💾 حفظ</button><button className="btn btn-g" onClick={()=>setShowFinanceForm(false)}>إلغاء</button></div>
                   </div>
                 </div>
               )}
