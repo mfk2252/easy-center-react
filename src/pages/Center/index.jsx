@@ -48,8 +48,8 @@ function extractParents(students) {
 }
 
 export default function CenterPage() {
-  const { toast, currentUser, go, activeView } = useApp();
-  const center = lsGet('center') || {};
+  const { toast, currentUser, go, activeView, center } = useApp();
+  const centerData = center || lsGet('center') || {};
   const [tab, setTab] = useState('partners');
   const isManager = currentUser?.role === 'manager';
   const canView = ['manager','vice'].includes(currentUser?.role);
@@ -320,7 +320,7 @@ export default function CenterPage() {
               </div>
               <div className="c-acts" onClick={ev=>ev.stopPropagation()}>
                 {p.phone&&<a href={`https://wa.me/${p.phone.replace(/[^0-9+]/g,'').replace(/^0/,'966')}`} target="_blank" rel="noreferrer" className="btn btn-xs btn-bl">💬</a>}
-                <button className="btn btn-xs btn-bl" onClick={()=>printItem(p,'partnership',center.logo,center.name)}>🖨️</button>
+                <button className="btn btn-xs btn-bl" onClick={()=>printItem(p,'partnership',centerData.logo,centerData.name)}>🖨️</button>
                 {isManager&&<button className="btn btn-xs btn-g" onClick={()=>{setPartnerForm({...p});setPartnerEditId(p.id);setShowPartnerForm(true);}}>✏️</button>}
                 {isManager&&<button className="btn btn-xs btn-d" onClick={()=>{lsDel('partners',p.id);reload();toast('🗑️ تم الحذف','ok');}}>🗑️</button>}
               </div>
@@ -334,7 +334,7 @@ export default function CenterPage() {
                 <div className="fhd" style={{padding:'14px 20px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                   <h2>🤝 {viewPartner.name}</h2>
                   <div style={{display:'flex',gap:8}}>
-                    <button className="btn btn-g btn-sm" onClick={()=>printItem(viewPartner,'partnership',center.logo,center.name)}>🖨️ طباعة</button>
+                    <button className="btn btn-g btn-sm" onClick={()=>printItem(viewPartner,'partnership',centerData.logo,centerData.name)}>🖨️ طباعة</button>
                     <button className="btn btn-g btn-sm" onClick={()=>setViewPartner(null)}>✕</button>
                   </div>
                 </div>
@@ -445,7 +445,7 @@ export default function CenterPage() {
                         </div>
                         <span style={{fontWeight:900,color:'var(--ok)'}}>{Number(x.amount).toLocaleString()} ر</span>
                         {x.fileData&&<a href={x.fileData} download={x.fileName||'finance-file'} className="btn btn-xs btn-v">📎</a>}
-                        <button className="btn btn-xs btn-bl" onClick={()=>printItem({ ...x, type:'income' },'finance',center.logo,center.name)}>🖨️</button>
+                        <button className="btn btn-xs btn-bl" onClick={()=>printItem({ ...x, type:'income' },'finance',centerData.logo,centerData.name)}>🖨️</button>
                         <button className="btn btn-xs btn-g" onClick={()=>editFinanceEntry(x,'income')}>✏️</button>
                         <button className="btn btn-xs btn-d" onClick={()=>{lsDel('income',x.id);reload();}}>🗑️</button>
                       </div>
@@ -463,7 +463,7 @@ export default function CenterPage() {
                         </div>
                         <span style={{fontWeight:900,color:'var(--err)'}}>{Number(x.amount).toLocaleString()} ر</span>
                         {x.fileData&&<a href={x.fileData} download={x.fileName||'finance-file'} className="btn btn-xs btn-v">📎</a>}
-                        <button className="btn btn-xs btn-bl" onClick={()=>printItem({ ...x, type:'expense' },'finance',center.logo,center.name)}>🖨️</button>
+                        <button className="btn btn-xs btn-bl" onClick={()=>printItem({ ...x, type:'expense' },'finance',centerData.logo,centerData.name)}>🖨️</button>
                         <button className="btn btn-xs btn-g" onClick={()=>editFinanceEntry(x,'expense')}>✏️</button>
                         <button className="btn btn-xs btn-d" onClick={()=>{lsDel('expenses',x.id);reload();}}>🗑️</button>
                       </div>
@@ -709,7 +709,7 @@ export default function CenterPage() {
                         window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
                       }}>💬 واتس</button>
                     )}
-                    <button className="btn btn-xs btn-g" onClick={()=>{printItem(w,'warning',center.logo,center.name);}}>🖨️</button>
+                    <button className="btn btn-xs btn-g" onClick={()=>{printItem(w,'warning',centerData.logo,centerData.name);}}>🖨️</button>
                     {isManager&&<button className="btn btn-xs btn-d" onClick={()=>{lsDel('warnings',w.id);setWarnings(lsGet('warnings')||[]);toast('🗑️ تم الحذف','ok');}}>🗑️</button>}
                   </div>
                 </div>
@@ -734,7 +734,7 @@ export default function CenterPage() {
               <div className="c-acts">
                 {d.url&&<a href={d.url} target="_blank" rel="noreferrer" className="btn btn-xs btn-v">🔗</a>}
                 {d.fileData&&<a href={d.fileData} download={d.fileName||'file'} className="btn btn-xs btn-g">📥</a>}
-                <button className="btn btn-xs btn-bl" onClick={()=>printItem(d,'document',center.logo,center.name)}>🖨️</button>
+                <button className="btn btn-xs btn-bl" onClick={()=>printItem(d,'document',centerData.logo,centerData.name)}>🖨️</button>
                 {isManager&&<button className="btn btn-xs btn-g" onClick={()=>{setDocForm({...d});setDocEditId(d.id);setShowDocForm(true);}}>✏️</button>}
                 {isManager&&<button className="btn btn-xs btn-d" onClick={()=>{lsDel('centerDocs',d.id);reload();toast('🗑️ تم الحذف','ok');}}>🗑️</button>}
               </div>
