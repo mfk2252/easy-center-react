@@ -8,10 +8,28 @@ import EmptyState from '../../components/ui/EmptyState';
 const DOC_TYPES = { stats:'إحصائية وزارية', policy:'لائحة / سياسة', report:'تقرير', strategy:'استراتيجية', circular:'تعميم', memo:'📝 مذكرة داخلية', other:'أخرى' };
 const EXPENSE_CATS = { salary:'رواتب', rent:'إيجار', utilities:'فواتير', supplies:'مستلزمات', maintenance:'صيانة', training:'تدريب', other:'أخرى' };
 const INCOME_CATS = { fees:'رسوم طلاب', donation:'تبرعات', grant:'منح', other:'أخرى' };
+const STUDENT_FEES_OPTIONS = [
+  'رسوم التسجيل',
+  'رسوم القبول',
+  'الرسوم الدراسية السنوية',
+  'الرسوم الفصلية',
+  'رسوم إعادة التسجيل',
+  'رسوم الملف',
+  'رسوم اختبار تحديد المستوى',
+  'رسوم الاختبارات النهائية',
+  'رسوم الشهادات',
+  'رسوم التخرج',
+  'رسوم تأخير السداد',
+  'رسوم إعادة الاختبار',
+  'رسوم إعادة المادة',
+  'رسوم الحضور الجزئي',
+  'رسوم التعليم الإلكتروني',
+  'أخرى'
+];
 
 const EMPTY_DOC = { name:'', type:'stats', date:'', org:'', url:'', notes:'', fileData:'', fileName:'', audience:['all'] };
 const EMPTY_EXP = { desc:'', cat:'salary', amount:'', date:'', notes:'' };
-const EMPTY_INC = { desc:'', cat:'fees', amount:'', date:'', notes:'' };
+const EMPTY_INC = { desc:'', cat:'fees', feeType:'رسوم التسجيل', feeTypeOther:'', amount:'', date:'', notes:'' };
 const EMPTY_PARTNER = { name:'', type:'', contact:'', phone:'', email:'', startDate:'', notes:'' };
 const EMPTY_CUSTODY = { name:'', category:'', quantity:1, location:'', condition:'جيد', notes:'' };
 const EMPTY_VISIT = { name:'', date:'', type:'', delegation:'', purpose:'', result:'', notes:'' };
@@ -169,8 +187,14 @@ export default function CenterPage() {
     toast('✅ تم حفظ المصروف','ok'); setShowExpForm(false); reload();
   }
   function saveInc() {
-    if (!incForm.desc || !incForm.amount || !incForm.date) { toast('⚠️ أكمل الحقول المطلوبة','er'); return; }
-    if (incEditId) lsUpd('income',incEditId,incForm); else lsAdd('income',{...incForm,id:uid()});
+    const feeDesc =
+      incForm.cat === 'fees'
+        ? (incForm.feeType === 'أخرى' ? (incForm.feeTypeOther || '').trim() : incForm.feeType)
+        : '';
+    const finalDesc = (incForm.desc || '').trim() || feeDesc;
+    if (!finalDesc || !incForm.amount || !incForm.date) { toast('⚠️ أكمل الحقول المطلوبة','er'); return; }
+    const payload = { ...incForm, desc: finalDesc };
+    if (incEditId) lsUpd('income',incEditId,payload); else lsAdd('income',{...payload,id:uid()});
     toast('✅ تم حفظ الإيراد','ok'); setShowIncForm(false); reload();
   }
 
@@ -332,6 +356,7 @@ export default function CenterPage() {
             <>
               <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
                 <button type="button" className="btn btn-s" onClick={()=>{setIncForm({...EMPTY_INC,date:todayStr()});setIncEditId(null);setShowIncForm(true);}}>➕ إيراد</button>
+                <button type="button" className="btn btn-bl" onClick={()=>{setIncForm({...EMPTY_INC,cat:'fees',date:todayStr(),desc:''});setIncEditId(null);setShowIncForm(true);}}>🎓 رسوم الطلاب</button>
                 <button type="button" className="btn btn-w" onClick={()=>{setExpForm({...EMPTY_EXP,date:todayStr()});setExpEditId(null);setShowExpForm(true);}}>➕ مصروف</button>
                 <button type="button" className="btn btn-p" onClick={openSalaries}>💰 الرواتب</button>
                 <button type="button" className="btn btn-g btn-sm no-print" onClick={()=>window.print()} style={{marginRight:'auto'}}>🖨️ طباعة</button>
@@ -382,8 +407,22 @@ export default function CenterPage() {
                     <div className="fhd" style={{padding:'14px 20px',borderRadius:0}}><h2>{incEditId?'✏️ تعديل إيراد':'💰 تسجيل إيراد'}</h2></div>
                     <div style={{padding:'18px 20px'}}>
                       <div className="fg c2">
-                        <div className="fl full"><label>وصف الإيراد <span className="req">*</span></label><input value={incForm.desc} onChange={fldI('desc')}/></div>
-                        <div className="fl"><label>الفئة</label><select value={incForm.cat} onChange={fldI('cat')}>{Object.entries(INCOME_CATS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div>
+                        <div className="fl"><label>الفئة</label><select value={incForm.cat} onChange={e=>setIncForm(f=>({...f,cat:e.target.value}))}>{Object.entries(INCOME_CATS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div>
+                        {incForm.cat==='fees' && (
+                          <div className="fl">
+                            <label>البند الثابت (رسوم الطلاب)</label>
+                            <select value={incForm.feeType || 'رسوم التسجيل'} onChange={e=>setIncForm(f=>({...f,feeType:e.target.value,desc:e.target.value==='أخرى'?'':(e.target.value||'')}))}>
+                              {STUDENT_FEES_OPTIONS.map(opt=><option key={opt} value={opt}>{opt}</option>)}
+                            </select>
+                          </div>
+                        )}
+                        {incForm.cat==='fees' && incForm.feeType==='أخرى' && (
+                          <div className="fl full">
+                            <label>أخرى (يدوي) <span className="req">*</span></label>
+                            <input value={incForm.feeTypeOther || ''} onChange={e=>setIncForm(f=>({...f,feeTypeOther:e.target.value,desc:e.target.value}))} placeholder="اكتب البند هنا..."/>
+                          </div>
+                        )}
+                        <div className="fl full"><label>وصف الإيراد <span className="req">*</span></label><input value={incForm.desc} onChange={fldI('desc')} placeholder={incForm.cat==='fees' ? 'يُملأ تلقائيًا من القائمة ويمكن تعديله' : ''}/></div>
                         <div className="fl"><label>المبلغ (ريال) <span className="req">*</span></label><input type="number" value={incForm.amount} onChange={fldI('amount')} min="0"/></div>
                         <div className="fl full"><label>التاريخ <span className="req">*</span></label><input type="date" value={incForm.date} onChange={fldI('date')}/></div>
                         <div className="fl full"><label>ملاحظات</label><textarea value={incForm.notes} onChange={fldI('notes')} rows={2}/></div>
