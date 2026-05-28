@@ -46,6 +46,11 @@ export function AppProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    // timeout احتياطي - لو لم يستجب Firebase بعد 8 ثوانٍ
+    const loadingTimeout = setTimeout(() => {
+      setScreen(prev => prev === 'loading' ? 'login' : prev);
+    }, 8000);
+
     // جلسة موظف محفوظة
     const savedSession = (() => {
       try { return JSON.parse(localStorage.getItem('scs_session') || 'null'); }
@@ -53,6 +58,7 @@ export function AppProvider({ children }) {
     })();
 
     if (savedSession?.centerId) {
+      clearTimeout(loadingTimeout);
       localStorage.setItem('scs_current_uid', savedSession.centerId);
       setCurrentUser(savedSession);
       setSubscriptionStatus(savedSession.subscription || { allowed: true, reason: 'active' });
@@ -65,12 +71,13 @@ export function AppProvider({ children }) {
 
     // Google Auth
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      clearTimeout(loadingTimeout);
       if (fbUser) {
         localStorage.setItem('scs_current_uid', fbUser.uid);
 
         const centerData = await getCenterSettings(fbUser.uid);
         const subStatus = checkSubscriptionStatus(centerData);
-        
+
         const user = {
           uid: fbUser.uid,
           email: fbUser.email,
@@ -84,7 +91,6 @@ export function AppProvider({ children }) {
         setCurrentUser(user);
         setSubscriptionStatus(subStatus);
 
-        // اشتراك منتهي → شاشة الاشتراك
         if (!subStatus.allowed) {
           setScreen('subscription');
           return;
@@ -106,7 +112,10 @@ export function AppProvider({ children }) {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(loadingTimeout);
+      unsubscribe();
+    };
   }, []);
 
   function applyCenter(data) {

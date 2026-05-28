@@ -14,11 +14,10 @@ export default function App() {
 
   if (screen === 'loading') {
     return (
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh', background:'var(--g9)' }}>
-        <div style={{ textAlign:'center', color:'white' }}>
-          <div style={{ fontSize:'3rem', marginBottom:12 }}>🏥</div>
-          <div style={{ fontWeight:700, fontSize:'1rem' }}>جاري التحميل...</div>
-        </div>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh', background:'#0f172a', flexDirection:'column', gap:16 }}>
+        <div style={{ fontSize:'3rem' }}>🏥</div>
+        <div style={{ fontWeight:700, fontSize:'1rem', color:'white' }}>جاري التحميل...</div>
+        <div style={{ width:40, height:4, background:'#1a56db', borderRadius:2, animation:'none' }}/>
       </div>
     );
   }

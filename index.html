@@ -14,9 +14,37 @@
     <link rel="icon" type="image/png" href="/pwa-192x192.png"/>
     <title>نظام إدارة المركز</title>
     <script>
+      // تسجيل Service Worker مع تحديث تلقائي فوري
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        window.addEventListener('load', async () => {
+          try {
+            const reg = await navigator.serviceWorker.register('/sw.js');
+            
+            // تحديث فوري عند وجود نسخة جديدة
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  newWorker.postMessage({ type: 'SKIP_WAITING' });
+                  window.location.reload();
+                }
+              });
+            });
+
+            // تحقق من التحديثات عند كل تحميل
+            reg.update();
+          } catch(e) {
+            console.warn('SW registration failed:', e);
+          }
+        });
+
+        // إعادة التحميل عند تغيير الـ SW
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
         });
       }
     </script>
