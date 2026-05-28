@@ -97,6 +97,11 @@ export function printItem(itemData, itemType, centerLogo, centerName) {
     contentHTML = `
       <div style="padding:0 20px;">
         <h2 style="color:#dc2626;margin:0 0 15px 0;">💰 بيانات معاملة مالية</h2>
+        ${itemData.fileData && itemData.fileData.startsWith('data:image') ? `
+          <div style="margin-bottom:12px;">
+            <img src="${itemData.fileData}" style="max-width:100%;max-height:260px;object-fit:contain;border:1px solid #ddd;border-radius:8px;padding:4px;">
+          </div>
+        ` : ''}
         <table style="width:100%;border-collapse:collapse;">
           <tr style="background:#f5f5f5;">
             <td style="padding:10px;border-bottom:1px solid #ddd;"><b>النوع</b></td>
@@ -108,7 +113,11 @@ export function printItem(itemData, itemType, centerLogo, centerName) {
           </tr>
           <tr style="background:#f5f5f5;">
             <td style="padding:10px;border-bottom:1px solid #ddd;"><b>الفئة</b></td>
-            <td style="padding:10px;border-bottom:1px solid #ddd;text-align:left;">${itemData.cat}</td>
+            <td style="padding:10px;border-bottom:1px solid #ddd;text-align:left;">${itemData.categoryLabel || itemData.cat || '—'}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px;border-bottom:1px solid #ddd;"><b>البند</b></td>
+            <td style="padding:10px;border-bottom:1px solid #ddd;text-align:left;">${itemData.itemType || '—'}</td>
           </tr>
           <tr style="background:${itemData.type === 'income' ? '#dcfce7' : '#fee2e2'};">
             <td style="padding:10px;border-bottom:1px solid #ddd;"><b style="font-size:16px;">المبلغ</b></td>
@@ -123,6 +132,11 @@ export function printItem(itemData, itemType, centerLogo, centerName) {
           <div style="margin-top:15px;padding:12px;background:#fef3c7;border-right:4px solid #f59e0b;border-radius:4px;">
             <b style="color:#d97706;">📝 ملاحظات:</b><br/>
             ${itemData.notes}
+          </div>
+        ` : ''}
+        ${itemData.fileName ? `
+          <div style="margin-top:10px;padding:10px;background:#f8fafc;border-radius:4px;">
+            📎 <b>مرفق:</b> ${itemData.fileName}
           </div>
         ` : ''}
       </div>
