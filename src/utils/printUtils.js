@@ -1,11 +1,12 @@
 export function printItem(itemData, itemType, centerLogo, centerName) {
   const printWindow = window.open('', '', 'height=600,width=900');
+  const safeCenterName = (centerName && String(centerName).trim()) || 'المركز';
   
   // شعار المركز والعنوان
   const headerHTML = `
     <div style="text-align:center;padding:20px;border-bottom:2px solid #333;margin-bottom:20px;">
       ${centerLogo ? `<img src="${centerLogo}" style="height:70px;margin-bottom:10px;border-radius:8px;object-fit:contain;">` : '<div style="font-size:3rem;margin-bottom:10px;">🏥</div>'}
-      <h1 style="margin:0;font-size:28px;color:#0f172a;font-weight:900;">${centerName}</h1>
+      <h1 style="margin:0;font-size:28px;color:#0f172a;font-weight:900;">${safeCenterName}</h1>
       <p style="margin:8px 0;color:#666;font-size:13px;">📅 ${new Date().toLocaleDateString('ar-SA')} | ⏰ ${new Date().toLocaleTimeString('ar-SA')}</p>
     </div>
   `;
