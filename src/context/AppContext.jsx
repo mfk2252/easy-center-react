@@ -128,6 +128,8 @@ export function AppProvider({ children }) {
       configured: data.isSetup || false
     };
     setCenter(c);
+    if (c.name) localStorage.setItem('scs_center_name', c.name);
+    if (c.logo) localStorage.setItem('scs_center_logo', c.logo);
     applyTheme(c.color);
     document.title = c.name || 'نظام إدارة المركز';
   }
