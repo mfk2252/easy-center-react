@@ -8,28 +8,49 @@ import EmptyState from '../../components/ui/EmptyState';
 const DOC_TYPES = { stats:'إحصائية وزارية', policy:'لائحة / سياسة', report:'تقرير', strategy:'استراتيجية', circular:'تعميم', memo:'📝 مذكرة داخلية', other:'أخرى' };
 const EXPENSE_CATS = { salary:'رواتب', rent:'إيجار', utilities:'فواتير', supplies:'مستلزمات', maintenance:'صيانة', training:'تدريب', other:'أخرى' };
 const INCOME_CATS = { fees:'رسوم طلاب', donation:'تبرعات', grant:'منح', other:'أخرى' };
-const STUDENT_FEES_OPTIONS = [
-  'رسوم التسجيل',
-  'رسوم القبول',
-  'الرسوم الدراسية السنوية',
-  'الرسوم الفصلية',
-  'رسوم إعادة التسجيل',
-  'رسوم الملف',
-  'رسوم اختبار تحديد المستوى',
-  'رسوم الاختبارات النهائية',
-  'رسوم الشهادات',
-  'رسوم التخرج',
-  'رسوم تأخير السداد',
-  'رسوم إعادة الاختبار',
-  'رسوم إعادة المادة',
-  'رسوم الحضور الجزئي',
-  'رسوم التعليم الإلكتروني',
-  'أخرى'
+const INCOME_GROUPS = [
+  {
+    label: 'رسوم الطلاب',
+    items: [
+      'رسوم التسجيل','رسوم القبول','الرسوم الدراسية السنوية','الرسوم الفصلية','رسوم إعادة التسجيل','رسوم الملف',
+      'رسوم اختبار تحديد المستوى','رسوم الاختبارات النهائية','رسوم الشهادات','رسوم التخرج','رسوم تأخير السداد',
+      'رسوم إعادة الاختبار','رسوم إعادة المادة','رسوم الحضور الجزئي','رسوم التعليم الإلكتروني'
+    ]
+  },
+  {
+    label: 'إيرادات الخدمات',
+    items: [
+      'رسوم الباص / النقل المدرسي','اشتراك الباص الشهري','رسوم تغيير خط الباص','رسوم الرحلات','رسوم الأنشطة','رسوم النوادي',
+      'رسوم السوبر ماركت (المقصف)','رسوم الوجبات','رسوم الكتب','رسوم الزي المدرسي','رسوم الأدوات التعليمية',
+      'رسوم المختبرات','رسوم الطباعة والتصوير','رسوم المنصات الإلكترونية','رسوم الدورات الإضافية','رسوم التقوية','رسوم التدريب الصيفي'
+    ]
+  },
+  {
+    label: 'إيرادات أخرى',
+    items: [
+      'تبرعات','رعايات شركات','دعم حكومي','تأجير القاعات','تأجير الملاعب','تأجير الباصات','بيع الكتب','بيع الزي',
+      'أرباح السوبر ماركت (المقصف)','أرباح الفعاليات','غرامات التأخير','غرامات التلفيات'
+    ]
+  }
 ];
+const EXPENSE_GROUPS = [
+  { label:'الرواتب والأجور', items:['رواتب الموظفين','رواتب المعلمين','رواتب الإداريين','رواتب المديرين','رواتب المحاسبين','رواتب موظفي القبول والتسجيل','رواتب موظفي خدمة العملاء','رواتب المشرفين','رواتب الأمن','رواتب العمال','رواتب السائقين','رواتب المراسلين','رواتب عمال النظافة','رواتب فنيي الحاسب','رواتب فنيي المختبر','رواتب الممرضات','رواتب مسؤولي الباصات'] },
+  { label:'البدلات والمزايا', items:['بدل سكن','بدل نقل','بدل طبيعة عمل','بدل هاتف','بدل طعام','بدل إشراف','بدل ساعات إضافية','بدل انتداب','بدل تذاكر سفر','التأمين الطبي','التأمينات الاجتماعية','مكافآت الأداء','مكافآت نهاية العام','عمولات التسجيل','مكافآت الطلاب المتفوقين','نهاية الخدمة'] },
+  { label:'مصروفات الباصات والنقل', items:['مصروفات تشغيل الباص','رواتب السائقين','رواتب المشرفات','وقود الباصات','ديزل','بنزين','صيانة الباصات','غيار الزيت','الإطارات','البطاريات','قطع الغيار','غسيل الباصات','تجديد الاستمارات','التأمين على الباصات','مخالفات المرور','أجهزة التتبع GPS','رسوم المواقف','عقود النقل الخارجي','إيجار الباصات','استهلاك الباصات'] },
+  { label:'المصروفات التعليمية', items:['شراء الكتب','المناهج','الوسائل التعليمية','السبورات الذكية','أجهزة العرض','الطابعات','الأحبار','الأوراق','المختبرات','الأدوات العلمية','اشتراكات البرامج التعليمية','اشتراكات Zoom / Teams','تراخيص البرامج','الإنترنت','السيرفرات','الصيانة التقنية','أجهزة الكمبيوتر','أجهزة التابلت'] },
+  { label:'المصروفات الإدارية والتشغيلية', items:['المبنى والمرافق','إيجار المبنى','إيجار الفصول','الكهرباء','الماء','الغاز','الإنترنت','الهاتف','رسوم البلدية','رسوم الدفاع المدني','رسوم التراخيص','رسوم وزارة التعليم','رسوم الغرفة التجارية','النظافة','التعقيم','مكافحة الحشرات','الأمن والحراسة','الصيانة العامة','صيانة التكييف','صيانة المصاعد','صيانة الكهرباء','صيانة السباكة','صيانة الأثاث','الأدوات المكتبية','القرطاسية','الملفات','الأحبار','أجهزة البصمة','الكاميرات','أنظمة الحضور والانصراف','أنظمة ERP','أنظمة المحاسبة'] },
+  { label:'التسويق والعلاقات العامة', items:['إعلانات السوشيال ميديا','تصميم الجرافيك','إدارة الحسابات','تصوير الفيديو','تصوير المناسبات','الهدايا الدعائية','البنرات','اللوحات الإعلانية','الحملات التسويقية','العمولات التسويقية','المعارض التعليمية','رعاية الفعاليات'] },
+  { label:'المصروفات الطلابية والأنشطة', items:['الرحلات','المسابقات','الحفلات','الأنشطة الرياضية','الأنشطة الفنية','الجوائز','الشهادات','الضيافة','الزي الرياضي','أدوات النشاط'] },
+  { label:'الأصول والمشتريات', items:['شراء باصات','شراء سيارات','شراء أثاث','شراء مكاتب','شراء كراسي','شراء تكييفات','شراء كاميرات','شراء أجهزة كمبيوتر','شراء شاشات','إنشاء ملاعب','إنشاء مختبرات','تجهيز الفصول','أعمال الديكور','التوسعات'] },
+  { label:'البنود المحاسبية والمالية', items:['الذمم المدينة','أقساط الطلاب المستحقة','شيكات آجلة','ديون العملاء','مستحقات النقل','الذمم الدائنة','الموردون','فواتير غير مدفوعة','عقود الصيانة','الضرائب والالتزامات','ضريبة القيمة المضافة','ضريبة الرواتب','الزكاة (في الخليج)','التأمينات الاجتماعية','رسوم الإقامة','رسوم تجديد الإقامات','رسوم التأشيرات','المخصصات','مخصص نهاية الخدمة','مخصص الديون المشكوك فيها','مخصص الصيانة','مخصص الإجازات'] },
+  { label:'التقارير المالية المستخدمة', items:['الميزانية العمومية','قائمة الدخل','التدفقات النقدية','كشف الرواتب','تقرير الباصات','تقرير المتأخرات','تقرير المصروفات','تقرير الإيرادات','تقرير الأرباح والخسائر','تقرير أعمار الديون','ميزانية تشغيل المدرسة','ميزانية الأنشطة','ميزانية النقل'] }
+];
+const FLAT_INCOME_ITEMS = [...INCOME_GROUPS.flatMap(g => g.items), 'أخرى'];
+const FLAT_EXPENSE_ITEMS = [...EXPENSE_GROUPS.flatMap(g => g.items), 'أخرى'];
 
 const EMPTY_DOC = { name:'', type:'stats', date:'', org:'', url:'', notes:'', fileData:'', fileName:'', audience:['all'] };
-const EMPTY_EXP = { desc:'', cat:'salary', amount:'', date:'', notes:'' };
-const EMPTY_INC = { desc:'', cat:'fees', feeType:'رسوم التسجيل', feeTypeOther:'', amount:'', date:'', notes:'' };
+const EMPTY_EXP = { desc:'', cat:'salary', itemType:FLAT_EXPENSE_ITEMS[0], itemTypeOther:'', amount:'', date:'', notes:'' };
+const EMPTY_INC = { desc:'', cat:'fees', itemType:FLAT_INCOME_ITEMS[0], itemTypeOther:'', amount:'', date:'', notes:'' };
 const EMPTY_PARTNER = { name:'', type:'', contact:'', phone:'', email:'', startDate:'', notes:'' };
 const EMPTY_CUSTODY = { name:'', category:'', quantity:1, location:'', condition:'جيد', notes:'' };
 const EMPTY_VISIT = { name:'', date:'', type:'', delegation:'', purpose:'', result:'', notes:'' };
@@ -182,16 +203,16 @@ export default function CenterPage() {
 
   // Finance
   function saveExp() {
-    if (!expForm.desc || !expForm.amount || !expForm.date) { toast('⚠️ أكمل الحقول المطلوبة','er'); return; }
-    if (expEditId) lsUpd('expenses',expEditId,expForm); else lsAdd('expenses',{...expForm,id:uid()});
+    const presetDesc = expForm.itemType === 'أخرى' ? (expForm.itemTypeOther || '').trim() : expForm.itemType;
+    const finalDesc = (expForm.desc || '').trim() || presetDesc;
+    if (!finalDesc || !expForm.amount || !expForm.date) { toast('⚠️ أكمل الحقول المطلوبة','er'); return; }
+    const payload = { ...expForm, desc: finalDesc };
+    if (expEditId) lsUpd('expenses',expEditId,payload); else lsAdd('expenses',{...payload,id:uid()});
     toast('✅ تم حفظ المصروف','ok'); setShowExpForm(false); reload();
   }
   function saveInc() {
-    const feeDesc =
-      incForm.cat === 'fees'
-        ? (incForm.feeType === 'أخرى' ? (incForm.feeTypeOther || '').trim() : incForm.feeType)
-        : '';
-    const finalDesc = (incForm.desc || '').trim() || feeDesc;
+    const presetDesc = incForm.itemType === 'أخرى' ? (incForm.itemTypeOther || '').trim() : incForm.itemType;
+    const finalDesc = (incForm.desc || '').trim() || presetDesc;
     if (!finalDesc || !incForm.amount || !incForm.date) { toast('⚠️ أكمل الحقول المطلوبة','er'); return; }
     const payload = { ...incForm, desc: finalDesc };
     if (incEditId) lsUpd('income',incEditId,payload); else lsAdd('income',{...payload,id:uid()});
@@ -356,7 +377,7 @@ export default function CenterPage() {
             <>
               <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
                 <button type="button" className="btn btn-s" onClick={()=>{setIncForm({...EMPTY_INC,date:todayStr()});setIncEditId(null);setShowIncForm(true);}}>➕ إيراد</button>
-                <button type="button" className="btn btn-bl" onClick={()=>{setIncForm({...EMPTY_INC,cat:'fees',date:todayStr(),desc:''});setIncEditId(null);setShowIncForm(true);}}>🎓 رسوم الطلاب</button>
+                <button type="button" className="btn btn-bl" onClick={()=>{setIncForm({...EMPTY_INC,cat:'fees',itemType:'رسوم التسجيل',date:todayStr(),desc:''});setIncEditId(null);setShowIncForm(true);}}>🎓 رسوم الطلاب</button>
                 <button type="button" className="btn btn-w" onClick={()=>{setExpForm({...EMPTY_EXP,date:todayStr()});setExpEditId(null);setShowExpForm(true);}}>➕ مصروف</button>
                 <button type="button" className="btn btn-p" onClick={openSalaries}>💰 الرواتب</button>
                 <button type="button" className="btn btn-g btn-sm no-print" onClick={()=>window.print()} style={{marginRight:'auto'}}>🖨️ طباعة</button>
@@ -408,21 +429,24 @@ export default function CenterPage() {
                     <div style={{padding:'18px 20px'}}>
                       <div className="fg c2">
                         <div className="fl"><label>الفئة</label><select value={incForm.cat} onChange={e=>setIncForm(f=>({...f,cat:e.target.value}))}>{Object.entries(INCOME_CATS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div>
-                        {incForm.cat==='fees' && (
-                          <div className="fl">
-                            <label>البند الثابت (رسوم الطلاب)</label>
-                            <select value={incForm.feeType || 'رسوم التسجيل'} onChange={e=>setIncForm(f=>({...f,feeType:e.target.value,desc:e.target.value==='أخرى'?'':(e.target.value||'')}))}>
-                              {STUDENT_FEES_OPTIONS.map(opt=><option key={opt} value={opt}>{opt}</option>)}
-                            </select>
-                          </div>
-                        )}
-                        {incForm.cat==='fees' && incForm.feeType==='أخرى' && (
+                        <div className="fl">
+                          <label>البند الثابت</label>
+                          <select value={incForm.itemType || FLAT_INCOME_ITEMS[0]} onChange={e=>setIncForm(f=>({...f,itemType:e.target.value,desc:e.target.value==='أخرى'?'':(e.target.value||'')}))}>
+                            {INCOME_GROUPS.map(group=>(
+                              <optgroup key={group.label} label={group.label}>
+                                {group.items.map(opt=><option key={`${group.label}-${opt}`} value={opt}>{opt}</option>)}
+                              </optgroup>
+                            ))}
+                            <option value="أخرى">أخرى</option>
+                          </select>
+                        </div>
+                        {incForm.itemType==='أخرى' && (
                           <div className="fl full">
                             <label>أخرى (يدوي) <span className="req">*</span></label>
-                            <input value={incForm.feeTypeOther || ''} onChange={e=>setIncForm(f=>({...f,feeTypeOther:e.target.value,desc:e.target.value}))} placeholder="اكتب البند هنا..."/>
+                            <input value={incForm.itemTypeOther || ''} onChange={e=>setIncForm(f=>({...f,itemTypeOther:e.target.value,desc:e.target.value}))} placeholder="اكتب البند هنا..."/>
                           </div>
                         )}
-                        <div className="fl full"><label>وصف الإيراد <span className="req">*</span></label><input value={incForm.desc} onChange={fldI('desc')} placeholder={incForm.cat==='fees' ? 'يُملأ تلقائيًا من القائمة ويمكن تعديله' : ''}/></div>
+                        <div className="fl full"><label>وصف الإيراد <span className="req">*</span></label><input value={incForm.desc} onChange={fldI('desc')} placeholder="يُملأ تلقائيًا من القائمة ويمكن تعديله"/></div>
                         <div className="fl"><label>المبلغ (ريال) <span className="req">*</span></label><input type="number" value={incForm.amount} onChange={fldI('amount')} min="0"/></div>
                         <div className="fl full"><label>التاريخ <span className="req">*</span></label><input type="date" value={incForm.date} onChange={fldI('date')}/></div>
                         <div className="fl full"><label>ملاحظات</label><textarea value={incForm.notes} onChange={fldI('notes')} rows={2}/></div>
@@ -439,8 +463,25 @@ export default function CenterPage() {
                     <div className="fhd" style={{padding:'14px 20px',borderRadius:0}}><h2>{expEditId?'✏️ تعديل مصروف':'🧾 تسجيل مصروف'}</h2></div>
                     <div style={{padding:'18px 20px'}}>
                       <div className="fg c2">
-                        <div className="fl full"><label>وصف المصروف <span className="req">*</span></label><input value={expForm.desc} onChange={fldE('desc')}/></div>
                         <div className="fl"><label>الفئة</label><select value={expForm.cat} onChange={fldE('cat')}>{Object.entries(EXPENSE_CATS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div>
+                        <div className="fl">
+                          <label>البند الثابت</label>
+                          <select value={expForm.itemType || FLAT_EXPENSE_ITEMS[0]} onChange={e=>setExpForm(f=>({...f,itemType:e.target.value,desc:e.target.value==='أخرى'?'':(e.target.value||'')}))}>
+                            {EXPENSE_GROUPS.map(group=>(
+                              <optgroup key={group.label} label={group.label}>
+                                {group.items.map(opt=><option key={`${group.label}-${opt}`} value={opt}>{opt}</option>)}
+                              </optgroup>
+                            ))}
+                            <option value="أخرى">أخرى</option>
+                          </select>
+                        </div>
+                        {expForm.itemType==='أخرى' && (
+                          <div className="fl full">
+                            <label>أخرى (يدوي) <span className="req">*</span></label>
+                            <input value={expForm.itemTypeOther || ''} onChange={e=>setExpForm(f=>({...f,itemTypeOther:e.target.value,desc:e.target.value}))} placeholder="اكتب البند هنا..."/>
+                          </div>
+                        )}
+                        <div className="fl full"><label>وصف المصروف <span className="req">*</span></label><input value={expForm.desc} onChange={fldE('desc')} placeholder="يُملأ تلقائيًا من القائمة ويمكن تعديله"/></div>
                         <div className="fl"><label>المبلغ (ريال) <span className="req">*</span></label><input type="number" value={expForm.amount} onChange={fldE('amount')} min="0"/></div>
                         <div className="fl full"><label>التاريخ <span className="req">*</span></label><input type="date" value={expForm.date} onChange={fldE('date')}/></div>
                         <div className="fl full"><label>ملاحظات</label><textarea value={expForm.notes} onChange={fldE('notes')} rows={2}/></div>
