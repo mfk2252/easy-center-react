@@ -246,6 +246,28 @@ body.dark .sw-sec{background:var(--bg-input);border-color:var(--border-color);}
   .nav-sync { display: none; }
 }
 
+/* Setup wizard */
+.setup-wrap{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:var(--bg-page);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.setup-card{width:100%;max-width:560px;background:var(--bg-card);border-radius:16px;box-shadow:var(--sh3);overflow:hidden;display:flex;flex-direction:column;max-height:min(96vh,calc(100dvh - 24px));margin:auto}
+.setup-steps{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.setup-step{flex:1;min-width:80px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:8px;background:var(--g0);font-size:.72rem;color:var(--g5)}
+.setup-step.on{background:var(--pr-l);color:var(--pr);font-weight:800}
+.setup-step.done{background:var(--ok-l);color:var(--ok-d)}
+.setup-step-n{width:22px;height:22px;border-radius:50%;background:var(--g2);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.75rem}
+.setup-step.on .setup-step-n{background:var(--pr);color:#fff}
+.setup-form-scroll{flex:1;min-height:0;padding:0 20px 12px}
+.nav-lang-btn{background:rgba(255,255,255,.1);color:var(--g4);border:1px solid rgba(255,255,255,.15);padding:6px 10px;border-radius:7px;font-family:'Tajawal',sans-serif;font-size:.78rem;font-weight:800;cursor:pointer;flex-shrink:0}
+.nav-lang-btn:hover{background:rgba(255,255,255,.18);color:#fff}
+.timeline-wrap{padding:4px 0}
+.timeline-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-color)}
+.timeline-item:last-child{border-bottom:none}
+.timeline-dot{width:40px;height:40px;border-radius:50%;border:2px solid var(--pr);display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--g0);font-size:1.1rem}
+.timeline-body{flex:1;min-width:0}
+.timeline-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:4px}
+.timeline-date{font-size:.72rem;color:var(--g5);margin-right:auto}
+.timeline-desc{font-size:.84rem;color:var(--g6);line-height:1.5}
+.timeline-extra{font-size:.75rem;color:var(--g5);margin-top:4px}
+
 /* إصلاح الطباعة */
 @media print {
   .nav, .no-print, .tabs, .ph-a { display: none !important; }

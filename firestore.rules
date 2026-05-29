@@ -1,0 +1,34 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isCenterOwner(centerId) {
+      return signedIn() && request.auth.uid == centerId;
+    }
+
+    // Center document: only the Google-authenticated manager (uid == centerId)
+    match /centers/{centerId} {
+      allow read: if isCenterOwner(centerId);
+      allow create: if signedIn() && request.auth.uid == centerId;
+      allow update, delete: if isCenterOwner(centerId);
+
+      match /{subcollection}/{docId} {
+        allow read, write: if isCenterOwner(centerId);
+      }
+    }
+
+    // Staff users collection — manager of that center can manage
+    match /users/{userId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.auth.uid == request.resource.data.centerId;
+      allow update, delete: if signedIn()
+        && request.auth.uid == resource.data.centerId;
+    }
+  }
+}

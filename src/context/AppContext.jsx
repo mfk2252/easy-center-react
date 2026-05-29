@@ -4,6 +4,7 @@ import { auth } from '../firebase/config';
 import { getCenterSettings } from '../firebase/db';
 import { signOutUser, checkSubscriptionStatus } from '../firebase/auth';
 import { syncFromFirebase } from '../hooks/useStorage';
+import { getWelcomeMessage } from './LanguageContext';
 
 const AppContext = createContext(null);
 
@@ -96,12 +97,13 @@ export function AppProvider({ children }) {
           return;
         }
 
-        if (centerData?.isSetup) {
+        if (!needsCenterSetup(centerData)) {
           applyCenter(centerData);
           setSyncing(true);
           syncFromFirebase(fbUser.uid, ALL_KEYS)
             .finally(() => { setSyncing(false); setScreen('app'); });
         } else {
+          applyCenter(centerData || {});
           setScreen('setup');
         }
       } else {
@@ -118,20 +120,36 @@ export function AppProvider({ children }) {
     };
   }, []);
 
+  function needsCenterSetup(data) {
+    if (!data) return true;
+    if (data.setupCompleted === true && data.status === 'active') return false;
+    if (data.isSetup === true && data.status !== 'pending_setup') return false;
+    return data.status === 'pending_setup' || !data.isSetup || !data.setupCompleted;
+  }
+
   function applyCenter(data) {
     const c = {
-      name: data.name || '',
-      logo: data.logo || '',
+      name: data.centerName || data.name || '',
+      logo: data.logoUrl || data.logo || '',
       color: data.color || '#1a56db',
       type: data.type || '',
       phone: data.phone || '',
-      configured: data.isSetup || false
+      email: data.email || data.ownerEmail || '',
+      address: data.address || '',
+      currency: data.currency || 'SAR',
+      status: data.status || 'active',
+      setupCompleted: !!data.setupCompleted,
+      configured: data.setupCompleted || data.isSetup || false,
     };
     setCenter(c);
     if (c.name) localStorage.setItem('scs_center_name', c.name);
     if (c.logo) localStorage.setItem('scs_center_logo', c.logo);
+    if (data.fontSize) localStorage.setItem('scs_fontsize', String(data.fontSize));
+    if (data.fontWeight) localStorage.setItem('scs_fontweight', String(data.fontWeight));
+    if (data.platformLang) localStorage.setItem('scs_lang', data.platformLang);
     applyTheme(c.color);
     document.title = c.name || 'نظام إدارة المركز';
+    return c;
   }
 
   async function loadCenterData(centerId) {
@@ -179,11 +197,23 @@ export function AppProvider({ children }) {
       return;
     }
 
-    await loadCenterData(user.centerId);
+    const centerData = await getCenterSettings(user.centerId);
+    applyCenter(centerData || {});
+
+    if (user.needsSetup || user.isNewCenter || (user.role === 'manager' && needsCenterSetup(centerData))) {
+      setScreen('setup');
+      return;
+    }
+
+    const lang = localStorage.getItem('scs_lang') || 'ar';
+    if (!user._skipWelcome) {
+      toast('✅ ' + getWelcomeMessage(user.name, user.centerId, lang), 'ok');
+    }
+
     setSyncing(true);
     syncFromFirebase(user.centerId, ALL_KEYS)
       .finally(() => { setSyncing(false); setScreen('app'); setActiveView('dash'); });
-  }, []);
+  }, [toast]);
 
   const logout = useCallback(async () => {
     try { await signOutUser(); } catch(e) {}

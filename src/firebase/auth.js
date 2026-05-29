@@ -57,14 +57,19 @@ export async function signInWithGoogle() {
 
   if (isNew) {
     await setDoc(centerRef, {
+      centerId: user.uid,
       managerId: user.uid,
       managerEmail: user.email,
+      ownerEmail: user.email,
       managerName: user.displayName,
       managerPhoto: user.photoURL,
-      name: '', type: '', phone: '', logo: '',
+      name: '', centerName: '', type: '', phone: '', logo: '', logoUrl: '',
       color: '#1a56db',
+      currency: 'SAR',
       createdAt: serverTimestamp(),
       isSetup: false,
+      setupCompleted: false,
+      status: 'pending_setup',
       subscription: {
         status: 'trial',
         trialExpiry: getTrialExpiry(),
@@ -75,6 +80,7 @@ export async function signInWithGoogle() {
 
   const data = isNew ? null : centerDoc.data();
   const subStatus = checkSubscriptionStatus(data);
+  const needsSetup = isNew || data?.status === 'pending_setup' || !data?.setupCompleted || !data?.isSetup;
 
   return {
     uid: user.uid,
@@ -84,7 +90,8 @@ export async function signInWithGoogle() {
     role: 'manager',
     centerId: user.uid,
     isNewCenter: isNew,
-    subscription: subStatus
+    needsSetup,
+    subscription: subStatus,
   };
 }
 

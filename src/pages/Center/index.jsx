@@ -4,6 +4,7 @@ import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { todayStr, uid } from '../../utils/dateHelpers';
 import { printItem } from '../../utils/printUtils';
 import EmptyState from '../../components/ui/EmptyState';
+import { handleFileInputChange } from '../../utils/fileUpload';
 
 const DOC_TYPES = { stats:'إحصائية وزارية', policy:'لائحة / سياسة', report:'تقرير', strategy:'استراتيجية', circular:'تعميم', memo:'📝 مذكرة داخلية', other:'أخرى' };
 const EXPENSE_CATS = { salary:'رواتب', rent:'إيجار', utilities:'فواتير', supplies:'مستلزمات', maintenance:'صيانة', training:'تدريب', other:'أخرى' };
@@ -179,7 +180,14 @@ export default function CenterPage() {
     if (docEditId) lsUpd('centerDocs',docEditId,docForm); else lsAdd('centerDocs',{...docForm,id:uid()});
     toast('✅ تم حفظ الوثيقة','ok'); setShowDocForm(false); reload();
   }
-  function handleDocFile(e) { const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setDocForm(fm=>({...fm,fileData:ev.target.result,fileName:f.name}));r.readAsDataURL(f); }
+  async function handleDocFile(e) {
+    try {
+      const res = await handleFileInputChange(e, { allowPdf: true, allowDoc: true });
+      if (res) setDocForm(fm => ({ ...fm, fileData: res.data, fileName: res.name }));
+    } catch (ex) {
+      toast('⚠️ ' + (ex.i18nKey === 'file.tooLarge' ? 'حجم الملف يتجاوز 2 ميجابايت' : 'نوع الملف غير مدعوم'), 'er');
+    }
+  }
 
   // Finance
   function saveExp() {
@@ -237,12 +245,13 @@ export default function CenterPage() {
     setFinanceEditId(entry.id);
     setShowFinanceForm(true);
   }
-  function handleFinanceFile(e) {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    const r = new FileReader();
-    r.onload = ev => setFinanceForm(v => ({ ...v, fileData: ev.target.result, fileName: f.name }));
-    r.readAsDataURL(f);
+  async function handleFinanceFile(e) {
+    try {
+      const res = await handleFileInputChange(e, { allowPdf: true });
+      if (res) setFinanceForm(v => ({ ...v, fileData: res.data, fileName: res.name }));
+    } catch (ex) {
+      toast('⚠️ ' + (ex.i18nKey === 'file.tooLarge' ? 'حجم الملف يتجاوز 2 ميجابايت' : 'نوع الملف غير مدعوم'), 'er');
+    }
   }
   function saveFinanceEntry() {
     const itemFromList = financeForm.itemType === 'أخرى' ? (financeForm.itemTypeOther || '').trim() : financeForm.itemType;

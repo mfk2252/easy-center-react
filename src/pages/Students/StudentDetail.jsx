@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { calcAge, formatDate, todayStr, uid, nowTimeStr } from '../../utils/dateHelpers';
+import StudentTimeline from '../../components/students/StudentTimeline';
+import { handleFileInputChange } from '../../utils/fileUpload';
 
 const IEP_DOMAINS = ['التواصل واللغة','المهارات الاجتماعية','السلوك والانتباه','المهارات الحركية','الرعاية الذاتية','الأكاديمي','أخرى'];
 const EMPTY_IEP = { domain:'', goal:'', priority:'medium', start:'', review:'', progress:0, notes:'' };
@@ -209,13 +211,13 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
 
   const fldI = k => e => setIepForm(f=>({...f,[k]:e.target.value}));
   const fldS = k => e => setSessForm(f=>({...f,[k]:e.target.value}));
-  function sessAttach(e) {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    const r = new FileReader();
-    r.onload = ev => setSessForm(fm => ({ ...fm, attachmentData: ev.target.result, attachmentName: f.name }));
-    r.readAsDataURL(f);
-    e.target.value = '';
+  async function sessAttach(e) {
+    try {
+      const res = await handleFileInputChange(e, { allowPdf: true, allowDoc: true });
+      if (res) setSessForm(fm => ({ ...fm, attachmentData: res.data, attachmentName: res.name }));
+    } catch (ex) {
+      toast('⚠️ ' + (ex.i18nKey === 'file.tooLarge' ? 'حجم الملف يتجاوز 2 ميجابايت' : 'نوع الملف غير مدعوم'), 'er');
+    }
   }
   const fldA = k => e => setApptForm(f=>({...f,[k]:e.target.value}));
   const fldR = k => e => setRepForm(f=>({...f,[k]:e.target.value}));
@@ -257,10 +259,23 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
 
       {/* Tabs */}
       <div className="tabs" style={{ flexWrap:'wrap' }}>
-        {[['info','📋 المعلومات'],['iep','🎯 خطة IEP'],['sessions','🩺 الجلسات'],['appts','📅 المواعيد'],['attendance','📅 الحضور'],['fees','💳 الرسوم والدفعات'],['reports','📑 التقارير'],['behavior','📐 خطة تعديل سلوك']].map(([v,l])=>(
+        {[['info','📋 المعلومات'],['timeline','🕐 الخط الزمني'],['iep','🎯 خطة IEP'],['sessions','🩺 الجلسات'],['appts','📅 المواعيد'],['attendance','📅 الحضور'],['fees','💳 الرسوم والدفعات'],['reports','📑 التقارير'],['behavior','📐 خطة تعديل سلوك']].map(([v,l])=>(
           <button key={v} type="button" className={`tab ${tab===v?'on':''}`} onClick={()=>setTab(v)}>{l}</button>
         ))}
       </div>
+
+      {tab === 'timeline' && (
+        <StudentTimeline
+          sessions={sessions}
+          reports={reports}
+          attendance={attStu}
+          iepGoals={iepGoals}
+          attachments={stu.attachments}
+          notes={stu.notes}
+          payments={payments}
+          appointments={appts}
+        />
+      )}
 
       {/* INFO TAB */}
       {tab === 'info' && (

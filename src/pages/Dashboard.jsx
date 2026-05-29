@@ -301,7 +301,7 @@ export default function Dashboard() {
             ['🩺 الجلسات', 'sessions'],
             ['🌴 الإجازات', 'hr-leaves'],
             ['💳 إدارة المركز', 'center'],
-            ['📊 التقارير', 'reports'],
+            ['📈 الإحصائيات', 'statistics'],
             ['🗓️ التقويم', 'calendar'],
           ].map(([label, view]) => (
             <button key={view} type="button" className="btn btn-s btn-sm" onClick={() => go(view)}>

@@ -44,6 +44,8 @@ export function canSeeTab(role, tabId) {
     hr: ['manager','vice','reception'],
     students: ['manager','vice','specialist','reception','parent'],
     programs: ['manager','vice','specialist','reception'],
+    'prog-reports': ['manager','vice','specialist','reception'],
+    statistics: ['manager','vice'],
     reports: ['manager','vice'],
     center: ['manager','vice','reception'],
     settings: ['manager','vice','technician'],

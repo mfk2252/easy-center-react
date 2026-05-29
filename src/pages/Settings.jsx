@@ -4,6 +4,8 @@ import { lsGet, lsAdd, lsUpd, lsDel, syncFromFirebase, pushToFirebase, getCenter
 import { uid, todayStr } from '../utils/dateHelpers';
 import { ROLES } from '../utils/constants';
 import { updateCenterSettings, createUser, updateUser, deleteUser, getCenterUsers } from '../firebase/db';
+import { useLang } from '../context/LanguageContext';
+import { handleFileInputChange, FILE_ACCEPT_IMAGE } from '../utils/fileUpload';
 
 const PRESET_COLORS=['#1a56db','#7c3aed','#059669','#dc2626','#d97706','#0891b2','#db2777','#0f172a'];
 const ROLE_OPTIONS=[['manager','مدير'],['vice','نائب المدير'],['specialist_speech','أخصائي تخاطب'],['specialist_physio','أخصائي علاج فيزيائي'],['specialist_behavior','أخصائي تعديل سلوك'],['specialist_occupational','أخصائي علاج وظيفي'],['specialist','أخصائي عام'],['reception','استقبال'],['admin','إداري'],['technician','فني النظام'],['parent','ولي أمر']];
@@ -24,6 +26,9 @@ const PERMISSIONS = [
 
 export default function Settings() {
   const { center, currentUser, persistConfig, updateCenterColor, toast } = useApp();
+  const { t } = useLang();
+  const [fontSize, setFontSize] = useState(() => Number(localStorage.getItem('scs_fontsize')) || 15);
+  const [fontWeight, setFontWeight] = useState(() => localStorage.getItem('scs_fontweight') || '600');
   const [tab, setTab] = useState('center');
   const [users, setUsers] = useState([]);
   const [showUserForm, setShowUserForm] = useState(false);
@@ -115,11 +120,28 @@ export default function Settings() {
     }
   }
 
-  function handleCenterLogo(e) {
-    const f = e.target.files?.[0]; if(!f) return;
-    const r = new FileReader();
-    r.onload = ev => setCenterForm(prev=>({...prev, logo:ev.target.result}));
-    r.readAsDataURL(f);
+  async function handleCenterLogo(e) {
+    try {
+      const res = await handleFileInputChange(e, { imagesOnly: true });
+      if (res) setCenterForm(prev => ({ ...prev, logo: res.data }));
+    } catch (ex) {
+      toast('⚠️ ' + t(ex.i18nKey || 'file.invalidType'), 'er');
+    }
+  }
+
+  function applyFontSettings(size, weight) {
+    document.documentElement.style.setProperty('--fs', `${size}px`);
+    document.documentElement.style.setProperty('--fw', weight);
+    localStorage.setItem('scs_fontsize', String(size));
+    localStorage.setItem('scs_fontweight', weight);
+    if (centerId) {
+      updateCenterSettings(centerId, { fontSize: size, fontWeight: weight }).catch(() => {});
+    }
+  }
+
+  function saveAppearance() {
+    applyFontSettings(fontSize, fontWeight);
+    saveCenter();
   }
 
   function exportData() {
@@ -191,7 +213,7 @@ export default function Settings() {
                 <label>الشعار</label>
                 <div style={{display:'flex',gap:12,alignItems:'center'}}>
                   {centerForm.logo ? <img src={centerForm.logo} alt="logo" style={{width:56,height:56,borderRadius:10,objectFit:'cover'}}/> : <div style={{width:56,height:56,borderRadius:10,background:'var(--g1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.5rem'}}>🏥</div>}
-                  <label className="btn btn-g" style={{cursor:'pointer'}}>📷 رفع شعار<input type="file" accept="image/*" style={{display:'none'}} onChange={handleCenterLogo}/></label>
+                  <label className="btn btn-g" style={{cursor:'pointer'}}>📷 رفع شعار<input type="file" accept={FILE_ACCEPT_IMAGE} style={{display:'none'}} onChange={handleCenterLogo}/></label>
                   {centerForm.logo && <button className="btn btn-d" onClick={()=>setCenterForm(f=>({...f,logo:''}))}>🗑️</button>}
                 </div>
               </div>
@@ -204,18 +226,38 @@ export default function Settings() {
       {/* المظهر */}
       {tab==='appearance' && (
         <div className="wg">
-          <div className="wg-h"><h3>🎨 اللون الرئيسي</h3></div>
+          <div className="wg-h"><h3>🎨 {t('settings.appearance')}</h3></div>
           <div className="wg-b">
-            <div style={{display:'flex',gap:10,flexWrap:'wrap',marginBottom:16}}>
-              {PRESET_COLORS.map(c=>(
-                <button key={c} onClick={()=>{setSelColor(c);updateCenterColor(c);}} style={{
-                  width:38,height:38,borderRadius:'50%',background:c,border:'none',cursor:'pointer',
-                  outline:selColor===c?`3px solid ${c}`:'none',outlineOffset:2,
-                  transform:selColor===c?'scale(1.2)':'scale(1)',transition:'transform 0.2s'
+            <div className="fg c2" style={{ marginBottom: 20 }}>
+              <div className="fl">
+                <label>{t('settings.fontSize')}</label>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <button type="button" className="btn btn-g btn-sm" onClick={() => { const n = Math.max(12, fontSize - 1); setFontSize(n); applyFontSettings(n, fontWeight); }}>{t('settings.fontSmaller')}</button>
+                  <span style={{ fontWeight: 700, minWidth: 48, textAlign: 'center' }}>{fontSize}px</span>
+                  <button type="button" className="btn btn-g btn-sm" onClick={() => { const n = Math.min(22, fontSize + 1); setFontSize(n); applyFontSettings(n, fontWeight); }}>{t('settings.fontLarger')}</button>
+                </div>
+              </div>
+              <div className="fl">
+                <label>{t('settings.fontWeight')}</label>
+                <select value={fontWeight} onChange={e => { setFontWeight(e.target.value); applyFontSettings(fontSize, e.target.value); }}>
+                  <option value="400">{t('settings.fontNormal')}</option>
+                  <option value="600">600</option>
+                  <option value="700">{t('settings.fontBold')}</option>
+                  <option value="900">900</option>
+                </select>
+              </div>
+            </div>
+            <label style={{ fontWeight: 700, display: 'block', marginBottom: 8 }}>{t('settings.mainColor')}</label>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
+              {PRESET_COLORS.map(c => (
+                <button key={c} type="button" onClick={() => { setSelColor(c); updateCenterColor(c); }} style={{
+                  width: 38, height: 38, borderRadius: '50%', background: c, border: 'none', cursor: 'pointer',
+                  outline: selColor === c ? `3px solid ${c}` : 'none', outlineOffset: 2,
+                  transform: selColor === c ? 'scale(1.2)' : 'scale(1)', transition: 'transform 0.2s',
                 }}/>
               ))}
             </div>
-            <button className="btn btn-p" onClick={saveCenter}>💾 حفظ</button>
+            <button type="button" className="btn btn-p" onClick={saveAppearance}>💾 {t('save')}</button>
           </div>
         </div>
       )}
