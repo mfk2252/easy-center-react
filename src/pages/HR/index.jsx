@@ -220,7 +220,7 @@ export default function HRPage() {
       <div className="ph">
         <div className="ph-t"><h2>👥 الموظفون</h2><p>إدارة شاملة للكوادر البشرية في المركز</p></div>
         <div className="ph-a">
-          <button className="btn btn-g btn-sm no-print" onClick={()=>go('attendance')}>📅 الحضور السريع</button>
+          <button className="btn btn-g btn-sm no-print" onClick={()=>go('attendance')}>📅 تسجيل الحضور</button>
           <button className="btn btn-g btn-sm no-print" onClick={()=>go('hr-leaves')}>🌴 الإجازات</button>
           {canEdit&&<button className="btn btn-p no-print" onClick={()=>openForm()}>➕ موظف جديد</button>}
         </div>

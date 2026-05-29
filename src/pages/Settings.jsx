@@ -33,8 +33,27 @@ export default function Settings() {
   const [users, setUsers] = useState([]);
   const [showUserForm, setShowUserForm] = useState(false);
   const [editUserId, setEditUserId] = useState(null);
-  const [userForm, setUserForm] = useState({ username:'', password:'', name:'', email:'', role:'specialist', title:'', permissions:{} });
-  const [centerForm, setCenterForm] = useState({ name:center.name||'', type:center.type||'', phone:center.phone||'', logo:center.logo||'' });
+  const [userForm, setUserForm] = useState({ username:'', password:'', name:'', email:'', role:'specialist', title:'', studentId:'', permissions:{} });
+  const [stuList, setStuList] = useState([]);
+  const [centerForm, setCenterForm] = useState({
+    name: center.name || '',
+    nameEn: center.nameEn || localStorage.getItem('scs_center_name_en') || '',
+    type: center.type || '',
+    phone: center.phone || '',
+    phoneCode: center.phoneCode || localStorage.getItem('scs_center_phone_code') || '+966',
+    email: center.email || '',
+    address: center.address || localStorage.getItem('scs_center_address') || '',
+    logo: center.logo || '',
+    currency: center.currency || 'SAR',
+    website: center.website || '',
+    whatsapp: center.whatsapp || '',
+    instagram: center.instagram || '',
+    barcode: center.barcode || '',
+    morningFrom: center.shifts?.morning?.from || '07:00',
+    morningTo: center.shifts?.morning?.to || '12:00',
+    eveningFrom: center.shifts?.evening?.from || '16:00',
+    eveningTo: center.shifts?.evening?.to || '20:00',
+  });
   const [selColor, setSelColor] = useState(center.color||'#1a56db');
   const [syncLoading, setSyncLoading] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
@@ -44,6 +63,7 @@ export default function Settings() {
 
   useEffect(() => {
     reloadUsers();
+    setStuList(lsGet('students'));
   }, []);
 
   async function reloadUsers() {
@@ -65,6 +85,7 @@ export default function Settings() {
   async function saveUser() {
     if (!userForm.username.trim()||!userForm.name.trim()) { toast('⚠️ أدخل اسم المستخدم والاسم الكامل','er'); return; }
     if (!editUserId&&!userForm.password) { toast('⚠️ أدخل كلمة المرور','er'); return; }
+    if (userForm.role === 'parent' && !userForm.studentId) { toast('⚠️ اختر الطالب المرتبط بولي الأمر','er'); return; }
 
     const userData = { ...userForm, centerId, permissions: userForm.permissions||{}, active:true };
 
@@ -80,7 +101,7 @@ export default function Settings() {
       }
       setShowUserForm(false);
       setEditUserId(null);
-      setUserForm({ username:'', password:'', name:'', email:'', role:'specialist', title:'', permissions:{} });
+      setUserForm({ username:'', password:'', name:'', email:'', role:'specialist', title:'', studentId:'', permissions:{} });
       reloadUsers();
     } catch(e) {
       toast('❌ حدث خطأ: '+e.message,'er');
@@ -100,23 +121,50 @@ export default function Settings() {
   }
 
   async function saveCenter() {
-    const updated = { ...center, ...centerForm, color: selColor, configured:true };
+    if (!centerForm.name?.trim()) { toast('⚠️ أدخل اسم المركز بالعربية','er'); return; }
+    if (!centerForm.nameEn?.trim()) { toast('⚠️ أدخل اسم المركز بالإنجليزية','er'); return; }
+    const shifts = {
+      morning: { from: centerForm.morningFrom, to: centerForm.morningTo },
+      evening: { from: centerForm.eveningFrom, to: centerForm.eveningTo },
+    };
+    const socialLinks = { website: centerForm.website, whatsapp: centerForm.whatsapp, instagram: centerForm.instagram };
+    const updated = { ...center, ...centerForm, shifts, socialLinks, color: selColor, configured: true };
     try {
       if (centerId) {
         await updateCenterSettings(centerId, {
-          name: centerForm.name,
+          centerName: centerForm.name.trim(),
+          name: centerForm.name.trim(),
+          nameEn: centerForm.nameEn.trim(),
           type: centerForm.type,
           phone: centerForm.phone,
+          phoneCode: centerForm.phoneCode,
+          email: centerForm.email,
+          address: centerForm.address,
           logo: centerForm.logo,
+          currency: centerForm.currency,
+          socialLinks,
+          shifts,
+          barcode: centerForm.barcode,
           color: selColor,
-          isSetup: true
+          isSetup: true,
+          setupCompleted: true,
+          status: 'active',
         });
-        if (centerForm.logo) localStorage.setItem('scs_center_logo', centerForm.logo);
       }
       persistConfig(updated);
       toast('✅ تم حفظ بيانات المركز','ok');
     } catch(e) {
       toast('❌ خطأ في الحفظ','er');
+    }
+  }
+
+  async function handleBarcode(e) {
+    try {
+      const { handleFileInputChange } = await import('../utils/fileUpload');
+      const res = await handleFileInputChange(e, { imagesOnly: true });
+      if (res) setCenterForm(f => ({ ...f, barcode: res.data }));
+    } catch (ex) {
+      toast('⚠️ ' + t(ex.i18nKey || 'file.invalidType'), 'er');
     }
   }
 
@@ -201,20 +249,53 @@ export default function Settings() {
           <div className="wg-h"><h3>🏥 بيانات المركز</h3></div>
           <div className="wg-b">
             <div className="fg c2">
-              <div className="fl full"><label>اسم المركز</label><input value={centerForm.name} onChange={e=>setCenterForm(f=>({...f,name:e.target.value}))}/></div>
+              <div className="fl"><label>اسم المركز (عربي) <span className="req">*</span></label><input value={centerForm.name} onChange={e=>setCenterForm(f=>({...f,name:e.target.value}))}/></div>
+              <div className="fl"><label>اسم المركز (English) <span className="req">*</span></label><input value={centerForm.nameEn} onChange={e=>setCenterForm(f=>({...f,nameEn:e.target.value}))} dir="ltr"/></div>
               <div className="fl"><label>نوع المركز</label>
                 <select value={centerForm.type} onChange={e=>setCenterForm(f=>({...f,type:e.target.value}))}>
                   <option value="">اختر</option>
                   {['تربية خاصة','تأهيل','تخاطب','توحد','صعوبات تعلم','متعدد التخصصات'].map(t=><option key={t}>{t}</option>)}
                 </select>
               </div>
-              <div className="fl"><label>الهاتف</label><input value={centerForm.phone} onChange={e=>setCenterForm(f=>({...f,phone:e.target.value}))}/></div>
+              <div className="fl"><label>العملة</label>
+                <select value={centerForm.currency} onChange={e=>setCenterForm(f=>({...f,currency:e.target.value}))}>
+                  {['SAR','BHD','AED','KWD','QAR','OMR','USD'].map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div className="fl"><label>كود الدولة</label><input value={centerForm.phoneCode} onChange={e=>setCenterForm(f=>({...f,phoneCode:e.target.value}))} dir="ltr" placeholder="+966"/></div>
+              <div className="fl"><label>الهاتف الأساسي</label><input type="tel" value={centerForm.phone} onChange={e=>setCenterForm(f=>({...f,phone:e.target.value}))} dir="ltr"/></div>
+              <div className="fl"><label>البريد</label><input type="email" value={centerForm.email} onChange={e=>setCenterForm(f=>({...f,email:e.target.value}))} dir="ltr"/></div>
+              <div className="fl full"><label>العنوان</label><textarea value={centerForm.address} onChange={e=>setCenterForm(f=>({...f,address:e.target.value}))} rows={2}/></div>
+              <div className="fl"><label>الموقع / صفحة التواصل</label><input value={centerForm.website} onChange={e=>setCenterForm(f=>({...f,website:e.target.value}))} dir="ltr" placeholder="https://"/></div>
+              <div className="fl"><label>واتساب المركز</label><input value={centerForm.whatsapp} onChange={e=>setCenterForm(f=>({...f,whatsapp:e.target.value}))} dir="ltr"/></div>
+              <div className="fl"><label>إنستجرام</label><input value={centerForm.instagram} onChange={e=>setCenterForm(f=>({...f,instagram:e.target.value}))} dir="ltr" placeholder="@center"/></div>
+              <div className="fl full"><label>الفترة الصباحية</label>
+                <div style={{display:'flex',gap:8}}>
+                  <input type="time" value={centerForm.morningFrom} onChange={e=>setCenterForm(f=>({...f,morningFrom:e.target.value}))}/>
+                  <span>—</span>
+                  <input type="time" value={centerForm.morningTo} onChange={e=>setCenterForm(f=>({...f,morningTo:e.target.value}))}/>
+                </div>
+              </div>
+              <div className="fl full"><label>الفترة المسائية</label>
+                <div style={{display:'flex',gap:8}}>
+                  <input type="time" value={centerForm.eveningFrom} onChange={e=>setCenterForm(f=>({...f,eveningFrom:e.target.value}))}/>
+                  <span>—</span>
+                  <input type="time" value={centerForm.eveningTo} onChange={e=>setCenterForm(f=>({...f,eveningTo:e.target.value}))}/>
+                </div>
+              </div>
               <div className="fl full">
                 <label>الشعار</label>
-                <div style={{display:'flex',gap:12,alignItems:'center'}}>
+                <div style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
                   {centerForm.logo ? <img src={centerForm.logo} alt="logo" style={{width:56,height:56,borderRadius:10,objectFit:'cover'}}/> : <div style={{width:56,height:56,borderRadius:10,background:'var(--g1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.5rem'}}>🏥</div>}
                   <label className="btn btn-g" style={{cursor:'pointer'}}>📷 رفع شعار<input type="file" accept={FILE_ACCEPT_IMAGE} style={{display:'none'}} onChange={handleCenterLogo}/></label>
-                  {centerForm.logo && <button className="btn btn-d" onClick={()=>setCenterForm(f=>({...f,logo:''}))}>🗑️</button>}
+                  {centerForm.logo && <button type="button" className="btn btn-d" onClick={()=>setCenterForm(f=>({...f,logo:''}))}>🗑️</button>}
+                </div>
+              </div>
+              <div className="fl full">
+                <label>الباركود (يظهر في الطباعة)</label>
+                <div style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
+                  {centerForm.barcode && <img src={centerForm.barcode} alt="" style={{height:64}}/>}
+                  <label className="btn btn-g" style={{cursor:'pointer'}}>📷 رفع باركود<input type="file" accept={FILE_ACCEPT_IMAGE} style={{display:'none'}} onChange={handleBarcode}/></label>
                 </div>
               </div>
             </div>
@@ -266,7 +347,7 @@ export default function Settings() {
       {tab==='users' && (
         <div>
           <div style={{display:'flex',justifyContent:'flex-end',marginBottom:12}}>
-            {isManager && <button className="btn btn-p" onClick={()=>{setUserForm({username:'',password:'',name:'',email:'',role:'specialist',title:'',permissions:{}});setEditUserId(null);setShowUserForm(true);}}>➕ مستخدم جديد</button>}
+            {isManager && <button className="btn btn-p" onClick={()=>{setUserForm({username:'',password:'',name:'',email:'',role:'specialist',title:'',studentId:'',permissions:{}});setEditUserId(null);setShowUserForm(true);}}>➕ مستخدم جديد</button>}
           </div>
 
           {users.length===0 ? (
@@ -313,6 +394,15 @@ export default function Settings() {
                         {ROLE_OPTIONS.map(([v,l])=><option key={v} value={v}>{l}</option>)}
                       </select>
                     </div>
+                    {userForm.role === 'parent' && (
+                      <div className="fl full">
+                        <label>الطالب المرتبط <span className="req">*</span></label>
+                        <select value={userForm.studentId || ''} onChange={fldU('studentId')}>
+                          <option value="">— اختر الطالب —</option>
+                          {stuList.map(s => <option key={s.id} value={s.id}>{s.name}{s.className ? ` (${s.className})` : ''}</option>)}
+                        </select>
+                      </div>
+                    )}
                   </div>
 
                   <div style={{marginTop:20}}>

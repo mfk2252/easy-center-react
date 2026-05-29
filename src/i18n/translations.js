@@ -30,7 +30,7 @@ export const translations = {
     nav: {
       dash: 'الرئيسية',
       calendar: 'التقويم',
-      attendance: 'الحضور السريع',
+      attendance: 'تسجيل الحضور',
       hr: 'الموظفون',
       students: 'الطلاب',
       progReports: 'البرامج والتقارير',

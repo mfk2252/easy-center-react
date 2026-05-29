@@ -297,7 +297,7 @@ export default function Dashboard() {
         </div>
         <div className="wg-b" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {[
-            ['📅 الحضور السريع', 'attendance'],
+            ['📅 تسجيل الحضور', 'attendance'],
             ['🩺 الجلسات', 'sessions'],
             ['🌴 الإجازات', 'hr-leaves'],
             ['💳 إدارة المركز', 'center'],

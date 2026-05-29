@@ -4,6 +4,7 @@ import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { calcAge, formatDate, todayStr, uid, nowTimeStr } from '../../utils/dateHelpers';
 import StudentTimeline from '../../components/students/StudentTimeline';
 import { handleFileInputChange } from '../../utils/fileUpload';
+import { centerWhatsAppUrl, parentCanViewStudent } from '../../utils/parentAccess';
 
 const IEP_DOMAINS = ['التواصل واللغة','المهارات الاجتماعية','السلوك والانتباه','المهارات الحركية','الرعاية الذاتية','الأكاديمي','أخرى'];
 const EMPTY_IEP = { domain:'', goal:'', priority:'medium', start:'', review:'', progress:0, notes:'' };
@@ -17,7 +18,9 @@ const PRIORITY_BADGE = { high:'b-rd', medium:'b-or', low:'b-gr' };
 const PRIORITY_LABEL = { high:'عالية', medium:'متوسطة', low:'منخفضة' };
 
 export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
-  const { toast, currentUser } = useApp();
+  const { toast, currentUser, center } = useApp();
+  const isParent = currentUser?.role === 'parent';
+  const centerWa = centerWhatsAppUrl(center?.whatsapp, center?.phoneCode, center?.phone);
   const [stu, setStu] = useState(null);
   const [tab, setTab] = useState('info');
   const [emps, setEmps] = useState([]);
@@ -54,7 +57,7 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
   const [bipForm, setBipForm] = useState(EMPTY_BIP);
   const [repFilter, setRepFilter] = useState('all');
 
-  const canEdit = ['manager','vice','reception','specialist','specialist_speech','specialist_physio','specialist_behavior','specialist_occupational'].includes(currentUser?.role);
+  const canEdit = !isParent && ['manager','vice','reception','specialist','specialist_speech','specialist_physio','specialist_behavior','specialist_occupational'].includes(currentUser?.role);
 
   function load() {
     setStu(lsGet('students').find(s => s.id === stuId));
@@ -158,6 +161,13 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
 
 
   useEffect(() => { load(); }, [stuId]);
+  useEffect(() => {
+    if (!stu || !isParent) return;
+    if (!parentCanViewStudent(stu, currentUser)) {
+      toast('⚠️ لا يمكنك عرض هذا الطالب', 'er');
+      onBack();
+    }
+  }, [stu, isParent, currentUser]);
   if (!stu) return <div style={{padding:40,textAlign:'center',color:'var(--g4)'}}>جاري التحميل...</div>;
 
   const spec = emps.find(e => e.id === stu.specialistId);
@@ -236,6 +246,7 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
           <h2>{stu.name}</h2>
           <div className="det-sub">
             <span>{stu.diagnosis}</span>
+            {stu.className && <span>📚 {stu.className}</span>}
             <span>👶 {calcAge(stu.dob)}</span>
             {spec && <span>🩺 {spec.name}</span>}
             {stu.parentPhone && <span>👨‍👩‍👦 {stu.parentName} {stu.parentPhone}</span>}
@@ -243,7 +254,8 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
           {progs.length > 0 && <div style={{ marginTop:6, display:'flex', gap:6, flexWrap:'wrap' }}>{progs.map((p,i)=><span key={i} className="bdg b-cy">{p}</span>)}</div>}
         </div>
         <div className="det-acts">
-          {stu.parentPhone && <a href={`https://wa.me/${stu.parentPhone.replace(/[^0-9+]/g,'').replace(/^0/,'966')}`} target="_blank" rel="noreferrer" className="btn btn-bl btn-sm">💬 واتساب</a>}
+          {isParent && centerWa && <a href={centerWa} target="_blank" rel="noreferrer" className="btn btn-bl btn-sm">💬 واتساب المركز</a>}
+          {!isParent && stu.parentPhone && <a href={`https://wa.me/${stu.parentPhone.replace(/[^0-9+]/g,'').replace(/^0/,'966')}`} target="_blank" rel="noreferrer" className="btn btn-bl btn-sm">💬 واتساب ولي الأمر</a>}
           {canEdit && <button className="btn btn-p" onClick={() => onEdit(stu)}>✏️ تعديل</button>}
           <button className="btn btn-g" onClick={onBack}>← رجوع</button>
         </div>
@@ -284,7 +296,7 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
             <div className="wg-h"><h3>👤 البيانات الشخصية</h3></div>
             <div className="wg-b">
               <div className="info-grid">
-                {[['الاسم',stu.name],['تاريخ الميلاد',stu.dob],['العمر',calcAge(stu.dob)],['الجنس',stu.gender],['الجنسية',stu.nationality],['تاريخ التسجيل',stu.joinDate],['التشخيص',stu.diagnosis],['تشخيص إضافي',stu.diagnosis2],['المستشفى',stu.hospital],['الطبيب',stu.doctor],['الأدوية',stu.medications]].filter(([,v])=>v).map(([k,v])=>(
+                {[['الاسم',stu.name],['الصف / الفصل',stu.className],['تاريخ الميلاد',stu.dob],['العمر',calcAge(stu.dob)],['الجنس',stu.gender],['الجنسية',stu.nationality],['تاريخ التسجيل',stu.joinDate],['التشخيص',stu.diagnosis],['تشخيص إضافي',stu.diagnosis2],['المستشفى',stu.hospital],['الطبيب',stu.doctor],['الأدوية',stu.medications]].filter(([,v])=>v).map(([k,v])=>(
                   <div className="ic" key={k}><div className="ik">{k}</div><div className="iv">{v}</div></div>
                 ))}
               </div>

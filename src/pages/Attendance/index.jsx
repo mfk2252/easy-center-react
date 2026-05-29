@@ -128,7 +128,7 @@ export default function AttendancePage() {
   return (
     <div>
       <div className="ph">
-        <div className="ph-t"><h2>📅 الحضور السريع</h2><p>تسجيل حضور وانصراف الموظفين والطلاب</p></div>
+        <div className="ph-t"><h2>📅 تسجيل الحضور</h2><p>تسجيل حضور وانصراف الموظفين والطلاب</p></div>
         <div className="ph-a">
           <button className="btn btn-g btn-sm" onClick={()=>navDate(-1)}>→ السابق</button>
           <button className="btn btn-p btn-sm" onClick={()=>setDateStr(todayStr())}>اليوم</button>

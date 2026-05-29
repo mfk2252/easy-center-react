@@ -49,7 +49,7 @@ export const COLORS = [
 export const NAV_ITEMS = [
   { id: 'dash', label: '📊 الرئيسية', roles: null },
   { id: 'calendar', label: '🗓️ التقويم', roles: null },
-  { id: 'attendance', label: '📅 الحضور السريع', roles: null },
+  { id: 'attendance', label: '📅 تسجيل الحضور', roles: null },
   { id: 'hr', label: '👥 الموظفون', roles: ['manager','vice','admin'] },
   { id: 'students', label: '👦 الطلاب', roles: null },
   { id: 'programs', label: '🎯 الأنشطة', roles: null },

@@ -5,6 +5,7 @@ import { getCenterSettings } from '../firebase/db';
 import { signOutUser, checkSubscriptionStatus } from '../firebase/auth';
 import { syncFromFirebase } from '../hooks/useStorage';
 import { getWelcomeMessage } from './LanguageContext';
+import { persistCenterMeta } from '../utils/centerMeta';
 
 const AppContext = createContext(null);
 
@@ -13,7 +14,8 @@ const ALL_KEYS = [
   'attStu','attEmp','income','expenses','salaries','leaves',
   'calEvents','centerActivities','parentInteractions','consultations',
   'evaluations','warnings','stuReports','behaviorPlans',
-  'studentFees','payments','notifs','manualAlerts','users'
+  'studentFees','payments','notifs','manualAlerts','users',
+  'progEvaluations','progPrograms','progReports',
 ];
 
 function applyTheme(color) {
@@ -128,22 +130,41 @@ export function AppProvider({ children }) {
   }
 
   function applyCenter(data) {
+    const social = data.socialLinks || data.social || {};
     const c = {
       name: data.centerName || data.name || '',
+      nameEn: data.nameEn || data.centerNameEn || '',
       logo: data.logoUrl || data.logo || '',
       color: data.color || '#1a56db',
       type: data.type || '',
       phone: data.phone || '',
+      phoneCode: data.phoneCode || '+966',
       email: data.email || data.ownerEmail || '',
       address: data.address || '',
       currency: data.currency || 'SAR',
+      website: social.website || data.website || '',
+      whatsapp: social.whatsapp || data.whatsapp || '',
+      instagram: social.instagram || data.instagram || '',
+      barcode: data.barcode || '',
+      shifts: data.shifts || {},
       status: data.status || 'active',
       setupCompleted: !!data.setupCompleted,
       configured: data.setupCompleted || data.isSetup || false,
     };
     setCenter(c);
-    if (c.name) localStorage.setItem('scs_center_name', c.name);
-    if (c.logo) localStorage.setItem('scs_center_logo', c.logo);
+    persistCenterMeta({
+      name: c.name,
+      nameEn: c.nameEn,
+      logo: c.logo,
+      address: c.address,
+      phone: c.phone,
+      phoneCode: c.phoneCode,
+      email: c.email,
+      currency: c.currency,
+      barcode: c.barcode,
+      socialLinks: { website: c.website, whatsapp: c.whatsapp, instagram: c.instagram },
+      shifts: c.shifts,
+    });
     if (data.fontSize) localStorage.setItem('scs_fontsize', String(data.fontSize));
     if (data.fontWeight) localStorage.setItem('scs_fontweight', String(data.fontWeight));
     if (data.platformLang) localStorage.setItem('scs_lang', data.platformLang);

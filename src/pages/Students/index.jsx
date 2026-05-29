@@ -5,17 +5,19 @@ import { DIAGNOSES, SPECIALIST_ROLES } from '../../utils/constants';
 import { calcAge, todayStr, uid, nowTimeStr } from '../../utils/dateHelpers';
 import EmptyState from '../../components/ui/EmptyState';
 import StudentDetail from './StudentDetail';
+import { parentCanViewStudent, centerWhatsAppUrl } from '../../utils/parentAccess';
 
 const SESSION_TYPES = ['تخاطب ونطق','تعديل سلوك','علاج فيزيائي','علاج وظيفي','تكامل حسي','تعليمي وتربوي','مهارات اجتماعية'];
 const STATUSES = { active:'✅ نشط', inactive:'⏸️ منقطع', graduated:'🎓 متخرج', transferred:'🔄 محوّل', waitlist:'⏳ انتظار', rejected:'❌ غير مناسب' };
 const STATUS_BADGE = { active:'b-gr', inactive:'b-gy', graduated:'b-cy', transferred:'b-bl', waitlist:'b-or', rejected:'b-rd' };
 
-const EMPTY_STU = { name:'', dob:'', gender:'', nationality:'سعودي', joinDate:'', status:'active', specialistId:'', sessionTypes:[], diagnosis:'', diagnosis2:'', hospital:'', doctor:'', medications:'', medNotes:'', parentName:'', parentPhone:'', parentPhone2:'', parentRelation:'', parentJob:'', parentEmail:'', address:'', progMorning:{enabled:false}, progEvening:{enabled:false}, progSessions:{enabled:false,emp:'',type:'',freq:'أسبوعي'}, progOnline:{enabled:false,emp:'',type:'',dur:'45 دقيقة',link:''}, notes:'', photo:'', attachments:[] };
+const EMPTY_STU = { name:'', className:'', dob:'', gender:'', nationality:'سعودي', joinDate:'', status:'active', specialistId:'', sessionTypes:[], diagnosis:'', diagnosis2:'', hospital:'', doctor:'', medications:'', medNotes:'', parentName:'', parentPhone:'', parentPhone2:'', parentRelation:'', parentJob:'', parentEmail:'', address:'', progMorning:{enabled:false}, progEvening:{enabled:false}, progSessions:{enabled:false,emp:'',type:'',freq:'أسبوعي'}, progOnline:{enabled:false,emp:'',type:'',dur:'45 دقيقة',link:''}, notes:'', photo:'', attachments:[] };
 const EMPTY_QS = { stuId:'', type:'تخاطب ونطق', date:'', time:'', duration:45, empId:'', notes:'', attachData:'', attachName:'' };
 const EMPTY_CONSULT = { beneficiaryName:'', parentName:'', date:'', time:'', empId:'', duration:45, notes:'', attachData:'', attachName:'' };
 
 export default function StudentsPage() {
-  const { go, toast, currentUser, activeView } = useApp();
+  const { go, toast, currentUser, activeView, center } = useApp();
+  const isParent = currentUser?.role === 'parent';
   const [students, setStudents] = useState([]);
   const [emps, setEmps] = useState([]);
   const [tab, setTab] = useState('active');
@@ -31,17 +33,24 @@ export default function StudentsPage() {
   const [showConsult, setShowConsult] = useState(false);
   const [consultForm, setConsultForm] = useState(EMPTY_CONSULT);
 
-  const canAdd = ['manager','vice','reception'].includes(currentUser?.role);
-  const canEdit = ['manager','vice','reception'].includes(currentUser?.role);
+  const canAdd = !isParent && ['manager','vice','reception'].includes(currentUser?.role);
+  const canEdit = !isParent && ['manager','vice','reception'].includes(currentUser?.role);
+  const centerWa = centerWhatsAppUrl(center?.whatsapp, center?.phoneCode, center?.phone);
   const specialists = emps.filter(e => SPECIALIST_ROLES.includes(e.role));
 
   useEffect(() => { setStudents(lsGet('students')); setEmps(lsGet('employees')); }, [activeView]);
+  useEffect(() => {
+    if (!isParent || detailId) return;
+    const mine = lsGet('students').filter(s => parentCanViewStudent(s, currentUser));
+    if (mine.length === 1) setDetailId(mine[0].id);
+  }, [isParent, currentUser?.studentId, currentUser?.username]);
   function reload() { setStudents(lsGet('students')); }
   const fld = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
   function fldProg(prog, key) { return e => setForm(f => ({ ...f, [prog]: { ...f[prog], [key]: e.target.value } })); }
   function toggleProg(prog) { setForm(f => ({ ...f, [prog]: { ...f[prog], enabled: !f[prog].enabled } })); }
 
   const filtered = students.filter(s => {
+    if (isParent && !parentCanViewStudent(s, currentUser)) return false;
     if (tab==='active' && !['active'].includes(s.status)) return false;
     if (tab==='morning' && !s.progMorning?.enabled) return false;
     if (tab==='evening' && !s.progEvening?.enabled) return false;
@@ -172,7 +181,10 @@ export default function StudentsPage() {
   return (
     <div>
       <div className="ph">
-        <div className="ph-t"><h2>👦 الطلاب</h2><p>قاعدة بيانات الطلاب المسجلين</p></div>
+        <div className="ph-t"><h2>👦 {isParent ? 'بيانات الطفل' : 'الطلاب'}</h2><p>{isParent ? 'عرض بيانات طفلك والتواصل مع المركز' : 'قاعدة بيانات الطلاب المسجلين'}</p></div>
+        {isParent && centerWa && (
+          <a href={centerWa} target="_blank" rel="noreferrer" className="btn btn-bl">💬 واتساب المركز</a>
+        )}
         <div className="ph-a" style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
           {canAdd && <button type="button" className="btn btn-p" onClick={() => openForm()}>➕ طالب جديد</button>}
           {canEdit && <button type="button" className="btn btn-s" onClick={openQuickSession}>🩺 تسجيل جلسة</button>}
@@ -217,7 +229,7 @@ export default function StudentsPage() {
               </div>
               <div className="ci">
                 <div className="cn">{s.name}</div>
-                <div className="cm">{s.diagnosis||'—'} · {calcAge(s.dob)} · {spec?.name||'—'}</div>
+                <div className="cm">{s.className && `📚 ${s.className} · `}{s.diagnosis||'—'} · {calcAge(s.dob)} · {spec?.name||'—'}</div>
                 <div className="cm">{s.parentName&&'👨‍👩‍👦 '+s.parentName} {s.parentPhone&&'· '+s.parentPhone}</div>
               </div>
               <div className="c-badges">
@@ -225,7 +237,8 @@ export default function StudentsPage() {
                 {progs.map((p,i)=><span key={i} className="bdg b-cy">{p}</span>)}
               </div>
               <div className="c-acts" onClick={ev=>ev.stopPropagation()}>
-                {s.parentPhone && <a href={`https://wa.me/${s.parentPhone.replace(/[^0-9+]/g,'').replace(/^0/,'966')}`} target="_blank" rel="noreferrer" className="btn btn-xs btn-bl">💬</a>}
+                {!isParent && s.parentPhone && <a href={`https://wa.me/${s.parentPhone.replace(/[^0-9+]/g,'').replace(/^0/,'966')}`} target="_blank" rel="noreferrer" className="btn btn-xs btn-bl">💬</a>}
+                {isParent && centerWa && <a href={centerWa} target="_blank" rel="noreferrer" className="btn btn-xs btn-bl">💬 المركز</a>}
                 {canEdit && <button className="btn btn-xs btn-g" onClick={()=>openForm(s)}>✏️</button>}
               </div>
             </div>
@@ -253,6 +266,7 @@ export default function StudentsPage() {
                 </div>
                 <div className="fg c3">
                   <div className="fl"><label>الاسم الكامل <span className="req">*</span></label><input value={form.name} onChange={fld('name')} placeholder="اسم الطالب كاملاً"/></div>
+                  <div className="fl"><label>الصف / الفصل</label><input value={form.className} onChange={fld('className')} placeholder="مثال: الصف الثاني أ"/></div>
                   <div className="fl"><label>تاريخ الميلاد <span className="req">*</span></label><input type="date" value={form.dob} onChange={fld('dob')}/></div>
                   <div className="fl"><label>العمر</label><input value={calcAge(form.dob)} readOnly style={{ background:'var(--g0)' }}/></div>
                 </div>

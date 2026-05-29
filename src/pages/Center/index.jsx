@@ -5,6 +5,8 @@ import { todayStr, uid } from '../../utils/dateHelpers';
 import { printItem } from '../../utils/printUtils';
 import EmptyState from '../../components/ui/EmptyState';
 import { handleFileInputChange } from '../../utils/fileUpload';
+import AttachmentField from '../../components/ui/AttachmentField';
+import { CUSTODY_CATEGORIES } from '../../utils/custodyCategories';
 
 const DOC_TYPES = { stats:'إحصائية وزارية', policy:'لائحة / سياسة', report:'تقرير', strategy:'استراتيجية', circular:'تعميم', memo:'📝 مذكرة داخلية', other:'أخرى' };
 const EXPENSE_CATS = { salary:'رواتب', rent:'إيجار', utilities:'فواتير', supplies:'مستلزمات', maintenance:'صيانة', training:'تدريب', other:'أخرى' };
@@ -28,11 +30,11 @@ const EMPTY_FINANCE = { type:'income', categoryId:'1', categoryLabel:'1- رسو�
 const EMPTY_DOC = { name:'', type:'stats', date:'', org:'', url:'', notes:'', fileData:'', fileName:'', audience:['all'] };
 const EMPTY_EXP = { desc:'', cat:'salary', amount:'', date:'', notes:'' };
 const EMPTY_INC = { desc:'', cat:'fees', amount:'', date:'', notes:'' };
-const EMPTY_PARTNER = { name:'', type:'', contact:'', phone:'', email:'', startDate:'', notes:'' };
-const EMPTY_CUSTODY = { name:'', category:'', quantity:1, location:'', condition:'جيد', notes:'' };
-const EMPTY_VISIT = { name:'', date:'', type:'', delegation:'', purpose:'', result:'', notes:'' };
-const EMPTY_PARENT_LOG = { parentKey:'', type:'visit', date:'', notes:'' };
-const EMPTY_BUS = { busNumber:'', driverPhone:'', route:'', notes:'', studentIds:[] };
+const EMPTY_PARTNER = { name:'', type:'', contact:'', phone:'', email:'', startDate:'', notes:'', fileData:'', fileName:'' };
+const EMPTY_CUSTODY = { name:'', category:'أجهزة إلكترونية', quantity:1, location:'', condition:'جيد', notes:'', fileData:'', fileName:'' };
+const EMPTY_VISIT = { name:'', date:'', type:'', delegation:'', purpose:'', result:'', notes:'', fileData:'', fileName:'' };
+const EMPTY_PARENT_LOG = { parentKey:'', type:'visit', date:'', notes:'', fileData:'', fileName:'' };
+const EMPTY_BUS = { busNumber:'', driverPhone:'', route:'', notes:'', studentIds:[], fileData:'', fileName:'' };
 const PARENT_TYPE_LABEL = { visit:'زيارة', call:'مكالمة', guidance:'جلسة إرشادية' };
 
 function extractParents(students) {
@@ -410,6 +412,12 @@ export default function CenterPage() {
                     <div className="fl"><label>الجوال</label><input type="tel" value={partnerForm.phone} onChange={fldP('phone')}/></div>
                     <div className="fl"><label>البريد</label><input type="email" value={partnerForm.email} onChange={fldP('email')}/></div>
                     <div className="fl"><label>تاريخ الشراكة</label><input type="date" value={partnerForm.startDate} onChange={fldP('startDate')}/></div>
+                    <AttachmentField
+                      fileData={partnerForm.fileData}
+                      fileName={partnerForm.fileName}
+                      onAttach={(data, name) => setPartnerForm(f => ({ ...f, fileData: data, fileName: name }))}
+                      onError={msg => toast('⚠️ ' + msg, 'er')}
+                    />
                     <div className="fl full"><label>ملاحظات</label><textarea value={partnerForm.notes} onChange={fldP('notes')} rows={2}/></div>
                   </div>
                 </div>
@@ -613,6 +621,12 @@ export default function CenterPage() {
                     <div className="modal-body-scroll" style={{padding:'18px 20px'}}>
                       <div className="fg c2">
                         <div className="fl"><label>التاريخ</label><input type="date" value={parentLogForm.date} onChange={fldPL('date')}/></div>
+                        <AttachmentField
+                          fileData={parentLogForm.fileData}
+                          fileName={parentLogForm.fileName}
+                          onAttach={(data, name) => setParentLogForm(f => ({ ...f, fileData: data, fileName: name }))}
+                          onError={msg => toast('⚠️ ' + msg, 'er')}
+                        />
                         <div className="fl full"><label>ملاحظات</label><textarea value={parentLogForm.notes} onChange={fldPL('notes')} rows={3}/></div>
                       </div>
                     </div>
@@ -663,6 +677,12 @@ export default function CenterPage() {
                         <div className="fl"><label>رقم الباص <span className="req">*</span></label><input value={busForm.busNumber} onChange={fldB('busNumber')}/></div>
                         <div className="fl"><label>جوال السائق</label><input type="tel" value={busForm.driverPhone} onChange={fldB('driverPhone')}/></div>
                         <div className="fl full"><label>خط السير</label><textarea value={busForm.route} onChange={fldB('route')} rows={2} placeholder="المناطق / المحطات..."/></div>
+                        <AttachmentField
+                          fileData={busForm.fileData}
+                          fileName={busForm.fileName}
+                          onAttach={(data, name) => setBusForm(f => ({ ...f, fileData: data, fileName: name }))}
+                          onError={msg => toast('⚠️ ' + msg, 'er')}
+                        />
                         <div className="fl full"><label>ملاحظات</label><textarea value={busForm.notes} onChange={fldB('notes')} rows={2}/></div>
                         <div className="fl full"><label>الطلاب المشتركون</label>
                           <div style={{ maxHeight:180, overflowY:'auto', border:'1px solid var(--border-color)', borderRadius:8, padding:8 }}>
@@ -796,6 +816,7 @@ export default function CenterPage() {
                 <div className="cm">{c.category&&c.category+' · '}الكمية: {c.quantity} · {c.location&&c.location+' · '}{c.condition}</div>
               </div>
               <div className="c-acts">
+                <button className="btn btn-xs btn-bl" onClick={()=>printItem({...c,fileData:c.fileData},'custody',centerData.logo,centerData.name)}>🖨️</button>
                 {isManager&&<button className="btn btn-xs btn-g" onClick={()=>{setCustodyForm({...c});setCustodyEditId(c.id);setShowCustodyForm(true);}}>✏️</button>}
                 {isManager&&<button className="btn btn-xs btn-d" onClick={()=>{lsDel('custody',c.id);reload();toast('🗑️','ok');}}>🗑️</button>}
               </div>
@@ -808,10 +829,20 @@ export default function CenterPage() {
                 <div style={{padding:'18px 20px'}}>
                   <div className="fg c2">
                     <div className="fl full"><label>اسم الصنف <span className="req">*</span></label><input value={custodyForm.name} onChange={fldC('name')}/></div>
-                    <div className="fl"><label>الفئة</label><input value={custodyForm.category} onChange={fldC('category')} placeholder="أجهزة، أثاث..."/></div>
+                    <div className="fl full"><label>الفئة</label>
+                      <select value={custodyForm.category} onChange={fldC('category')}>
+                        {CUSTODY_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
                     <div className="fl"><label>الكمية</label><input type="number" value={custodyForm.quantity} onChange={fldC('quantity')} min="1"/></div>
                     <div className="fl"><label>الموقع</label><input value={custodyForm.location} onChange={fldC('location')} placeholder="مستودع، قاعة..."/></div>
                     <div className="fl"><label>الحالة</label><select value={custodyForm.condition} onChange={fldC('condition')}><option>جيد</option><option>مقبول</option><option>يحتاج صيانة</option><option>معطل</option></select></div>
+                    <AttachmentField
+                      fileData={custodyForm.fileData}
+                      fileName={custodyForm.fileName}
+                      onAttach={(data, name) => setCustodyForm(f => ({ ...f, fileData: data, fileName: name }))}
+                      onError={msg => toast('⚠️ ' + msg, 'er')}
+                    />
                     <div className="fl full"><label>ملاحظات</label><textarea value={custodyForm.notes} onChange={fldC('notes')} rows={2}/></div>
                   </div>
                 </div>
@@ -889,6 +920,7 @@ export default function CenterPage() {
                 {v.result&&<div className="cm">النتيجة: {v.result}</div>}
               </div>
               <div className="c-acts">
+                <button className="btn btn-xs btn-bl" onClick={()=>printItem({...v,fileData:v.fileData},'visit',centerData.logo,centerData.name)}>🖨️</button>
                 {isManager&&<button className="btn btn-xs btn-g" onClick={()=>{setVisitForm({...v});setVisitEditId(v.id);setShowVisitForm(true);}}>✏️</button>}
                 {isManager&&<button className="btn btn-xs btn-d" onClick={()=>{lsDel('centerVisits',v.id);reload();toast('🗑️','ok');}}>🗑️</button>}
               </div>
@@ -907,6 +939,12 @@ export default function CenterPage() {
                     <div className="fl full"><label>الوفد</label><input value={visitForm.delegation} onChange={fldV('delegation')} placeholder="اسم المندوب / الوفد..."/></div>
                     <div className="fl full"><label>الغرض</label><textarea value={visitForm.purpose} onChange={fldV('purpose')} rows={2}/></div>
                     <div className="fl full"><label>نتيجة / توصيات</label><textarea value={visitForm.result} onChange={fldV('result')} rows={2}/></div>
+                    <AttachmentField
+                      fileData={visitForm.fileData}
+                      fileName={visitForm.fileName}
+                      onAttach={(data, name) => setVisitForm(f => ({ ...f, fileData: data, fileName: name }))}
+                      onError={msg => toast('⚠️ ' + msg, 'er')}
+                    />
                     <div className="fl full"><label>ملاحظات</label><textarea value={visitForm.notes} onChange={fldV('notes')} rows={2}/></div>
                   </div>
                 </div>

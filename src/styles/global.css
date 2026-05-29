@@ -41,12 +41,15 @@ body.dark .fsb{background:var(--bg-card);}
 body.dark .sw-sec{background:var(--bg-input);border-color:var(--border-color);}
 ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--g3);border-radius:3px}
 @media print{
-  .no-print{display:none!important}
-  .nav{display:none!important}
-  body{background:white!important}
+  .no-print,.nav,.tabs,.ph-a,.c-acts,.btn,.dark-toggle,.nav-lang-btn{display:none!important}
+  html,body,body.dark{background:#fff!important;color:#0f172a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .page,.wg,.card,.sc,.mb,.det-hd,.wg-b,.wg-h,.fl input,.fl select,.fl textarea{background:#fff!important;color:#0f172a!important;border-color:#cbd5e1!important;box-shadow:none!important}
+  .cn,.cm,.iv,.ik,.lb,.vl,.sb,.ph-t h2,.ph-t p,.wg-h h3{color:#0f172a!important}
+  table,th,td,tr{background:#fff!important;color:#0f172a!important;border-color:#cbd5e1!important}
+  th{background:#f1f5f9!important}
   .print-brand{display:flex!important;align-items:center;justify-content:center;gap:12px;padding:12px 0 16px;margin-bottom:12px;border-bottom:2px solid #e2e8f0;page-break-inside:avoid}
   .print-brand img{height:44px;max-width:120px;object-fit:contain;border-radius:8px}
-  .print-brand .print-brand-name{font-size:1.1rem;font-weight:900;color:#0f172a}
+  .print-brand .print-brand-name{font-size:1.1rem;font-weight:900;color:#0f172a!important}
 }
 .print-brand{display:none}
 

@@ -28,6 +28,7 @@ export default function SetupWizard() {
 
   const [form, setForm] = useState({
     name: '',
+    nameEn: '',
     type: '',
     logo: '',
     email: currentUser?.email || '',
@@ -74,7 +75,7 @@ export default function SetupWizard() {
   }
 
   async function finish() {
-    if (!form.name.trim()) { setErr(t('setup.errName')); setStep(1); return; }
+    if (!form.name.trim() || !form.nameEn.trim()) { setErr(t('setup.errName')); setStep(1); return; }
     setSaving(true);
     setErr('');
     try {
@@ -90,6 +91,8 @@ export default function SetupWizard() {
         centerId,
         centerName: form.name.trim(),
         name: form.name.trim(),
+        nameEn: form.nameEn.trim(),
+        phoneCode: form.phoneCode || '+966',
         type: form.type,
         logo: form.logo,
         logoUrl: form.logo,
@@ -125,6 +128,7 @@ export default function SetupWizard() {
 
       updateCenterData({
         name: form.name.trim(),
+        nameEn: form.nameEn.trim(),
         type: form.type,
         phone: form.phone,
         email: form.email,
@@ -181,9 +185,11 @@ export default function SetupWizard() {
                   <option value="en">English</option>
                 </select>
               </div>
-              <div className="fl full">
-                <label>{t('setup.centerName')} <span className="req">*</span></label>
-                <input value={form.name} onChange={fld('name')} placeholder={lang === 'en' ? 'Hope Special Education Center' : 'مركز الأمل للتربية الخاصة'}/>
+              <div className="fl"><label>{t('setup.centerName')} (عربي) <span className="req">*</span></label>
+                <input value={form.name} onChange={fld('name')} placeholder="مركز الأمل للتربية الخاصة"/>
+              </div>
+              <div className="fl"><label>{t('setup.centerName')} (English) <span className="req">*</span></label>
+                <input value={form.nameEn} onChange={fld('nameEn')} dir="ltr" placeholder="Hope Special Education Center"/>
               </div>
               <div className="fl full">
                 <label>{t('setup.centerType')}</label>
