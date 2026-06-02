@@ -21,21 +21,21 @@ export default function ProgramsReports() {
   const [evalForm, setEvalForm] = useState({ ...EMPTY_EVAL, date: todayStr() });
   const [progForm, setProgForm] = useState(EMPTY_PROG);
   const [repForm, setRepForm] = useState(EMPTY_REP);
-  const [aiHint, setAiHint] = useState('');
+  const [helperNote, setHelperNote] = useState('');
 
   const evaluations = lsGet('progEvaluations');
   const programs = lsGet('progPrograms');
   const reports = lsGet('progReports');
 
   function openModal(type) {
-    setAiHint('');
+    setHelperNote('');
     if (type === 'eval') setEvalForm({ ...EMPTY_EVAL, date: todayStr() });
     if (type === 'prog') setProgForm(EMPTY_PROG);
     if (type === 'rep') setRepForm(EMPTY_REP);
     setModal(type);
   }
 
-  function draftWithAi(type, form, setForm) {
+  function fillSuggestedDraft(type, form, setForm) {
     const domain = form.domain || 'التربية الخاصة';
     const name = form.studentName || form.title || 'المستفيد';
     let draft = '';
@@ -47,7 +47,7 @@ export default function ProgramsReports() {
       draft = `تقرير تقدم — ${domain}\nالفترة: ${form.period || 'شهري'}\n\nملخص الأداء:\n• \n\nنسبة تحقيق الأهداف: —%\n\nتوصيات الفريق:\n• `;
     }
     setForm(f => ({ ...f, ...(type === 'eval' ? { summary: draft } : type === 'prog' ? { objectives: draft.split('\n\nالأنشطة')[0], activities: '• جلسات فردية\n• أنشطة منزلية' } : { content: draft }) }));
-    setAiHint('تم إنشاء مسودة ذكية — راجعها وعدّلها قبل الحفظ (سيتم ربط الذكاء الاصطناعي لاحقاً).');
+    setHelperNote('تم تجهيز مسودة مقترحة — راجعها وعدّلها قبل الحفظ.');
   }
 
   function saveEval() {
@@ -96,9 +96,9 @@ export default function ProgramsReports() {
       </div>
 
       <div className="wg" style={{ marginTop: 16 }}>
-        <div className="wg-h"><h3>🤖 الذكاء الاصطناعي</h3></div>
+        <div className="wg-h"><h3>🧩 المساعد الكتابي</h3></div>
         <div className="wg-b" style={{ fontSize: '.88rem', color: 'var(--g5)' }}>
-          سيتم ربط توليد التقييمات والبرامج والتقارير بذكاء اصطناعي متخصص في التربية الخاصة، التدخل المبكر، تعديل السلوك، التكامل الحسي، وغيرها. حالياً يمكنك استخدام «مسودة ذكية» داخل كل نموذج.
+          يمكنك استخدام المسودة المقترحة داخل كل نموذج لتسريع كتابة التقييمات والبرامج والتقارير، ثم مراجعتها وتخصيصها حسب حالة الطالب.
         </div>
       </div>
 
@@ -129,7 +129,7 @@ export default function ProgramsReports() {
               <h2>{modal === 'eval' ? '📋 تقييم جديد' : modal === 'prog' ? '📘 برنامج جديد' : '📑 تقرير جديد'}</h2>
             </div>
             <div className="modal-body-scroll" style={{ padding: '18px 20px' }}>
-              {aiHint && <div style={{ marginBottom: 12, padding: 10, background: 'var(--ok-l)', borderRadius: 8, fontSize: '.82rem' }}>{aiHint}</div>}
+              {helperNote && <div style={{ marginBottom: 12, padding: 10, background: 'var(--ok-l)', borderRadius: 8, fontSize: '.82rem' }}>{helperNote}</div>}
 
               {modal === 'eval' && (
                 <div className="fg c2">
@@ -140,7 +140,7 @@ export default function ProgramsReports() {
                   </div>
                   <div className="fl full"><label>ملخص التقييم</label><textarea value={evalForm.summary} onChange={fldE('summary')} rows={8} /></div>
                   <div className="fl full">
-                    <button type="button" className="btn btn-s btn-sm" onClick={() => draftWithAi('eval', evalForm, setEvalForm)}>🤖 مسودة ذكية</button>
+                    <button type="button" className="btn btn-s btn-sm" onClick={() => fillSuggestedDraft('eval', evalForm, setEvalForm)}>📝 تعبئة مقترحة</button>
                   </div>
                 </div>
               )}
@@ -153,7 +153,7 @@ export default function ProgramsReports() {
                   <div className="fl full"><label>الأهداف</label><textarea value={progForm.objectives} onChange={fldP('objectives')} rows={5} /></div>
                   <div className="fl full"><label>الأنشطة</label><textarea value={progForm.activities} onChange={fldP('activities')} rows={4} /></div>
                   <div className="fl full">
-                    <button type="button" className="btn btn-s btn-sm" onClick={() => draftWithAi('prog', progForm, setProgForm)}>🤖 مسودة ذكية</button>
+                    <button type="button" className="btn btn-s btn-sm" onClick={() => fillSuggestedDraft('prog', progForm, setProgForm)}>📝 تعبئة مقترحة</button>
                   </div>
                 </div>
               )}
@@ -165,7 +165,7 @@ export default function ProgramsReports() {
                   <div className="fl"><label>الفترة</label><input value={repForm.period} onChange={fldR('period')} placeholder="شهري / فصلي" /></div>
                   <div className="fl full"><label>محتوى التقرير</label><textarea value={repForm.content} onChange={fldR('content')} rows={10} /></div>
                   <div className="fl full">
-                    <button type="button" className="btn btn-s btn-sm" onClick={() => draftWithAi('rep', repForm, setRepForm)}>🤖 مسودة ذكية</button>
+                    <button type="button" className="btn btn-s btn-sm" onClick={() => fillSuggestedDraft('rep', repForm, setRepForm)}>📝 تعبئة مقترحة</button>
                   </div>
                 </div>
               )}
