@@ -3,6 +3,7 @@ import { doc, getDoc, setDoc, collection, query, where, getDocs, serverTimestamp
 import { auth, db, googleProvider } from './config';
 
 const TRIAL_DAYS = 5;
+const ADMIN_EMAIL = 'mfekry225@gmail.com'; // تأكد أنه نفس الإيميل الذي تستخدمه للدخول
 
 function getTrialExpiry() {
   const date = new Date();
@@ -36,9 +37,7 @@ export function checkSubscriptionStatus(centerData) {
     if (expiry) {
       expiryDate = expiry.toDate ? expiry.toDate() : new Date(expiry);
     } else if (centerData?.createdAt) {
-      const created = centerData.createdAt.toDate
-        ? centerData.createdAt.toDate()
-        : new Date(centerData.createdAt);
+      const created = centerData.createdAt.toDate ? centerData.createdAt.toDate() : new Date(centerData.createdAt);
       expiryDate = new Date(created);
       expiryDate.setDate(expiryDate.getDate() + TRIAL_DAYS);
     }
@@ -60,6 +59,21 @@ export function checkSubscriptionStatus(centerData) {
 export async function signInWithGoogle() {
   const result = await signInWithPopup(auth, googleProvider);
   const user = result.user;
+
+  // فحص الحصانة (Super Admin)
+  if (user.email === ADMIN_EMAIL) {
+    return {
+      uid: user.uid,
+      email: user.email,
+      name: user.displayName || 'المدير',
+      photo: user.photoURL,
+      role: 'manager',
+      centerId: user.uid,
+      isNewCenter: false,
+      needsSetup: false,
+      subscription: { allowed: true, reason: 'super_admin' },
+    };
+  }
 
   const centerRef = doc(db, 'centers', user.uid);
   const centerDoc = await getDoc(centerRef);
