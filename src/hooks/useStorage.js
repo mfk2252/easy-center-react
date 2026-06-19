@@ -75,6 +75,25 @@ export function lsDel(key, id) {
   }
 }
 
+export const SYSTEM_DATA_KEYS = [
+  'students', 'employees', 'sessions', 'appointments', 'iepGoals',
+  'attStu', 'attEmp', 'income', 'expenses', 'salaries', 'leaves',
+  'calEvents', 'centerActivities', 'parentInteractions', 'consultations',
+  'evaluations', 'warnings', 'stuReports', 'behaviorPlans',
+  'studentFees', 'payments', 'notifs', 'manualAlerts', 'users',
+  'progEvaluations', 'progPrograms', 'progReports',
+  'partners', 'custody', 'centerVisits', 'buses', 'centerDocs',
+];
+
+/** تحديث شامل: جلب كل البيانات من Firestore + إعدادات المركز */
+export async function refreshAllSystemData(centerId) {
+  if (!centerId) throw new Error('لم يتم تحديد المركز');
+  const { getCenterSettings } = await import('../firebase/db');
+  await syncFromFirebase(centerId, SYSTEM_DATA_KEYS);
+  const centerData = await getCenterSettings(centerId);
+  return centerData;
+}
+
 // جلب من Firestore → localStorage
 export async function syncFromFirebase(centerId, keys) {
   if (!centerId) return;

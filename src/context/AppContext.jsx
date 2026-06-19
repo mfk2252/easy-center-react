@@ -63,12 +63,22 @@ export function AppProvider({ children }) {
     if (savedSession?.centerId) {
       clearTimeout(loadingTimeout);
       localStorage.setItem('scs_current_uid', savedSession.centerId);
-      setCurrentUser(savedSession);
-      setSubscriptionStatus(savedSession.subscription || { allowed: true, reason: 'active' });
-      loadCenterData(savedSession.centerId);
-      setSyncing(true);
-      syncFromFirebase(savedSession.centerId, ALL_KEYS)
-        .finally(() => { setSyncing(false); setScreen('app'); });
+      (async () => {
+        const centerData = await getCenterSettings(savedSession.centerId);
+        const subStatus = checkSubscriptionStatus(centerData);
+        const updatedUser = { ...savedSession, subscription: subStatus };
+        localStorage.setItem('scs_session', JSON.stringify(updatedUser));
+        setCurrentUser(updatedUser);
+        setSubscriptionStatus(subStatus);
+        if (!subStatus.allowed) {
+          setScreen('subscription');
+          return;
+        }
+        if (centerData) applyCenter(centerData);
+        setSyncing(true);
+        syncFromFirebase(savedSession.centerId, ALL_KEYS)
+          .finally(() => { setSyncing(false); setScreen('app'); });
+      })();
       return;
     }
 
@@ -121,6 +131,34 @@ export function AppProvider({ children }) {
       unsubscribe();
     };
   }, []);
+
+  // تحديث حالة التجربة/الاشتراك دورياً
+  useEffect(() => {
+    const centerId = currentUser?.centerId;
+    if (!centerId || screen !== 'app') return;
+
+    async function refreshSub() {
+      const centerData = await getCenterSettings(centerId);
+      const subStatus = checkSubscriptionStatus(centerData);
+      setSubscriptionStatus(subStatus);
+      setCurrentUser(prev => {
+        if (!prev) return prev;
+        const next = { ...prev, subscription: subStatus };
+        try {
+          const s = JSON.parse(localStorage.getItem('scs_session') || 'null');
+          if (s?.centerId === centerId) {
+            localStorage.setItem('scs_session', JSON.stringify({ ...s, subscription: subStatus }));
+          }
+        } catch (_) { /* ignore */ }
+        return next;
+      });
+      if (!subStatus.allowed) setScreen('subscription');
+    }
+
+    refreshSub();
+    const timer = setInterval(refreshSub, 60 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, [currentUser?.centerId, screen]);
 
   function needsCenterSetup(data) {
     if (!data) return true;

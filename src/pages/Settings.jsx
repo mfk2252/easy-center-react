@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { lsGet, lsAdd, lsUpd, lsDel, syncFromFirebase, pushToFirebase, getCenterId } from '../hooks/useStorage';
+import { lsGet, lsAdd, lsUpd, lsDel, refreshAllSystemData, getCenterId } from '../hooks/useStorage';
 import { uid, todayStr } from '../utils/dateHelpers';
 import { ROLES } from '../utils/constants';
 import { updateCenterSettings, createUser, updateUser, deleteUser, getCenterUsers } from '../firebase/db';
 import { useLang } from '../context/LanguageContext';
 import { handleFileInputChange, FILE_ACCEPT_IMAGE } from '../utils/fileUpload';
+import { getRoleLabel, getUserPermissionLabels, getCurrentUsername } from '../utils/userLabels';
 
 const PRESET_COLORS=['#1a56db','#7c3aed','#059669','#dc2626','#d97706','#0891b2','#db2777','#0f172a'];
 const ROLE_OPTIONS=[['manager','مدير'],['vice','نائب المدير'],['specialist_speech','أخصائي تخاطب'],['specialist_physio','أخصائي علاج فيزيائي'],['specialist_behavior','أخصائي تعديل سلوك'],['specialist_occupational','أخصائي علاج وظيفي'],['specialist','أخصائي عام'],['reception','استقبال'],['admin','إداري'],['technician','فني النظام'],['parent','ولي أمر']];
@@ -25,7 +26,7 @@ const PERMISSIONS = [
 ];
 
 export default function Settings() {
-  const { center, currentUser, persistConfig, updateCenterColor, toast } = useApp();
+  const { center, currentUser, persistConfig, updateCenterColor, toast, loadCenterData, subscriptionStatus } = useApp();
   const { t } = useLang();
   const [fontSize, setFontSize] = useState(() => Number(localStorage.getItem('scs_fontsize')) || 15);
   const [fontWeight, setFontWeight] = useState(() => localStorage.getItem('scs_fontweight') || '600');
@@ -55,8 +56,7 @@ export default function Settings() {
     eveningTo: center.shifts?.evening?.to || '20:00',
   });
   const [selColor, setSelColor] = useState(center.color||'#1a56db');
-  const [syncLoading, setSyncLoading] = useState(false);
-  const [pushLoading, setPushLoading] = useState(false);
+  const [refreshLoading, setRefreshLoading] = useState(false);
 
   const isManager = currentUser?.role === 'manager';
   const centerId = currentUser?.centerId || currentUser?.uid || getCenterId();
@@ -117,6 +117,25 @@ export default function Settings() {
       toast('🗑️ تم الحذف','ok');
     } catch(e) {
       toast('❌ خطأ في الحذف','er');
+    }
+  }
+
+  const currentPerms = getUserPermissionLabels(currentUser);
+  const currentUsername = getCurrentUsername(currentUser);
+
+  async function handleRefreshAll() {
+    if (!centerId) { toast('⚠️ سجّل دخولك أولاً', 'er'); return; }
+    setRefreshLoading(true);
+    toast('🔄 جارٍ تحديث النظام...', 'ok');
+    try {
+      const centerData = await refreshAllSystemData(centerId);
+      if (centerData) loadCenterData(centerId);
+      toast('✅ تم التحديث! سيتم إعادة تحميل النظام...', 'ok');
+      setTimeout(() => window.location.reload(), 1200);
+    } catch (e) {
+      toast('❌ تعذّر التحديث — تحقق من الاتصال', 'er');
+    } finally {
+      setRefreshLoading(false);
     }
   }
 
@@ -346,6 +365,30 @@ export default function Settings() {
       {/* المستخدمون */}
       {tab==='users' && (
         <div>
+          <div className="wg" style={{ marginBottom: 14 }}>
+            <div className="wg-h"><h3>👤 المستخدم الحالي</h3></div>
+            <div className="wg-b">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 12, fontSize: '.88rem' }}>
+                <div><span style={{ color: 'var(--g5)' }}>الاسم:</span> <strong>{currentUser?.name || '—'}</strong></div>
+                <div><span style={{ color: 'var(--g5)' }}>اسم المستخدم:</span> <strong dir="ltr">@{currentUsername}</strong></div>
+                <div><span style={{ color: 'var(--g5)' }}>الصلاحية:</span> <strong>{getRoleLabel(currentUser?.role)}</strong></div>
+              </div>
+              <div style={{ marginTop: 12, padding: '10px 14px', background: 'var(--g0)', borderRadius: 8, fontSize: '.82rem' }}>
+                <div style={{ fontWeight: 800, marginBottom: 6 }}>الأذونات المتاحة:</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {currentPerms.map(p => (
+                    <span key={p} className="bdg b-gr" style={{ fontSize: '.75rem' }}>{p}</span>
+                  ))}
+                </div>
+              </div>
+              {(subscriptionStatus || currentUser?.subscription)?.reason === 'trial' && (
+                <div style={{ marginTop: 10, fontSize: '.82rem', color: 'var(--warn)' }}>
+                  ⏳ فترة التجربة: متبقي <strong>{(subscriptionStatus || currentUser?.subscription)?.daysLeft ?? '—'}</strong> {(subscriptionStatus || currentUser?.subscription)?.daysLeft === 1 ? 'يوم' : 'أيام'}
+                </div>
+              )}
+            </div>
+          </div>
+
           <div style={{display:'flex',justifyContent:'flex-end',marginBottom:12}}>
             {isManager && <button className="btn btn-p" onClick={()=>{setUserForm({username:'',password:'',name:'',email:'',role:'specialist',title:'',studentId:'',permissions:{}});setEditUserId(null);setShowUserForm(true);}}>➕ مستخدم جديد</button>}
           </div>
@@ -432,48 +475,23 @@ export default function Settings() {
         <div>
           {/* Firebase Sync */}
           <div className="wg" style={{marginBottom:14}}>
-            <div className="wg-h"><h3>🔥 مزامنة Firebase</h3></div>
+            <div className="wg-h"><h3>🔄 تحديث الكل</h3></div>
             <div className="wg-b">
-              <p style={{fontSize:'.86rem',color:'var(--g5)',marginBottom:16}}>
-                البيانات تُحفظ تلقائياً في Firebase عند كل إضافة أو تعديل. استخدم هذه الأزرار للمزامنة اليدوية إذا لاحظت نقصاً في البيانات.
+              <p style={{fontSize:'.86rem',color:'var(--g5)',marginBottom:16,lineHeight:1.7}}>
+                يساعد على تحميل جميع أجزاء النظام بسلاسة من السحابة، ويتحقق من بيانات المركز والمستخدم الحالي
+                لضمان عمل النظام بشكل طبيعي — الطلاب، الموظفون، البرامج، المالية، والإعدادات.
               </p>
-              <div style={{display:'flex',gap:10,flexWrap:'wrap',marginBottom:12}}>
-                <button className="btn btn-p" disabled={pushLoading} onClick={async()=>{
-                  if (!centerId) { toast('⚠️ سجّل دخولك أولاً','er'); return; }
-                  setPushLoading(true);
-                  toast('⬆️ جارٍ رفع البيانات...','ok');
-                  try {
-                    await pushToFirebase(centerId);
-                    toast('✅ تم رفع كل البيانات لـ Firebase!','ok');
-                  } catch(e) {
-                    toast('❌ خطأ في الرفع','er');
-                  } finally {
-                    setPushLoading(false);
-                  }
-                }}>
-                  {pushLoading ? '⏳ جارٍ...' : '⬆️ رفع بياناتي لـ Firebase'}
-                </button>
-                <button className="btn btn-s" disabled={syncLoading} onClick={async()=>{
-                  if (!centerId) { toast('⚠️ سجّل دخولك أولاً','er'); return; }
-                  setSyncLoading(true);
-                  toast('⬇️ جارٍ جلب البيانات...','ok');
-                  try {
-                    const keys=['students','employees','sessions','appointments','iepGoals','attStu','attEmp','income','expenses','salaries','leaves','calEvents','centerActivities','parentInteractions','consultations','evaluations','warnings','stuReports','behaviorPlans','studentFees','payments','notifs','manualAlerts'];
-                    await syncFromFirebase(centerId, keys);
-                    toast('✅ تم الجلب! جارٍ إعادة التحميل...','ok');
-                    setTimeout(()=>window.location.reload(), 1500);
-                  } catch(e) {
-                    toast('❌ خطأ في الجلب','er');
-                  } finally {
-                    setSyncLoading(false);
-                  }
-                }}>
-                  {syncLoading ? '⏳ جارٍ...' : '⬇️ جلب بياناتي من Firebase'}
-                </button>
-              </div>
-              <div style={{padding:'10px 14px',background:'var(--ok-l)',borderRadius:8,fontSize:'.78rem',color:'var(--ok)'}}>
-                💡 <strong>رفع:</strong> يرفع بيانات هذا الجهاز للسحابة &nbsp;|&nbsp;
-                <strong>جلب:</strong> يجلب بيانات السحابة لهذا الجهاز
+              <button
+                type="button"
+                className="btn btn-p"
+                disabled={refreshLoading}
+                onClick={handleRefreshAll}
+                style={{ minWidth: 200 }}
+              >
+                {refreshLoading ? '⏳ جارٍ التحديث...' : '🔄 تحديث الكل الآن'}
+              </button>
+              <div style={{marginTop:12,padding:'10px 14px',background:'var(--ok-l)',borderRadius:8,fontSize:'.78rem',color:'var(--ok)'}}>
+                💡 يُفضّل استخدامه عند فتح النظام لأول مرة، أو عند ملاحظة نقص في البيانات، أو بعد تسجيل الدخول من جهاز جديد.
               </div>
             </div>
           </div>
@@ -505,13 +523,13 @@ export default function Settings() {
           <div className="wg-b" style={{textAlign:'center',padding:30}}>
             <div style={{fontSize:'3rem',marginBottom:12}}>🏥</div>
             <h2 style={{margin:'0 0 8px'}}>نظام إدارة المركز المتكامل</h2>
-            <p style={{color:'var(--g5)',marginBottom:4}}>الإصدار 2.0 — مع Firebase</p>
+            <p style={{color:'var(--g5)',marginBottom:4}}>الإصدار V1</p>
             <p style={{color:'var(--g5)',fontSize:'.85rem'}}>منصة إدارية شاملة للمراكز التعليمية والتأهيلية</p>
             <div style={{marginTop:20,padding:'12px 16px',background:'var(--g0)',borderRadius:10,fontSize:'.82rem',color:'var(--g5)'}}>
               <div>المركز: <strong>{center.name||'—'}</strong></div>
               <div>المستخدم: <strong>{currentUser?.name||'—'}</strong></div>
-              <div>الدور: <strong>{ROLES[currentUser?.role]||currentUser?.role||'—'}</strong></div>
-              <div>Firebase: <strong style={{color:'var(--ok)'}}>✅ متصل</strong></div>
+              <div>اسم المستخدم: <strong dir="ltr">@{getCurrentUsername(currentUser)}</strong></div>
+              <div>الصلاحية: <strong>{getRoleLabel(currentUser?.role)}</strong></div>
             </div>
           </div>
         </div>

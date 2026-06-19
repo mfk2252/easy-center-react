@@ -192,6 +192,32 @@ export function printItem(itemData, itemType, centerLogo, centerName) {
         <tr><td style="padding:8px;border:1px solid #ddd;"><b>الموقع</b></td><td style="padding:8px;border:1px solid #ddd;">${esc(itemData.location)}</td></tr>
       </table>
     `;
+  } else if (itemType === 'initial_eval') {
+    const photoHtml = itemData.photo
+      ? `<div style="text-align:center;margin-bottom:16px;"><img src="${itemData.photo}" style="max-height:100px;border-radius:12px;border:1px solid #cbd5e1;" alt=""/></div>`
+      : '';
+    const section = (title, text) => text
+      ? `<div style="margin-bottom:14px;"><h3 style="color:#2563eb;font-size:14px;margin:0 0 6px;border-right:4px solid #2563eb;padding-right:8px;">${title}</h3><div style="white-space:pre-wrap;line-height:1.8;">${esc(text)}</div></div>`
+      : '';
+    contentHTML = `
+      <h2 style="color:#1a56db;margin:0 0 12px;">📋 تقرير التقييم المبدئي</h2>
+      ${photoHtml}
+      <table>
+        <tr><td style="padding:8px;border:1px solid #ddd;width:28%;"><b>اسم الطفل</b></td><td style="padding:8px;border:1px solid #ddd;">${esc(itemData.studentName)}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ddd;"><b>تاريخ الميلاد</b></td><td style="padding:8px;border:1px solid #ddd;">${esc(itemData.dob || '—')}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ddd;"><b>العمر</b></td><td style="padding:8px;border:1px solid #ddd;">${esc(itemData.age || '—')}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ddd;"><b>التشخيص</b></td><td style="padding:8px;border:1px solid #ddd;">${esc(itemData.diagnosis || '—')}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ddd;"><b>المجال</b></td><td style="padding:8px;border:1px solid #ddd;">${esc(itemData.domain || '—')}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ddd;"><b>الأخصائي</b></td><td style="padding:8px;border:1px solid #ddd;">${esc(itemData.specialistName || '—')}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ddd;"><b>التاريخ</b></td><td style="padding:8px;border:1px solid #ddd;">${esc(itemData.date || '—')}</td></tr>
+      </table>
+      ${section('التاريخ التطوري', itemData.history)}
+      ${section('مقابلة الأهل', itemData.parentsInterview)}
+      ${section('أدوات التقييم', itemData.appliedTools)}
+      ${section('الملاحظة', itemData.observationSessions)}
+      ${section('التوصيات', itemData.recommendations)}
+      ${itemData.summary ? section('ملخص إضافي', itemData.summary) : ''}
+    `;
   } else if (itemType === 'generic') {
     contentHTML = itemData.html || `<p>${esc(itemData.text || '')}</p>`;
   } else {

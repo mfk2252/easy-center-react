@@ -31,15 +31,25 @@ export function checkSubscriptionStatus(centerData) {
   }
 
   if (status === 'trial' || !status) {
+    let expiryDate = null;
     const expiry = centerData?.subscription?.trialExpiry;
     if (expiry) {
-      const expiryDate = expiry.toDate ? expiry.toDate() : new Date(expiry);
+      expiryDate = expiry.toDate ? expiry.toDate() : new Date(expiry);
+    } else if (centerData?.createdAt) {
+      const created = centerData.createdAt.toDate
+        ? centerData.createdAt.toDate()
+        : new Date(centerData.createdAt);
+      expiryDate = new Date(created);
+      expiryDate.setDate(expiryDate.getDate() + TRIAL_DAYS);
+    }
+
+    if (expiryDate) {
       const now = new Date();
-      if (expiryDate < now) {
+      if (expiryDate <= now) {
         return { allowed: false, reason: 'trial_expired', message: 'انتهت فترة التجربة المجانية.' };
       }
-      const daysLeft = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
-      return { allowed: true, reason: 'trial', daysLeft };
+      const daysLeft = Math.max(1, Math.ceil((expiryDate - now) / 86400000));
+      return { allowed: true, reason: 'trial', daysLeft, trialExpiry: expiryDate.toISOString() };
     }
     return { allowed: true, reason: 'trial', daysLeft: TRIAL_DAYS };
   }

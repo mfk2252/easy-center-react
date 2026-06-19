@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 
 export default function TrialBanner() {
-  const { currentUser } = useApp();
+  const { currentUser, subscriptionStatus } = useApp();
   const [dismissed, setDismissed] = useState(false);
 
-  const sub = currentUser?.subscription;
+  const sub = subscriptionStatus || currentUser?.subscription;
   if (!sub || sub.reason !== 'trial' || dismissed) return null;
 
   const daysLeft = sub.daysLeft || 0;
