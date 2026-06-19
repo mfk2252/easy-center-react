@@ -2,7 +2,7 @@ import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { auth, db, googleProvider } from './config';
 
-const TRIAL_DAYS = 5;
+const TRIAL_DAYS = 200;
 const ADMIN_EMAIL = 'mfekry225@gmail.com'; // تأكد أنه نفس الإيميل الذي تستخدمه للدخول
 
 function getTrialExpiry() {
