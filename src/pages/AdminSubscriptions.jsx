@@ -94,9 +94,14 @@ export default function AdminSubscriptions() {
               </div>
 
               <div style={{ display: 'flex', gap: 5 }}>
-                <button onClick={() => activateCenter(center.id, 1)}>✅ تفعيل شهر</button>
-                <button onClick={() => suspendCenter(center.id)}>إيقاف</button>
-              </div>
+  <button className="btn btn-xs" onClick={() => activateCenter(center.id, 1)}>شهر</button>
+  <button className="btn btn-xs" onClick={() => activateCenter(center.id, 6)}>6 أشهر</button>
+  <button className="btn btn-xs" onClick={() => activateCenter(center.id, 12)}>سنة</button>
+  <button className="btn btn-xs btn-d" onClick={() => suspendCenter(center.id)}>إيقاف</button>
+</div>
+
+// وتأكد أن خلفية الـ div هي var(--card) وليس #fff
+<div key={center.id} style={{ background: 'var(--card)', border: '1px solid var(--border-color)', ... }}>
             </div>
           );
         })}
