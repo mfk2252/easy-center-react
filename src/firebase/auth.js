@@ -3,7 +3,19 @@ import { doc, getDoc, setDoc, collection, query, where, getDocs, serverTimestamp
 import { auth, db, googleProvider } from './config';
 
 const TRIAL_DAYS = 200;
-export const ADMIN_EMAIL = 'mfekry225@gmail.com'; // تأكد أنه نفس الإيميل الذي تستخدمه للدخول
+export const ADMIN_EMAIL = 'mfekry225@gmail.com'; // إيميل Google الخاص بمالك المنصة
+
+// بريد مخصص فقط لتسجيل الدخول عبر Email/Password (لأن ADMIN_EMAIL أعلاه
+// مرتبط فعلياً بحساب Google، وFirebase لا يسمح بربط طريقة دخول ثانية بنفس
+// البريد افتراضياً). غيّر هذه القيمة إلى ما تفضله، بشرط أن تُنشئ نفس القيمة
+// حرفياً كمستخدم Email/Password من Firebase Console.
+export const PLATFORM_ADMIN_LOGIN_EMAIL = 'admin.owner@easycenter.local';
+
+/** يُستخدم في كل مكان يحتاج التأكد أن هذا البريد يخص مالك المنصة،
+ *  سواء دخل عبر Google (ADMIN_EMAIL) أو عبر Email/Password (PLATFORM_ADMIN_LOGIN_EMAIL). */
+export function isPlatformAdminEmail(email) {
+  return !!email && (email === ADMIN_EMAIL || email === PLATFORM_ADMIN_LOGIN_EMAIL);
+}
 
 function getTrialExpiry() {
   const date = new Date();
@@ -61,7 +73,7 @@ export async function signInWithGoogle() {
   const user = result.user;
 
   // فحص الحصانة (Super Admin)
-  if (user.email === ADMIN_EMAIL) {
+  if (isPlatformAdminEmail(user.email)) {
     return {
       uid: user.uid,
       email: user.email,
@@ -135,8 +147,8 @@ function mapAuthError(code) {
 
 /**
  * دخول مالك المنصة (Super Admin) عبر البريد وكلمة المرور — Firebase Email/Password.
- * هذا المسار مخصص حصراً لصاحب المنصة (ADMIN_EMAIL) وليس بديلاً عن دخول مديري المراكز.
- * يتطلب: تفعيل Email/Password من Firebase Console وإنشاء المستخدم يدوياً هناك أولاً.
+ * هذا المسار مخصص حصراً لصاحب المنصة (isPlatformAdminEmail) وليس بديلاً عن دخول مديري المراكز.
+ * يتطلب: تفعيل Email/Password من Firebase Console وإنشاء مستخدم بقيمة PLATFORM_ADMIN_LOGIN_EMAIL هناك أولاً.
  */
 export async function signInWithEmailPassword(email, password) {
   let result;
@@ -148,7 +160,7 @@ export async function signInWithEmailPassword(email, password) {
 
   const user = result.user;
 
-  if (user.email !== ADMIN_EMAIL) {
+  if (!isPlatformAdminEmail(user.email)) {
     // هذا المسار مخصص لمالك المنصة فقط في هذه المرحلة
     await signOut(auth);
     throw new Error('هذا الحساب غير مصرّح له بالدخول من هنا');
