@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLang, getWelcomeMessage } from '../../context/LanguageContext';
-import { signInWithGoogle, signInWithCredentials } from '../../firebase/auth';
+import { signInWithGoogle, signInWithCredentials, signInWithEmailPassword } from '../../firebase/auth';
 
 export default function LoginScreen() {
   const { login, toast } = useApp();
@@ -33,10 +33,18 @@ export default function LoginScreen() {
     if (!password) { setErr(t('loginErrPass')); return; }
     setLoading(true);
     try {
-      const user = await signInWithCredentials(username, password);
+      // إن كان الإدخال يشبه بريداً إلكترونياً، نحاول الدخول عبر Firebase Email/Password
+      // (مخصص لمالك المنصة). غير ذلك، نتبع مسار الموظفين المعتاد عبر Firestore.
+      const isEmailFormat = username.includes('@');
+      const user = isEmailFormat
+        ? await signInWithEmailPassword(username, password)
+        : await signInWithCredentials(username, password);
+
       localStorage.setItem('userPerms', JSON.stringify(user.permissions || {}));
       const lang = localStorage.getItem('scs_lang') || 'ar';
-      toast('✅ ' + getWelcomeMessage(user.name, user.centerId, lang), 'ok');
+      if (!user._skipWelcome) {
+        toast('✅ ' + getWelcomeMessage(user.name, user.centerId, lang), 'ok');
+      }
       login(user);
     } catch (e) {
       setErr(e.message || (localStorage.getItem('scs_lang') === 'en' ? 'Invalid credentials' : 'بيانات الدخول غير صحيحة'));
