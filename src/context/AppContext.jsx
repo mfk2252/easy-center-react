@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { getCenterSettings } from '../firebase/db';
-import { signOutUser, checkSubscriptionStatus } from '../firebase/auth';
+import { signOutUser, checkSubscriptionStatus, ADMIN_EMAIL } from '../firebase/auth';
 import { syncFromFirebase } from '../hooks/useStorage';
 import { getWelcomeMessage } from './LanguageContext';
 import { persistCenterMeta } from '../utils/centerMeta';
@@ -25,6 +25,20 @@ function applyTheme(color) {
   const r=parseInt(h.substr(0,2),16), g=parseInt(h.substr(2,2),16), b=parseInt(h.substr(4,2),16);
   document.documentElement.style.setProperty('--pr-d',`rgb(${Math.max(0,r-35)},${Math.max(0,g-35)},${Math.max(0,b-35)})`);
   document.documentElement.style.setProperty('--pr-l',`rgba(${r},${g},${b},0.1)`);
+}
+
+/** كائن currentUser الموحّد لمالك المنصة — نفس الشكل سواء جاء من login() المباشر
+ *  أو من onAuthStateChanged (بعد تحديث الصفحة مثلاً)، لتفادي أي تعارض بينهما. */
+function buildPlatformAdminUser(fbUser) {
+  return {
+    uid: fbUser.uid,
+    email: fbUser.email,
+    name: fbUser.displayName || 'مالك المنصة',
+    role: 'manager',
+    centerId: fbUser.uid,
+    isPlatformAdmin: true,
+    subscription: { allowed: true, reason: 'platform_admin' },
+  };
 }
 
 export function AppProvider({ children }) {
@@ -82,10 +96,25 @@ export function AppProvider({ children }) {
       return;
     }
 
-    // Google Auth
+    // Google Auth + Email/Password Auth (كلاهما يمران عبر نفس onAuthStateChanged)
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       clearTimeout(loadingTimeout);
       if (fbUser) {
+        // مالك المنصة: مسار مختصر بدون أي منطق متعلق بمركز/اشتراك
+        // (لازم نفحص هذا هنا أيضاً وليس فقط داخل login()، لأن Firebase يطلق
+        // onAuthStateChanged تلقائياً بعد signInWithEmailAndPassword وأيضاً بعد
+        // إعادة تحميل الصفحة، وبدون هذا الفحص كان سيحاول معاملته كمدير مركز
+        // عادي فيحوّله خطأً لشاشة setup لعدم وجود مستند مركز باسمه).
+        if (fbUser.email === ADMIN_EMAIL) {
+          const adminUser = buildPlatformAdminUser(fbUser);
+          localStorage.setItem('scs_current_uid', fbUser.uid);
+          setCurrentUser(adminUser);
+          setSubscriptionStatus(adminUser.subscription);
+          setScreen('app');
+          setActiveView('admin');
+          return;
+        }
+
         localStorage.setItem('scs_current_uid', fbUser.uid);
 
         const centerData = await getCenterSettings(fbUser.uid);
@@ -135,7 +164,7 @@ export function AppProvider({ children }) {
   // تحديث حالة التجربة/الاشتراك دورياً
   useEffect(() => {
     const centerId = currentUser?.centerId;
-    if (!centerId || screen !== 'app') return;
+    if (!centerId || screen !== 'app' || currentUser?.isPlatformAdmin) return;
 
     async function refreshSub() {
       const centerData = await getCenterSettings(centerId);
@@ -158,7 +187,7 @@ export function AppProvider({ children }) {
     refreshSub();
     const timer = setInterval(refreshSub, 60 * 60 * 1000);
     return () => clearInterval(timer);
-  }, [currentUser?.centerId, screen]);
+  }, [currentUser?.centerId, screen, currentUser?.isPlatformAdmin]);
 
   function needsCenterSetup(data) {
     if (!data) return true;
@@ -244,6 +273,17 @@ export function AppProvider({ children }) {
   }, []);
 
   const login = useCallback(async (user) => {
+    // مسار مالك المنصة: لا مركز، لا مزامنة بيانات — دخول مباشر لشاشة إدارة الاشتراكات.
+    // (onAuthStateChanged أعلاه سيؤكد نفس النتيجة تلقائياً بعد لحظات، فلا يوجد تعارض)
+    if (user.isPlatformAdmin) {
+      localStorage.setItem('scs_current_uid', user.centerId);
+      setCurrentUser(user);
+      setSubscriptionStatus(user.subscription);
+      setScreen('app');
+      setActiveView('admin');
+      return;
+    }
+
     if (user.role !== 'manager') {
       localStorage.setItem('scs_session', JSON.stringify(user));
     }
