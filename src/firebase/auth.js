@@ -1,9 +1,9 @@
-import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
+import { signInWithPopup, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { auth, db, googleProvider } from './config';
 
 const TRIAL_DAYS = 200;
-const ADMIN_EMAIL = 'mfekry225@gmail.com'; // تأكد أنه نفس الإيميل الذي تستخدمه للدخول
+export const ADMIN_EMAIL = 'mfekry225@gmail.com'; // تأكد أنه نفس الإيميل الذي تستخدمه للدخول
 
 function getTrialExpiry() {
   const date = new Date();
@@ -13,7 +13,7 @@ function getTrialExpiry() {
 
 export function checkSubscriptionStatus(centerData) {
   if (!centerData) return { allowed: true, reason: 'trial', daysLeft: TRIAL_DAYS };
-  
+
   const status = centerData?.subscription?.status;
 
   if (status === 'active') {
@@ -116,6 +116,53 @@ export async function signInWithGoogle() {
     isNewCenter: isNew,
     needsSetup,
     subscription: subStatus,
+  };
+}
+
+/** رسائل خطأ عربية مفهومة بدلاً من رموز Firebase التقنية */
+function mapAuthError(code) {
+  const map = {
+    'auth/invalid-credential': 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
+    'auth/user-not-found': 'لا يوجد حساب بهذا البريد الإلكتروني',
+    'auth/wrong-password': 'كلمة المرور غير صحيحة',
+    'auth/invalid-email': 'صيغة البريد الإلكتروني غير صحيحة',
+    'auth/too-many-requests': 'محاولات فاشلة كثيرة، حاول مرة أخرى لاحقاً',
+    'auth/network-request-failed': 'تحقق من اتصال الإنترنت وحاول مجدداً',
+    'auth/user-disabled': 'هذا الحساب معطّل',
+  };
+  return map[code] || 'تعذّر تسجيل الدخول، حاول مرة أخرى';
+}
+
+/**
+ * دخول مالك المنصة (Super Admin) عبر البريد وكلمة المرور — Firebase Email/Password.
+ * هذا المسار مخصص حصراً لصاحب المنصة (ADMIN_EMAIL) وليس بديلاً عن دخول مديري المراكز.
+ * يتطلب: تفعيل Email/Password من Firebase Console وإنشاء المستخدم يدوياً هناك أولاً.
+ */
+export async function signInWithEmailPassword(email, password) {
+  let result;
+  try {
+    result = await signInWithEmailAndPassword(auth, email.trim(), password);
+  } catch (e) {
+    throw new Error(mapAuthError(e?.code));
+  }
+
+  const user = result.user;
+
+  if (user.email !== ADMIN_EMAIL) {
+    // هذا المسار مخصص لمالك المنصة فقط في هذه المرحلة
+    await signOut(auth);
+    throw new Error('هذا الحساب غير مصرّح له بالدخول من هنا');
+  }
+
+  return {
+    uid: user.uid,
+    email: user.email,
+    name: user.displayName || 'مالك المنصة',
+    role: 'manager',
+    centerId: user.uid,
+    isPlatformAdmin: true,
+    subscription: { allowed: true, reason: 'platform_admin' },
+    _skipWelcome: true,
   };
 }
 
