@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, getDocs, doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { isPlatformAdminEmail } from '../firebase/auth';
 
 export default function AdminSubscriptions() {
   const [centers, setCenters] = useState([]);
@@ -59,8 +60,8 @@ export default function AdminSubscriptions() {
 
   function getStatusBadge(center) {
     // شرط خاص للأدمن ليظهر دائماً بشكل مميز
-    if (center.managerEmail === "mfekry225@gmail.com") return { label: 'مدير النظام 👑', color: '#8b5cf6' };
-    
+    if (isPlatformAdminEmail(center.managerEmail)) return { label: 'مدير النظام 👑', color: '#8b5cf6' };
+
     const sub = center.subscription;
     if (!sub) return { label: 'تجريبي', color: '#3b82f6' };
     if (sub.status === 'active') return { label: 'مفعّل ✅', color: '#10b981' };
