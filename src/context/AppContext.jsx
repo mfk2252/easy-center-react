@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { getCenterSettings } from '../firebase/db';
-import { signOutUser, checkSubscriptionStatus, ADMIN_EMAIL } from '../firebase/auth';
+import { signOutUser, checkSubscriptionStatus, isPlatformAdminEmail } from '../firebase/auth';
 import { syncFromFirebase } from '../hooks/useStorage';
 import { getWelcomeMessage } from './LanguageContext';
 import { persistCenterMeta } from '../utils/centerMeta';
@@ -105,7 +105,7 @@ export function AppProvider({ children }) {
         // onAuthStateChanged تلقائياً بعد signInWithEmailAndPassword وأيضاً بعد
         // إعادة تحميل الصفحة، وبدون هذا الفحص كان سيحاول معاملته كمدير مركز
         // عادي فيحوّله خطأً لشاشة setup لعدم وجود مستند مركز باسمه).
-        if (fbUser.email === ADMIN_EMAIL) {
+        if (isPlatformAdminEmail(fbUser.email)) {
           const adminUser = buildPlatformAdminUser(fbUser);
           localStorage.setItem('scs_current_uid', fbUser.uid);
           setCurrentUser(adminUser);
