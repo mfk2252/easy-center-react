@@ -11,15 +11,14 @@ import ProgramsReports from '../pages/ProgramsReports';
 import CenterPage from '../pages/Center/index';
 import Settings from '../pages/Settings';
 import AdminSubscriptions from '../pages/AdminSubscriptions';
-
-const ADMIN_EMAIL = 'mfekry225@gmail.com';
+import { isPlatformAdminEmail } from '../firebase/auth';
 
 export default function AppRouter() {
   const { activeView, currentUser } = useApp();
   const { t } = useLang();
 
   const isManager = currentUser?.role === 'manager' || currentUser?.role === 'vice';
-  const isAdmin = currentUser?.email === ADMIN_EMAIL;
+  const isAdmin = isPlatformAdminEmail(currentUser?.email);
 
   const userPerms = (() => {
     try { return JSON.parse(localStorage.getItem('userPerms') || '{}'); }
