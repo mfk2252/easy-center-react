@@ -2,8 +2,7 @@ import { useApp } from '../../context/AppContext';
 import { useLang } from '../../context/LanguageContext';
 import { canSeeTab } from '../../utils/permissions';
 import { syncFromFirebase, getCenterId } from '../../hooks/useStorage';
-
-const ADMIN_EMAIL = 'mfekry225@gmail.com';
+import { isPlatformAdminEmail } from '../../firebase/auth';
 
 const NAV_ITEMS = [
   { id: 'dash', key: 'nav.dash', icon: '📊' },
@@ -29,7 +28,7 @@ export default function Navbar() {
   const { center, currentUser, activeView, go, logout, toggleDark, darkMode, setSearchOpen } = useApp();
   const { t, toggleLang, lang } = useLang();
   const role = currentUser?.role || '';
-  const isAdmin = currentUser?.email === ADMIN_EMAIL;
+  const isAdmin = isPlatformAdminEmail(currentUser?.email);
 
   async function handleSync() {
     const centerId = currentUser?.centerId || getCenterId();
