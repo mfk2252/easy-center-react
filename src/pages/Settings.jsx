@@ -3,7 +3,10 @@ import { useApp } from '../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel, refreshAllSystemData, getCenterId } from '../hooks/useStorage';
 import { uid, todayStr } from '../utils/dateHelpers';
 import { ROLES } from '../utils/constants';
-import { updateCenterSettings, createUser, updateUser, deleteUser, getCenterUsers } from '../firebase/db';
+import { updateCenterSettings, getCenterUsers } from '../firebase/db';
+import { createStaffAccount } from '../firebase/auth';
+import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '../firebase/config';
 import { useLang } from '../context/LanguageContext';
 import { handleFileInputChange, FILE_ACCEPT_IMAGE } from '../utils/fileUpload';
 import { getRoleLabel, getUserPermissionLabels, getCurrentUsername } from '../utils/userLabels';
@@ -25,6 +28,8 @@ const PERMISSIONS = [
   {key:'calendar',name:'التقويم',icon:'📅'},
 ];
 
+const EMPTY_USER_FORM = { username:'', password:'', name:'', contactEmail:'', role:'specialist', title:'', studentId:'', phone:'', permissions:{} };
+
 export default function Settings() {
   const { center, currentUser, persistConfig, updateCenterColor, toast, loadCenterData, subscriptionStatus } = useApp();
   const { t } = useLang();
@@ -32,9 +37,11 @@ export default function Settings() {
   const [fontWeight, setFontWeight] = useState(() => localStorage.getItem('scs_fontweight') || '600');
   const [tab, setTab] = useState('center');
   const [users, setUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
   const [showUserForm, setShowUserForm] = useState(false);
   const [editUserId, setEditUserId] = useState(null);
-  const [userForm, setUserForm] = useState({ username:'', password:'', name:'', email:'', role:'specialist', title:'', studentId:'', permissions:{} });
+  const [userForm, setUserForm] = useState(EMPTY_USER_FORM);
+  const [savingUser, setSavingUser] = useState(false);
   const [stuList, setStuList] = useState([]);
   const [centerForm, setCenterForm] = useState({
     name: center.name || '',
@@ -68,55 +75,112 @@ export default function Settings() {
 
   async function reloadUsers() {
     if (!centerId) return;
+    setUsersLoading(true);
     try {
       const fbUsers = await getCenterUsers(centerId);
-      if (fbUsers.length > 0) {
-        setUsers(fbUsers);
-      } else {
-        setUsers(lsGet('users'));
-      }
+      setUsers(fbUsers);
     } catch(e) {
-      setUsers(lsGet('users'));
+      toast('⚠️ تعذّر تحميل قائمة المستخدمين', 'er');
+      setUsers([]);
+    } finally {
+      setUsersLoading(false);
     }
   }
 
   const fldU = k => e => setUserForm(f=>({...f,[k]:e.target.value}));
 
+  function openNewUserForm() {
+    setUserForm({ ...EMPTY_USER_FORM });
+    setEditUserId(null);
+    setShowUserForm(true);
+  }
+
+  function openEditUserForm(u) {
+    setUserForm({
+      username: u.username || '',
+      password: '', // كلمة المرور لا تُعرض ولا تُعدَّل من هنا
+      name: u.name || '',
+      contactEmail: u.contactEmail || '',
+      role: u.role || 'specialist',
+      title: u.title || '',
+      studentId: u.studentId || '',
+      phone: u.phone || '',
+      permissions: u.permissions || {},
+    });
+    setEditUserId(u.id); // u.id = uid الحقيقي لحساب Firebase Auth الخاص بالموظف
+    setShowUserForm(true);
+  }
+
   async function saveUser() {
-    if (!userForm.username.trim()||!userForm.name.trim()) { toast('⚠️ أدخل اسم المستخدم والاسم الكامل','er'); return; }
-    if (!editUserId&&!userForm.password) { toast('⚠️ أدخل كلمة المرور','er'); return; }
-    if (userForm.role === 'parent' && !userForm.studentId) { toast('⚠️ اختر الطالب المرتبط بولي الأمر','er'); return; }
+    if (!userForm.name.trim()) { toast('⚠️ أدخل الاسم الكامل', 'er'); return; }
+    if (userForm.role === 'parent' && !userForm.studentId) { toast('⚠️ اختر الطالب المرتبط بولي الأمر', 'er'); return; }
 
-    const userData = { ...userForm, centerId, permissions: userForm.permissions||{}, active:true };
-
+    setSavingUser(true);
     try {
       if (editUserId) {
-        await updateUser(editUserId, userData);
-        lsUpd('users', editUserId, userData);
-        toast('✅ تم التحديث','ok');
+        // تعديل حساب موجود: فقط الحقول الوصفية (لا يمكن تغيير اسم المستخدم/كلمة
+        // المرور من هنا حالياً — يحتاج ذلك تدفقاً منفصلاً لاحقاً إن رغبت به)
+        await updateDoc(doc(db, 'users', editUserId), {
+          name: userForm.name,
+          role: userForm.role,
+          permissions: userForm.permissions || {},
+          title: userForm.title,
+          studentId: userForm.studentId,
+          phone: userForm.phone,
+          contactEmail: userForm.contactEmail,
+        });
+        toast('✅ تم تحديث بيانات الحساب', 'ok');
       } else {
-        const newId = await createUser(centerId, userData);
-        lsAdd('users', {...userData, id:newId});
-        toast('✅ تم إضافة المستخدم','ok');
+        // حساب جديد بالكامل
+        if (!userForm.username.trim()) { toast('⚠️ أدخل اسم مستخدم', 'er'); setSavingUser(false); return; }
+        if (!userForm.password || userForm.password.length < 6) { toast('⚠️ كلمة المرور يجب أن تكون 6 أحرف على الأقل', 'er'); setSavingUser(false); return; }
+
+        await createStaffAccount(centerId, {
+          username: userForm.username,
+          password: userForm.password,
+          name: userForm.name,
+          role: userForm.role,
+          permissions: userForm.permissions || {},
+          title: userForm.title,
+          studentId: userForm.studentId,
+          phone: userForm.phone,
+          contactEmail: userForm.contactEmail,
+        });
+        toast('✅ تم إنشاء الحساب بنجاح', 'ok');
       }
       setShowUserForm(false);
       setEditUserId(null);
-      setUserForm({ username:'', password:'', name:'', email:'', role:'specialist', title:'', studentId:'', permissions:{} });
+      setUserForm({ ...EMPTY_USER_FORM });
       reloadUsers();
     } catch(e) {
-      toast('❌ حدث خطأ: '+e.message,'er');
+      toast('❌ ' + (e.message || 'حدث خطأ غير متوقع'), 'er');
+    } finally {
+      setSavingUser(false);
     }
   }
 
-  async function delUser(id) {
-    if (!window.confirm('حذف هذا المستخدم؟')) return;
+  async function toggleUserActive(u) {
     try {
-      await deleteUser(id);
-      lsDel('users', id);
+      await updateDoc(doc(db, 'users', u.id), { active: !(u.active !== false) });
+      toast(u.active === false ? '✅ تم تفعيل الحساب' : '⏸️ تم تعطيل الحساب', 'ok');
       reloadUsers();
-      toast('🗑️ تم الحذف','ok');
     } catch(e) {
-      toast('❌ خطأ في الحذف','er');
+      toast('❌ تعذّر تغيير حالة الحساب', 'er');
+    }
+  }
+
+  async function delUser(u) {
+    if (!window.confirm(`حذف حساب "${u.name}" نهائياً؟ لن يستطيع تسجيل الدخول بعد الآن.`)) return;
+    try {
+      // نحذف ملف التعريف + فهرس اسم المستخدم معاً (يُحرّر اسم المستخدم للاستخدام مجدداً)
+      await deleteDoc(doc(db, 'users', u.id));
+      if (u.username) {
+        try { await deleteDoc(doc(db, 'staffLoginIndex', u.username)); } catch(_) {}
+      }
+      toast('🗑️ تم حذف الحساب', 'ok');
+      reloadUsers();
+    } catch(e) {
+      toast('❌ تعذّر حذف الحساب', 'er');
     }
   }
 
@@ -232,7 +296,7 @@ export default function Settings() {
       try {
         const data=JSON.parse(ev.target.result);
         const keys=['employees','students','sessions','leaves','salaries','attEmp','attStu','appointments','iepGoals','calEvents','income','expenses','notifs','studentFees','payments','warnings'];
-        keys.forEach(k=>{ if(data[k]) lsAdd && localStorage.setItem(`${centerId}_${k}`, JSON.stringify(data[k])); });
+        keys.forEach(k=>{ if(data[k]) localStorage.setItem(`${centerId}_${k}`, JSON.stringify(data[k])); });
         toast('✅ تم استيراد البيانات - أعد تحميل الصفحة','ok');
       } catch(err) { toast('❌ خطأ في الملف','er'); }
     };
@@ -390,32 +454,38 @@ export default function Settings() {
           </div>
 
           <div style={{display:'flex',justifyContent:'flex-end',marginBottom:12}}>
-            {isManager && <button className="btn btn-p" onClick={()=>{setUserForm({username:'',password:'',name:'',email:'',role:'specialist',title:'',studentId:'',permissions:{}});setEditUserId(null);setShowUserForm(true);}}>➕ مستخدم جديد</button>}
+            {isManager && <button className="btn btn-p" onClick={openNewUserForm}>➕ مستخدم جديد</button>}
           </div>
 
-          {users.length===0 ? (
+          {usersLoading ? (
+            <div className="empty"><div className="ei">⏳</div><div className="et">جارٍ التحميل...</div></div>
+          ) : users.length===0 ? (
             <div className="empty"><div className="ei">👥</div><div className="et">لا يوجد مستخدمون</div></div>
           ) : (
             <div className="g2">
-              {users.map(u=>(
-                <div key={u.id} className="card">
-                  <div style={{display:'flex',alignItems:'center',gap:12}}>
-                    <div style={{width:44,height:44,borderRadius:'50%',background:'var(--pr-l)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.3rem'}}>
-                      {u.role==='manager'?'👑':u.role==='parent'?'👨‍👩‍👧':'👤'}
-                    </div>
-                    <div style={{flex:1}}>
-                      <div style={{fontWeight:700}}>{u.name}</div>
-                      <div style={{fontSize:'.78rem',color:'var(--g5)'}}>@{u.username} · {ROLES[u.role]||u.role}</div>
-                    </div>
-                    {isManager && (
-                      <div className="c-acts">
-                        <button className="btn btn-xs btn-g" onClick={()=>{setUserForm({...u,password:''});setEditUserId(u.id);setShowUserForm(true);}}>✏️</button>
-                        <button className="btn btn-xs btn-d" onClick={()=>delUser(u.id)}>🗑️</button>
+              {users.map(u=>{
+                const isActive = u.active !== false;
+                return (
+                  <div key={u.id} className="card">
+                    <div style={{display:'flex',alignItems:'center',gap:12,width:'100%'}}>
+                      <div style={{width:44,height:44,borderRadius:'50%',background:'var(--pr-l)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.3rem',opacity:isActive?1:.4}}>
+                        {u.role==='manager'?'👑':u.role==='parent'?'👨‍👩‍👧':'👤'}
                       </div>
-                    )}
+                      <div style={{flex:1,opacity:isActive?1:.6}}>
+                        <div style={{fontWeight:700}}>{u.name} {!isActive && <span className="bdg b-gy">معطّل</span>}</div>
+                        <div style={{fontSize:'.78rem',color:'var(--g5)'}}>@{u.username} · {ROLES[u.role]||u.role}</div>
+                      </div>
+                      {isManager && (
+                        <div className="c-acts">
+                          <button className="btn btn-xs btn-g" onClick={()=>openEditUserForm(u)}>✏️</button>
+                          <button className={`btn btn-xs ${isActive?'btn-w':'btn-s'}`} onClick={()=>toggleUserActive(u)}>{isActive?'⏸️':'▶️'}</button>
+                          <button className="btn btn-xs btn-d" onClick={()=>delUser(u)}>🗑️</button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -424,17 +494,32 @@ export default function Settings() {
             <div className="mbg" onClick={e=>{if(e.target===e.currentTarget){setShowUserForm(false);setEditUserId(null);}}}>
               <div className="mb mb-xl" style={{padding:0,overflow:'hidden',borderRadius:16}}>
                 <div className="fhd" style={{padding:'14px 20px',borderRadius:0}}>
-                  <h2>{editUserId?'✏️ تعديل':'➕ مستخدم جديد'}</h2>
+                  <h2>{editUserId?'✏️ تعديل حساب':'➕ مستخدم جديد'}</h2>
+                  {!editUserId && <p style={{fontSize:'.8rem',opacity:.85,marginTop:4}}>سيُستخدم اسم المستخدم للدخول لاحقاً — تأكد أنه واضح للموظف</p>}
                 </div>
                 <div className="modal-body-scroll" style={{padding:'18px 20px'}}>
                   <div className="fg c2">
                     <div className="fl full"><label>الاسم الكامل <span className="req">*</span></label><input value={userForm.name} onChange={fldU('name')}/></div>
-                    <div className="fl"><label>اسم المستخدم <span className="req">*</span></label><input value={userForm.username} onChange={fldU('username')} autoComplete="off"/></div>
-                    <div className="fl"><label>كلمة المرور {!editUserId&&<span className="req">*</span>}</label><input type="password" value={userForm.password} onChange={fldU('password')} placeholder={editUserId?'اتركها للإبقاء':'••••••••'}/></div>
-                    <div className="fl full"><label>البريد الإلكتروني</label><input type="email" value={userForm.email||''} onChange={fldU('email')}/></div>
+
+                    <div className="fl"><label>اسم المستخدم {!editUserId && <span className="req">*</span>}</label>
+                      <input value={userForm.username} onChange={fldU('username')} autoComplete="off" disabled={!!editUserId}
+                        placeholder="أحرف/أرقام إنجليزية، بدون مسافات" dir="ltr" style={editUserId?{background:'var(--g0)'}:{}}/>
+                      {editUserId && <p style={{fontSize:'.72rem',color:'var(--g5)',marginTop:4}}>لا يمكن تغيير اسم المستخدم بعد الإنشاء</p>}
+                    </div>
+
+                    <div className="fl"><label>كلمة المرور {!editUserId && <span className="req">*</span>}</label>
+                      {editUserId ? (
+                        <input value="••••••••" disabled style={{background:'var(--g0)'}}/>
+                      ) : (
+                        <input type="password" value={userForm.password} onChange={fldU('password')} placeholder="6 أحرف على الأقل"/>
+                      )}
+                    </div>
+
+                    <div className="fl full"><label>البريد/الجوال للتواصل (اختياري)</label><input value={userForm.contactEmail} onChange={fldU('contactEmail')} placeholder="لا يُستخدم للدخول، فقط للتواصل"/></div>
+
                     <div className="fl full"><label>الدور</label>
                       <select value={userForm.role} onChange={fldU('role')}>
-                        {ROLE_OPTIONS.map(([v,l])=><option key={v} value={v}>{l}</option>)}
+                        {ROLE_OPTIONS.filter(([v])=>v!=='manager').map(([v,l])=><option key={v} value={v}>{l}</option>)}
                       </select>
                     </div>
                     {userForm.role === 'parent' && (
@@ -461,8 +546,8 @@ export default function Settings() {
                   </div>
                 </div>
                 <div className="fa">
-                  <button className="btn btn-p" onClick={saveUser}>💾 حفظ</button>
-                  <button className="btn btn-g" onClick={()=>{setShowUserForm(false);setEditUserId(null);}}>إلغاء</button>
+                  <button className="btn btn-p" onClick={saveUser} disabled={savingUser}>{savingUser ? '⏳ جارٍ الحفظ...' : '💾 حفظ'}</button>
+                  <button className="btn btn-g" onClick={()=>{setShowUserForm(false);setEditUserId(null);}} disabled={savingUser}>إلغاء</button>
                 </div>
               </div>
             </div>
