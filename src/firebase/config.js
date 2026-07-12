@@ -2,7 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyBOKnMTpaIlksl3WMqM_d9K_yvSWoWWWVU",
   authDomain: "specialed-pro.firebaseapp.com",
   projectId: "specialed-pro",
