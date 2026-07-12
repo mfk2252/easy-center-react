@@ -1,18 +1,23 @@
-import { signInWithPopup, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { auth, db, googleProvider } from './config';
+import { initializeApp, deleteApp } from 'firebase/app';
+import {
+  signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  getAuth, signOut, onAuthStateChanged
+} from 'firebase/auth';
+import {
+  doc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs,
+  serverTimestamp, Timestamp
+} from 'firebase/firestore';
+import { auth, db, googleProvider, firebaseConfig } from './config';
 
-const TRIAL_DAYS = 200;
+const TRIAL_DAYS = 5;
 export const ADMIN_EMAIL = 'mfekry225@gmail.com'; // إيميل Google الخاص بمالك المنصة
 
-// بريد مخصص فقط لتسجيل الدخول عبر Email/Password (لأن ADMIN_EMAIL أعلاه
-// مرتبط فعلياً بحساب Google، وFirebase لا يسمح بربط طريقة دخول ثانية بنفس
-// البريد افتراضياً). غيّر هذه القيمة إلى ما تفضله، بشرط أن تُنشئ نفس القيمة
-// حرفياً كمستخدم Email/Password من Firebase Console.
+// بريد مخصص فقط لتسجيل دخول مالك المنصة عبر Email/Password (لأن ADMIN_EMAIL أعلاه
+// مرتبط فعلياً بحساب Google، وFirebase لا يسمح بربط طريقة دخول ثانية بنفس البريد
+// افتراضياً). غيّر هذه القيمة إن أردت، بشرط إنشاء نفس القيمة حرفياً في Firebase Console.
 export const PLATFORM_ADMIN_LOGIN_EMAIL = 'admin.owner@easycenter.local';
 
-/** يُستخدم في كل مكان يحتاج التأكد أن هذا البريد يخص مالك المنصة،
- *  سواء دخل عبر Google (ADMIN_EMAIL) أو عبر Email/Password (PLATFORM_ADMIN_LOGIN_EMAIL). */
+/** يتحقق أن هذا البريد يخص مالك المنصة، سواء عبر Google أو Email/Password. */
 export function isPlatformAdminEmail(email) {
   return !!email && (email === ADMIN_EMAIL || email === PLATFORM_ADMIN_LOGIN_EMAIL);
 }
@@ -68,6 +73,25 @@ export function checkSubscriptionStatus(centerData) {
   return { allowed: true, reason: 'trial', daysLeft: TRIAL_DAYS };
 }
 
+/** رسائل خطأ عربية مفهومة بدلاً من رموز Firebase التقنية */
+function mapAuthError(code) {
+  const map = {
+    'auth/invalid-credential': 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
+    'auth/user-not-found': 'لا يوجد حساب بهذه البيانات',
+    'auth/wrong-password': 'كلمة المرور غير صحيحة',
+    'auth/invalid-email': 'صيغة البريد الإلكتروني غير صحيحة',
+    'auth/too-many-requests': 'محاولات فاشلة كثيرة، حاول مرة أخرى لاحقاً',
+    'auth/network-request-failed': 'تحقق من اتصال الإنترنت وحاول مجدداً',
+    'auth/user-disabled': 'هذا الحساب معطّل',
+    'auth/email-already-in-use': 'اسم المستخدم هذا مستخدم بالفعل، اختر اسماً آخر',
+    'auth/weak-password': 'كلمة المرور ضعيفة جداً، استخدم 6 أحرف على الأقل',
+  };
+  return map[code] || 'تعذّر تسجيل الدخول، حاول مرة أخرى';
+}
+
+// ============================================================
+// دخول مدير المركز عبر Google
+// ============================================================
 export async function signInWithGoogle() {
   const result = await signInWithPopup(auth, googleProvider);
   const user = result.user;
@@ -131,25 +155,11 @@ export async function signInWithGoogle() {
   };
 }
 
-/** رسائل خطأ عربية مفهومة بدلاً من رموز Firebase التقنية */
-function mapAuthError(code) {
-  const map = {
-    'auth/invalid-credential': 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
-    'auth/user-not-found': 'لا يوجد حساب بهذا البريد الإلكتروني',
-    'auth/wrong-password': 'كلمة المرور غير صحيحة',
-    'auth/invalid-email': 'صيغة البريد الإلكتروني غير صحيحة',
-    'auth/too-many-requests': 'محاولات فاشلة كثيرة، حاول مرة أخرى لاحقاً',
-    'auth/network-request-failed': 'تحقق من اتصال الإنترنت وحاول مجدداً',
-    'auth/user-disabled': 'هذا الحساب معطّل',
-  };
-  return map[code] || 'تعذّر تسجيل الدخول، حاول مرة أخرى';
-}
-
-/**
- * دخول مالك المنصة (Super Admin) عبر البريد وكلمة المرور — Firebase Email/Password.
- * هذا المسار مخصص حصراً لصاحب المنصة (isPlatformAdminEmail) وليس بديلاً عن دخول مديري المراكز.
- * يتطلب: تفعيل Email/Password من Firebase Console وإنشاء مستخدم بقيمة PLATFORM_ADMIN_LOGIN_EMAIL هناك أولاً.
- */
+// ============================================================
+// دخول مالك المنصة أو مدير مركز (عائد بالفعل) عبر Email/Password
+// ⚠️ هذا المسار للدخول فقط، وليس لإنشاء مركز جديد. إنشاء مركز جديد عبر
+// Email/Password غير مبني بعد — راجع الملاحظة في نهاية الملف.
+// ============================================================
 export async function signInWithEmailPassword(email, password) {
   let result;
   try {
@@ -160,51 +170,218 @@ export async function signInWithEmailPassword(email, password) {
 
   const user = result.user;
 
-  if (!isPlatformAdminEmail(user.email)) {
-    // هذا المسار مخصص لمالك المنصة فقط في هذه المرحلة
-    await signOut(auth);
-    throw new Error('هذا الحساب غير مصرّح له بالدخول من هنا');
+  if (isPlatformAdminEmail(user.email)) {
+    return {
+      uid: user.uid,
+      email: user.email,
+      name: user.displayName || 'مالك المنصة',
+      role: 'manager',
+      centerId: user.uid,
+      isPlatformAdmin: true,
+      subscription: { allowed: true, reason: 'platform_admin' },
+      _skipWelcome: true,
+    };
   }
+
+  // مدير مركز عادي يدخل ببريد/كلمة مرور (بدل Google)
+  const centerDoc = await getDoc(doc(db, 'centers', user.uid));
+  if (!centerDoc.exists()) {
+    await signOut(auth);
+    throw new Error('لا يوجد مركز مرتبط بهذا الحساب. تواصل مع الدعم.');
+  }
+
+  const data = centerDoc.data();
+  const subStatus = checkSubscriptionStatus(data);
+  const needsSetup = data?.status === 'pending_setup' || !data?.setupCompleted || !data?.isSetup;
 
   return {
     uid: user.uid,
     email: user.email,
-    name: user.displayName || 'مالك المنصة',
+    name: user.displayName || data.name || data.centerName || 'المدير',
     role: 'manager',
     centerId: user.uid,
-    isPlatformAdmin: true,
-    subscription: { allowed: true, reason: 'platform_admin' },
-    _skipWelcome: true,
+    isNewCenter: false,
+    needsSetup,
+    subscription: subStatus,
   };
 }
 
-export async function signInWithCredentials(username, password) {
-  const q = query(collection(db, 'users'), where('username', '==', username.trim()));
-  const snapshot = await getDocs(q);
+// ============================================================
+// تسجيل ذاتي لمدير مركز جديد عبر Email/Password (بديل لتسجيل Google الأول).
+// نفس منطق إنشاء المركز في signInWithGoogle بالضبط، لكن بدون Google.
+// ============================================================
+export async function signUpManagerWithEmailPassword(email, password) {
+  const trimmedEmail = email.trim();
+  if (isPlatformAdminEmail(trimmedEmail)) {
+    throw new Error('هذا البريد محجوز، لا يمكن استخدامه لإنشاء حساب مركز');
+  }
 
-  if (snapshot.empty) throw new Error('اسم المستخدم غير موجود');
+  let result;
+  try {
+    result = await createUserWithEmailAndPassword(auth, trimmedEmail, password);
+  } catch (e) {
+    throw new Error(mapAuthError(e?.code));
+  }
 
-  const userData = snapshot.docs[0].data();
-  if (userData.password !== password) throw new Error('كلمة المرور غير صحيحة');
-  if (userData.active === false) throw new Error('هذا الحساب معطّل. تواصل مع المدير.');
+  const user = result.user;
 
-  const centerDoc = await getDoc(doc(db, 'centers', userData.centerId));
+  await setDoc(doc(db, 'centers', user.uid), {
+    centerId: user.uid,
+    managerId: user.uid,
+    managerEmail: user.email,
+    ownerEmail: user.email,
+    managerName: '',
+    name: '', centerName: '', type: '', phone: '', logo: '', logoUrl: '',
+    color: '#1a56db',
+    currency: 'SAR',
+    createdAt: serverTimestamp(),
+    isSetup: false,
+    setupCompleted: false,
+    status: 'pending_setup',
+    subscription: {
+      status: 'trial',
+      trialExpiry: getTrialExpiry(),
+      createdAt: serverTimestamp(),
+    },
+  });
+
+  return {
+    uid: user.uid,
+    email: user.email,
+    name: 'المدير',
+    role: 'manager',
+    centerId: user.uid,
+    isNewCenter: true,
+    needsSetup: true,
+    subscription: { allowed: true, reason: 'trial', daysLeft: TRIAL_DAYS },
+  };
+}
+
+// ============================================================
+// بناء البريد الداخلي الحقيقي لحساب موظف/ولي أمر (غير مرئي له إطلاقاً)
+// ============================================================
+function buildStaffAuthEmail(centerId, username) {
+  const clean = username.trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
+  return `${clean}@${centerId}.staff.easycenter.local`;
+}
+
+// ============================================================
+// إنشاء حساب موظف/ولي أمر تابع لمركز المدير الحالي.
+// يُستدعى من واجهة المدير وهو لا يزال مسجّلاً دخوله (جلسته لا تتأثر إطلاقاً)
+// لأن إنشاء حساب Firebase Auth الجديد يتم عبر نسخة Firebase ثانوية مؤقتة.
+// ============================================================
+export async function createStaffAccount(managerCenterId, {
+  username, password, name, role, permissions, title, studentId, phone, contactEmail,
+}) {
+  const cleanUsername = (username || '').trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
+  if (!cleanUsername) throw new Error('أدخل اسم مستخدم صالح (أحرف/أرقام إنجليزية فقط)');
+  if (!password || password.length < 6) throw new Error('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+
+  const authEmail = buildStaffAuthEmail(managerCenterId, cleanUsername);
+  const indexRef = doc(db, 'staffLoginIndex', cleanUsername);
+
+  // 1) حجز اسم المستخدم أولاً (يفشل تلقائياً لو كان مُستخدَماً من مركز آخر —
+  //    بفضل قاعدة create/update في firestore.rules)
+  try {
+    await setDoc(indexRef, {
+      centerId: managerCenterId,
+      authEmail,
+      createdAt: serverTimestamp(),
+    });
+  } catch (e) {
+    throw new Error('اسم المستخدم هذا مستخدم بالفعل على المنصة، اختر اسماً آخر');
+  }
+
+  // 2) إنشاء حساب Firebase Auth عبر نسخة ثانوية مؤقتة (لا تؤثر على جلسة المدير)
+  const secondaryApp = initializeApp(firebaseConfig, `staff-create-${Date.now()}`);
+  const secondaryAuth = getAuth(secondaryApp);
+  let newUid;
+  try {
+    const cred = await createUserWithEmailAndPassword(secondaryAuth, authEmail, password);
+    newUid = cred.user.uid;
+    await signOut(secondaryAuth);
+  } catch (e) {
+    // تراجع: احذف الحجز حتى لا يبقى اسم المستخدم محجوزاً بلا حساب فعلي
+    try { await deleteDoc(indexRef); } catch (_) {}
+    await deleteApp(secondaryApp);
+    throw new Error(mapAuthError(e?.code));
+  }
+  await deleteApp(secondaryApp);
+
+  // 3) كتابة ملف التعريف — عبر db الأساسي (جلسة المدير الحالية النشطة)
+  try {
+    await setDoc(doc(db, 'users', newUid), {
+      centerId: managerCenterId,
+      username: cleanUsername,
+      authEmail,
+      name: name || '',
+      role: role || 'specialist',
+      permissions: permissions || {},
+      title: title || '',
+      studentId: studentId || '',
+      phone: phone || '',
+      contactEmail: contactEmail || '',
+      active: true,
+      createdAt: serverTimestamp(),
+    });
+  } catch (e) {
+    // تراجع كامل: احذف الحجز (حساب Auth اليتيم يبقى معطّلاً فعلياً لأن لا ملف
+    // تعريف له، ولن يستطيع الدخول لأي بيانات بسبب قواعد Firestore)
+    try { await deleteDoc(indexRef); } catch (_) {}
+    throw new Error('تعذّر حفظ بيانات الحساب: ' + (e.message || ''));
+  }
+
+  return newUid;
+}
+
+// ============================================================
+// دخول موظف/ولي أمر عبر اسم المستخدم البسيط (بدون @) — لا يعرف مركزه إطلاقاً،
+// النظام يكتشفه تلقائياً عبر فهرس staffLoginIndex العام (قراءة فقط، لا كلمات مرور فيه).
+// ============================================================
+export async function signInStaffOrParent(username, password) {
+  const cleanUsername = (username || '').trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
+  if (!cleanUsername) throw new Error('يرجى إدخال اسم المستخدم');
+
+  const idxSnap = await getDoc(doc(db, 'staffLoginIndex', cleanUsername));
+  if (!idxSnap.exists()) throw new Error('اسم المستخدم غير موجود');
+  const { authEmail } = idxSnap.data();
+
+  let cred;
+  try {
+    cred = await signInWithEmailAndPassword(auth, authEmail, password);
+  } catch (e) {
+    throw new Error(mapAuthError(e?.code));
+  }
+
+  const profileSnap = await getDoc(doc(db, 'users', cred.user.uid));
+  if (!profileSnap.exists()) {
+    await signOut(auth);
+    throw new Error('لم يتم العثور على بيانات هذا الحساب');
+  }
+  const profile = profileSnap.data();
+  if (profile.active === false) {
+    await signOut(auth);
+    throw new Error('هذا الحساب معطّل. تواصل مع المدير.');
+  }
+
+  // نتحقق أيضاً من حالة اشتراك المركز نفسه (نفس المنطق المستخدم مع المدير)
+  const centerDoc = await getDoc(doc(db, 'centers', profile.centerId));
   const subStatus = checkSubscriptionStatus(centerDoc.data());
-
   if (!subStatus.allowed) {
+    await signOut(auth);
     throw new Error(subStatus.message || 'انتهى اشتراك المركز. تواصل مع المدير.');
   }
 
   return {
-    uid: snapshot.docs[0].id,
-    email: userData.email || '',
-    name: userData.name,
-    username: userData.username,
-    role: userData.role,
-    centerId: userData.centerId,
-    permissions: userData.permissions || {},
+    uid: cred.user.uid,
+    name: profile.name,
+    username: profile.username,
+    role: profile.role,
+    centerId: profile.centerId,
+    permissions: profile.permissions || {},
+    studentId: profile.studentId || '',
     subscription: subStatus,
-    isNewCenter: false
+    isNewCenter: false,
   };
 }
 
