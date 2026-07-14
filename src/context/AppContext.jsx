@@ -6,6 +6,7 @@ import { signOutUser, checkSubscriptionStatus, isPlatformAdminEmail } from '../f
 import { syncFromFirebase } from '../hooks/useStorage';
 import { getWelcomeMessage } from './LanguageContext';
 import { persistCenterMeta } from '../utils/centerMeta';
+import { updateFavicon } from '../utils/favicon';
 
 const AppContext = createContext(null);
 
@@ -61,6 +62,13 @@ export function AppProvider({ children }) {
     if (fs) document.documentElement.style.setProperty('--fs', fs+'px');
     if (fw) document.documentElement.style.setProperty('--fw', fw);
   }, []);
+
+  // أيقونة تبويب المتصفح (Favicon) تتحدّث تلقائياً حسب شعار المركز الحالي.
+  // ترجع تلقائياً للأيقونة الافتراضية عند عدم وجود شعار (بما في ذلك بعد تسجيل
+  // الخروج، لأن logout() يُعيد center.logo إلى '').
+  useEffect(() => {
+    updateFavicon(center.logo);
+  }, [center.logo]);
 
   useEffect(() => {
     // timeout احتياطي - لو لم يستجب Firebase بعد 8 ثوانٍ
