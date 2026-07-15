@@ -17,6 +17,9 @@ const ALL_KEYS = [
   'evaluations','warnings','stuReports','behaviorPlans',
   'studentFees','payments','notifs','manualAlerts','users',
   'progEvaluations','progPrograms','progReports',
+  'progWeeklyReports','progMonthlyReports','progParentMeetings',
+  'progSemiAnnualReports','progAnnualReports','progBehaviorReports',
+  'progLearningDifficultyReports',
 ];
 
 function applyTheme(color) {
