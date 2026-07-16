@@ -364,7 +364,7 @@ export default function Calendar() {
             <span>🗓️</span> التقويم الأكاديمي
           </h2>
           <p style={{ margin: '2px 0 0 0', fontSize: '0.85rem', color: 'var(--text-sub)' }}>
-            {MONTHS_AR[month]} {year} — متابعة الجلسات والأحداث اليومية بكثافة بصرية مريحة
+            {MONTHS_AR[month]} {year} — متابعة الجلسات والأحداث اليومية 
           </p>
         </div>
 
