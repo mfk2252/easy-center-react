@@ -6,7 +6,7 @@ import { signOutUser, checkSubscriptionStatus, isPlatformAdminEmail } from '../f
 import { syncFromFirebase } from '../hooks/useStorage';
 import { getWelcomeMessage } from './LanguageContext';
 import { persistCenterMeta } from '../utils/centerMeta';
-import { updateFavicon } from '../utils/favicon';
+import { updateFavicon, updateManifestIcon } from '../utils/favicon';
 
 const AppContext = createContext(null);
 
@@ -71,7 +71,8 @@ export function AppProvider({ children }) {
   // الخروج، لأن logout() يُعيد center.logo إلى '').
   useEffect(() => {
     updateFavicon(center.logo);
-  }, [center.logo]);
+    updateManifestIcon(center.logo, { appName: center.name });
+  }, [center.logo, center.name]);
 
   useEffect(() => {
     // timeout احتياطي - لو لم يستجب Firebase بعد 8 ثوانٍ
