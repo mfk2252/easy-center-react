@@ -146,7 +146,7 @@ function buildCalendarItems() {
       source: 'عيد ميلاد',
       date: iso,
       time: '',
-      title: `🎂 ${s.name} (طالب)`,
+      title: `🎂 {s.name} (طالب)`,
       detail: d === 0 ? 'اليوم' : d === 1 ? 'غداً' : `خلال ${d} يوم`,
       color: 'gr',
       raw: s,
@@ -165,7 +165,7 @@ function buildCalendarItems() {
       source: 'عيد ميلاد',
       date: iso,
       time: '',
-      title: `🎂 ${e.name} (موظف)`,
+      title: `🎂 {e.name} (موظف)`,
       detail: d === 0 ? 'اليوم' : d === 1 ? 'غداً' : `خلال ${d} يوم`,
       color: 'gr',
       raw: e,
@@ -228,8 +228,9 @@ export default function Calendar() {
     setShowForm(true);
   }
 
+  // دالة الحفظ المعدلة لمعالجة الأخطاء المحتملة
   function save() {
-    if (!form.title.trim() || !form.date) {
+    if (!form.title || !form.title.trim() || !form.date) {
       toast('⚠️ أدخل العنوان والتاريخ', 'er');
       return;
     }
@@ -320,7 +321,7 @@ export default function Calendar() {
   }
 
   function saveEval() {
-    if (!evalForm.childName.trim() || !evalForm.date || !evalForm.time) {
+    if (!evalForm.childName || !evalForm.childName.trim() || !evalForm.date || !evalForm.time) {
       toast('⚠️ أدخل اسم الطفل والموعد والساعة', 'er'); return;
     }
     lsAdd('evaluations', { ...evalForm, id: uid() });
@@ -369,15 +370,30 @@ export default function Calendar() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          {/* التحكم بالتنقل */}
+          {/* التحكم بالتنقل - تم إصلاح الألوان لتلائم الوضع الداكن */}
           <div style={{ display: 'flex', background: 'var(--g0)', padding: 4, borderRadius: 8, border: '1px solid var(--border-color)' }}>
-            <button type="button" className="btn btn-sm" style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '4px 10px' }} onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() - 1); return n; })}>
+            <button 
+              type="button" 
+              className="btn btn-sm" 
+              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '4px 10px', color: 'var(--text)' }} 
+              onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() - 1); return n; })}
+            >
               → السابق
             </button>
-            <button type="button" className="btn btn-sm" style={{ background: 'var(--bg-card)', border: 'none', borderRadius: 6, padding: '4px 12px', fontWeight: 'bold' }} onClick={() => setCur(new Date())}>
+            <button 
+              type="button" 
+              className="btn btn-sm" 
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 6, padding: '4px 12px', fontWeight: 'bold', color: 'var(--text)' }} 
+              onClick={() => setCur(new Date())}
+            >
               اليوم
             </button>
-            <button type="button" className="btn btn-sm" style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '4px 10px' }} onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() + 1); return n; })}>
+            <button 
+              type="button" 
+              className="btn btn-sm" 
+              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '4px 10px', color: 'var(--text)' }} 
+              onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() + 1); return n; })}
+            >
               التالي ←
             </button>
           </div>
@@ -421,6 +437,14 @@ export default function Calendar() {
               const isToday = ds === today;
               const isSel = d === selDay;
 
+              // تحديد لون رقم اليوم بناءً على الحالة لضمان التباين العالي
+              let dayNumColor = 'var(--text)';
+              if (isToday) {
+                dayNumColor = 'var(--pr)';
+              } else if (isSel) {
+                dayNumColor = 'var(--pr)';
+              }
+
               return (
                 <button
                   type="button"
@@ -458,7 +482,7 @@ export default function Calendar() {
                     <span style={{ 
                       fontSize: '0.85rem', 
                       fontWeight: isToday ? 900 : 700, 
-                      color: isToday ? 'var(--pr)' : 'var(--text)',
+                      color: dayNumColor,
                       background: isToday ? 'var(--pr-l)' : 'transparent',
                       width: 20,
                       height: 20,
@@ -510,7 +534,7 @@ export default function Calendar() {
           {/* قائمة المهام والأحداث */}
           <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 12 }}>
             <div className="wg-h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', padding: '12px 16px' }}>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800 }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text)' }}>
                 📅 جدول يوم {selDay} {MONTHS_AR[month]}
               </h3>
               <div style={{ display: 'flex', gap: 4 }}>
@@ -521,7 +545,7 @@ export default function Calendar() {
             
             <div className="wg-b" style={{ padding: 16, maxHeight: 320, overflowY: 'auto' }}>
               {dayItems.length === 0 ? (
-                <div style={{ color: 'var(--g4)', textAlign: 'center', padding: '24px 0' }}>
+                <div style={{ color: 'var(--text-sub)', textAlign: 'center', padding: '24px 0' }}>
                   <p style={{ fontSize: '1.5rem', margin: 0 }}>☕</p>
                   <p style={{ fontSize: '0.8rem', margin: '4px 0 0 0' }}>لا توجد عناصر مجدولة اليوم.</p>
                 </div>
@@ -558,7 +582,7 @@ export default function Calendar() {
                           }}>
                             {it.source}
                           </span>
-                          {it.time && <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)' }}>🕐 {it.time}</span>}
+                          {it.time && <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)' }}>%s🕐 {it.time}</span>}
                         </div>
                         <div style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--text)' }}>{it.title}</div>
                       </button>
@@ -572,7 +596,7 @@ export default function Calendar() {
           {/* معاينة التفاصيل بالكامل */}
           <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 12 }}>
             <div className="wg-h" style={{ borderBottom: '1px solid var(--border-color)', padding: '12px 16px' }}>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800 }}>📌 بطاقة التفاصيل</h3>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text)' }}>📌 بطاقة التفاصيل</h3>
             </div>
             <div className="wg-b" style={{ padding: 16 }}>
               {selItem ? (
@@ -593,7 +617,7 @@ export default function Calendar() {
                   {selItem.time && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--g0)', padding: '8px 12px', borderRadius: 8 }}>
                       <span style={{ fontSize: '1rem' }}>🕒</span>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{selItem.time}</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text)' }}>{selItem.time}</div>
                     </div>
                   )}
 
@@ -615,7 +639,7 @@ export default function Calendar() {
                   )}
                 </div>
               ) : (
-                <div style={{ textAlign: 'center', padding: '36px 0', color: 'var(--g4)' }}>
+                <div style={{ textAlign: 'center', padding: '36px 0', color: 'var(--text-sub)' }}>
                   <span style={{ fontSize: '2rem' }}>🎯</span>
                   <p style={{ fontSize: '0.8rem', marginTop: 8 }}>اضغط على أي عنصر في الأجندة لعرض تفاصيله الكاملة هنا.</p>
                 </div>
@@ -743,50 +767,52 @@ export default function Calendar() {
                 <div className="fl">
                   <label style={{ fontWeight: 700 }}>الحضور</label>
                   <select value={stuApptForm.mode} onChange={fldA('mode')}>
-                    <option value="inperson">🏢 حضوري بالمركز</option>
-                    <option value="online">🌐 أونلاين / عن بعد</option>
+                    <option value="inperson">حضوري بالمركز</option>
+                    <option value="online">أونلاين (عن بعد)</option>
                   </select>
                 </div>
                 {stuApptForm.mode === 'online' && (
                   <div className="fl full">
-                    <label style={{ fontWeight: 700 }}>رابط الاجتماع (Zoom / Meet)</label>
-                    <input value={stuApptForm.link} onChange={fldA('link')} placeholder="https://..." />
+                    <label style={{ fontWeight: 700 }}>رابط الغرفة الافتراضية</label>
+                    <input type="url" value={stuApptForm.link} onChange={fldA('link')} placeholder="https://..." />
                   </div>
                 )}
                 <div className="fl full">
-                  <label style={{ fontWeight: 700 }}>ملاحظات حول الموعد</label>
-                  <textarea value={stuApptForm.notes} onChange={fldA('notes')} rows={2} placeholder="تفاصيل إضافية أو توصيات خاصة..." />
+                  <label style={{ fontWeight: 700 }}>ملاحظات</label>
+                  <textarea value={stuApptForm.notes} onChange={fldA('notes')} rows={2} />
                 </div>
               </div>
             </div>
             <div className="fa" style={{ padding: '12px 20px', background: 'var(--g0)' }}>
-              <button type="button" className="btn btn-p" onClick={saveStuAppt}>💾 تسجيل الموعد</button>
+              <button type="button" className="btn btn-p" onClick={saveStuAppt}>💾 حفظ الموعد</button>
               <button type="button" className="btn btn-g" onClick={() => setShowStuAppt(false)}>إلغاء</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 3. تسجيل جلسة علاجية */}
+      {/* 3. تسجيل جلسة جديدة */}
       {showStuSess && (
         <div className="mbg" onClick={e => e.target === e.currentTarget && setShowStuSess(false)}>
           <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
-            <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0, background: '#3b82f6' }}>
-              <h2 style={{ color: '#fff', margin: 0, fontSize: '1.15rem' }}>🩺 تسجيل جلسة علاجية فورية</h2>
+            <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0 }}>
+              <h2 style={{ margin: 0, fontSize: '1.15rem' }}>🩺 تسجيل جلسة علاجية وتوثيقها</h2>
             </div>
             <div className="modal-body-scroll" style={{ padding: '20px' }}>
               <div className="fg c2">
                 <div className="fl full">
-                  <label style={{ fontWeight: 700 }}>اختر الطالب <span className="req">*</span></label>
+                  <label style={{ fontWeight: 700 }}>الطالب <span className="req">*</span></label>
                   <select value={stuSessForm.stuId} onChange={fldS('stuId')}>
                     <option value="">— اختر الطالب —</option>
                     {students.map(s => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
+                      <option key={s.id} value={s.id}>
+                        {s.name} {s.status === 'waitlist' ? ' (انتظار)' : ''}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div className="fl">
-                  <label style={{ fontWeight: 700 }}>نوع الجلسة</label>
+                  <label style={{ fontWeight: 700 }}>النوع</label>
                   <select value={stuSessForm.type} onChange={fldS('type')}>
                     {SESS_TYPES.map(t => (
                       <option key={t} value={t}>{t}</option>
@@ -794,7 +820,7 @@ export default function Calendar() {
                   </select>
                 </div>
                 <div className="fl">
-                  <label style={{ fontWeight: 700 }}>تاريخ الجلسة <span className="req">*</span></label>
+                  <label style={{ fontWeight: 700 }}>التاريخ <span className="req">*</span></label>
                   <input type="date" value={stuSessForm.date} onChange={fldS('date')} />
                 </div>
                 <div className="fl">
@@ -802,11 +828,7 @@ export default function Calendar() {
                   <input type="time" value={stuSessForm.time} onChange={fldS('time')} />
                 </div>
                 <div className="fl">
-                  <label style={{ fontWeight: 700 }}>المدة (بالدقائق)</label>
-                  <input type="number" value={stuSessForm.duration} onChange={fldS('duration')} />
-                </div>
-                <div className="fl">
-                  <label style={{ fontWeight: 700 }}>الأخصائي المعالج</label>
+                  <label style={{ fontWeight: 700 }}>الأخصائي المنفذ</label>
                   <select value={stuSessForm.empId} onChange={fldS('empId')}>
                     <option value="">— حدد الأخصائي —</option>
                     {specialists.map(e => (
@@ -815,28 +837,30 @@ export default function Calendar() {
                   </select>
                 </div>
                 <div className="fl">
-                  <label style={{ fontWeight: 700 }}>حالة الجلسة</label>
+                  <label style={{ fontWeight: 700 }}>المدة الفعالة (دقائق)</label>
+                  <input type="number" min={15} value={stuSessForm.duration} onChange={fldS('duration')} />
+                </div>
+                <div className="fl">
+                  <label style={{ fontWeight: 700 }}>الحالة</label>
                   <select value={stuSessForm.status} onChange={fldS('status')}>
-                    <option value="done">✅ منجزة بالكامل</option>
-                    <option value="scheduled">⏳ مجدولة مستقبلاً</option>
+                    <option value="done">✅ تم إنجازها</option>
+                    <option value="scheduled">⏳ مجدولة</option>
                   </select>
                 </div>
                 <div className="fl full">
-                  <label style={{ fontWeight: 700 }}>الأهداف التي تم العمل عليها</label>
-                  <input value={stuSessForm.goals} onChange={fldS('goals')} placeholder="أهداف الجلسة الحالية..." />
+                  <label style={{ fontWeight: 700 }}>المخرجات والملاحظات السلوكية</label>
+                  <textarea value={stuSessForm.notes} onChange={fldS('notes')} rows={2} />
                 </div>
                 <div className="fl full">
-                  <label style={{ fontWeight: 700 }}>ملاحظات الجلسة والتقدم</label>
-                  <textarea value={stuSessForm.notes} onChange={fldS('notes')} rows={2} placeholder="صف مستوى استجابة الطالب والتفاعل..." />
-                </div>
-                <div className="fl full">
-                  <label style={{ fontWeight: 700 }}>إرفاق ملف / واجب منزلي</label>
-                  <input type="file" onChange={sessAttach} style={{ fontSize: '0.85rem' }} />
-                  {stuSessForm.attachName && (
-                    <div style={{ fontSize: '0.8rem', color: '#10b981', marginTop: 4 }}>
-                      📎 تم تجهيز الملف: {stuSessForm.attachName}
-                    </div>
-                  )}
+                  <label style={{ fontWeight: 700, marginBottom: 6 }}>تحميل وثيقة/ملف</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--g0)', padding: 10, borderRadius: 8, border: '1px dashed var(--border-color)' }}>
+                    <input type="file" accept="image/*,.pdf" onChange={sessAttach} style={{ border: 'none', background: 'transparent', padding: 0 }} />
+                    {stuSessForm.attachName && (
+                      <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--pr)' }}>
+                        📎 {stuSessForm.attachName}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -848,49 +872,48 @@ export default function Calendar() {
         </div>
       )}
 
-      {/* 4. تسجيل تقييم جديد */}
+      {/* 4. تسجيل تقييم لحالة جديدة */}
       {showEval && (
         <div className="mbg" onClick={e => e.target === e.currentTarget && setShowEval(false)}>
-          <div className="mb mb-sm" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
-            <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0, background: '#f59e0b' }}>
-              <h2 style={{ color: '#fff', margin: 0, fontSize: '1.15rem' }}>📋 تسجيل موعد تقييم لحالة جديدة</h2>
+          <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
+            <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0, background: 'var(--or)' }}>
+              <h2 style={{ color: '#fff', margin: 0, fontSize: '1.15rem' }}>📋 تقييم مستفيد جديد</h2>
             </div>
             <div className="modal-body-scroll" style={{ padding: '20px' }}>
               <div className="fg c2">
-                <div className="fl full">
+                <div className="fl">
                   <label style={{ fontWeight: 700 }}>اسم الطفل المستهدف <span className="req">*</span></label>
-                  <input value={evalForm.childName} onChange={fldEv('childName')} placeholder="الاسم الكامل للطفل..." />
-                </div>
-                <div className="fl full">
-                  <label style={{ fontWeight: 700 }}>اسم ولي الأمر</label>
-                  <input value={evalForm.parentName} onChange={fldEv('parentName')} placeholder="اسم الأب أو الأم والقرابة..." />
-                </div>
-                <div className="fl full">
-                  <label style={{ fontWeight: 700 }}>التشخيص الأولي (إن وجد)</label>
-                  <input value={evalForm.diagnosis} onChange={fldEv('diagnosis')} placeholder="مثال: طيف توحد، تأخر لغوي..." />
+                  <input value={evalForm.childName} onChange={fldEv('childName')} placeholder="الاسم ثلاثي..." />
                 </div>
                 <div className="fl">
-                  <label style={{ fontWeight: 700 }}>تاريخ التقييم <span className="req">*</span></label>
+                  <label style={{ fontWeight: 700 }}>اسم ولي الأمر</label>
+                  <input value={evalForm.parentName} onChange={fldEv('parentName')} />
+                </div>
+                <div className="fl full">
+                  <label style={{ fontWeight: 700 }}>التشخيص الأولي / الغرض من التقييم</label>
+                  <input value={evalForm.diagnosis} onChange={fldEv('diagnosis')} />
+                </div>
+                <div className="fl">
+                  <label style={{ fontWeight: 700 }}>تاريخ الحضور <span className="req">*</span></label>
                   <input type="date" value={evalForm.date} onChange={fldEv('date')} />
                 </div>
                 <div className="fl">
-                  <label style={{ fontWeight: 700 }}>ساعة البدء <span className="req">*</span></label>
+                  <label style={{ fontWeight: 700 }}>توقيت المقابلة <span className="req">*</span></label>
                   <input type="time" value={evalForm.time} onChange={fldEv('time')} />
                 </div>
                 <div className="fl full">
-                  <label style={{ fontWeight: 700 }}>تفاصيل وملاحظات أولية</label>
-                  <textarea value={evalForm.notes} onChange={fldEv('notes')} rows={2} placeholder="الشكوى الأساسية أو توصيات التقييم..." />
+                  <label style={{ fontWeight: 700 }}>ملاحظات أولية</label>
+                  <textarea value={evalForm.notes} onChange={fldEv('notes')} rows={3} />
                 </div>
               </div>
             </div>
             <div className="fa" style={{ padding: '12px 20px', background: 'var(--g0)' }}>
-              <button type="button" className="btn btn-p" style={{ background: '#f59e0b' }} onClick={saveEval}>💾 حفظ وتوليد التنبيه</button>
+              <button type="button" className="btn btn-p" style={{ background: 'var(--or)', borderColor: 'var(--or)' }} onClick={saveEval}>💾 تسجيل موعد التقييم</button>
               <button type="button" className="btn btn-g" onClick={() => setShowEval(false)}>إلغاء</button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }
