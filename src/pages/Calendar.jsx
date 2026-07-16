@@ -146,7 +146,7 @@ function buildCalendarItems() {
       source: 'عيد ميلاد',
       date: iso,
       time: '',
-      title: `🎂 {s.name} (طالب)`,
+      title: `🎂 ${s.name} (طالب)`,
       detail: d === 0 ? 'اليوم' : d === 1 ? 'غداً' : `خلال ${d} يوم`,
       color: 'gr',
       raw: s,
@@ -165,7 +165,7 @@ function buildCalendarItems() {
       source: 'عيد ميلاد',
       date: iso,
       time: '',
-      title: `🎂 {e.name} (موظف)`,
+      title: `🎂 ${e.name} (موظف)`,
       detail: d === 0 ? 'اليوم' : d === 1 ? 'غداً' : `خلال ${d} يوم`,
       color: 'gr',
       raw: e,
@@ -228,7 +228,6 @@ export default function Calendar() {
     setShowForm(true);
   }
 
-  // دالة الحفظ المعدلة لمعالجة الأخطاء المحتملة
   function save() {
     if (!form.title || !form.title.trim() || !form.date) {
       toast('⚠️ أدخل العنوان والتاريخ', 'er');
@@ -346,7 +345,7 @@ export default function Calendar() {
   return (
     <div style={{ maxWidth: 1400, margin: '0 auto', padding: '12px 16px', fontFamily: 'inherit' }}>
       
-      {/* 1. Header العصري المدمج */}
+      {/* 1. Header العصري المدمج والمعدل بالكامل لطلبك */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -361,21 +360,23 @@ export default function Calendar() {
         border: '1px solid var(--border-color)'
       }}>
         <div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
-            <span>🗓️</span> التقويم الأكاديمي
+          {/* تم جعل العنوان الكبير هو الشهر الحالي مع السنة بدلاً من الكلمة السابقة */}
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 850, margin: 0, display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text)' }}>
+            <span>🗓️</span> {MONTHS_AR[month]} {year}
           </h2>
-          <p style={{ margin: '2px 0 0 0', fontSize: '0.85rem', color: 'var(--text-sub)' }}>
-            {MONTHS_AR[month]} {year} — متابعة الجلسات والأحداث اليومية 
+          {/* النص الرفيع بالأسفل */}
+          <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--text-sub)', opacity: 0.85, fontWeight: 'normal' }}>
+            التقويم الأكاديمي — متابعة الجلسات والأحداث اليومية
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          {/* التحكم بالتنقل - تم إصلاح الألوان لتلائم الوضع الداكن */}
+          {/* التحكم بالتنقل - مظهر الأزرار المحدث */}
           <div style={{ display: 'flex', background: 'var(--g0)', padding: 4, borderRadius: 8, border: '1px solid var(--border-color)' }}>
             <button 
               type="button" 
               className="btn btn-sm" 
-              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '4px 10px', color: 'var(--text)' }} 
+              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '4px 10px', color: 'var(--text)', fontWeight: 'bold' }} 
               onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() - 1); return n; })}
             >
               → السابق
@@ -391,14 +392,14 @@ export default function Calendar() {
             <button 
               type="button" 
               className="btn btn-sm" 
-              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '4px 10px', color: 'var(--text)' }} 
+              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '4px 10px', color: 'var(--text)', fontWeight: 'bold' }} 
               onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() + 1); return n; })}
             >
               التالي ←
             </button>
           </div>
 
-          {/* أزرار الإضافة */}
+          {/* أزرار الإضافة السريعة */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             <button type="button" className="btn btn-p btn-sm" style={{ borderRadius: 8, padding: '6px 12px' }} onClick={() => openForm()}>
               ➕ حدث عام
@@ -416,33 +417,55 @@ export default function Calendar() {
         </div>
       </div>
 
-      {/* 2. شبكة التقويم المدمجة والأنيقة */}
+      {/* 2. شبكة التقويم المعدلة بالكامل لحل مشكلة التباين واللون الداكن */}
       <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.01)' }}>
         <div className="wg-b" style={{ padding: 10, background: 'var(--bg-card)' }}>
-          {/* أيام الأسبوع */}
+          
+          {/* أيام الأسبوع (تم تصحيح اللون ليكون أبيض ناصع/واضح تماماً بالثيم الداكن) */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginBottom: 6 }}>
             {DAYS_AR.map(d => (
-              <div key={d} style={{ textAlign: 'center', fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-sub)', padding: '4px 0', borderBottom: '1px solid var(--g1)' }}>
+              <div 
+                key={d} 
+                style={{ 
+                  textAlign: 'center', 
+                  fontSize: '0.85rem', 
+                  fontWeight: 'bold', 
+                  color: 'var(--text)', // يعتمد على لون النص الرئيسي للثيم وليس الخافت
+                  padding: '8px 0', 
+                  borderBottom: '1px solid var(--border-color)',
+                  opacity: 0.95
+                }}
+              >
                 {d}
               </div>
             ))}
           </div>
           
-          {/* خلايا الأيام ذات الحجم المتناسق لمنع التضخم */}
+          {/* خلايا الأيام */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
             {cells.map((d, i) => {
-              if (!d) return <div key={i} style={{ minHeight: '64px', background: 'var(--g0)', borderRadius: 8, opacity: 0.3 }} />;
+              if (!d) return <div key={i} style={{ minHeight: '80px', background: 'var(--g0)', borderRadius: 8, opacity: 0.15 }} />;
               const ds = dateStr(d);
               const row = itemsOnDay(d);
               const isToday = ds === today;
               const isSel = d === selDay;
 
-              // تحديد لون رقم اليوم بناءً على الحالة لضمان التباين العالي
-              let dayNumColor = 'var(--text)';
+              // معالجة ذكية ومباشرة للألوان لمنع حدوث أي تداخل مع الألوان الداكنة
+              let cellBg = 'var(--bg-card)';
+              let borderStyle = '1px solid var(--border-color)';
+              let textWeight = '600';
+              let numColor = 'var(--text)'; // أبيض في الثيم الداكن، رمادي غامق في الفاتح
+
               if (isToday) {
-                dayNumColor = 'var(--pr)';
+                cellBg = 'rgba(236, 72, 153, 0.12)'; // خلفية وردية خفيفة ملائمة للون الـ Border الحالي
+                borderStyle = '2px solid var(--pr)'; // حد وردي بارز جداً
+                textWeight = '900';
+                numColor = 'var(--text)'; // أبيض واضح
               } else if (isSel) {
-                dayNumColor = 'var(--pr)';
+                cellBg = 'var(--pr-l)';
+                borderStyle = '1px solid var(--pr)';
+                textWeight = '800';
+                numColor = 'var(--text)';
               }
 
               return (
@@ -454,24 +477,24 @@ export default function Calendar() {
                     setSelItem(null);
                   }}
                   style={{
-                    minHeight: '64px',
+                    minHeight: '80px',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     alignItems: 'stretch',
-                    border: isToday ? '2px solid var(--pr)' : isSel ? '1px solid var(--pr)' : '1px solid var(--border-color)',
+                    border: borderStyle,
                     borderRadius: 8,
-                    padding: '6px',
-                    background: isSel ? 'var(--pr-l)' : isToday ? 'rgba(var(--pr-rgb), 0.03)' : 'var(--bg-card)',
+                    padding: '8px',
+                    background: cellBg,
                     cursor: 'pointer',
                     textAlign: 'right',
                     position: 'relative',
                     outline: 'none',
-                    transition: 'transform 0.15s, box-shadow 0.15s'
+                    transition: 'all 0.15s ease'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                    e.currentTarget.style.boxShadow = '0 4px 10px rgba(0,0,0,0.04)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'none';
@@ -479,13 +502,13 @@ export default function Calendar() {
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                    {/* رقم اليوم بخط واضح وبارز وبألوان الثيم الديناميكية */}
                     <span style={{ 
-                      fontSize: '0.85rem', 
-                      fontWeight: isToday ? 900 : 700, 
-                      color: dayNumColor,
-                      background: isToday ? 'var(--pr-l)' : 'transparent',
-                      width: 20,
-                      height: 20,
+                      fontSize: '0.95rem', 
+                      fontWeight: textWeight, 
+                      color: numColor,
+                      width: 24,
+                      height: 24,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -494,20 +517,20 @@ export default function Calendar() {
                       {d}
                     </span>
                     {row.length > 0 && (
-                      <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-sub)' }}>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--pr)' }}>
                         ●
                       </span>
                     )}
                   </div>
 
-                  {/* نقاط ملونة مدمجة تمثل الأحداث بدلاً من الكروت الضخمة */}
-                  <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginTop: 4 }}>
+                  {/* نقاط ملونة ممتازة لتمثيل الجلسات والأحداث */}
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
                     {row.map(it => (
                       <span 
                         key={it.id} 
                         style={{ 
-                          width: 6, 
-                          height: 6, 
+                          width: 8, 
+                          height: 8, 
                           borderRadius: '50%', 
                           background: getColorStyles(it.color).text 
                         }} 
@@ -582,7 +605,7 @@ export default function Calendar() {
                           }}>
                             {it.source}
                           </span>
-                          {it.time && <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)' }}>%s🕐 {it.time}</span>}
+                          {it.time && <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)' }}>🕐 {it.time}</span>}
                         </div>
                         <div style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--text)' }}>{it.title}</div>
                       </button>
