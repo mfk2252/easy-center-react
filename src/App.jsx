@@ -1,4 +1,4 @@
-import { useState } from 'react'; // أضفنا useState هنا في الأعلى
+import { useState } from 'react';
 import { useApp } from './context/AppContext';
 import SetupWizard from './components/layout/SetupWizard';
 import LoginScreen from './components/layout/LoginScreen';
@@ -24,30 +24,56 @@ export default function App() {
 
   if (screen === 'loading') {
     return (
-      <div style={{ display:'flex', alignItems:'center', justify縱ontent:'center', minHeight:'100vh', background:'#0f172a', flexDirection:'column', gap:16 }}>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', // تم تصحيح الكلمة للتوسيط الكامل
+        minHeight: '100vh', 
+        background: '#0f172a', 
+        flexDirection: 'column', 
+        gap: 20,
+        padding: '20px',
+        boxSizing: 'border-box'
+      }}>
         {center?.logo ? (
           <img 
             src={center.logo} 
             alt={center.name || "شعار المركز"} 
-            style={{ width: '96px', height: '96px', objectFit: 'contain', marginBottom: '8px', animation: 'pulse 2s infinite' }}
+            style={{ 
+              width: 'clamp(100px, 20vw, 160px)', // حجم مرن ومتجاوب للشعار
+              height: 'clamp(100px, 20vw, 160px)', 
+              objectFit: 'contain', 
+              marginBottom: '8px', 
+              animation: 'pulse 2s infinite' 
+            }}
             onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
           />
         ) : null}
         
-        {/* سيظهر الإيموجي العشوائي هنا كبديل فوري */}
-        <div style={{ fontSize:'3rem', display: center?.logo ? 'none' : 'block', animation: 'bounce 1.5s infinite' }}>
+        {/* إيموجي ضخم ومتجاوب جداً (يصل إلى 8rem على الشاشات الكبيرة ويصغر ديناميكياً على الهواتف) */}
+        <div style={{ 
+          fontSize: 'clamp(5rem, 18vw, 8rem)', 
+          display: center?.logo ? 'none' : 'block', 
+          animation: 'bounce 1.5s infinite',
+          lineHeight: 1,
+          userSelect: 'none'
+        }}>
           {defaultEmoji}
         </div>
 
-        <div style={{ fontWeight:700, fontSize:'1rem', color:'white' }}>جاري التحميل...</div>
+        <div style={{ fontWeight: 700, fontSize: 'clamp(1rem, 4vw, 1.25rem)', color: 'white', marginTop: 10 }}>
+          جاري التحميل...
+        </div>
         
+        {/* شريط التحميل */}
         <div style={{ 
-          width: 80, 
-          height: 4, 
+          width: 100, 
+          height: 5, 
           background: 'var(--pr, #1a56db)', 
           borderRadius: 2, 
           position: 'relative',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          marginTop: 5
         }}>
           <div style={{
             position: 'absolute',
@@ -71,7 +97,7 @@ export default function App() {
           }
           @keyframes bounce {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+            50% { transform: translateY(-20px); } /* قفزة أعلى تناسب الحجم الضخم الجديد */
           }
         `}</style>
       </div>
