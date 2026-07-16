@@ -11,7 +11,7 @@ import SubscriptionScreen from './components/layout/SubscriptionScreen';
 import TrialBanner from './components/layout/TrialBanner';
 
 // قائمة الإيموجيات اللطيفة والمعبرة عن الأطفال والتربية الخاصة والتخاطب
-const LOADING_EMOJIS = ['🧩', '🧸', '🎨', '📚', '🗣️', '👶', '🎈', '🎯', '✏️', '🧠', '🦄', '🍭'];
+const LOADING_EMOJIS = ['🧩', '🧸', '🎨', '📚', '🗣️', '👶', '🎈', '🎯', '✏️', '🧠', '🧑‍🏫', '👨‍🦽', '🍬'];
 
 export default function App() {
   const { screen, center, subscriptionStatus } = useApp();
