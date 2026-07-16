@@ -146,7 +146,7 @@ function buildCalendarItems() {
       source: 'عيد ميلاد',
       date: iso,
       time: '',
-      title: `🎂 {s.name} (طالب)`,
+      title: `🎂 ${s.name} (طالب)`,
       detail: d === 0 ? 'اليوم' : d === 1 ? 'غداً' : `خلال ${d} يوم`,
       color: 'gr',
       raw: s,
@@ -165,7 +165,7 @@ function buildCalendarItems() {
       source: 'عيد ميلاد',
       date: iso,
       time: '',
-      title: `🎂 {e.name} (موظف)`,
+      title: `🎂 ${e.name} (موظف)`,
       detail: d === 0 ? 'اليوم' : d === 1 ? 'غداً' : `خلال ${d} يوم`,
       color: 'gr',
       raw: e,
@@ -743,52 +743,50 @@ export default function Calendar() {
                 <div className="fl">
                   <label style={{ fontWeight: 700 }}>الحضور</label>
                   <select value={stuApptForm.mode} onChange={fldA('mode')}>
-                    <option value="inperson">حضوري بالمركز</option>
-                    <option value="online">أونلاين (عن بعد)</option>
+                    <option value="inperson">🏢 حضوري بالمركز</option>
+                    <option value="online">🌐 أونلاين / عن بعد</option>
                   </select>
                 </div>
                 {stuApptForm.mode === 'online' && (
                   <div className="fl full">
-                    <label style={{ fontWeight: 700 }}>رابط الغرفة الافتراضية</label>
-                    <input type="url" value={stuApptForm.link} onChange={fldA('link')} placeholder="https://..." />
+                    <label style={{ fontWeight: 700 }}>رابط الاجتماع (Zoom / Meet)</label>
+                    <input value={stuApptForm.link} onChange={fldA('link')} placeholder="https://..." />
                   </div>
                 )}
                 <div className="fl full">
-                  <label style={{ fontWeight: 700 }}>ملاحظات</label>
-                  <textarea value={stuApptForm.notes} onChange={fldA('notes')} rows={2} />
+                  <label style={{ fontWeight: 700 }}>ملاحظات حول الموعد</label>
+                  <textarea value={stuApptForm.notes} onChange={fldA('notes')} rows={2} placeholder="تفاصيل إضافية أو توصيات خاصة..." />
                 </div>
               </div>
             </div>
             <div className="fa" style={{ padding: '12px 20px', background: 'var(--g0)' }}>
-              <button type="button" className="btn btn-p" onClick={saveStuAppt}>💾 حفظ الموعد</button>
+              <button type="button" className="btn btn-p" onClick={saveStuAppt}>💾 تسجيل الموعد</button>
               <button type="button" className="btn btn-g" onClick={() => setShowStuAppt(false)}>إلغاء</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 3. تسجيل جلسة جديدة */}
+      {/* 3. تسجيل جلسة علاجية */}
       {showStuSess && (
         <div className="mbg" onClick={e => e.target === e.currentTarget && setShowStuSess(false)}>
           <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
-            <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0 }}>
-              <h2 style={{ margin: 0, fontSize: '1.15rem' }}>🩺 تسجيل جلسة علاجية وتوثيقها</h2>
+            <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0, background: '#3b82f6' }}>
+              <h2 style={{ color: '#fff', margin: 0, fontSize: '1.15rem' }}>🩺 تسجيل جلسة علاجية فورية</h2>
             </div>
             <div className="modal-body-scroll" style={{ padding: '20px' }}>
               <div className="fg c2">
                 <div className="fl full">
-                  <label style={{ fontWeight: 700 }}>الطالب <span className="req">*</span></label>
+                  <label style={{ fontWeight: 700 }}>اختر الطالب <span className="req">*</span></label>
                   <select value={stuSessForm.stuId} onChange={fldS('stuId')}>
                     <option value="">— اختر الطالب —</option>
                     {students.map(s => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} {s.status === 'waitlist' ? ' (انتظار)' : ''}
-                      </option>
+                      <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
                   </select>
                 </div>
                 <div className="fl">
-                  <label style={{ fontWeight: 700 }}>النوع</label>
+                  <label style={{ fontWeight: 700 }}>نوع الجلسة</label>
                   <select value={stuSessForm.type} onChange={fldS('type')}>
                     {SESS_TYPES.map(t => (
                       <option key={t} value={t}>{t}</option>
@@ -796,7 +794,7 @@ export default function Calendar() {
                   </select>
                 </div>
                 <div className="fl">
-                  <label style={{ fontWeight: 700 }}>التاريخ <span className="req">*</span></label>
+                  <label style={{ fontWeight: 700 }}>تاريخ الجلسة <span className="req">*</span></label>
                   <input type="date" value={stuSessForm.date} onChange={fldS('date')} />
                 </div>
                 <div className="fl">
@@ -804,7 +802,11 @@ export default function Calendar() {
                   <input type="time" value={stuSessForm.time} onChange={fldS('time')} />
                 </div>
                 <div className="fl">
-                  <label style={{ fontWeight: 700 }}>الأخصائي المنفذ</label>
+                  <label style={{ fontWeight: 700 }}>المدة (بالدقائق)</label>
+                  <input type="number" value={stuSessForm.duration} onChange={fldS('duration')} />
+                </div>
+                <div className="fl">
+                  <label style={{ fontWeight: 700 }}>الأخصائي المعالج</label>
                   <select value={stuSessForm.empId} onChange={fldS('empId')}>
                     <option value="">— حدد الأخصائي —</option>
                     {specialists.map(e => (
@@ -813,30 +815,28 @@ export default function Calendar() {
                   </select>
                 </div>
                 <div className="fl">
-                  <label style={{ fontWeight: 700 }}>المدة الفعالة (دقائق)</label>
-                  <input type="number" min={15} value={stuSessForm.duration} onChange={fldS('duration')} />
-                </div>
-                <div className="fl">
-                  <label style={{ fontWeight: 700 }}>الحالة</label>
+                  <label style={{ fontWeight: 700 }}>حالة الجلسة</label>
                   <select value={stuSessForm.status} onChange={fldS('status')}>
-                    <option value="done">✅ تم إنجازها</option>
-                    <option value="scheduled">⏳ مجدولة</option>
+                    <option value="done">✅ منجزة بالكامل</option>
+                    <option value="scheduled">⏳ مجدولة مستقبلاً</option>
                   </select>
                 </div>
                 <div className="fl full">
-                  <label style={{ fontWeight: 700 }}>المخرجات والملاحظات السلوكية</label>
-                  <textarea value={stuSessForm.notes} onChange={fldS('notes')} rows={2} />
+                  <label style={{ fontWeight: 700 }}>الأهداف التي تم العمل عليها</label>
+                  <input value={stuSessForm.goals} onChange={fldS('goals')} placeholder="أهداف الجلسة الحالية..." />
                 </div>
                 <div className="fl full">
-                  <label style={{ fontWeight: 700, marginBottom: 6 }}>تحميل وثيقة/ملف</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--g0)', padding: 10, borderRadius: 8, border: '1px dashed var(--border-color)' }}>
-                    <input type="file" accept="image/*,.pdf" onChange={sessAttach} style={{ border: 'none', background: 'transparent', padding: 0 }} />
-                    {stuSessForm.attachName && (
-                      <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--pr)' }}>
-                        📎 {stuSessForm.attachName}
-                      </span>
-                    )}
-                  </div>
+                  <label style={{ fontWeight: 700 }}>ملاحظات الجلسة والتقدم</label>
+                  <textarea value={stuSessForm.notes} onChange={fldS('notes')} rows={2} placeholder="صف مستوى استجابة الطالب والتفاعل..." />
+                </div>
+                <div className="fl full">
+                  <label style={{ fontWeight: 700 }}>إرفاق ملف / واجب منزلي</label>
+                  <input type="file" onChange={sessAttach} style={{ fontSize: '0.85rem' }} />
+                  {stuSessForm.attachName && (
+                    <div style={{ fontSize: '0.8rem', color: '#10b981', marginTop: 4 }}>
+                      📎 تم تجهيز الملف: {stuSessForm.attachName}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -848,48 +848,49 @@ export default function Calendar() {
         </div>
       )}
 
-      {/* 4. تسجيل تقييم لحالة جديدة */}
+      {/* 4. تسجيل تقييم جديد */}
       {showEval && (
         <div className="mbg" onClick={e => e.target === e.currentTarget && setShowEval(false)}>
-          <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
-            <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0, background: 'var(--or)' }}>
-              <h2 style={{ color: '#fff', margin: 0, fontSize: '1.15rem' }}>📋 تقييم مستفيد جديد</h2>
+          <div className="mb mb-sm" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
+            <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0, background: '#f59e0b' }}>
+              <h2 style={{ color: '#fff', margin: 0, fontSize: '1.15rem' }}>📋 تسجيل موعد تقييم لحالة جديدة</h2>
             </div>
             <div className="modal-body-scroll" style={{ padding: '20px' }}>
               <div className="fg c2">
-                <div className="fl">
+                <div className="fl full">
                   <label style={{ fontWeight: 700 }}>اسم الطفل المستهدف <span className="req">*</span></label>
-                  <input value={evalForm.childName} onChange={fldEv('childName')} placeholder="الاسم ثلاثي..." />
-                </div>
-                <div className="fl">
-                  <label style={{ fontWeight: 700 }}>اسم ولي الأمر</label>
-                  <input value={evalForm.parentName} onChange={fldEv('parentName')} />
+                  <input value={evalForm.childName} onChange={fldEv('childName')} placeholder="الاسم الكامل للطفل..." />
                 </div>
                 <div className="fl full">
-                  <label style={{ fontWeight: 700 }}>التشخيص الأولي / الغرض من التقييم</label>
-                  <input value={evalForm.diagnosis} onChange={fldEv('diagnosis')} />
+                  <label style={{ fontWeight: 700 }}>اسم ولي الأمر</label>
+                  <input value={evalForm.parentName} onChange={fldEv('parentName')} placeholder="اسم الأب أو الأم والقرابة..." />
+                </div>
+                <div className="fl full">
+                  <label style={{ fontWeight: 700 }}>التشخيص الأولي (إن وجد)</label>
+                  <input value={evalForm.diagnosis} onChange={fldEv('diagnosis')} placeholder="مثال: طيف توحد، تأخر لغوي..." />
                 </div>
                 <div className="fl">
-                  <label style={{ fontWeight: 700 }}>تاريخ الحضور <span className="req">*</span></label>
+                  <label style={{ fontWeight: 700 }}>تاريخ التقييم <span className="req">*</span></label>
                   <input type="date" value={evalForm.date} onChange={fldEv('date')} />
                 </div>
                 <div className="fl">
-                  <label style={{ fontWeight: 700 }}>توقيت المقابلة <span className="req">*</span></label>
+                  <label style={{ fontWeight: 700 }}>ساعة البدء <span className="req">*</span></label>
                   <input type="time" value={evalForm.time} onChange={fldEv('time')} />
                 </div>
                 <div className="fl full">
-                  <label style={{ fontWeight: 700 }}>ملاحظات أولية</label>
-                  <textarea value={evalForm.notes} onChange={fldEv('notes')} rows={3} />
+                  <label style={{ fontWeight: 700 }}>تفاصيل وملاحظات أولية</label>
+                  <textarea value={evalForm.notes} onChange={fldEv('notes')} rows={2} placeholder="الشكوى الأساسية أو توصيات التقييم..." />
                 </div>
               </div>
             </div>
             <div className="fa" style={{ padding: '12px 20px', background: 'var(--g0)' }}>
-              <button type="button" className="btn btn-p" style={{ background: 'var(--or)', borderColor: 'var(--or)' }} onClick={saveEval}>💾 تسجيل موعد التقييم</button>
+              <button type="button" className="btn btn-p" style={{ background: '#f59e0b' }} onClick={saveEval}>💾 حفظ وتوليد التنبيه</button>
               <button type="button" className="btn btn-g" onClick={() => setShowEval(false)}>إلغاء</button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }
