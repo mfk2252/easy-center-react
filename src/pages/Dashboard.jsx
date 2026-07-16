@@ -140,61 +140,21 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* بطاقات الإحصائيات التفاعلية القابلة للضغط */}
+      {/* كروت الإحصائيات الأصلية المستقرة */}
       <div className="stats" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-        
-        {/* 1. كارت الموظفين */}
-        <div 
-          className="sc" 
-          onClick={() => go('employees')}
-          style={{ cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = 'var(--sh-lg)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = 'none';
-          }}
-        >
+        <div className="sc">
           <div className="lb">الموظفون</div>
           <div className="vl">{data.emps.length}</div>
           <div className="sb">موظف نشط</div>
         </div>
 
-        {/* 2. كارت الطلاب النشطين */}
-        <div 
-          className="sc g" 
-          onClick={() => go('students')}
-          style={{ cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = 'var(--sh-lg)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = 'none';
-          }}
-        >
+        <div className="sc g">
           <div className="lb">الطلاب النشطون</div>
           <div className="vl">{activeStudents.length}</div>
           <div className="sb">طالب نشط</div>
         </div>
 
-        {/* 3. كارت حضور الجلسات اليوم */}
-        <div 
-          className="sc o" 
-          onClick={() => go('sessions')}
-          style={{ cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = 'var(--sh-lg)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = 'none';
-          }}
-        >
+        <div className="sc o">
           <div className="lb">حضور الجلسات اليوم</div>
           <div className="vl">
             {sessPresent}/{sessStudents.length}
@@ -202,27 +162,13 @@ export default function Dashboard() {
           <div className="sb">جلسات حضورية</div>
         </div>
 
-        {/* 4. كارت حضور الصفوف اليوم */}
-        <div 
-          className="sc v" 
-          onClick={() => go('attendance')}
-          style={{ cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = 'var(--sh-lg)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = 'none';
-          }}
-        >
+        <div className="sc v">
           <div className="lb">حضور الصفوف اليوم</div>
           <div className="vl">
             {classPresent}/{classStudents.length}
           </div>
           <div className="sb">صباحي + مسائي</div>
         </div>
-
       </div>
 
       {/* التنبيهات */}
