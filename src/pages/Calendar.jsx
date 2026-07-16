@@ -7,11 +7,20 @@ import { SPECIALIST_ROLES } from '../utils/constants';
 const DAYS_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 const MONTHS_AR = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 const EV_COLORS = [
-  ['bl', 'أزرق'],
-  ['gr', 'أخضر'],
-  ['or', 'برتقالي'],
-  ['rd', 'أحمر'],
+  ['bl', 'أزرق', 'rgba(59, 130, 246, 0.1)', '#3b82f6'],
+  ['gr', 'أخضر', 'rgba(16, 185, 129, 0.1)', '#10b981'],
+  ['or', 'برتقالي', 'rgba(245, 158, 11, 0.1)', '#f59e0b'],
+  ['rd', 'أحمر', 'rgba(239, 68, 68, 0.1)', '#ef4444'],
+  ['pu', 'بنفسجي', 'rgba(139, 92, 246, 0.1)', '#8b5cf6']
 ];
+
+// استرجاع تفاصيل اللون بشكل مرن
+const getColorStyles = (colorKey) => {
+  const found = EV_COLORS.find(([c]) => c === colorKey);
+  if (found) return { bg: found[2], text: found[3] };
+  return { bg: 'rgba(107, 114, 128, 0.1)', text: '#6b7280' }; // افتراضي رمادي
+};
+
 const EMPTY_EV = { title: '', date: '', time: '', color: 'bl', type: 'event', notes: '' };
 const EMPTY_STU_APPT = { stuId: '', type: 'تخاطب ونطق', date: '', time: '', duration: '45 دقيقة', mode: 'inperson', link: '', empId: '', notes: '' };
 const EMPTY_STU_SESS = { stuId: '', type: 'تخاطب ونطق', date: '', time: '', duration: 45, empId: '', status: 'done', notes: '', goals: '', attachData: '', attachName: '' };
@@ -22,7 +31,6 @@ function isEvalType(type) {
   return t.includes('تقييم') || t.includes('evaluation');
 }
 
-/** طالب جديد في التقويم: قائمة انتظار = لون مميز */
 function isCalendarNewStudent(st) {
   return st && st.status === 'waitlist';
 }
@@ -220,6 +228,7 @@ export default function Calendar() {
     setEditId(null);
     setShowForm(true);
   }
+
   function save() {
     if (!form.title.trim() || !form.date) {
       toast('⚠️ أدخل العنوان والتاريخ', 'er');
@@ -235,12 +244,14 @@ export default function Calendar() {
     setShowForm(false);
     reload();
   }
+
   function del(id) {
     lsDel('calEvents', id);
     reload();
     toast('🗑️ تم الحذف', 'ok');
     setSelItem(null);
   }
+
   const fld = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
   const fldA = k => e => setStuApptForm(f => ({ ...f, [k]: e.target.value }));
   const fldS = k => e => setStuSessForm(f => ({ ...f, [k]: e.target.value }));
@@ -251,6 +262,7 @@ export default function Calendar() {
     setStuApptForm({ ...EMPTY_STU_APPT, date: d ? dateStr(d) : todayStr(), time: nowTimeStr() });
     setShowStuAppt(true);
   }
+
   function saveStuAppt() {
     if (!stuApptForm.stuId || !stuApptForm.date || !stuApptForm.time) {
       toast('⚠️ اختر الطالب والتاريخ والوقت', 'er');
@@ -261,10 +273,12 @@ export default function Calendar() {
     setShowStuAppt(false);
     reload();
   }
+
   function openStuSess(d = null) {
     setStuSessForm({ ...EMPTY_STU_SESS, date: d ? dateStr(d) : todayStr(), time: nowTimeStr() });
     setShowStuSess(true);
   }
+
   function sessAttach(e) {
     const f = e.target.files[0];
     if (!f) return;
@@ -273,6 +287,7 @@ export default function Calendar() {
     r.readAsDataURL(f);
     e.target.value = '';
   }
+
   function saveStuSess() {
     if (!stuSessForm.stuId || !stuSessForm.date) {
       toast('⚠️ اختر الطالب والتاريخ', 'er');
@@ -304,12 +319,12 @@ export default function Calendar() {
     setEvalForm({ childName:'', parentName:'', diagnosis:'', date: d ? dateStr(d) : todayStr(), time:'', notes:'' });
     setShowEval(true);
   }
+
   function saveEval() {
     if (!evalForm.childName.trim() || !evalForm.date || !evalForm.time) {
       toast('⚠️ أدخل اسم الطفل والموعد والساعة', 'er'); return;
     }
     lsAdd('evaluations', { ...evalForm, id: uid() });
-    // Smart alert: add notification to register child data
     lsAdd('manualAlerts', {
       id: uid(),
       title: `📋 تذكير: تسجيل بيانات ${evalForm.childName} كاملة`,
@@ -329,55 +344,85 @@ export default function Calendar() {
   }, [selDay]);
 
   return (
-    <div>
-      <div className="ph">
-        <div className="ph-t">
-          <h2>🗓️ التقويم</h2>
-          <p>
-            {MONTHS_AR[month]} {year} — جميع المواعيد والجلسات والتنبيهات
+    <div style={{ maxWidth: 1400, margin: '0 auto', padding: '12px 16px', fontFamily: 'inherit' }}>
+      
+      {/* 1. Header العصري الجديد */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 16,
+        marginBottom: 24,
+        background: 'var(--bg-card)',
+        padding: '16px 24px',
+        borderRadius: 16,
+        boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+        border: '1px solid var(--border-color)'
+      }}>
+        <div>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
+            <span>🗓️</span> التقويم الأكاديمي
+          </h2>
+          <p style={{ margin: '4px 0 0 0', fontSize: '0.88rem', color: 'var(--text-sub)' }}>
+            {MONTHS_AR[month]} {year} — شاشة متابعة الجلسات والأحداث والمواعيد اليومية
           </p>
         </div>
-        <div className="ph-a">
-          <button type="button" className="btn btn-g btn-sm" onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() - 1); return n; })}>
-            → السابق
-          </button>
-          <button type="button" className="btn btn-p btn-sm" onClick={() => setCur(new Date())}>
-            اليوم
-          </button>
-          <button type="button" className="btn btn-g btn-sm" onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() + 1); return n; })}>
-            التالي ←
-          </button>
-          <button type="button" className="btn btn-p" onClick={() => openForm()}>
-            ➕ حدث
-          </button>
-          <button type="button" className="btn btn-s btn-sm" onClick={() => openStuAppt()}>
-            📅 موعد طالب
-          </button>
-          <button type="button" className="btn btn-s btn-sm" onClick={() => openStuSess()}>
-            🩺 جلسة طالب
-          </button>
-          <button type="button" className="btn btn-s btn-sm" onClick={() => openEval()} style={{background:'var(--or-l)',color:'var(--or)',border:'1px solid var(--or)'}}>
-            📋 تقييم جديد
-          </button>
+
+        {/* أدوات التحكم بالتنقل والأفعال مجمعة بدقة */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          {/* مجموعة التنقل */}
+          <div style={{ display: 'flex', background: 'var(--g0)', padding: 4, borderRadius: 12, border: '1px solid var(--border-color)' }}>
+            <button type="button" className="btn btn-sm" style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '6px 12px' }} onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() - 1); return n; })}>
+              → السابق
+            </button>
+            <button type="button" className="btn btn-sm" style={{ background: 'var(--bg-card)', border: 'none', borderRadius: 8, padding: '6px 16px', fontWeight: 'bold' }} onClick={() => setCur(new Date())}>
+              اليوم
+            </button>
+            <button type="button" className="btn btn-sm" style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '6px 12px' }} onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() + 1); return n; })}>
+              التالي ←
+            </button>
+          </div>
+
+          {/* أزرار الإضافة السريعة مقسمة بألوان ناعمة */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button type="button" className="btn btn-p" style={{ borderRadius: 10, padding: '8px 16px' }} onClick={() => openForm()}>
+              ➕ حدث عام
+            </button>
+            <button type="button" className="btn btn-s" style={{ borderRadius: 10, padding: '8px 16px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.2)' }} onClick={() => openStuAppt()}>
+              📅 موعد طالب
+            </button>
+            <button type="button" className="btn btn-s" style={{ borderRadius: 10, padding: '8px 16px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)' }} onClick={() => openStuSess()}>
+              🩺 جلسة علاجية
+            </button>
+            <button type="button" className="btn" style={{ borderRadius: 10, padding: '8px 16px', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.2)' }} onClick={() => openEval()}>
+              📋 تقييم جديد
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="wg">
-        <div className="wg-b" style={{ padding: 8 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
+      {/* 2. شبكة التقويم المحسنة بلمسة فنية */}
+      <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+        <div className="wg-b" style={{ padding: 12, background: 'var(--bg-card)' }}>
+          {/* أيام الأسبوع */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8, marginBottom: 8 }}>
             {DAYS_AR.map(d => (
-              <div key={d} style={{ textAlign: 'center', fontSize: '.75rem', fontWeight: 900, color: 'var(--text-sub)', padding: '4px 0' }}>
+              <div key={d} style={{ textAlign: 'center', fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-sub)', padding: '8px 0', borderBottom: '2px solid var(--g0)' }}>
                 {d}
               </div>
             ))}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+          
+          {/* خلايا الأيام */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
             {cells.map((d, i) => {
-              if (!d) return <div key={i} style={{ minHeight: 70, background: 'var(--g0)', borderRadius: 'var(--r3)', opacity: 0.4 }} />;
+              if (!d) return <div key={i} style={{ aspectRatio: '1.2/1', background: 'var(--g0)', borderRadius: 12, opacity: 0.3 }} />;
               const ds = dateStr(d);
               const row = itemsOnDay(d);
               const isToday = ds === today;
               const isSel = d === selDay;
+
               return (
                 <button
                   type="button"
@@ -387,23 +432,83 @@ export default function Calendar() {
                     setSelItem(null);
                   }}
                   style={{
-                    minHeight: 70,
-                    border: `${isToday ? '2px' : '1px'} solid ${isToday ? 'var(--pr)' : isSel ? 'var(--pr)' : 'var(--border-color)'}`,
-                    borderRadius: 'var(--r3)',
-                    padding: 5,
-                    background: isSel ? 'var(--pr-l)' : 'var(--bg-card)',
+                    aspectRatio: '1.2/1',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    border: isToday ? '2px solid var(--pr)' : isSel ? '1px solid var(--pr)' : '1px solid var(--border-color)',
+                    borderRadius: 12,
+                    padding: '8px 10px',
+                    background: isSel ? 'var(--pr-l)' : isToday ? 'rgba(var(--pr-rgb), 0.03)' : 'var(--bg-card)',
                     cursor: 'pointer',
-                    transition: 'all .15s',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     textAlign: 'right',
+                    position: 'relative',
+                    outline: 'none',
+                    boxShadow: isSel ? '0 4px 12px rgba(var(--pr-rgb), 0.1)' : 'none',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.05)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'none';
+                    e.currentTarget.style.boxShadow = isSel ? '0 4px 12px rgba(var(--pr-rgb), 0.1)' : 'none';
                   }}
                 >
-                  <div style={{ fontSize: '.8rem', fontWeight: isToday ? 900 : 700, color: isToday ? 'var(--pr)' : 'var(--text-sub)', marginBottom: 3 }}>{d}</div>
-                  {row.slice(0, 3).map(it => (
-                    <div key={it.id} className={`cal-ev ${it.color || 'bl'}`} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {it.title}
-                    </div>
-                  ))}
-                  {row.length > 3 && <div style={{ fontSize: '.65rem', color: 'var(--g4)' }}>+{row.length - 3}</div>}
+                  {/* رقم اليوم مع شارة مميزة لليوم الحالي */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                    <span style={{ 
+                      fontSize: '0.95rem', 
+                      fontWeight: isToday ? 900 : 700, 
+                      color: isToday ? 'var(--pr)' : 'var(--text)',
+                      background: isToday ? 'var(--pr-l)' : 'transparent',
+                      width: 24,
+                      height: 24,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '50%'
+                    }}>
+                      {d}
+                    </span>
+                    {row.length > 0 && (
+                      <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: 20, background: 'var(--g1)', color: 'var(--text-sub)' }}>
+                        {row.length} أنشطة
+                      </span>
+                    )}
+                  </div>
+
+                  {/* الأحداث المجدولة داخل الخلية ككبسولات هادئة */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3, width: '100%', marginTop: 6, overflow: 'hidden' }}>
+                    {row.slice(0, 2).map(it => {
+                      const colorTheme = getColorStyles(it.color);
+                      return (
+                        <div 
+                          key={it.id} 
+                          style={{ 
+                            fontSize: '0.72rem', 
+                            padding: '3px 6px',
+                            borderRadius: 6,
+                            background: colorTheme.bg,
+                            color: colorTheme.text,
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis', 
+                            whiteSpace: 'nowrap',
+                            borderRight: `3px solid ${colorTheme.text}`,
+                            fontWeight: 600
+                          }}
+                        >
+                          {it.title}
+                        </div>
+                      );
+                    })}
+                    {row.length > 2 && (
+                      <div style={{ fontSize: '0.68rem', color: 'var(--pr)', fontWeight: 'bold', paddingRight: 4 }}>
+                        +{row.length - 2} عناصر أخرى
+                      </div>
+                    )}
+                  </div>
                 </button>
               );
             })}
@@ -411,143 +516,185 @@ export default function Calendar() {
         </div>
       </div>
 
+      {/* 3. قسم تفاصيل اليوم والجدول الزمني (Agenda) */}
       {selDay && (
-        <div className="wg">
-          <div className="wg-h">
-            <h3>
-              📅 {selDay} {MONTHS_AR[month]} {year}
-            </h3>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button type="button" className="btn btn-p btn-sm" onClick={() => openForm(selDay)}>
-                ➕ إضافة للتقويم
-              </button>
-              <button type="button" className="btn btn-s btn-sm" onClick={() => openStuAppt(selDay)}>
-                📅 موعد
-              </button>
-              <button type="button" className="btn btn-s btn-sm" onClick={() => openStuSess(selDay)}>
-                🩺 جلسة
-              </button>
-              <button type="button" className="btn btn-sm" onClick={() => openEval(selDay)} style={{background:'var(--or-l)',color:'var(--or)',border:'1px solid var(--or)'}}>
-                📋 تقييم
-              </button>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+          gap: 20, 
+          marginTop: 24,
+          animation: 'fadeIn 0.3s ease'
+        }}>
+          {/* الجزء الأيمن: قائمة الأحداث كجدول زمني */}
+          <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 16 }}>
+            <div className="wg-h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', padding: '16px 20px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>
+                📅 أحداث يوم {selDay} {MONTHS_AR[month]}
+              </h3>
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button type="button" className="btn btn-p btn-sm" onClick={() => openForm(selDay)} style={{ borderRadius: 8 }}>➕ عام</button>
+                <button type="button" className="btn btn-s btn-sm" onClick={() => openStuAppt(selDay)} style={{ borderRadius: 8 }}>📅 موعد</button>
+                <button type="button" className="btn btn-s btn-sm" onClick={() => openStuSess(selDay)} style={{ borderRadius: 8 }}>🩺 جلسة</button>
+              </div>
+            </div>
+            
+            <div className="wg-b" style={{ padding: 20, maxHeight: 400, overflowY: 'auto' }}>
+              {dayItems.length === 0 ? (
+                <div style={{ color: 'var(--g4)', textAlign: 'center', padding: '32px 0' }}>
+                  <p style={{ fontSize: '2rem', margin: 0 }}>☕</p>
+                  <p style={{ fontSize: '0.88rem', margin: '8px 0 0 0' }}>لا توجد التزامات أو جلسات مجدولة لهذا اليوم.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {dayItems.map(it => {
+                    const colorTheme = getColorStyles(it.color);
+                    const isSelected = selItem?.id === it.id;
+                    return (
+                      <button
+                        type="button"
+                        key={it.id}
+                        onClick={() => setSelItem(it)}
+                        style={{
+                          display: 'block',
+                          width: '100%',
+                          textAlign: 'right',
+                          padding: '12px 16px',
+                          borderRadius: 12,
+                          border: isSelected ? '2px solid var(--pr)' : '1px solid var(--border-color)',
+                          background: isSelected ? 'var(--pr-l)' : 'var(--bg-card)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          boxShadow: isSelected ? '0 4px 12px rgba(var(--pr-rgb), 0.08)' : '0 2px 6px rgba(0,0,0,0.01)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                          <span style={{ 
+                            fontSize: '0.72rem', 
+                            padding: '3px 8px', 
+                            borderRadius: 6, 
+                            background: colorTheme.bg, 
+                            color: colorTheme.text,
+                            fontWeight: 'bold'
+                          }}>
+                            {it.source}
+                          </span>
+                          {it.time && <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)', fontWeight: 600 }}>🕐 {it.time}</span>}
+                        </div>
+                        <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--text)' }}>{it.title}</div>
+                        {it.detail && (
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {it.detail}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
-          <div className="wg-b">
-            {dayItems.length === 0 ? (
-              <div style={{ color: 'var(--g4)', textAlign: 'center', padding: '12px 0', fontSize: '.84rem' }}>لا توجد أحداث في هذا اليوم</div>
-            ) : (
-              dayItems.map(it => (
-                <button
-                  type="button"
-                  key={it.id}
-                  onClick={() => setSelItem(it)}
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    textAlign: 'right',
-                    marginBottom: 8,
-                    padding: '10px 12px',
-                    borderRadius: 'var(--r2)',
-                    border: selItem?.id === it.id ? '2px solid var(--pr)' : '1px solid var(--border-color)',
-                    background: selItem?.id === it.id ? 'var(--pr-l)' : 'var(--g0)',
-                    cursor: 'pointer',
-                    font: 'inherit',
-                  }}
-                >
-                  <div style={{ fontSize: '.72rem', color: 'var(--g5)', marginBottom: 4 }}>{it.source}</div>
-                  <div style={{ fontWeight: 800, fontSize: '.88rem' }}>{it.title}</div>
-                  {(it.time || it.detail) && (
-                    <div style={{ fontSize: '.78rem', color: 'var(--g4)', marginTop: 4 }}>
-                      {it.time && `🕐 ${it.time}`}
-                      {it.time && it.detail ? ' · ' : ''}
-                      {it.detail}
+
+          {/* الجزء الأيسر: لوحة تفاصيل الحدث المختار الفاخرة */}
+          <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 16 }}>
+            <div className="wg-h" style={{ borderBottom: '1px solid var(--border-color)', padding: '16px 20px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>📌 تفاصيل الحدث</h3>
+            </div>
+            <div className="wg-b" style={{ padding: 20 }}>
+              {selItem ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.8rem', padding: '4px 10px', borderRadius: 8, background: 'var(--g0)', color: 'var(--text)', fontWeight: 'bold' }}>
+                      🧬 المصدر: {selItem.source}
+                    </span>
+                    <span style={{ fontSize: '0.8rem', padding: '4px 10px', borderRadius: 8, background: 'var(--g0)', color: 'var(--text)', fontWeight: 'bold' }}>
+                      📅 التاريخ: {selItem.date}
+                    </span>
+                  </div>
+
+                  <h4 style={{ margin: '8px 0 0 0', fontSize: '1.2rem', fontWeight: 800, color: 'var(--text)' }}>
+                    {selItem.title}
+                  </h4>
+
+                  {selItem.time && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--g0)', padding: '10px 14px', borderRadius: 10 }}>
+                      <span style={{ fontSize: '1.2rem' }}>🕒</span>
+                      <div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-sub)' }}>توقيت الموعد</div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{selItem.time}</div>
+                      </div>
                     </div>
                   )}
-                </button>
-              ))
-            )}
+
+                  {selItem.detail && (
+                    <div style={{ background: 'var(--g0)', padding: 14, borderRadius: 10 }}>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-sub)', marginBottom: 4, fontWeight: 'bold' }}>معلومات وتفاصيل:</div>
+                      <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.6, color: 'var(--text)' }}>{selItem.detail}</p>
+                    </div>
+                  )}
+
+                  {selItem.editable && selItem.raw?.id && (
+                    <div style={{ display: 'flex', gap: 8, marginTop: 12, borderTop: '1px solid var(--border-color)', paddingTop: 16 }}>
+                      <button type="button" className="btn btn-g btn-sm" style={{ flex: 1, borderRadius: 8 }} onClick={() => { setForm({ ...selItem.raw }); setEditId(selItem.raw.id); setShowForm(true); }}>
+                        ✏️ تعديل الحدث
+                      </button>
+                      <button type="button" className="btn btn-d btn-sm" style={{ flex: 1, borderRadius: 8 }} onClick={() => del(selItem.raw.id)}>
+                        🗑️ حذف من التقويم
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--g4)' }}>
+                  <span style={{ fontSize: '2.5rem' }}>🎯</span>
+                  <p style={{ fontSize: '0.88rem', marginTop: 12 }}>اضغط على أي حدث أو جلسة في القائمة المجاورة لعرض كامل تفاصيلها هنا.</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {selItem && (
-        <div className="wg" style={{ marginTop: 12 }}>
-          <div className="wg-h">
-            <h3>📌 تفاصيل الحدث</h3>
-          </div>
-          <div className="wg-b" style={{ fontSize: '.9rem', lineHeight: 1.7 }}>
-            <div>
-              <b>المصدر:</b> {selItem.source}
-            </div>
-            <div>
-              <b>التاريخ:</b> {selItem.date}
-            </div>
-            {selItem.time && (
-              <div>
-                <b>الوقت:</b> {selItem.time}
-              </div>
-            )}
-            <div>
-              <b>العنوان:</b> {selItem.title}
-            </div>
-            {selItem.detail && (
-              <div style={{ marginTop: 8 }}>
-                <b>التفاصيل:</b> {selItem.detail}
-              </div>
-            )}
-            {selItem.editable && selItem.raw?.id && (
-              <div style={{ marginTop: 14, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <button type="button" className="btn btn-g btn-sm" onClick={() => { setForm({ ...selItem.raw }); setEditId(selItem.raw.id); setShowForm(true); }}>
-                  ✏️ تعديل
-                </button>
-                <button type="button" className="btn btn-d btn-sm" onClick={() => del(selItem.raw.id)}>
-                  🗑️ حذف من التقويم
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* ================= MODALS SECTION (تحسين الهيكل والجمالية بالكامل) ================= */}
 
+      {/* 1. Modal: إضافة وتعديل حدث عام */}
       {showForm && (
         <div className="mbg" onClick={e => e.target === e.currentTarget && setShowForm(false)}>
-          <div className="mb mb-sm" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
-            <div className="fhd" style={{ padding: '14px 20px', borderRadius: 0 }}>
-              <h2>{editId ? '✏️ تعديل الحدث' : '➕ حدث جديد'}</h2>
+          <div className="mb mb-sm" style={{ padding: 0, overflow: 'hidden', borderRadius: 20, boxShadow: '0 10px 30px rgba(0,0,0,0.15)' }}>
+            <div className="fhd" style={{ padding: '20px 24px', borderRadius: 0, background: 'var(--pr)' }}>
+              <h2 style={{ color: '#fff', margin: 0, fontSize: '1.25rem' }}>{editId ? '✏️ تعديل الحدث' : '➕ إضافة حدث جديد'}</h2>
             </div>
-            <div className="modal-body-scroll" style={{ padding: '18px 20px' }}>
+            <div className="modal-body-scroll" style={{ padding: '24px' }}>
               <div className="fg c2">
                 <div className="fl full">
-                  <label>
-                    عنوان الحدث <span className="req">*</span>
-                  </label>
-                  <input value={form.title} onChange={fld('title')} placeholder="اسم الحدث..." autoFocus />
+                  <label style={{ fontWeight: 700 }}>عنوان الحدث <span className="req">*</span></label>
+                  <input value={form.title} onChange={fld('title')} placeholder="اكتب اسم النشاط أو الحدث..." autoFocus />
                 </div>
                 <div className="fl">
-                  <label>
-                    التاريخ <span className="req">*</span>
-                  </label>
+                  <label style={{ fontWeight: 700 }}>التاريخ <span className="req">*</span></label>
                   <input type="date" value={form.date} onChange={fld('date')} />
                 </div>
                 <div className="fl">
-                  <label>الوقت</label>
+                  <label style={{ fontWeight: 700 }}>الوقت</label>
                   <input type="time" value={form.time} onChange={fld('time')} />
                 </div>
                 <div className="fl full">
-                  <label>اللون</label>
-                  <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
-                    {EV_COLORS.map(([c, l]) => (
+                  <label style={{ fontWeight: 700, marginBottom: 8 }}>تصنيف اللون</label>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    {EV_COLORS.map(([c, l, bg, text]) => (
                       <button
                         type="button"
                         key={c}
                         onClick={() => setForm(f => ({ ...f, color: c }))}
-                        className={`cal-ev ${c}`}
                         style={{
-                          padding: '4px 10px',
+                          padding: '6px 14px',
                           cursor: 'pointer',
-                          border: form.color === c ? '2px solid var(--g8)' : '2px solid transparent',
-                          borderRadius: 6,
+                          background: bg,
+                          color: text,
+                          border: form.color === c ? `2px solid ${text}` : '2px solid transparent',
+                          borderRadius: 8,
                           font: 'inherit',
+                          fontWeight: 'bold',
+                          transition: 'all 0.15s'
                         }}
                       >
                         {l}
@@ -556,83 +703,67 @@ export default function Calendar() {
                   </div>
                 </div>
                 <div className="fl full">
-                  <label>ملاحظات</label>
-                  <textarea value={form.notes} onChange={fld('notes')} rows={2} />
+                  <label style={{ fontWeight: 700 }}>ملاحظات وتفاصيل</label>
+                  <textarea value={form.notes} onChange={fld('notes')} rows={3} placeholder="أي معلومات أو تفاصيل مهمة للحدث..." />
                 </div>
               </div>
             </div>
-            <div className="fa">
-              <button type="button" className="btn btn-p" onClick={save}>
-                💾 حفظ
-              </button>
-              <button type="button" className="btn btn-g" onClick={() => setShowForm(false)}>
-                إلغاء
-              </button>
+            <div className="fa" style={{ padding: '16px 24px', background: 'var(--g0)' }}>
+              <button type="button" className="btn btn-p" style={{ padding: '10px 24px' }} onClick={save}>💾 حفظ التغييرات</button>
+              <button type="button" className="btn btn-g" onClick={() => setShowForm(false)}>إلغاء</button>
             </div>
           </div>
         </div>
       )}
 
+      {/* 2. Modal: موعد طالب جديد */}
       {showStuAppt && (
         <div className="mbg" onClick={e => e.target === e.currentTarget && setShowStuAppt(false)}>
-          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
-            <div className="fhd" style={{ padding: '14px 20px', borderRadius: 0 }}>
-              <h2>📅 تسجيل موعد مرتبط بطالب</h2>
-              <p style={{ fontSize: '.8rem', opacity: 0.9 }}>طلبة قائمة الانتظار يظهرون بلون مميز في التقويم</p>
+          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 20 }}>
+            <div className="fhd" style={{ padding: '20px 24px', borderRadius: 0 }}>
+              <h2 style={{ margin: 0 }}>📅 تسجيل موعد مرتبط بطالب</h2>
+              <p style={{ fontSize: '0.8rem', opacity: 0.9, margin: '4px 0 0 0' }}>مستفيدي قائمة الانتظار تظهر مواعيدهم بلون بنفسجي مميز</p>
             </div>
-            <div className="modal-body-scroll" style={{ padding: '18px 20px' }}>
+            <div className="modal-body-scroll" style={{ padding: '24px' }}>
               <div className="fg c2">
                 <div className="fl full">
-                  <label>
-                    الطالب <span className="req">*</span>
-                  </label>
+                  <label style={{ fontWeight: 700 }}>اختر الطالب <span className="req">*</span></label>
                   <select value={stuApptForm.stuId} onChange={fldA('stuId')}>
-                    <option value="">— اختر من قاعدة البيانات —</option>
+                    <option value="">— ابحث باسم الطالب في قاعدة البيانات —</option>
                     {students.map(s => (
                       <option key={s.id} value={s.id}>
-                        {s.name}
-                        {s.status === 'waitlist' ? ' (انتظار)' : ''}
+                        {s.name} {s.status === 'waitlist' ? ' ⏱️ (قائمة انتظار)' : ''}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div className="fl">
-                  <label>
-                    نوع الموعد <span className="req">*</span>
-                  </label>
+                  <label style={{ fontWeight: 700 }}>مجال أو نوع الموعد <span className="req">*</span></label>
                   <select value={stuApptForm.type} onChange={fldA('type')}>
                     {SESS_TYPES.map(t => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
+                      <option key={t} value={t}>{t}</option>
                     ))}
                   </select>
                 </div>
                 <div className="fl">
-                  <label>
-                    التاريخ <span className="req">*</span>
-                  </label>
+                  <label style={{ fontWeight: 700 }}>تاريخ الجلسة / الموعد <span className="req">*</span></label>
                   <input type="date" value={stuApptForm.date} onChange={fldA('date')} />
                 </div>
                 <div className="fl">
-                  <label>
-                    الوقت <span className="req">*</span>
-                  </label>
+                  <label style={{ fontWeight: 700 }}>ساعة البدء <span className="req">*</span></label>
                   <input type="time" value={stuApptForm.time} onChange={fldA('time')} />
                 </div>
                 <div className="fl">
-                  <label>الأخصائي</label>
+                  <label style={{ fontWeight: 700 }}>الأخصائي المسؤول</label>
                   <select value={stuApptForm.empId} onChange={fldA('empId')}>
-                    <option value="">—</option>
+                    <option value="">— حدد الأخصائي —</option>
                     {specialists.map(e => (
-                      <option key={e.id} value={e.id}>
-                        {e.name}
-                      </option>
+                      <option key={e.id} value={e.id}>{e.name}</option>
                     ))}
                   </select>
                 </div>
                 <div className="fl">
-                  <label>المدة</label>
+                  <label style={{ fontWeight: 700 }}>المدة المستهدفة</label>
                   <select value={stuApptForm.duration} onChange={fldA('duration')}>
                     <option>30 دقيقة</option>
                     <option>45 دقيقة</option>
@@ -640,146 +771,155 @@ export default function Calendar() {
                   </select>
                 </div>
                 <div className="fl">
-                  <label>نوع الحضور</label>
+                  <label style={{ fontWeight: 700 }}>طريقة الحضور</label>
                   <select value={stuApptForm.mode} onChange={fldA('mode')}>
-                    <option value="inperson">حضوري</option>
-                    <option value="online">أونلاين</option>
+                    <option value="inperson">حضوري بالمركز</option>
+                    <option value="online">أونلاين (عن بعد)</option>
                   </select>
                 </div>
                 {stuApptForm.mode === 'online' && (
                   <div className="fl full">
-                    <label>رابط الاجتماع</label>
+                    <label style={{ fontWeight: 700 }}>رابط الغرفة الافتراضية (Zoom / Teams)</label>
                     <input type="url" value={stuApptForm.link} onChange={fldA('link')} placeholder="https://..." />
                   </div>
                 )}
                 <div className="fl full">
-                  <label>ملاحظات</label>
-                  <textarea value={stuApptForm.notes} onChange={fldA('notes')} rows={2} />
+                  <label style={{ fontWeight: 700 }}>توجيهات أو ملاحظات إضافية</label>
+                  <textarea value={stuApptForm.notes} onChange={fldA('notes')} rows={2} placeholder="أي نقاط يجب مراعاتها أثناء الموعد..." />
                 </div>
               </div>
             </div>
-            <div className="fa">
-              <button type="button" className="btn btn-p" onClick={saveStuAppt}>
-                💾 حفظ الموعد
-              </button>
-              <button type="button" className="btn btn-g" onClick={() => setShowStuAppt(false)}>
-                إلغاء
-              </button>
+            <div className="fa" style={{ padding: '16px 24px', background: 'var(--g0)' }}>
+              <button type="button" className="btn btn-p" onClick={saveStuAppt}>💾 حفظ الموعد</button>
+              <button type="button" className="btn btn-g" onClick={() => setShowStuAppt(false)}>إلغاء</button>
             </div>
           </div>
         </div>
       )}
 
+      {/* 3. Modal: تسجيل جلسة جديدة */}
       {showStuSess && (
         <div className="mbg" onClick={e => e.target === e.currentTarget && setShowStuSess(false)}>
-          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
-            <div className="fhd" style={{ padding: '14px 20px', borderRadius: 0 }}>
-              <h2>🩺 تسجيل جلسة مرتبطة بطالب</h2>
+          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 20 }}>
+            <div className="fhd" style={{ padding: '20px 24px', borderRadius: 0 }}>
+              <h2 style={{ margin: 0 }}>🩺 تسجيل جلسة علاجية وتوثيقها</h2>
             </div>
-            <div className="modal-body-scroll" style={{ padding: '18px 20px' }}>
+            <div className="modal-body-scroll" style={{ padding: '24px' }}>
               <div className="fg c2">
                 <div className="fl full">
-                  <label>
-                    الطالب <span className="req">*</span>
-                  </label>
+                  <label style={{ fontWeight: 700 }}>الطالب <span className="req">*</span></label>
                   <select value={stuSessForm.stuId} onChange={fldS('stuId')}>
-                    <option value="">— اختر من قاعدة البيانات —</option>
+                    <option value="">— اختر الطالب —</option>
                     {students.map(s => (
                       <option key={s.id} value={s.id}>
-                        {s.name}
-                        {s.status === 'waitlist' ? ' (انتظار)' : ''}
+                        {s.name} {s.status === 'waitlist' ? ' (انتظار)' : ''}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div className="fl">
-                  <label>نوع الجلسة</label>
+                  <label style={{ fontWeight: 700 }}>النوع</label>
                   <select value={stuSessForm.type} onChange={fldS('type')}>
                     {SESS_TYPES.map(t => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
+                      <option key={t} value={t}>{t}</option>
                     ))}
                   </select>
                 </div>
                 <div className="fl">
-                  <label>
-                    التاريخ <span className="req">*</span>
-                  </label>
+                  <label style={{ fontWeight: 700 }}>التاريخ <span className="req">*</span></label>
                   <input type="date" value={stuSessForm.date} onChange={fldS('date')} />
                 </div>
                 <div className="fl">
-                  <label>الوقت</label>
+                  <label style={{ fontWeight: 700 }}>الوقت</label>
                   <input type="time" value={stuSessForm.time} onChange={fldS('time')} />
                 </div>
                 <div className="fl">
-                  <label>الأخصائي</label>
+                  <label style={{ fontWeight: 700 }}>الأخصائي المنفذ</label>
                   <select value={stuSessForm.empId} onChange={fldS('empId')}>
-                    <option value="">—</option>
+                    <option value="">— حدد الأخصائي —</option>
                     {specialists.map(e => (
-                      <option key={e.id} value={e.id}>
-                        {e.name}
-                      </option>
+                      <option key={e.id} value={e.id}>{e.name}</option>
                     ))}
                   </select>
                 </div>
                 <div className="fl">
-                  <label>المدة (دقيقة)</label>
+                  <label style={{ fontWeight: 700 }}>المدة الفعالة (بالدقائق)</label>
                   <input type="number" min={15} value={stuSessForm.duration} onChange={fldS('duration')} />
                 </div>
                 <div className="fl">
-                  <label>الحالة</label>
+                  <label style={{ fontWeight: 700 }}>الحالة الحالية</label>
                   <select value={stuSessForm.status} onChange={fldS('status')}>
-                    <option value="done">منجزة</option>
-                    <option value="scheduled">مجدولة</option>
+                    <option value="done">✅ تم إنجازها</option>
+                    <option value="scheduled">⏳ مجدولة مستقبلاً</option>
                   </select>
                 </div>
                 <div className="fl full">
-                  <label>ملاحظات</label>
-                  <textarea value={stuSessForm.notes} onChange={fldS('notes')} rows={2} />
+                  <label style={{ fontWeight: 700 }}>الاستجابة والملاحظات السلوكية</label>
+                  <textarea value={stuSessForm.notes} onChange={fldS('notes')} rows={2} placeholder="اكتب تقرير مخرجات الجلسة هنا..." />
                 </div>
                 <div className="fl full">
-                  <label>مرفق توثيق (صورة أو ملف)</label>
-                  <input type="file" accept="image/*,.pdf,.doc,.docx" onChange={sessAttach} />
-                  {stuSessForm.attachName && <span style={{ fontSize: '.8rem', marginRight: 8 }}>{stuSessForm.attachName}</span>}
+                  <label style={{ fontWeight: 700, marginBottom: 8 }}>تحميل وثيقة/ملف التقييم أو صور الأنشطة</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--g0)', padding: 12, borderRadius: 10, border: '1px dashed var(--border-color)' }}>
+                    <input type="file" accept="image/*,.pdf,.doc,.docx" onChange={sessAttach} style={{ border: 'none', background: 'transparent', padding: 0 }} />
+                    {stuSessForm.attachName && (
+                      <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--pr)' }}>
+                        📎 {stuSessForm.attachName}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="fa">
-              <button type="button" className="btn btn-p" onClick={saveStuSess}>
-                💾 حفظ الجلسة
-              </button>
-              <button type="button" className="btn btn-g" onClick={() => setShowStuSess(false)}>
-                إلغاء
-              </button>
+            <div className="fa" style={{ padding: '16px 24px', background: 'var(--g0)' }}>
+              <button type="button" className="btn btn-p" onClick={saveStuSess}>💾 حفظ وتوثيق الجلسة</button>
+              <button type="button" className="btn btn-g" onClick={() => setShowStuSess(false)}>إلغاء</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Evaluation Modal */}
+      {/* 4. Modal: تسجيل تقييم لحالة جديدة */}
       {showEval && (
         <div className="mbg" onClick={e => e.target === e.currentTarget && setShowEval(false)}>
-          <div className="mb mb-large" style={{ padding:0, overflow:'hidden', borderRadius:16 }}>
-            <div className="fhd" style={{ padding:'14px 20px', borderRadius:0 }}>
-              <h2>📋 تقييم جديد</h2>
-              <p style={{ fontSize:'.82rem', opacity:0.85 }}>موعد تقييم لمستفيد جديد — سيُضاف تنبيه ذكي لتسجيل بياناته</p>
+          <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 20 }}>
+            <div className="fhd" style={{ padding: '20px 24px', borderRadius: 0, background: 'var(--or)' }}>
+              <h2 style={{ color: '#fff', margin: 0 }}>📋 تقييم مستفيد جديد</h2>
+              <p style={{ fontSize: '0.82rem', opacity: 0.9, margin: '4px 0 0 0', color: '#fff' }}>سيتم جدولة موعد تقييم وإدراج تنبيه ذكي لإكمال التسجيل</p>
             </div>
-            <div className="modal-body-scroll" style={{ padding:'18px 20px' }}>
+            <div className="modal-body-scroll" style={{ padding: '24px' }}>
               <div className="fg c2">
-                <div className="fl"><label>اسم الطفل <span className="req">*</span></label><input value={evalForm.childName} onChange={fldEv('childName')} placeholder="الاسم الكامل"/></div>
-                <div className="fl"><label>اسم ولي الأمر</label><input value={evalForm.parentName} onChange={fldEv('parentName')} placeholder="اسم ولي الأمر"/></div>
-                <div className="fl full"><label>التشخيص / السبب</label><input value={evalForm.diagnosis} onChange={fldEv('diagnosis')} placeholder="مثال: تأخر لغوي، توحد..."/></div>
-                <div className="fl"><label>تاريخ الموعد <span className="req">*</span></label><input type="date" value={evalForm.date} onChange={fldEv('date')}/></div>
-                <div className="fl"><label>الساعة <span className="req">*</span></label><input type="time" value={evalForm.time} onChange={fldEv('time')}/></div>
-                <div className="fl full"><label>ملاحظات</label><textarea value={evalForm.notes} onChange={fldEv('notes')} rows={3} placeholder="أي معلومات إضافية..."/></div>
+                <div className="fl">
+                  <label style={{ fontWeight: 700 }}>اسم الطفل المستهدف <span className="req">*</span></label>
+                  <input value={evalForm.childName} onChange={fldEv('childName')} placeholder="الاسم ثلاثي أو رباعي..." />
+                </div>
+                <div className="fl">
+                  <label style={{ fontWeight: 700 }}>اسم ولي الأمر</label>
+                  <input value={evalForm.parentName} onChange={fldEv('parentName')} placeholder="الأب أو الأم..." />
+                </div>
+                <div className="fl full">
+                  <label style={{ fontWeight: 700 }}>التشخيص الأولي / الغرض من التقييم</label>
+                  <input value={evalForm.diagnosis} onChange={fldEv('diagnosis')} placeholder="مثال: تأخر لغوي ناتج عن تشتت انتباه، سمات توحد..." />
+                </div>
+                <div className="fl">
+                  <label style={{ fontWeight: 700 }}>تاريخ الحضور <span className="req">*</span></label>
+                  <input type="date" value={evalForm.date} onChange={fldEv('date')} />
+                </div>
+                <div className="fl">
+                  <label style={{ fontWeight: 700 }}>توقيت المقابلة <span className="req">*</span></label>
+                  <input type="time" value={evalForm.time} onChange={fldEv('time')} />
+                </div>
+                <div className="fl full">
+                  <label style={{ fontWeight: 700 }}>ملاحظات أولية من التواصل التلفوني</label>
+                  <textarea value={evalForm.notes} onChange={fldEv('notes')} rows={3} placeholder="اكتب أي ملاحظات أدلى بها ولي الأمر عند الاتصال الأولي..." />
+                </div>
               </div>
-              <div style={{ marginTop:14, padding:'10px 14px', background:'var(--warn-l)', border:'1px solid #fde68a', borderRadius:'var(--r2)', fontSize:'.82rem', color:'var(--warn)' }}>
-                💡 سيُضاف تلقائياً تنبيه ذكي في لوحة التحكم يُذكّر بتسجيل بيانات الطفل كاملة عند حضور الموعد
+              <div style={{ marginTop: 20, padding: '12px 16px', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: 12, fontSize: '0.82rem', color: '#b45309', display: 'flex', gap: 8, alignItems: 'center' }}>
+                <span>💡</span>
+                <span><strong>إجراء ذكي تلقائي:</strong> سيقوم النظام تلقائياً بإضافة تنبيه في لوحة التحكم يذكّرك باستيفاء ملف الطفل عند حضوره لجلسة التقييم.</span>
               </div>
             </div>
-            <div className="fa">
-              <button type="button" className="btn btn-p" onClick={saveEval}>💾 حفظ موعد التقييم</button>
+            <div className="fa" style={{ padding: '16px 24px', background: 'var(--g0)' }}>
+              <button type="button" className="btn btn-p" style={{ background: 'var(--or)', borderColor: 'var(--or)' }} onClick={saveEval}>💾 تسجيل موعد التقييم</button>
               <button type="button" className="btn btn-g" onClick={() => setShowEval(false)}>إلغاء</button>
             </div>
           </div>
