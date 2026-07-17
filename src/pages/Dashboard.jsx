@@ -145,13 +145,13 @@ export default function Dashboard() {
         <div className="sc clickable-stat" onClick={() => go('hr')}>
           <div className="lb">الموظفون</div>
           <div className="vl">{data.emps.length}</div>
-          <div className="sb">موظف نشط · التفاصيل ←</div>
+          <div className="sb">موظف نشط ←</div>
         </div>
         
         <div className="sc g clickable-stat" onClick={() => go('students')}>
           <div className="lb">الطلاب النشطون</div>
           <div className="vl">{activeStudents.length}</div>
-          <div className="sb">طالب نشط · التفاصيل ←</div>
+          <div className="sb">طالب نشط ←</div>
         </div>
 
         <div
@@ -162,7 +162,7 @@ export default function Dashboard() {
           <div className="vl">
             {sessPresent}/{sessStudents.length}
           </div>
-          <div className="sb">جلسات حضورية · التفاصيل ←</div>
+          <div className="sb">جلسات حضورية ←</div>
         </div>
 
         <div
@@ -173,7 +173,7 @@ export default function Dashboard() {
           <div className="vl">
             {classPresent}/{classStudents.length}
           </div>
-          <div className="sb">صباحي + مسائي · التفاصيل ←</div>
+          <div className="sb">صباحي + مسائي ←</div>
         </div>
       </div>
 
