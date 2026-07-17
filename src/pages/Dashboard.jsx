@@ -19,7 +19,7 @@ export default function Dashboard() {
   const [alerts, setAlerts] = useState([]);
   const [showManualForm, setShowManualForm] = useState(false);
   const [manualForm, setManualForm] = useState(EMPTY_MANUAL);
-  const [showStatusBanner, setShowStatusBanner] = useState(true); // للتحكم في ظهور شريط الحالة السريع
+  const [showStatusBanner, setShowStatusBanner] = useState(true);
   const canManual = ['manager', 'vice', 'reception'].includes(currentUser?.role);
 
   useEffect(() => {
@@ -77,9 +77,20 @@ export default function Dashboard() {
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 3);
 
+  // استخراج الوقت الحالي بشكل منفصل وبصيغة أرقام واضحة
   const timeStr = clockData.time.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  const dateStr = clockData.time.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  const hijriStr = formatHijriDate(clockData.time);
+  
+  // استخراج اسم اليوم فقط (دون تكراره في التواريخ اللاحقة)
+  const dayNameStr = clockData.time.toLocaleDateString('ar-SA', { weekday: 'long' });
+  
+  // استخراج التاريخ الميلادي الرقمي مع اسم الشهر (دون اسم اليوم)
+  const numericDateStr = clockData.time.toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
+  
+  // استخراج التاريخ الهجري (مع تنظيف أي تكرار لاسم اليوم إن وجد داخل الدالة المساعدة)
+  let hijriStr = formatHijriDate(clockData.time);
+  if (hijriStr && hijriStr.includes('،')) {
+    hijriStr = hijriStr.split('،')[1]?.trim() || hijriStr;
+  }
 
   function saveManual() {
     if (!manualForm.title.trim() || !manualForm.date) {
@@ -105,12 +116,10 @@ export default function Dashboard() {
     return acc;
   }, {});
 
-  // محرك ذكي بسيط لحساب "حالة المركز اليوم" ديناميكياً
   const getTodayStatusMessage = () => {
     const totalExpectedAttendance = sessStudents.length + classStudents.length;
     const totalActualPresent = sessPresent + classPresent;
     
-    // 1. إذا لم يبدأ تسجيل الحضور بعد
     if (totalExpectedAttendance > 0 && totalActualPresent === 0) {
       return {
         text: "بداية يوم نشيط! لم يتم تسجيل حضور الطلاب للفترة الحالية بعد. يرجى توجيه المعلمين لبدء التحضير.",
@@ -119,7 +128,6 @@ export default function Dashboard() {
       };
     }
 
-    // 2. إذا كانت هناك نسبة غياب ملحوظة (أكثر من 25% غياب مثلاً)
     const absentRate = totalExpectedAttendance > 0 ? ((totalExpectedAttendance - totalActualPresent) / totalExpectedAttendance) : 0;
     if (absentRate >= 0.25) {
       return {
@@ -129,7 +137,6 @@ export default function Dashboard() {
       };
     }
 
-    // 3. حالة اعتيادية ممتازة
     return {
       text: "العمليات تسير بشكل ممتاز اليوم! تم تحضير الطلاب بنجاح، ومتابعة الجلسات مستمرة دون عوائق.",
       icon: "✨",
@@ -147,7 +154,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* شريط حالة المركز اليوم الذكي والديناميكي (الجديد) */}
+      {/* شريط حالة المركز اليوم الذكي والديناميكي */}
       {showStatusBanner && (
         <div
           style={{
@@ -190,12 +197,13 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* شريط التوقيت والترحيب المطور - تم منع تكرار اليوم بالكامل وتنسيقه */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 16,
-          padding: 'clamp(10px, 2vw, 16px) clamp(12px, 3vw, 22px)',
+          gap: 20,
+          padding: 'clamp(12px, 2vw, 18px) clamp(14px, 3vw, 24px)',
           background: 'var(--bg-card)',
           borderRadius: 'var(--r)',
           border: '1px solid var(--border-color)',
@@ -204,14 +212,30 @@ export default function Dashboard() {
           flexWrap: 'wrap',
         }}
       >
-        <div style={{ fontSize: 'clamp(1.15rem, 4vw, 1.75rem)', fontVariantNumeric: 'tabular-nums', letterSpacing: 1, fontWeight: 900 }}>{timeStr}</div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 'clamp(0.72rem, 2.2vw, 0.84rem)', color: 'var(--g5)', fontWeight: 500 }}>{clockData.greeting}</div>
-          {hijriStr && (
-            <div style={{ fontSize: 'clamp(0.78rem, 2.4vw, 0.92rem)', fontWeight: 800, color: 'var(--text-main)', marginTop: 2, lineHeight: 1.35 }}>{hijriStr}</div>
-          )}
-          <div style={{ fontSize: 'clamp(0.8rem, 2.5vw, 0.98rem)', fontWeight: 600, color: 'var(--g6)', marginTop: 2, lineHeight: 1.35 }}>{dateStr}</div>
+        {/* الساعة الكبيرة المريحة للعين */}
+        <div style={{ fontSize: 'clamp(1.25rem, 4.5vw, 1.85rem)', fontVariantNumeric: 'tabular-nums', letterSpacing: 1, fontWeight: 900, color: 'var(--text-main)' }}>
+          {timeStr}
         </div>
+
+        {/* قسم البيانات الحية المرتب - منع التكرار */}
+        <div style={{ flex: 1, minWidth: 0, borderRight: '2px solid var(--border-color)', paddingRight: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 'clamp(0.85rem, 2.6vw, 1.05rem)', fontWeight: 900, color: 'var(--pr)' }}>{dayNameStr}</span>
+            <span style={{ fontSize: 'clamp(0.72rem, 2.2vw, 0.84rem)', color: 'var(--g5)', fontWeight: 500 }}>— {clockData.greeting}</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', marginTop: 4, gap: 1 }}>
+            <div style={{ fontSize: 'clamp(0.75rem, 2.3vw, 0.88rem)', fontWeight: 600, color: 'var(--g6)' }}>
+              📅 ميلادي: <span style={{ fontVariantNumeric: 'tabular-nums' }}>{numericDateStr}</span>
+            </div>
+            {hijriStr && (
+              <div style={{ fontSize: 'clamp(0.75rem, 2.3vw, 0.88rem)', fontWeight: 700, color: 'var(--text-main)' }}>
+                🌙 هجري: <span style={{ fontVariantNumeric: 'tabular-nums' }}>{hijriStr}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* معلومات المستخدم والمركز الحالية لتوثيق الواجهة */}
         <div style={{ borderRight: '2px solid var(--border-color)', paddingRight: 16, textAlign: 'right', minWidth: 0 }}>
           <div style={{ fontSize: 'clamp(0.78rem, 2.2vw, 0.88rem)', fontWeight: 900, color: 'var(--pr)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 'min(220px, 40vw)' }}>{center.name}</div>
           <div style={{ fontSize: 'clamp(0.68rem, 2vw, 0.78rem)', color: 'var(--g5)', marginTop: 2 }}>
@@ -220,7 +244,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* كروت الإحصائيات — أصبحت قابلة للنقر، كل واحدة تنقلك لمكانها الصحيح */}
+      {/* كروت الإحصائيات التفاعلية */}
       <div className="stats" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
         <div className="sc clickable-stat" onClick={() => go('hr')}>
           <div className="lb">الموظفون</div>
