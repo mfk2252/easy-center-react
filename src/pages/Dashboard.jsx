@@ -140,34 +140,40 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* كروت الإحصائيات الأصلية المستقرة */}
+      {/* كروت الإحصائيات — أصبحت قابلة للنقر، كل واحدة تنقلك لمكانها الصحيح */}
       <div className="stats" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-        <div className="sc">
+        <div className="sc clickable-stat" onClick={() => go('hr')}>
           <div className="lb">الموظفون</div>
           <div className="vl">{data.emps.length}</div>
-          <div className="sb">موظف نشط</div>
+          <div className="sb">موظف نشط · التفاصيل ←</div>
         </div>
-
-        <div className="sc g">
+        
+        <div className="sc g clickable-stat" onClick={() => go('students')}>
           <div className="lb">الطلاب النشطون</div>
           <div className="vl">{activeStudents.length}</div>
-          <div className="sb">طالب نشط</div>
+          <div className="sb">طالب نشط · التفاصيل ←</div>
         </div>
 
-        <div className="sc o">
+        <div
+          className="sc o clickable-stat"
+          onClick={() => { sessionStorage.setItem('scs_attendance_tab', 'sessions'); go('attendance'); }}
+        >
           <div className="lb">حضور الجلسات اليوم</div>
           <div className="vl">
             {sessPresent}/{sessStudents.length}
           </div>
-          <div className="sb">جلسات حضورية</div>
+          <div className="sb">جلسات حضورية · التفاصيل ←</div>
         </div>
 
-        <div className="sc v">
+        <div
+          className="sc v clickable-stat"
+          onClick={() => { sessionStorage.setItem('scs_attendance_tab', 'morning'); go('attendance'); }}
+        >
           <div className="lb">حضور الصفوف اليوم</div>
           <div className="vl">
             {classPresent}/{classStudents.length}
           </div>
-          <div className="sb">صباحي + مسائي</div>
+          <div className="sb">صباحي + مسائي · التفاصيل ←</div>
         </div>
       </div>
 
