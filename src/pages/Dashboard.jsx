@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [alerts, setAlerts] = useState([]);
   const [showManualForm, setShowManualForm] = useState(false);
   const [manualForm, setManualForm] = useState(EMPTY_MANUAL);
+  const [showStatusBanner, setShowStatusBanner] = useState(true); // للتحكم في ظهور شريط الحالة السريع
   const canManual = ['manager', 'vice', 'reception'].includes(currentUser?.role);
 
   useEffect(() => {
@@ -55,9 +56,11 @@ export default function Dashboard() {
   const activeStudents = data.students.filter(s => !['inactive', 'transferred', 'waitlist', 'rejected'].includes(s.status));
   const sessStudents = activeStudents.filter(s => s.progSessions?.enabled);
   const classStudents = activeStudents.filter(s => s.progMorning?.enabled || s.progEvening?.enabled);
+  
   const sessPresent = data.attStu.filter(
     a => a.date === today && a.status === 'present' && a.session === 'sessions' && sessStudents.find(x => x.id === a.kidId)
   ).length;
+  
   const classPresent = data.attStu.filter(
     a =>
       a.date === today &&
@@ -102,6 +105,40 @@ export default function Dashboard() {
     return acc;
   }, {});
 
+  // محرك ذكي بسيط لحساب "حالة المركز اليوم" ديناميكياً
+  const getTodayStatusMessage = () => {
+    const totalExpectedAttendance = sessStudents.length + classStudents.length;
+    const totalActualPresent = sessPresent + classPresent;
+    
+    // 1. إذا لم يبدأ تسجيل الحضور بعد
+    if (totalExpectedAttendance > 0 && totalActualPresent === 0) {
+      return {
+        text: "بداية يوم نشيط! لم يتم تسجيل حضور الطلاب للفترة الحالية بعد. يرجى توجيه المعلمين لبدء التحضير.",
+        icon: "🌅",
+        type: "info"
+      };
+    }
+
+    // 2. إذا كانت هناك نسبة غياب ملحوظة (أكثر من 25% غياب مثلاً)
+    const absentRate = totalExpectedAttendance > 0 ? ((totalExpectedAttendance - totalActualPresent) / totalExpectedAttendance) : 0;
+    if (absentRate >= 0.25) {
+      return {
+        text: `تنبيه تشغيلي: نسبة غياب الطلاب اليوم مرتفعة وتصل إلى ${Math.round(absentRate * 100)}%. يرجى مراجعة الاتصالات مع أولياء الأمور.`,
+        icon: "⚠️",
+        type: "warning"
+      };
+    }
+
+    // 3. حالة اعتيادية ممتازة
+    return {
+      text: "العمليات تسير بشكل ممتاز اليوم! تم تحضير الطلاب بنجاح، ومتابعة الجلسات مستمرة دون عوائق.",
+      icon: "✨",
+      type: "success"
+    };
+  };
+
+  const statusMessage = getTodayStatusMessage();
+
   return (
     <div>
       <div className="ph">
@@ -109,6 +146,49 @@ export default function Dashboard() {
           <h2>📊 لوحة التحكم</h2>
         </div>
       </div>
+
+      {/* شريط حالة المركز اليوم الذكي والديناميكي (الجديد) */}
+      {showStatusBanner && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            padding: '12px 16px',
+            background: statusMessage.type === 'warning' ? 'var(--warn-l)' : statusMessage.type === 'success' ? 'var(--ok-l, #e6f9f0)' : 'var(--pr-l)',
+            color: statusMessage.type === 'warning' ? 'var(--warn)' : statusMessage.type === 'success' ? 'var(--ok, #10b981)' : 'var(--pr)',
+            border: `1px solid ${statusMessage.type === 'warning' ? 'var(--warn)' : statusMessage.type === 'success' ? 'var(--ok, #10b981)' : 'var(--border-color)'}`,
+            borderRadius: 'var(--r)',
+            marginBottom: 14,
+            fontSize: 'clamp(0.78rem, 2.4vw, 0.88rem)',
+            fontWeight: 700,
+            animation: 'fadeIn 0.3s ease-in-out',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: '1.2rem' }}>{statusMessage.icon}</span>
+            <span>{statusMessage.text}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowStatusBanner(false)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'inherit',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              padding: '0 4px',
+              fontWeight: 'bold',
+              opacity: 0.7
+            }}
+            title="إغلاق الشريط"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       <div
         style={{
