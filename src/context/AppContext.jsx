@@ -20,6 +20,7 @@ const ALL_KEYS = [
   'progWeeklyReports','progMonthlyReports','progParentMeetings',
   'progSemiAnnualReports','progAnnualReports','progBehaviorReports',
   'progLearningDifficultyReports',
+  'bonuses',
 ];
 
 function applyTheme(color) {
@@ -113,10 +114,6 @@ export function AppProvider({ children }) {
       clearTimeout(loadingTimeout);
       if (fbUser) {
         // مالك المنصة: مسار مختصر بدون أي منطق متعلق بمركز/اشتراك
-        // (لازم نفحص هذا هنا أيضاً وليس فقط داخل login()، لأن Firebase يطلق
-        // onAuthStateChanged تلقائياً بعد signInWithEmailAndPassword وأيضاً بعد
-        // إعادة تحميل الصفحة، وبدون هذا الفحص كان سيحاول معاملته كمدير مركز
-        // عادي فيحوّله خطأً لشاشة setup لعدم وجود مستند مركز باسمه).
         if (isPlatformAdminEmail(fbUser.email)) {
           const adminUser = buildPlatformAdminUser(fbUser);
           localStorage.setItem('scs_current_uid', fbUser.uid);
@@ -285,8 +282,6 @@ export function AppProvider({ children }) {
   }, []);
 
   const login = useCallback(async (user) => {
-    // مسار مالك المنصة: لا مركز، لا مزامنة بيانات — دخول مباشر لشاشة إدارة الاشتراكات.
-    // (onAuthStateChanged أعلاه سيؤكد نفس النتيجة تلقائياً بعد لحظات، فلا يوجد تعارض)
     if (user.isPlatformAdmin) {
       localStorage.setItem('scs_current_uid', user.centerId);
       setCurrentUser(user);
