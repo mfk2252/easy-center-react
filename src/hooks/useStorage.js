@@ -5,7 +5,6 @@
 import { uid } from '../utils/dateHelpers';
 import { fbGetAll, fbSet, fbUpdate, fbDelete } from '../firebase/db';
 
-// الحصول على centerId
 export function getCenterId() {
   try {
     const session = JSON.parse(localStorage.getItem('scs_session') || 'null');
@@ -14,13 +13,11 @@ export function getCenterId() {
   } catch(e) { return null; }
 }
 
-// مفتاح التخزين المحلي
 function cKey(key) {
   const cId = getCenterId();
   return cId ? `${cId}_${key}` : `local_${key}`;
 }
 
-// قراءة من localStorage
 export function lsGet(key) {
   try {
     const r = localStorage.getItem(cKey(key));
@@ -28,22 +25,18 @@ export function lsGet(key) {
   } catch(e) { return []; }
 }
 
-// كتابة في localStorage
 function lsWrite(key, data) {
   try { localStorage.setItem(cKey(key), JSON.stringify(data)); } catch(e) {}
 }
 
-// إضافة عنصر
 export function lsAdd(key, item) {
   const cId = getCenterId();
   const newItem = { ...item, id: item.id || uid(), createdAt: item.createdAt || new Date().toISOString() };
   
-  // localStorage فوراً
   const list = lsGet(key);
   list.push(newItem);
   lsWrite(key, list);
   
-  // Firestore في الخلفية
   if (cId) {
     fbSet(cId, key, newItem.id, newItem).catch(e => console.warn(`fbAdd ${key}:`, e));
   }
@@ -51,7 +44,6 @@ export function lsAdd(key, item) {
   return newItem;
 }
 
-// تحديث عنصر
 export function lsUpd(key, id, data) {
   const cId = getCenterId();
   const list = lsGet(key);
@@ -65,7 +57,6 @@ export function lsUpd(key, id, data) {
   }
 }
 
-// حذف عنصر
 export function lsDel(key, id) {
   const cId = getCenterId();
   const list = lsGet(key).filter(x => x.id !== id);
@@ -85,6 +76,7 @@ export const SYSTEM_DATA_KEYS = [
   'progWeeklyReports', 'progMonthlyReports', 'progParentMeetings',
   'progSemiAnnualReports', 'progAnnualReports', 'progBehaviorReports',
   'progLearningDifficultyReports',
+  'bonuses',
   'partners', 'custody', 'centerVisits', 'buses', 'centerDocs',
 ];
 
@@ -123,11 +115,11 @@ export async function pushToFirebase(centerId) {
     'progWeeklyReports','progMonthlyReports','progParentMeetings',
     'progSemiAnnualReports','progAnnualReports','progBehaviorReports',
     'progLearningDifficultyReports',
+    'bonuses',
   ];
   
   for (const key of keys) {
     try {
-      // جرب مفاتيح مختلفة
       const raw = localStorage.getItem(`${centerId}_${key}`)
                || localStorage.getItem(`local_${key}`)
                || localStorage.getItem(key);
