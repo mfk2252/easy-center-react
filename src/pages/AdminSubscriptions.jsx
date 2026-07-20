@@ -7,6 +7,10 @@ export default function AdminSubscriptions() {
   const [centers, setCenters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(null);
+  
+  // حقول الواجهة الجديدة للبحث والفلترة
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all'); // all, active, suspended, trial, admin
 
   useEffect(() => { loadCenters(); }, []);
 
@@ -58,55 +62,187 @@ export default function AdminSubscriptions() {
     }
   }
 
-  function getStatusBadge(center) {
-    // شرط خاص للأدمن ليظهر دائماً بشكل مميز
-    if (isPlatformAdminEmail(center.managerEmail)) return { label: 'مدير النظام 👑', color: '#8b5cf6' };
+  // دالة لحساب الأيام المتبقية وتحديد لون الشارة المخصص
+  function getDaysLeftInfo(expiryDate) {
+    if (!expiryDate) return null;
+    const expiry = expiryDate.toDate ? expiryDate.toDate() : new Date(expiryDate);
+    const today = new Date();
+    const diffTime = expiry - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    const sub = center.subscription;
-    if (!sub) return { label: 'تجريبي', color: '#3b82f6' };
-    if (sub.status === 'active') return { label: 'مفعّل ✅', color: '#10b981' };
-    if (sub.status === 'suspended') return { label: 'موقوف 🔒', color: '#6b7280' };
-    return { label: 'تجريبي', color: '#3b82f6' };
+    if (diffDays <= 0) return { label: 'منتهي ❌', color: 'var(--err, #ef4444)' };
+    if (diffDays <= 7) return { label: `متبقي ${diffDays} أيام ⚠️`, color: 'var(--warn, #f59e0b)' };
+    return { label: `متبقي ${diffDays} يوماً 🟢`, color: 'var(--ok, #10b981)' };
   }
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center' }}>⏳ جارٍ تحميل البيانات...</div>;
+  function getStatusBadge(center) {
+    if (isPlatformAdminEmail(center.managerEmail)) return { label: 'مدير النظام 👑', color: '#8b5cf6', type: 'admin' };
+
+    const sub = center.subscription;
+    if (!sub) return { label: 'تجريبي ⏳', color: '#3b82f6', type: 'trial' };
+    if (sub.status === 'active') return { label: 'مفعّل ✅', color: '#10b981', type: 'active' };
+    if (sub.status === 'suspended') return { label: 'موقوف 🔒', color: '#6b7280', type: 'suspended' };
+    return { label: 'تجريبي ⏳', color: '#3b82f6', type: 'trial' };
+  }
+
+  // تصفية المراكز برمجياً في الواجهة حسب البحث والفلترة
+  const filteredCenters = centers.filter(center => {
+    const matchesSearch = 
+      (center.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (center.managerEmail || '').toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const badge = getStatusBadge(center);
+    const matchesFilter = filterStatus === 'all' || badge.type === filterStatus;
+
+    return matchesSearch && matchesFilter;
+  });
+
+  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-main)' }}>⏳ جارٍ تحميل البيانات...</div>;
 
   return (
-    <div style={{ padding: '20px', maxWidth: 900, margin: '0 auto' }}>
-      <h1>🔐 إدارة الاشتراكات</h1>
-      <p>عدد المراكز: {centers.length}</p>
-      
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {centers.map(center => {
-          const badge = getStatusBadge(center);
-          return (
-            <div key={center.id} style={{ 
-                background: 'var(--card)', 
-                border: '1px solid var(--border-color)', 
-                padding: '15px', 
-                borderRadius: 12, 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 14 
-            }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 'bold' }}>{center.name || 'بدون اسم'}</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--g5)' }}>{center.managerEmail}</div>
-              </div>
-              
-              <div style={{ padding: '5px 12px', borderRadius: 20, color: badge.color, background: badge.color + '22', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                {badge.label}
-              </div>
+    <div style={{ padding: '20px', maxWidth: 1000, margin: '0 auto', direction: 'rtl' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900 }}>🔐 إدارة الاشتراكات</h1>
+          <p style={{ margin: '5px 0 0 0', color: 'var(--g5)' }}>إجمالي المراكز المسجلة: {centers.length}</p>
+        </div>
+      </div>
 
-              <div style={{ display: 'flex', gap: 6 }}>
-                <button className="btn btn-xs" onClick={() => activateCenter(center.id, 1)}>شهر</button>
-                <button className="btn btn-xs" onClick={() => activateCenter(center.id, 6)}>6أشهر</button>
-                <button className="btn btn-xs" onClick={() => activateCenter(center.id, 12)}>سنة</button>
-                <button className="btn btn-xs btn-d" onClick={() => suspendCenter(center.id)}>إيقاف</button>
+      {/* شريط البحث والفلترة المتقدم الجديد */}
+      <div style={{ 
+        display: 'flex', 
+        gap: 12, 
+        marginBottom: 20, 
+        background: 'var(--bg-card, #1e1e2e)', 
+        padding: 14, 
+        borderRadius: 12, 
+        border: '1px solid var(--border-color)',
+        flexWrap: 'wrap',
+        alignItems: 'center'
+      }}>
+        <input 
+          type="text" 
+          placeholder="🔍 ابحث باسم المركز أو البريد الإلكتروني..." 
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ 
+            flex: 1, 
+            minWidth: 250, 
+            padding: '8px 14px', 
+            borderRadius: 8, 
+            border: '1px solid var(--border-color)', 
+            background: 'var(--bg, #121214)', 
+            color: 'var(--text-main)' 
+          }}
+        />
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {[
+            { id: 'all', label: 'الكل' },
+            { id: 'active', label: 'المفعلة' },
+            { id: 'suspended', label: 'الموقوفة' },
+            { id: 'trial', label: 'التجريبية' },
+            { id: 'admin', label: 'المدراء' }
+          ].map(btn => (
+            <button
+              key={btn.id}
+              onClick={() => setFilterStatus(btn.id)}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 6,
+                border: '1px solid var(--border-color)',
+                background: filterStatus === btn.id ? 'var(--pr, #8b5cf6)' : 'transparent',
+                color: filterStatus === btn.id ? '#fff' : 'var(--text-main)',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                fontWeight: 'bold',
+                transition: 'all 0.2s'
+              }}
+            >
+              {btn.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* قائمة المراكز */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {filteredCenters.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 30, color: 'var(--g4)' }}>ℹ️ لا توجد نتائج مطابقة للبحث.</div>
+        ) : (
+          filteredCenters.map(center => {
+            const badge = getStatusBadge(center);
+            const daysInfo = getDaysLeftInfo(center.subscription?.expiryDate);
+            const isSystemAdmin = isPlatformAdminEmail(center.managerEmail);
+
+            // توليد رابط تذكير واتساب ذكي يعتمد على بيانات المركز الحالي
+            const expiryText = center.subscription?.expiryDate 
+              ? new Date(center.subscription.expiryDate.seconds * 1000).toLocaleDateString('ar-EG') 
+              : 'غير محدد';
+            
+            const whatsappText = encodeURIComponent(
+              `مرحباً أستاذ، نود تذكيركم بحالة اشتراك مركزكم الفاضل (${center.name || 'Easy Center'}) في النظام، ينتهي الاشتراك بتاريخ: ${expiryText}. طاب يومكم بكل خير.`
+            );
+            const whatsappUrl = `https://wa.me/${center.managerPhone || ''}?text=${whatsappText}`;
+
+            return (
+              <div key={center.id} style={{ 
+                  background: 'var(--card, #1e1e2e)', 
+                  border: '1px solid var(--border-color)', 
+                  padding: '16px', 
+                  borderRadius: 14, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 16,
+                  flexWrap: 'wrap',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                  opacity: updating === center.id ? 0.6 : 1,
+                  pointerEvents: updating === center.id ? 'none' : 'auto'
+              }}>
+                {/* العمود الأول: البيانات الأساسية والتواريخ */}
+                <div style={{ flex: 2, minWidth: 220 }}>
+                  <div style={{ fontWeight: 900, fontSize: '1.05rem', color: 'var(--text-main)' }}>
+                    {center.name || 'بدون اسم'}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--g5)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>{center.managerEmail}</span>
+                    {center.managerPhone && (
+                      <a href={whatsappUrl} target="_blank" rel="noreferrer" title="تذكير عبر واتساب" style={{ textDecoration: 'none', fontSize: '0.9rem' }}>
+                        💬
+                      </a>
+                    )}
+                  </div>
+                  {center.subscription?.expiryDate && !isSystemAdmin && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--g4)', marginTop: 4 }}>
+                      📅 ينتهي في: <b>{new Date(center.subscription.expiryDate.seconds * 1000).toLocaleDateString('ar-EG')}</b>
+                    </div>
+                  )}
+                </div>
+                
+                {/* العمود الثاني: شارات الحالة وعداد الأيام المتبقية */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start', minWidth: 120 }}>
+                  <div style={{ padding: '4px 10px', borderRadius: 20, color: badge.color, background: badge.color + '18', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                    {badge.label}
+                  </div>
+                  {daysInfo && !isSystemAdmin && (
+                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: daysInfo.color, padding: '2px 8px', background: daysInfo.color + '10', borderRadius: 6 }}>
+                      {daysInfo.label}
+                    </div>
+                  )}
+                </div>
+
+                {/* العمود الثالث: أزرار التحكم الفورية وتمديد الباقات */}
+                <div style={{ display: 'flex', gap: 6, marginRight: 'auto', flexWrap: 'wrap' }}>
+                  <button className="btn btn-xs" style={{ minWidth: 50 }} onClick={() => activateCenter(center.id, 1)}>شهر</button>
+                  <button className="btn btn-xs" style={{ minWidth: 50 }} onClick={() => activateCenter(center.id, 6)}>6 أشهر</button>
+                  <button className="btn btn-xs" style={{ minWidth: 50 }} onClick={() => activateCenter(center.id, 12)}>سنة</button>
+                  {!isSystemAdmin && (
+                    <button className="btn btn-xs btn-d" style={{ minWidth: 55 }} onClick={() => suspendCenter(center.id)}>إيقاف</button>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
     </div>
   );
