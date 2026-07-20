@@ -76,7 +76,6 @@ export default function CenterPage() {
   const [partners, setPartners] = useState([]);
   const [custody, setCustody] = useState([]);
   const [visits, setVisits] = useState([]);
-  const [warnings, setWarnings] = useState(lsGet('warnings') || []);
 
   // Form states
   const [showDocForm, setShowDocForm] = useState(false);
@@ -107,8 +106,6 @@ export default function CenterPage() {
   const [showBusForm, setShowBusForm] = useState(false);
   const [busForm, setBusForm] = useState(EMPTY_BUS);
   const [busEditId, setBusEditId] = useState(null);
-  const [showWarningForm, setShowWarningForm] = useState(false);
-  const [warningForm, setWarningForm] = useState({ recipient:'', type:'warning', reason:'', date:todayStr(), notes:'' });
 
   function reload() {
     setDocs(lsGet('centerDocs'));
@@ -120,7 +117,6 @@ export default function CenterPage() {
     setStudents(lsGet('students'));
     setParentLogs(lsGet('parentInteractions'));
     setBuses(lsGet('buses'));
-    setWarnings(lsGet('warnings') || []);
   }
   useEffect(() => { reload(); }, []);
   useEffect(() => {
@@ -142,7 +138,6 @@ export default function CenterPage() {
   const fldV = k => e => setVisitForm(f=>({...f,[k]:e.target.value}));
   const fldPL = k => e => setParentLogForm(f=>({...f,[k]:e.target.value}));
   const fldB = k => e => setBusForm(f=>({...f,[k]:e.target.value}));
-  const fldW = k => e => setWarningForm(f=>({...f,[k]:e.target.value}));
 
   function verifyFinancePassword() {
     if (financePwInput === financePassword) {
@@ -709,45 +704,23 @@ export default function CenterPage() {
         <div>
           <div style={{display:'flex',justifyContent:'flex-end',marginBottom:12,gap:8,flexWrap:'wrap'}}>
             {isManager&&<button className="btn btn-p" onClick={()=>{setDocForm({...EMPTY_DOC,date:todayStr()});setDocEditId(null);setShowDocForm(true);}}>➕ إضافة وثيقة</button>}
-            {isManager&&<button className="btn btn-s" onClick={()=>setShowWarningForm(true)}>⚠️ إنذار جديد</button>}
           </div>
+
+          {/* تنويه: الجزاءات (كانت "الإنذارات" هنا) انتقلت لصفحة الموظفين */}
+          <div style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 16px', background:'var(--warn-l)', border:'1px solid #fde68a', borderRadius:10, marginBottom:14, flexWrap:'wrap' }}>
+            <span style={{ fontSize:'1.2rem' }}>⚠️</span>
+            <span style={{ flex:1, fontSize:'.84rem', color:'var(--warn)' }}>انتقل نظام "الجزاءات" (الإنذارات) إلى صفحة الموظفين لأنه يخص الكوادر البشرية مباشرة.</span>
+            <button type="button" className="btn btn-p btn-sm" onClick={() => go('hr-warnings')}>فتح صفحة الجزاءات ←</button>
+          </div>
+
           <div className="tabs">
-            {[['all','الكل'],['warnings','⚠️ إنذارات'],['stats','إحصائية'],['policy','لائحة'],['report','تقرير'],['memo','مذكرة']].map(([v,l])=>(
+            {[['all','الكل'],['stats','إحصائية'],['policy','لائحة'],['report','تقرير'],['memo','مذكرة']].map(([v,l])=>(
               <button key={v} className={`tab ${docTab===v?'on':''}`} onClick={()=>setDocTab(v)}>{l}</button>
             ))}
           </div>
 
-          {/* Warnings Section */}
-          {(docTab==='all' || docTab==='warnings') && warnings.length > 0 && (
-            <div style={{marginBottom:20}}>
-              <div style={{fontSize:'.9rem',fontWeight:800,color:'var(--err)',marginBottom:8}}>⚠️ الإنذارات ({warnings.length})</div>
-              {warnings.map(w=>(
-                <div key={w.id} className="card" style={{borderRight:'4px solid var(--err)',borderRadius:8}}>
-                  <div className="av" style={{background:'var(--err-l)',color:'var(--err)'}}>⚠️</div>
-                  <div className="ci">
-                    <div className="cn">{w.recipient}</div>
-                    <div className="cm">
-                      {w.type==='warning'?'⚠️ إنذار':w.type==='suspension'?'🚫 إيقاف':'❌ إنهاء'} · {w.date}
-                    </div>
-                    <div className="cm" style={{color:'var(--g5)'}}>{w.reason}</div>
-                  </div>
-                  <div className="c-acts" onClick={ev=>ev.stopPropagation()}>
-                    {w.recipient && (
-                      <button className="btn btn-xs btn-bl" onClick={()=>{
-                        const msg = `⚠️ إنذار رسمي\n\nالاسم: ${w.recipient}\nالنوع: ${w.type==='warning'?'إنذار':w.type==='suspension'?'إيقاف':'إنهاء'}\nالسبب: ${w.reason}\n\nالتاريخ: ${w.date}`;
-                        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
-                      }}>💬 واتس</button>
-                    )}
-                    <button className="btn btn-xs btn-g" onClick={()=>{printItem(w,'warning',centerData.logo,centerData.name);}}>🖨️</button>
-                    {isManager&&<button className="btn btn-xs btn-d" onClick={()=>{lsDel('warnings',w.id);setWarnings(lsGet('warnings')||[]);toast('🗑️ تم الحذف','ok');}}>🗑️</button>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* Documents Section */}
-          {filteredDocs.length===0 && warnings.length===0 ? <EmptyState icon="📄" title="لا توجد وثائق"/> : filteredDocs.sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(d=>(
+          {filteredDocs.length===0 ? <EmptyState icon="📄" title="لا توجد وثائق"/> : filteredDocs.sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(d=>(
             <div key={d.id} className="card clickable">
               <div className="av cyan">📄</div>
               <div className="ci">
@@ -850,57 +823,6 @@ export default function CenterPage() {
               </div>
             </div>
           )}
-        </div>
-      )}
-
-      {/* Warning Modal */}
-      {showWarningForm && (
-        <div className="mbg" onClick={e=>e.target===e.currentTarget && setShowWarningForm(false)}>
-          <div className="mb mb-large" style={{padding:0,overflow:'hidden',borderRadius:16}}>
-            <div className="fhd" style={{padding:'14px 20px'}}>
-              <h2>⚠️ إنذار جديد</h2>
-            </div>
-            <div className="modal-body-scroll" style={{padding:'18px 20px'}}>
-              <div className="fg c2">
-                <div className="fl full"><label>الموجه إليه (الموظف/الإداري) <span className="req">*</span></label>
-                  <select value={warningForm.recipient} onChange={fldW('recipient')}>
-                    <option value="">اختر</option>
-                    {lsGet('employees').map(e=><option key={e.id}>{e.name}</option>)}
-                  </select>
-                </div>
-                <div className="fl"><label>نوع الإنذار</label>
-                  <select value={warningForm.type} onChange={fldW('type')}>
-                    <option value="warning">⚠️ إنذار</option>
-                    <option value="suspension">🚫 إيقاف</option>
-                    <option value="termination">❌ إنهاء</option>
-                  </select>
-                </div>
-                <div className="fl"><label>التاريخ</label>
-                  <input type="date" value={warningForm.date} onChange={fldW('date')}/>
-                </div>
-                <div className="fl full"><label>السبب <span className="req">*</span></label>
-                  <textarea value={warningForm.reason} onChange={fldW('reason')} rows={3} placeholder="اشرح أسباب الإنذار بشكل تفصيلي..."/>
-                </div>
-                <div className="fl full"><label>ملاحظات إضافية</label>
-                  <textarea value={warningForm.notes} onChange={fldW('notes')} rows={2}/>
-                </div>
-              </div>
-            </div>
-            <div className="fa">
-              <button className="btn btn-p" onClick={()=>{
-                if(!warningForm.recipient || !warningForm.reason) {
-                  toast('⚠️ أدخل البيانات المطلوبة','er');
-                  return;
-                }
-                lsAdd('warnings', {...warningForm, id:uid()});
-                setWarnings(lsGet('warnings')||[]);
-                setShowWarningForm(false);
-                setWarningForm({recipient:'',type:'warning',reason:'',date:todayStr(),notes:''});
-                toast('✅ تم حفظ الإنذار','ok');
-              }}>💾 حفظ الإنذار</button>
-              <button className="btn btn-g" onClick={()=>setShowWarningForm(false)}>إلغاء</button>
-            </div>
-          </div>
         </div>
       )}
 
