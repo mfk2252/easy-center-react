@@ -40,7 +40,7 @@ export default function AdminSubscriptions() {
         'subscription.months': months
       });
       loadCenters();
-      alert("✅ تم التفعيل بنجاح");
+      alert("✅ تم التفعيل وتحديث صلاحية الاشتراك بنجاح");
     } catch(e) {
       alert('❌ خطأ: ' + e.message);
     } finally {
@@ -70,7 +70,7 @@ export default function AdminSubscriptions() {
 
     if (diffDays <= 0) return { label: 'منتهي ❌', color: '#ef4444' };
     if (diffDays <= 7) return { label: `متبقي ${diffDays} أيام ⚠️`, color: '#f59e0b' };
-    return { label: `متبقي ${diffDays} يوماً 🟢`, color: '#10b981' }; // تم إصلاح علامة التنصيص هنا ✅
+    return { label: `متبقي ${diffDays} يوماً 🟢`, color: '#10b981' };
   }
 
   function getStatusBadge(center) {
@@ -105,12 +105,12 @@ export default function AdminSubscriptions() {
         </div>
       </div>
 
-      {/* شريط البحث والفلترة المتوافق مع الوضعين */}
+      {/* شريط البحث والفلترة - معدل ليتوافق 100% مع ألوان التصميم */}
       <div style={{ 
         display: 'flex', 
         gap: 12, 
         marginBottom: 20, 
-        background: 'var(--card)', 
+        background: 'var(--bg-card, var(--card, #1e1e2e))', 
         padding: 14, 
         borderRadius: 12, 
         border: '1px solid var(--border-color)',
@@ -128,7 +128,7 @@ export default function AdminSubscriptions() {
             padding: '8px 14px', 
             borderRadius: 8, 
             border: '1px solid var(--border-color)', 
-            background: 'var(--bg)', 
+            background: 'var(--bg, #121214)', 
             color: 'var(--text-main)' 
           }}
         />
@@ -160,7 +160,7 @@ export default function AdminSubscriptions() {
         </div>
       </div>
 
-      {/* قائمة المراكز المتوافقة بالكامل */}
+      {/* قائمة المراكز المتوافقة بالكامل بصرياً وعملياً */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {filteredCenters.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 30, color: 'var(--g4)' }}>ℹ️ لا توجد نتائج مطابقة للبحث.</div>
@@ -181,7 +181,7 @@ export default function AdminSubscriptions() {
 
             return (
               <div key={center.id} style={{ 
-                  background: 'var(--card)', 
+                  background: 'var(--bg-card, var(--card, #1e1e2e))', // هنا تم التعديل لدعم --bg-card لتتغير الألوان فوراً في الوضعين
                   border: '1px solid var(--border-color)', 
                   padding: '16px', 
                   borderRadius: 14, 
@@ -208,7 +208,7 @@ export default function AdminSubscriptions() {
                       </a>
                     )}
                   </div>
-                  {center.subscription?.expiryDate && !isSystemAdmin && (
+                  {center.subscription?.expiryDate && (
                     <div style={{ fontSize: '0.75rem', color: 'var(--g4)', marginTop: 4 }}>
                       📅 ينتهي في: <span style={{ fontVariantNumeric: 'tabular-nums' }}>{new Date(center.subscription.expiryDate.seconds * 1000).toLocaleDateString('ar-EG')}</span>
                     </div>
@@ -220,14 +220,14 @@ export default function AdminSubscriptions() {
                   <div style={{ padding: '4px 10px', borderRadius: 20, color: badge.color, background: badge.color + '18', fontSize: '0.75rem', fontWeight: 'bold' }}>
                     {badge.label}
                   </div>
-                  {daysInfo && !isSystemAdmin && (
+                  {daysInfo && (
                     <div style={{ fontSize: '0.72rem', fontWeight: 700, color: daysInfo.color, padding: '2px 8px', background: daysInfo.color + '10', borderRadius: 6, fontVariantNumeric: 'tabular-nums' }}>
                       {daysInfo.label}
                     </div>
                   )}
                 </div>
 
-                {/* العمود الثالث: أزرار التحكم */}
+                {/* العمود الثالث: أزرار التحكم الفورية */}
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginLeft: '0', marginRight: 'auto' }}>
                   <button className="btn btn-xs" style={{ minWidth: 50 }} onClick={() => activateCenter(center.id, 1)}>شهر</button>
                   <button className="btn btn-xs" style={{ minWidth: 50 }} onClick={() => activateCenter(center.id, 6)}>6 أشهر</button>
