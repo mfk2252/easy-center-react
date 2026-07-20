@@ -70,7 +70,7 @@ export default function AdminSubscriptions() {
 
     if (diffDays <= 0) return { label: 'منتهي ❌', color: '#ef4444' };
     if (diffDays <= 7) return { label: `متبقي ${diffDays} أيام ⚠️`, color: '#f59e0b' };
-    return { label: `متبقي ${diffDays} يوماً 🟢', color: '#10b981' };
+    return { label: `متبقي ${diffDays} يوماً 🟢`, color: '#10b981' }; // تم إصلاح علامة التنصيص هنا ✅
   }
 
   function getStatusBadge(center) {
@@ -110,7 +110,7 @@ export default function AdminSubscriptions() {
         display: 'flex', 
         gap: 12, 
         marginBottom: 20, 
-        background: 'var(--card)', // استخدام متغير ثيم المشروع بدلاً من لون ثابت
+        background: 'var(--card)', 
         padding: 14, 
         borderRadius: 12, 
         border: '1px solid var(--border-color)',
@@ -128,7 +128,7 @@ export default function AdminSubscriptions() {
             padding: '8px 14px', 
             borderRadius: 8, 
             border: '1px solid var(--border-color)', 
-            background: 'var(--bg)', // يتغير تلقائياً حسب وضع الصفحة
+            background: 'var(--bg)', 
             color: 'var(--text-main)' 
           }}
         />
@@ -181,7 +181,7 @@ export default function AdminSubscriptions() {
 
             return (
               <div key={center.id} style={{ 
-                  background: 'var(--card)', // يتغير تلقائياً مع زر النمط الليلي والنهاري
+                  background: 'var(--card)', 
                   border: '1px solid var(--border-color)', 
                   padding: '16px', 
                   borderRadius: 14, 
@@ -195,7 +195,7 @@ export default function AdminSubscriptions() {
                   pointerEvents: updating === center.id ? 'none' : 'auto',
                   direction: 'rtl'
               }}>
-                {/* العمود الأول: بيانات المركز محاذاة لليمين مع لون نص متفاعل */}
+                {/* العمود الأول: بيانات المركز */}
                 <div style={{ flex: '1 1 250px', textAlign: 'right' }}>
                   <div style={{ fontWeight: 900, fontSize: '1.05rem', color: 'var(--text-main)' }}>
                     {center.name || 'بدون اسم'}
@@ -215,7 +215,7 @@ export default function AdminSubscriptions() {
                   )}
                 </div>
                 
-                {/* العمود الثاني: شارات الحالة وعداد الأيام المتبقية في المنتصف */}
+                {/* العمود الثاني: شارات الحالة */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center', minWidth: 120 }}>
                   <div style={{ padding: '4px 10px', borderRadius: 20, color: badge.color, background: badge.color + '18', fontSize: '0.75rem', fontWeight: 'bold' }}>
                     {badge.label}
@@ -227,7 +227,7 @@ export default function AdminSubscriptions() {
                   )}
                 </div>
 
-                {/* العمود الثالث: أزرار التحكم الفورية مندكّة لأقصى اليسار بصورة منسقة */}
+                {/* العمود الثالث: أزرار التحكم */}
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginLeft: '0', marginRight: 'auto' }}>
                   <button className="btn btn-xs" style={{ minWidth: 50 }} onClick={() => activateCenter(center.id, 1)}>شهر</button>
                   <button className="btn btn-xs" style={{ minWidth: 50 }} onClick={() => activateCenter(center.id, 6)}>6 أشهر</button>
