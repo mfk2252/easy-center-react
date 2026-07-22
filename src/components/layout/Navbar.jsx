@@ -33,17 +33,28 @@ export default function Navbar() {
   async function handleSync() {
     const centerId = currentUser?.centerId || getCenterId();
     if (!centerId) return;
+    
     try {
       await syncFromFirebase(centerId, ALL_KEYS);
       window.location.reload();
-    } catch (e) {}
+    } catch (e) {
+      console.error("خطأ أثناء المزامنة:", e);
+      alert(t('syncError') || 'حدث خطأ أثناء مزامنة البيانات، يرجى التحقق من الاتصال.');
+    }
   }
+
+  // دالة للتحقق من كون الزر هو النشط حالياً
+  const isActive = (itemId) => {
+    if (activeView === itemId) return true;
+    if (itemId !== 'dash' && activeView.startsWith(`${itemId}-`)) return true;
+    return false;
+  };
 
   return (
     <nav className="nav no-print">
       <div className="nav-brand" title={center.name || ''}>
         {center.logo
-          ? <img src={center.logo} alt="" style={{ height: 36, borderRadius: 8, objectFit: 'cover' }}/>
+          ? <img src={center.logo} alt={center.name || ''} style={{ height: 36, borderRadius: 8, objectFit: 'cover' }}/>
           : <div className="nav-brand-ph">🏥</div>}
       </div>
 
@@ -51,7 +62,7 @@ export default function Navbar() {
         <button
           key={item.id}
           type="button"
-          className={`nb ${activeView === item.id || (item.id !== 'dash' && activeView.startsWith(item.id.split('-')[0])) ? 'on' : ''}`}
+          className={`nb ${isActive(item.id) ? 'on' : ''}`}
           onClick={() => go(item.id)}
         >
           {item.icon} {t(item.key)}
@@ -64,9 +75,9 @@ export default function Navbar() {
           className={`nb ${activeView === 'admin' ? 'on' : ''}`}
           onClick={() => go('admin')}
           style={{ color: '#f59e0b' }}
-          title={t('nav.admin')}
+          title={t('nav.admin') || 'لوحة الإدارة'}
         >
-          👑 {t('nav.admin')}
+          👑 {t('nav.admin') || 'الإدارة العامة'}
         </button>
       )}
 
