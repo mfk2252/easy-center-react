@@ -27,11 +27,11 @@ export default function App() {
       <div style={{ 
         display: 'flex', 
         alignItems: 'center', 
-        justifyContent: 'center', // تم تصحيح الكلمة للتوسيط الكامل
+        justifyContent: 'center',
         minHeight: '100vh', 
         background: '#0f172a', 
         flexDirection: 'column', 
-        gap: 20,
+        gap: 16,
         padding: '20px',
         boxSizing: 'border-box'
       }}>
@@ -40,19 +40,19 @@ export default function App() {
             src={center.logo} 
             alt={center.name || "شعار المركز"} 
             style={{ 
-              width: 'clamp(100px, 20vw, 160px)', // حجم مرن ومتجاوب للشعار
-              height: 'clamp(100px, 20vw, 160px)', 
+              width: 'clamp(60px, 10vw, 90px)', // تم تقليل الحجم ليكون متناسقاً
+              height: 'clamp(60px, 10vw, 90px)', 
               objectFit: 'contain', 
-              marginBottom: '8px', 
+              marginBottom: '4px', 
               animation: 'pulse 2s infinite' 
             }}
             onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
           />
         ) : null}
         
-        {/* إيموجي ضخم ومتجاوب جداً (يصل إلى 8rem على الشاشات الكبيرة ويصغر ديناميكياً على الهواتف) */}
+        {/* إيموجي بحجم طبيعي ومريح للعين */}
         <div style={{ 
-          fontSize: 'clamp(5rem, 18vw, 8rem)', 
+          fontSize: 'clamp(2.5rem, 8vw, 4rem)', // من 2.5rem إلى 4rem كحد أقصى بدلاً من 8rem
           display: center?.logo ? 'none' : 'block', 
           animation: 'bounce 1.5s infinite',
           lineHeight: 1,
@@ -61,19 +61,19 @@ export default function App() {
           {defaultEmoji}
         </div>
 
-        <div style={{ fontWeight: 700, fontSize: 'clamp(1rem, 4vw, 1.25rem)', color: 'white', marginTop: 10 }}>
+        <div style={{ fontWeight: 600, fontSize: 'clamp(0.875rem, 2.5vw, 1rem)', color: '#94a3b8', marginTop: 4 }}>
           جاري التحميل...
         </div>
         
         {/* شريط التحميل */}
         <div style={{ 
-          width: 100, 
-          height: 5, 
+          width: 80, 
+          height: 4, 
           background: 'var(--pr, #1a56db)', 
           borderRadius: 2, 
           position: 'relative',
           overflow: 'hidden',
-          marginTop: 5
+          marginTop: 4
         }}>
           <div style={{
             position: 'absolute',
@@ -97,7 +97,7 @@ export default function App() {
           }
           @keyframes bounce {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); } /* قفزة أعلى تناسب الحجم الضخم الجديد */
+            50% { transform: translateY(-10px); } /* قفزة أخف تناسب الحجم المعتدل */
           }
         `}</style>
       </div>
@@ -124,9 +124,9 @@ export default function App() {
 
       <div className="print-brand" aria-hidden="true">
         {center.logo ? (
-          <img src={center.logo} alt="" />
+          <img src={center.logo} alt="" style={{ maxWidth: 40, maxHeight: 40 }} />
         ) : (
-          <span style={{ fontSize: '1.75rem' }}>{defaultEmoji}</span>
+          <span style={{ fontSize: '1.25rem' }}>{defaultEmoji}</span>
         )}
         <span className="print-brand-name">{center.name || 'المركز'}</span>
       </div>
