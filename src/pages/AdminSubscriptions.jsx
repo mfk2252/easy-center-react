@@ -3,7 +3,6 @@ import { collection, getDocs, doc, updateDoc, serverTimestamp, Timestamp } from 
 import { db } from '../firebase/config';
 import { isPlatformAdminEmail } from '../firebase/auth';
 
-// خريطة تقريبية لاستنتاج "الدولة" من كود الهاتف — تغطي دول الخليج والوطن العربي
 const COUNTRY_BY_CODE = {
   '+966': 'السعودية', '+971': 'الإمارات', '+973': 'البحرين', '+974': 'قطر',
   '+965': 'الكويت', '+968': 'عُمان', '+20': 'مصر', '+962': 'الأردن',
@@ -41,14 +40,13 @@ export default function AdminSubscriptions() {
     }
   }
 
-  // months = null يعني "دائم" (يُخزَّن كمدة طويلة جداً 100 سنة داخلياً)
   async function activateCenter(centerId, months) {
     setUpdating(centerId);
     try {
       const isPermanent = months == null;
       const expiry = new Date();
       expiry.setMonth(expiry.getMonth() + (isPermanent ? 1200 : months));
-      
+
       await updateDoc(doc(db, 'centers', centerId), {
         'subscription.status': 'active',
         'subscription.expiryDate': Timestamp.fromDate(expiry),
@@ -87,10 +85,10 @@ export default function AdminSubscriptions() {
   function getDaysLeftInfo(sub) {
     if (!sub?.expiryDate || sub.status !== 'active') return null;
     if (sub.isPermanent) return { label: '∞ دائم', color: '#7c3aed' };
-    
+
     const expiry = tsToDate(sub.expiryDate);
     const diffDays = Math.ceil((expiry - new Date()) / 86400000);
-    
+
     if (diffDays <= 0) return { label: 'منتهي ❌', color: '#ef4444' };
     if (diffDays <= 7) return { label: `متبقي ${diffDays} أيام ⚠️`, color: '#f59e0b' };
     if (diffDays <= 30) return { label: `متبقي ${diffDays} يوماً`, color: '#f59e0b' };
@@ -124,7 +122,6 @@ export default function AdminSubscriptions() {
     const matchesFilter = filterStatus === 'all' || badge.type === filterStatus;
     return matchesSearch && matchesFilter;
   }).sort((a, b) => {
-    // الأقرب للانتهاء أولاً بين المفعَّلة (غير الدائمة)، ثم البقية كما هي
     const aLeft = a.subscription?.status === 'active' && !a.subscription?.isPermanent && a._expiry ? a._expiry - new Date() : Infinity;
     const bLeft = b.subscription?.status === 'active' && !b.subscription?.isPermanent && b._expiry ? b._expiry - new Date() : Infinity;
     return aLeft - bLeft;
@@ -158,7 +155,6 @@ export default function AdminSubscriptions() {
         </div>
       </div>
 
-      {/* شريط إحصائيات سريع */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(120px,1fr))', gap: 10, marginBottom: 20 }}>
         {[
           ['نشط (مؤقت)', stats.active, '#10b981'],
@@ -167,16 +163,15 @@ export default function AdminSubscriptions() {
           ['ينتهي خلال 7 أيام', stats.expiringSoon, '#f59e0b'],
           ['موقوف', stats.suspended, '#6b7280'],
         ].map(([label, val, color]) => (
-          <div key={label} style={{ background: 'var(--bg-card, #1e1e2e)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '10px 14px', borderRight: `4px solid ${color}` }}>
+          <div key={label} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '10px 14px', borderRight: `4px solid ${color}` }}>
             <div style={{ fontSize: '.72rem', color: 'var(--g5)' }}>{label}</div>
             <div style={{ fontSize: '1.3rem', fontWeight: 900, color }}>{val}</div>
           </div>
         ))}
       </div>
 
-      {/* شريط البحث والفلترة */}
       <div style={{
-        display: 'flex', gap: 12, marginBottom: 20, background: 'var(--bg-card, #1e1e2e)', padding: 14,
+        display: 'flex', gap: 12, marginBottom: 20, background: 'var(--bg-card)', padding: 14,
         borderRadius: 12, border: '1px solid var(--border-color)', flexWrap: 'wrap', alignItems: 'center',
       }}>
         <input
@@ -186,7 +181,7 @@ export default function AdminSubscriptions() {
           onChange={(e) => setSearchTerm(e.target.value)}
           style={{
             flex: 1, minWidth: 250, padding: '8px 14px', borderRadius: 8,
-            border: '1px solid var(--border-color)', background: 'var(--bg-input, var(--bg, #121214))', color: 'var(--text-main)',
+            border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-main)',
           }}
         />
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -202,7 +197,7 @@ export default function AdminSubscriptions() {
               onClick={() => setFilterStatus(btn.id)}
               style={{
                 padding: '6px 12px', borderRadius: 6, border: '1px solid var(--border-color)',
-                background: filterStatus === btn.id ? 'var(--pr, #8b5cf6)' : 'transparent',
+                background: filterStatus === btn.id ? 'var(--pr)' : 'transparent',
                 color: filterStatus === btn.id ? '#fff' : 'var(--text-main)',
                 cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold',
               }}
@@ -213,7 +208,6 @@ export default function AdminSubscriptions() {
         </div>
       </div>
 
-      {/* قائمة المراكز */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {filteredCenters.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 30, color: 'var(--g4)' }}>ℹ️ لا توجد نتائج مطابقة للبحث.</div>
@@ -231,7 +225,7 @@ export default function AdminSubscriptions() {
 
             return (
               <div key={center.id} style={{
-                background: 'var(--bg-card, #1e1e2e)', border: '1px solid var(--border-color)', borderRadius: 14,
+                background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 14,
                 boxShadow: '0 2px 8px rgba(0,0,0,0.05)', opacity: updating === center.id ? 0.6 : 1,
                 pointerEvents: updating === center.id ? 'none' : 'auto', overflow: 'hidden',
               }}>
@@ -285,14 +279,13 @@ export default function AdminSubscriptions() {
                         ['تاريخ الانتهاء', center.subscription?.isPermanent ? '∞ دائم' : expiryText],
                         ['المدة الحالية', center.subscription?.isPermanent ? 'دائم' : (center.subscription?.months ? `${center.subscription.months} شهر` : '—')],
                       ].map(([k, v]) => (
-                        <div key={k} style={{ background: 'var(--g0, #f8f9fa)', borderRadius: 8, padding: '8px 12px' }}>
+                        <div key={k} style={{ background: 'var(--g0)', borderRadius: 8, padding: '8px 12px' }}>
                           <div style={{ fontSize: '.7rem', color: 'var(--g5)' }}>{k}</div>
                           <div style={{ fontSize: '.86rem', fontWeight: 700, color: 'var(--text-main)' }}>{v}</div>
                         </div>
                       ))}
                     </div>
 
-                    {/* الأزرار متاحة للجميع (بما فيهم حسابك) حتى تستطيع تفعيل حسابك كـ "دائم" وحل مشكلة الشاشة */}
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                       {DURATION_BTNS.map(([label, m]) => (
                         <button key={label} className="btn btn-xs" onClick={() => activateCenter(center.id, m)}>{label}</button>
@@ -305,12 +298,11 @@ export default function AdminSubscriptions() {
                           type="number" min="1" placeholder="عدد أشهر مخصص"
                           value={customMonths[center.id] || ''}
                           onChange={e => setCustomMonths(f => ({ ...f, [center.id]: e.target.value }))}
-                          style={{ width: 110, padding: '5px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-input, var(--bg, #121214))', color: 'var(--text-main)' }}
+                          style={{ width: 110, padding: '5px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-main)' }}
                         />
                         <button className="btn btn-xs btn-g" onClick={() => activateCustom(center.id)}>تفعيل مخصص</button>
                       </span>
 
-                      {/* زر الإيقاف فقط هو المخفي عن حساب مدير النظام حتى لا توقف حسابك بالخطأ */}
                       {!isSystemAdmin && (
                         <button className="btn btn-xs btn-d" style={{ marginRight: 'auto' }} onClick={() => suspendCenter(center.id)}>إيقاف</button>
                       )}
