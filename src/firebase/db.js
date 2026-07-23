@@ -25,26 +25,24 @@ export async function fbAdd(centerId, col, data) {
   } catch(e) { console.warn('fbAdd:', e); throw e; }
 }
 
+// NOTE: fbSet/fbUpdate/fbDelete used to swallow errors (catch + warn, no
+// rethrow). That meant a failed offline write was silently dropped forever.
+// They now rethrow so useStorage.js can catch the failure and push the
+// operation into the persisted offline queue for automatic retry later.
 export async function fbSet(centerId, col, docId, data) {
-  try {
-    await setDoc(centerDoc(centerId, col, docId), {
-      ...data, updatedAt: serverTimestamp()
-    }, { merge: true });
-  } catch(e) { console.warn('fbSet:', e); }
+  await setDoc(centerDoc(centerId, col, docId), {
+    ...data, updatedAt: serverTimestamp()
+  }, { merge: true });
 }
 
 export async function fbUpdate(centerId, col, docId, data) {
-  try {
-    await updateDoc(centerDoc(centerId, col, docId), {
-      ...data, updatedAt: serverTimestamp()
-    });
-  } catch(e) { console.warn('fbUpdate:', e); }
+  await updateDoc(centerDoc(centerId, col, docId), {
+    ...data, updatedAt: serverTimestamp()
+  });
 }
 
 export async function fbDelete(centerId, col, docId) {
-  try {
-    await deleteDoc(centerDoc(centerId, col, docId));
-  } catch(e) { console.warn('fbDelete:', e); }
+  await deleteDoc(centerDoc(centerId, col, docId));
 }
 
 export async function getCenterSettings(centerId) {
