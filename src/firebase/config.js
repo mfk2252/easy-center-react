@@ -20,10 +20,6 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
 // ===== Offline-first Firestore =====
-// Persistent IndexedDB cache with multi-tab support: reads/writes work
-// while offline and survive full app/device restarts. Firestore itself
-// queues offline writes and replays them automatically once the network
-// is back — this is the main engine behind "offline-first" here.
 let db;
 try {
   db = initializeFirestore(app, {
@@ -32,9 +28,6 @@ try {
     }),
   });
 } catch (e) {
-  // Some environments (very old browsers, certain private-browsing modes)
-  // don't support IndexedDB persistence — fall back to memory cache so the
-  // app still works (just without cross-restart offline durability).
   console.warn('Persistent Firestore cache unavailable, falling back to memory cache:', e);
   db = initializeFirestore(app, { localCache: memoryLocalCache() });
 }
@@ -42,4 +35,8 @@ export { db };
 
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+// Exported because src/firebase/auth.js imports it directly.
+export { firebaseConfig };
+
 export default app;
