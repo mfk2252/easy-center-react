@@ -20,6 +20,39 @@ const EMPTY_EVAL = {
   recommendations: '', summary: '', domain: 'التربية الخاصة', date: '',
 };
 
+// دالة التحقق من صحة البيانات
+function validateEvaluationForm(form) {
+  const errors = [];
+  
+  // 1. التحقق من اختيار الطالب
+  if (!validateStudentPick(form)) {
+    errors.push('اختر الطالب من القائمة أو أدخل اسمه');
+  }
+  
+  // 2. التحقق من التاريخ
+  if (!form.date || form.date.trim() === '') {
+    errors.push('أدخل تاريخ التقييم');
+  }
+  
+  // 3. التحقق من المجال
+  if (!form.domain || form.domain.trim() === '') {
+    errors.push('اختر المجال التعليمي/العلاجي');
+  }
+  
+  // 4. التحقق من وجود محتوى واحد على الأقل
+  const hasContent = 
+    (form.history?.trim() || '') !== '' ||
+    (form.parentsInterview?.trim() || '') !== '' ||
+    (form.appliedTools?.trim() || '') !== '' ||
+    (form.observationSessions?.trim() || '') !== '';
+  
+  if (!hasContent) {
+    errors.push('أدخل محتوى التقرير (التاريخ التطوري أو مقابلة الأهل أو أدوات أو الملاحظات)');
+  }
+  
+  return errors;
+}
+
 export default function InitialAssessment({ onBack }) {
   const { toast, center } = useApp();
   const [students, setStudents] = useState([]);
@@ -28,6 +61,7 @@ export default function InitialAssessment({ onBack }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState(null);
   const [helperNote, setHelperNote] = useState('');
+  const [formErrors, setFormErrors] = useState([]);
 
   function reload() {
     setStudents(lsGet('students'));
@@ -38,12 +72,14 @@ export default function InitialAssessment({ onBack }) {
   const evaluations = lsGet('progEvaluations').sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   function openNew() {
+    setFormErrors([]);
     setHelperNote('');
     setEvalForm({ ...EMPTY_EVAL, date: todayStr() });
     setEditId(null);
     setModalOpen(true);
   }
   function openEdit(item) {
+    setFormErrors([]);
     setHelperNote('');
     setEvalForm({ ...EMPTY_EVAL, ...item });
     setEditId(item.id);
@@ -73,14 +109,34 @@ export default function InitialAssessment({ onBack }) {
   }
 
   function save() {
-    if (!validateStudentPick(evalForm)) { toast('⚠️ اختر الطالب أو أدخل اسمه', 'er'); return; }
+    // التحقق من صحة البيانات
+    const validationErrors = validateEvaluationForm(evalForm);
+    
+    // إذا كانت هناك أخطاء - عرضها وإيقاف العملية
+    if (validationErrors.length > 0) {
+      setFormErrors(validationErrors);
+      toast('⚠️ تحقق من الأخطاء أعلاه', 'er');
+      return;
+    }
+    
+    // مسح الأخطاء السابقة
+    setFormErrors([]);
+    
+    // البيانات صحيحة - حفظ
     const payload = {
       ...evalForm,
       age: evalForm.age || (evalForm.dob ? calcAge(evalForm.dob) : ''),
       isUnregistered: evalForm.mode === 'other',
     };
-    if (editId) { lsUpd('progEvaluations', editId, payload); toast('✅ تم التحديث', 'ok'); }
-    else { lsAdd('progEvaluations', { ...payload, id: uid(), createdAt: todayStr() }); toast('✅ تم حفظ التقييم', 'ok'); }
+    
+    if (editId) { 
+      lsUpd('progEvaluations', editId, payload); 
+      toast('✅ تم تحديث التقييم بنجاح', 'ok'); 
+    } else { 
+      lsAdd('progEvaluations', { ...payload, id: uid(), createdAt: todayStr() }); 
+      toast('✅ تم حفظ التقييم بنجاح', 'ok'); 
+    }
+    
     setModalOpen(false);
   }
 
@@ -133,6 +189,26 @@ export default function InitialAssessment({ onBack }) {
             </div>
             <div className="modal-body-scroll" style={{ padding: '18px 20px' }}>
               {helperNote && <div style={{ marginBottom: 12, padding: 10, background: 'var(--ok-l)', borderRadius: 8, fontSize: '.82rem' }}>{helperNote}</div>}
+              
+              {formErrors.length > 0 && (
+                <div style={{ 
+                  marginBottom: 12, 
+                  padding: 10, 
+                  background: 'var(--err-l)', 
+                  borderRadius: 8, 
+                  fontSize: '.82rem',
+                  border: '1px solid var(--err)',
+                  color: 'var(--err)'
+                }}>
+                  <div style={{ fontWeight: 700, marginBottom: 6 }}>❌ أخطاء في البيانات:</div>
+                  {formErrors.map((err, i) => (
+                    <div key={i} style={{ marginBottom: 4, paddingLeft: 16 }}>
+                      • {err}
+                    </div>
+                  ))}
+                </div>
+              )}
+              
               <div className="fg c2">
                 <StudentPicker form={evalForm} setForm={setEvalForm} students={students} emps={emps} showExtra />
 
@@ -155,8 +231,8 @@ export default function InitialAssessment({ onBack }) {
                   <select value={evalForm.domain} onChange={e => setEvalForm(f => ({ ...f, domain: e.target.value }))}>{PROGRAM_DOMAINS.map(d => <option key={d}>{d}</option>)}</select>
                 </div>
 
-                <div className="fl full"><label>التاريخ التطوري</label><textarea value={evalForm.history} onChange={e => setEvalForm(f => ({ ...f, history: e.target.value }))} rows={3}/></div>
-                <div className="fl full"><label>مقابلة الأهل</label><textarea value={evalForm.parentsInterview} onChange={e => setEvalForm(f => ({ ...f, parentsInterview: e.target.value }))} rows={3}/></div>
+                <div className="fl full"><label>التاريخ التطوري</label><textarea value={evalForm.history} onChange={e => setEvalForm(f => ({ ...f, history: e.target.value }))} rows={4}/></div>
+                <div className="fl full"><label>مقابلة الأهل</label><textarea value={evalForm.parentsInterview} onChange={e => setEvalForm(f => ({ ...f, parentsInterview: e.target.value }))} rows={4}/></div>
                 <div className="fl full"><label>أدوات التقييم</label><textarea value={evalForm.appliedTools} onChange={e => setEvalForm(f => ({ ...f, appliedTools: e.target.value }))} rows={3}/></div>
                 <div className="fl full"><label>الملاحظة</label><textarea value={evalForm.observationSessions} onChange={e => setEvalForm(f => ({ ...f, observationSessions: e.target.value }))} rows={4}/></div>
                 <div className="fl full"><label>التوصيات</label><textarea value={evalForm.recommendations} onChange={e => setEvalForm(f => ({ ...f, recommendations: e.target.value }))} rows={4}/></div>
