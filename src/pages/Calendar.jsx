@@ -361,7 +361,7 @@ export default function Calendar() {
       }}>
         <div>
           {/* تم جعل العنوان الكبير هو الشهر الحالي مع السنة بدلاً من الكلمة السابقة */}
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 850, margin: 0, display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text)' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 850, margin: 0, display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-main)' }}>
             <span>🗓️</span> {MONTHS_AR[month]} {year}
           </h2>
           {/* النص الرفيع بالأسفل */}
@@ -376,7 +376,7 @@ export default function Calendar() {
             <button 
               type="button" 
               className="btn btn-sm" 
-              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '4px 10px', color: 'var(--text)', fontWeight: 'bold' }} 
+              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '4px 10px', color: 'var(--text-main)', fontWeight: 'bold' }} 
               onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() - 1); return n; })}
             >
               → السابق
@@ -384,7 +384,7 @@ export default function Calendar() {
             <button 
               type="button" 
               className="btn btn-sm" 
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 6, padding: '4px 12px', fontWeight: 'bold', color: 'var(--text)' }} 
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 6, padding: '4px 12px', fontWeight: 'bold', color: 'var(--text-main)' }} 
               onClick={() => setCur(new Date())}
             >
               اليوم
@@ -392,7 +392,7 @@ export default function Calendar() {
             <button 
               type="button" 
               className="btn btn-sm" 
-              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '4px 10px', color: 'var(--text)', fontWeight: 'bold' }} 
+              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '4px 10px', color: 'var(--text-main)', fontWeight: 'bold' }} 
               onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() + 1); return n; })}
             >
               التالي ←
@@ -430,7 +430,7 @@ export default function Calendar() {
                   textAlign: 'center', 
                   fontSize: '0.85rem', 
                   fontWeight: 'bold', 
-                  color: 'var(--text)', // يعتمد على لون النص الرئيسي للثيم وليس الخافت
+                  color: 'var(--text-main)', // يعتمد على لون النص الرئيسي للثيم وليس الخافت
                   padding: '8px 0', 
                   borderBottom: '1px solid var(--border-color)',
                   opacity: 0.95
@@ -454,18 +454,18 @@ export default function Calendar() {
               let cellBg = 'var(--bg-card)';
               let borderStyle = '1px solid var(--border-color)';
               let textWeight = '600';
-              let numColor = 'var(--text)'; // أبيض في الثيم الداكن، رمادي غامق في الفاتح
+              let numColor = 'var(--text-main)'; // أبيض في الثيم الداكن، رمادي غامق في الفاتح
 
               if (isToday) {
                 cellBg = 'rgba(236, 72, 153, 0.12)'; // خلفية وردية خفيفة ملائمة للون الـ Border الحالي
                 borderStyle = '2px solid var(--pr)'; // حد وردي بارز جداً
                 textWeight = '900';
-                numColor = 'var(--text)'; // أبيض واضح
+                numColor = 'var(--text-main)'; // أبيض واضح
               } else if (isSel) {
                 cellBg = 'var(--pr-l)';
                 borderStyle = '1px solid var(--pr)';
                 textWeight = '800';
-                numColor = 'var(--text)';
+                numColor = 'var(--text-main)';
               }
 
               return (
@@ -557,7 +557,7 @@ export default function Calendar() {
           {/* قائمة المهام والأحداث */}
           <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 12 }}>
             <div className="wg-h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', padding: '12px 16px' }}>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text)' }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>
                 📅 جدول يوم {selDay} {MONTHS_AR[month]}
               </h3>
               <div style={{ display: 'flex', gap: 4 }}>
@@ -607,7 +607,7 @@ export default function Calendar() {
                           </span>
                           {it.time && <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)' }}>🕐 {it.time}</span>}
                         </div>
-                        <div style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--text)' }}>{it.title}</div>
+                        <div style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--text-main)' }}>{it.title}</div>
                       </button>
                     );
                   })}
@@ -619,33 +619,33 @@ export default function Calendar() {
           {/* معاينة التفاصيل بالكامل */}
           <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 12 }}>
             <div className="wg-h" style={{ borderBottom: '1px solid var(--border-color)', padding: '12px 16px' }}>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text)' }}>📌 بطاقة التفاصيل</h3>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>📌 بطاقة التفاصيل</h3>
             </div>
             <div className="wg-b" style={{ padding: 16 }}>
               {selItem ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: 6, background: 'var(--g0)', color: 'var(--text)', fontWeight: 'bold' }}>
+                    <span style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: 6, background: 'var(--g0)', color: 'var(--text-main)', fontWeight: 'bold' }}>
                       المصدر: {selItem.source}
                     </span>
-                    <span style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: 6, background: 'var(--g0)', color: 'var(--text)', fontWeight: 'bold' }}>
+                    <span style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: 6, background: 'var(--g0)', color: 'var(--text-main)', fontWeight: 'bold' }}>
                       التاريخ: {selItem.date}
                     </span>
                   </div>
 
-                  <h4 style={{ margin: '4px 0 0 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--text)' }}>
+                  <h4 style={{ margin: '4px 0 0 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
                     {selItem.title}
                   </h4>
 
                   {selItem.time && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--g0)', padding: '8px 12px', borderRadius: 8 }}>
                       <span style={{ fontSize: '1rem' }}>🕒</span>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text)' }}>{selItem.time}</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-main)' }}>{selItem.time}</div>
                     </div>
                   )}
 
                   {selItem.detail && (
-                    <div style={{ background: 'var(--g0)', padding: 12, borderRadius: 8, fontSize: '0.85rem', lineHeight: 1.5, color: 'var(--text)' }}>
+                    <div style={{ background: 'var(--g0)', padding: 12, borderRadius: 8, fontSize: '0.85rem', lineHeight: 1.5, color: 'var(--text-main)' }}>
                       {selItem.detail}
                     </div>
                   )}
@@ -899,7 +899,7 @@ export default function Calendar() {
       {showEval && (
         <div className="mbg" onClick={e => e.target === e.currentTarget && setShowEval(false)}>
           <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
-            <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0, background: 'var(--or)' }}>
+            <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0, background: 'var(--warn)' }}>
               <h2 style={{ color: '#fff', margin: 0, fontSize: '1.15rem' }}>📋 تقييم مستفيد جديد</h2>
             </div>
             <div className="modal-body-scroll" style={{ padding: '20px' }}>
@@ -931,7 +931,7 @@ export default function Calendar() {
               </div>
             </div>
             <div className="fa" style={{ padding: '12px 20px', background: 'var(--g0)' }}>
-              <button type="button" className="btn btn-p" style={{ background: 'var(--or)', borderColor: 'var(--or)' }} onClick={saveEval}>💾 تسجيل موعد التقييم</button>
+              <button type="button" className="btn btn-p" style={{ background: 'var(--warn)', borderColor: 'var(--warn)' }} onClick={saveEval}>💾 تسجيل موعد التقييم</button>
               <button type="button" className="btn btn-g" onClick={() => setShowEval(false)}>إلغاء</button>
             </div>
           </div>
