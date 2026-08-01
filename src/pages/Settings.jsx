@@ -311,6 +311,17 @@ export default function Settings() {
     ['about','ℹ️ عن النظام'],
   ];
 
+  // دالة مساعدة لتنسيق التاريخ
+  const formatDate = (ts) => {
+    if (!ts) return '—';
+    try {
+      const date = ts.toDate ? ts.toDate() : new Date(ts);
+      return new Intl.DateTimeFormat('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' }).format(date);
+    } catch (e) {
+      return '—';
+    }
+  };
+
   return (
     <div>
       <div className="ph">
@@ -452,6 +463,40 @@ export default function Settings() {
               )}
             </div>
           </div>
+
+          {/* --- بداية قسم معلومات الاشتراك (للمدير فقط) --- */}
+          {isManager && center?.subscription && (
+            <div className="wg" style={{ marginBottom: 14, border: '1px solid var(--pr)', background: 'var(--pr-l)' }}>
+              <div className="wg-h" style={{ background: 'var(--pr)', color: '#fff' }}>
+                <h3>📋 معلومات اشتراك المركز</h3>
+              </div>
+              <div className="wg-b">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                  <div>
+                    <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>تاريخ بدء التفعيل</div>
+                    <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{formatDate(center.subscription.activatedAt)}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>تاريخ انتهاء الصلاحية</div>
+                    <div style={{ fontWeight: 700, fontSize: '1.1rem', color: center.subscription.status === 'active' ? 'var(--ok)' : 'var(--err)' }}>
+                      {formatDate(center.subscription.expiryDate)}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>مدة الاشتراك</div>
+                    <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{center.subscription.months} شهر</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>حالة الاشتراك</div>
+                    <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>
+                      {center.subscription.status === 'active' ? '✅ نشط' : '⏸️ غير نشط'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* --- نهاية قسم معلومات الاشتراك --- */}
 
           <div style={{display:'flex',justifyContent:'flex-end',marginBottom:12}}>
             {isManager && <button className="btn btn-p" onClick={openNewUserForm}>➕ مستخدم جديد</button>}
