@@ -21,6 +21,7 @@ const ALL_KEYS = [
   'progSemiAnnualReports','progAnnualReports','progBehaviorReports',
   'progLearningDifficultyReports',
   'bonuses',
+  'progGoalsBank',
 ];
 
 function applyTheme(color) {
@@ -68,20 +69,16 @@ export function AppProvider({ children }) {
   }, []);
 
   // أيقونة تبويب المتصفح (Favicon) تتحدّث تلقائياً حسب شعار المركز الحالي.
-  // ترجع تلقائياً للأيقونة الافتراضية عند عدم وجود شعار (بما في ذلك بعد تسجيل
-  // الخروج، لأن logout() يُعيد center.logo إلى '').
   useEffect(() => {
     updateFavicon(center.logo);
     updateManifestIcon(center.logo, { appName: center.name });
   }, [center.logo, center.name]);
 
   useEffect(() => {
-    // timeout احتياطي - لو لم يستجب Firebase بعد 8 ثوانٍ
     const loadingTimeout = setTimeout(() => {
       setScreen(prev => prev === 'loading' ? 'login' : prev);
     }, 8000);
 
-    // جلسة موظف محفوظة
     const savedSession = (() => {
       try { return JSON.parse(localStorage.getItem('scs_session') || 'null'); }
       catch(e) { return null; }
@@ -109,11 +106,9 @@ export function AppProvider({ children }) {
       return;
     }
 
-    // Google Auth + Email/Password Auth (كلاهما يمران عبر نفس onAuthStateChanged)
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       clearTimeout(loadingTimeout);
       if (fbUser) {
-        // مالك المنصة: مسار مختصر بدون أي منطق متعلق بمركز/اشتراك
         if (isPlatformAdminEmail(fbUser.email)) {
           const adminUser = buildPlatformAdminUser(fbUser);
           localStorage.setItem('scs_current_uid', fbUser.uid);
@@ -170,7 +165,6 @@ export function AppProvider({ children }) {
     };
   }, []);
 
-  // تحديث حالة التجربة/الاشتراك دورياً
   useEffect(() => {
     const centerId = currentUser?.centerId;
     if (!centerId || screen !== 'app' || currentUser?.isPlatformAdmin) return;
