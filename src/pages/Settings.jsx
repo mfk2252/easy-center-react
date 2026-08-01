@@ -30,6 +30,20 @@ const PERMISSIONS = [
 
 const EMPTY_USER_FORM = { username:'', password:'', name:'', contactEmail:'', role:'specialist', title:'', studentId:'', phone:'', permissions:{} };
 
+// دالة مساعدة لتنسيق التاريخ
+const formatDate = (timestamp) => {
+  if (!timestamp) return '—';
+  try {
+    // التعامل مع Timestamp对象 من Firebase أو Date
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return new Intl.DateTimeFormat('ar-SA', {
+      year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    }).format(date);
+  } catch (e) {
+    return '—';
+  }
+};
+
 export default function Settings() {
   const { center, currentUser, persistConfig, updateCenterColor, toast, loadCenterData, subscriptionStatus } = useApp();
   const { t } = useLang();
@@ -70,7 +84,10 @@ export default function Settings() {
 
   // استخراج بيانات الاشتراك من كائن المركز
   const subData = center?.subscription;
-  const hasActiveSub = subData && subData.status === 'active';
+  const isActiveSub = subData?.status === 'active';
+  const daysLeft = subData?.expiryDate 
+    ? Math.ceil((subData.expiryDate.toDate().getTime() - new Date().getTime()) / (1000 * 3600 * 24))
+    : 0;
 
   useEffect(() => {
     reloadUsers();
@@ -311,15 +328,6 @@ export default function Settings() {
     ['about','ℹ️ عن النظام'],
   ];
 
-  // دالة مساعدة لتنسيق التاريخ
-  const formatDate = (ts) => {
-    if (!ts) return '—';
-    try {
-      const date = ts.toDate ? ts.toDate() : new Date(ts);
-      return new Intl.DateTimeFormat('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' }).format(date);
-    } catch (e) { return '—'; }
-  };
-
   return (
     <div>
       <div className="ph">
@@ -438,39 +446,6 @@ export default function Settings() {
       {/* المستخدمون */}
       {tab==='users' && (
         <div>
-          {/* بطاقة معلومات الاشتراك - تظهر للمدير فقط */}
-          {isManager && (
-            <div className="wg" style={{ marginBottom: 20, border: '1px solid var(--pr)', background: 'var(--pr-l)' }}>
-              <div className="wg-h"><h3>💳 حالة اشتراك المركز</h3></div>
-              <div className="wg-b">
-                {hasActiveSub ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-                    <div>
-                      <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>تاريخ بدء التفعيل</div>
-                      <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{formatDate(subData.activatedAt)}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>تاريخ انتهاء الصلاحية</div>
-                      <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--err)' }}>{formatDate(subData.expiryDate)}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>مدة الاشتراك</div>
-                      <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{subData.months} أشهر</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>الحالة الحالية</div>
-                      <span className="bdg b-ok" style={{ fontSize: '.9rem', fontWeight: 700 }}>نشط ✅</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ textAlign: 'center', padding: 20, color: 'var(--g6)' }}>
-                    لا توجد بيانات اشتراك نشطة لهذا المركز.
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
           <div className="wg" style={{ marginBottom: 14 }}>
             <div className="wg-h"><h3>👤 المستخدم الحالي</h3></div>
             <div className="wg-b">
@@ -487,6 +462,8 @@ export default function Settings() {
                   ))}
                 </div>
               </div>
+              
+              {/* عرض فترة التجربة فقط إذا كانت نشطة */}
               {(subscriptionStatus || currentUser?.subscription)?.reason === 'trial' && (
                 <div style={{ marginTop: 10, fontSize: '.82rem', color: 'var(--warn)' }}>
                   ⏳ فترة التجربة: متبقي <strong>{(subscriptionStatus || currentUser?.subscription)?.daysLeft ?? '—'}</strong> {(subscriptionStatus || currentUser?.subscription)?.daysLeft === 1 ? 'يوم' : 'أيام'}
@@ -494,6 +471,44 @@ export default function Settings() {
               )}
             </div>
           </div>
+
+          {/* بطاقة معلومات الاشتراك - تظهر للمدير فقط */}
+          {isManager && (
+            <div className="wg" style={{ marginBottom: 14, border: '1px solid var(--pr)', background: 'var(--pr-l)' }}>
+              <div className="wg-h" style={{ background: 'var(--pr)', color: '#fff' }}>
+                <h3>📋 حالة اشتراك المركز</h3>
+              </div>
+              <div className="wg-b">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                  <div>
+                    <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>تاريخ بدء التفعيل</div>
+                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{formatDate(subData?.activatedAt)}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>تاريخ انتهاء الصلاحية</div>
+                    <div style={{ fontWeight: 700, fontSize: '1rem', color: daysLeft < 30 ? 'var(--error)' : 'var(--ok)' }}>
+                      {formatDate(subData?.expiryDate)}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>مدة الاشتراك</div>
+                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{subData?.months || 0} شهر</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>الحالة الحالية</div>
+                    <div style={{ display: 'inline-block', padding: '4px 12px', borderRadius: 20, fontSize: '.85rem', fontWeight: 700, background: isActiveSub ? 'var(--ok)' : 'var(--g4)', color: isActiveSub ? '#fff' : '#000' }}>
+                      {isActiveSub ? 'نشط ✅' : 'غير نشط ⏸️'}
+                    </div>
+                  </div>
+                  {daysLeft > 0 && daysLeft <= 30 && (
+                    <div style={{ gridColumn: '1 / -1', padding: '10px', background: 'var(--warn-l)', color: 'var(--warn)', borderRadius: 8, fontSize: '.9rem', fontWeight: 600 }}>
+                      ⚠️ تنبيه: يتبقى {daysLeft} يوم على انتهاء الاشتراك. يرجى التجديد لتجنب انقطاع الخدمة.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           <div style={{display:'flex',justifyContent:'flex-end',marginBottom:12}}>
             {isManager && <button className="btn btn-p" onClick={openNewUserForm}>➕ مستخدم جديد</button>}
