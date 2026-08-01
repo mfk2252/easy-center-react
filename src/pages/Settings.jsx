@@ -33,8 +33,6 @@ const EMPTY_USER_FORM = { username:'', password:'', name:'', contactEmail:'', ro
 export default function Settings() {
   const { center, currentUser, persistConfig, updateCenterColor, toast, loadCenterData, subscriptionStatus } = useApp();
   const { t } = useLang();
-  
-  // حالات المكون
   const [fontSize, setFontSize] = useState(() => Number(localStorage.getItem('scs_fontsize')) || 15);
   const [fontWeight, setFontWeight] = useState(() => localStorage.getItem('scs_fontweight') || '600');
   const [tab, setTab] = useState('center');
@@ -45,51 +43,39 @@ export default function Settings() {
   const [userForm, setUserForm] = useState(EMPTY_USER_FORM);
   const [savingUser, setSavingUser] = useState(false);
   const [stuList, setStuList] = useState([]);
-  
-  // حالة نموذج المركز
   const [centerForm, setCenterForm] = useState({
-    name: center?.name || '',
-    nameEn: center?.nameEn || localStorage.getItem('scs_center_name_en') || '',
-    type: center?.type || '',
-    phone: center?.phone || '',
-    phoneCode: center?.phoneCode || localStorage.getItem('scs_center_phone_code') || '+966',
-    email: center?.email || '',
-    address: center?.address || localStorage.getItem('scs_center_address') || '',
-    logo: center?.logo || '',
-    currency: center?.currency || 'SAR',
-    website: center?.website || '',
-    whatsapp: center?.whatsapp || '',
-    instagram: center?.instagram || '',
-    barcode: center?.barcode || '',
-    morningFrom: center?.shifts?.morning?.from || '07:00',
-    morningTo: center?.shifts?.morning?.to || '12:00',
-    eveningFrom: center?.shifts?.evening?.from || '16:00',
-    eveningTo: center?.shifts?.evening?.to || '20:00',
+    name: center.name || '',
+    nameEn: center.nameEn || localStorage.getItem('scs_center_name_en') || '',
+    type: center.type || '',
+    phone: center.phone || '',
+    phoneCode: center.phoneCode || localStorage.getItem('scs_center_phone_code') || '+966',
+    email: center.email || '',
+    address: center.address || localStorage.getItem('scs_center_address') || '',
+    logo: center.logo || '',
+    currency: center.currency || 'SAR',
+    website: center.website || '',
+    whatsapp: center.whatsapp || '',
+    instagram: center.instagram || '',
+    barcode: center.barcode || '',
+    morningFrom: center.shifts?.morning?.from || '07:00',
+    morningTo: center.shifts?.morning?.to || '12:00',
+    eveningFrom: center.shifts?.evening?.from || '16:00',
+    eveningTo: center.shifts?.evening?.to || '20:00',
   });
-
-  const [selColor, setSelColor] = useState(center?.color||'#1a56db');
+  const [selColor, setSelColor] = useState(center.color||'#1a56db');
   const [refreshLoading, setRefreshLoading] = useState(false);
-  
-  // حالة بيانات الاشتراك المحلية (للتأكد من وجودها حتى لو تأخر الـ Context)
-  const [localSub, setLocalSub] = useState(null);
 
   const isManager = currentUser?.role === 'manager';
   const centerId = currentUser?.centerId || currentUser?.uid || getCenterId();
 
+  // استخراج بيانات الاشتراك من كائن المركز
+  const subData = center?.subscription;
+  const hasActiveSub = subData && subData.status === 'active';
+
   useEffect(() => {
     reloadUsers();
     setStuList(lsGet('students'));
-    
-    // محاولة جلب بيانات الاشتراك من التخزين المحلي إذا لم تكن واضحة في center
-    if (centerId) {
-      const storedCenter = JSON.parse(localStorage.getItem(`${centerId}_center`) || '{}');
-      if (storedCenter.subscription) {
-        setLocalSub(storedCenter.subscription);
-      } else if (center?.subscription) {
-        setLocalSub(center.subscription);
-      }
-    }
-  }, [centerId, center]);
+  }, []);
 
   async function reloadUsers() {
     if (!centerId) return;
@@ -125,7 +111,7 @@ export default function Settings() {
       phone: u.phone || '',
       permissions: u.permissions || {},
     });
-    setEditUserId(u.id);
+    setEditUserId(u.id); 
     setShowUserForm(true);
   }
 
@@ -207,12 +193,7 @@ export default function Settings() {
     toast('🔄 جارٍ تحديث النظام...', 'ok');
     try {
       const centerData = await refreshAllSystemData(centerId);
-      if (centerData) {
-        loadCenterData(centerId);
-        // تحديث البيانات المحلية فوراً بعد التحديث
-        const updatedCenter = JSON.parse(localStorage.getItem(`${centerId}_center`) || '{}');
-        if (updatedCenter.subscription) setLocalSub(updatedCenter.subscription);
-      }
+      if (centerData) loadCenterData(centerId);
       toast('✅ تم التحديث! سيتم إعادة تحميل النظام...', 'ok');
       setTimeout(() => window.location.reload(), 1200);
     } catch (e) {
@@ -331,19 +312,13 @@ export default function Settings() {
   ];
 
   // دالة مساعدة لتنسيق التاريخ
-  const formatDate = (timestamp) => {
-    if (!timestamp) return 'غير محدد';
+  const formatDate = (ts) => {
+    if (!ts) return '—';
     try {
-      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-      return date.toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
-    } catch (e) {
-      return 'تاريخ غير صالح';
-    }
+      const date = ts.toDate ? ts.toDate() : new Date(ts);
+      return new Intl.DateTimeFormat('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' }).format(date);
+    } catch (e) { return '—'; }
   };
-
-  // تحديد بيانات الاشتراك للعرض (الأولوية للبيانات المحلية المحدثة)
-  const subData = localSub || center?.subscription || subscriptionStatus;
-  const hasSubscription = subData && (subData.status === 'active' || subData.expiryDate);
 
   return (
     <div>
@@ -463,39 +438,33 @@ export default function Settings() {
       {/* المستخدمون */}
       {tab==='users' && (
         <div>
-          {/* بطاقة معلومات الاشتراك (للمدير فقط) */}
-          {isManager && hasSubscription && (
-            <div className="wg" style={{ marginBottom: 20, border: '2px solid var(--pr-l)', background: 'var(--pr-l-5)' }}>
-              <div className="wg-h" style={{ background: 'var(--pr-l)', color: '#fff' }}>
-                <h3>📋 حالة اشتراك المركز</h3>
-              </div>
+          {/* بطاقة معلومات الاشتراك - تظهر للمدير فقط */}
+          {isManager && (
+            <div className="wg" style={{ marginBottom: 20, border: '1px solid var(--pr)', background: 'var(--pr-l)' }}>
+              <div className="wg-h"><h3>💳 حالة اشتراك المركز</h3></div>
               <div className="wg-b">
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-                  <div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--g5)', marginBottom: 4 }}>تاريخ بدء التفعيل</div>
-                    <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{formatDate(subData.activatedAt)}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--g5)', marginBottom: 4 }}>تاريخ انتهاء الصلاحية</div>
-                    <div style={{ fontWeight: 700, fontSize: '1.1rem', color: subData.expiryDate && new Date(subData.expiryDate.toDate ? subData.expiryDate.toDate() : subData.expiryDate) < new Date() ? 'var(--er)' : 'var(--ok)' }}>
-                      {formatDate(subData.expiryDate)}
+                {hasActiveSub ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                    <div>
+                      <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>تاريخ بدء التفعيل</div>
+                      <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{formatDate(subData.activatedAt)}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>تاريخ انتهاء الصلاحية</div>
+                      <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--err)' }}>{formatDate(subData.expiryDate)}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>مدة الاشتراك</div>
+                      <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{subData.months} أشهر</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>الحالة الحالية</div>
+                      <span className="bdg b-ok" style={{ fontSize: '.9rem', fontWeight: 700 }}>نشط ✅</span>
                     </div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--g5)', marginBottom: 4 }}>مدة الاشتراك</div>
-                    <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{subData.months || '-'} شهر</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--g5)', marginBottom: 4 }}>حالة النظام</div>
-                    <span className={`bdg ${subData.status === 'active' ? 'b-ok' : 'b-warn'}`} style={{ padding: '6px 12px', fontSize: '0.9rem' }}>
-                      {subData.status === 'active' ? '✅ نشط' : '⚠️ غير نشط'}
-                    </span>
-                  </div>
-                </div>
-                {subData.type && (
-                  <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--g5)' }}>نوع الباقة: </span>
-                    <strong>{subData.type}</strong>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: 20, color: 'var(--g6)' }}>
+                    لا توجد بيانات اشتراك نشطة لهذا المركز.
                   </div>
                 )}
               </div>
