@@ -5,36 +5,34 @@ import { uid } from '../../utils/dateHelpers';
 import { PROGRAMS, DOMAINS, SEED_GOALS, programLabel, programColor, domainLabel } from '../../utils/goalsBank';
 
 /**
- * دالة مساعدة لجمع الأهداف: البذور الثابتة + أهداف المركز المخصصة
+ * دالة مساعدة لجمع الأهداف وتجهيزها للعرض الهرمي
  */
 function getAllGoalsList() {
   const custom = lsGet('progGoalsBank');
-  // تحويل البذور الثابتة إلى كائنات قابلة للعرض
   const seeds = SEED_GOALS.map((g, i) => ({ ...g, id: `seed-${i}`, isSeed: true }));
   return [...seeds, ...custom];
 }
 
-/**
- * النافذة الرئيسية: إدارة وعرض بنك الأهداف
- * تعرض القائمة الكاملة (بورتاج، لوفاس، إلخ) مع إمكانية البحث والفلترة والإضافة.
- */
+// ============================================================================
+// 1. نافذة إدارة بنك الأهداف (العرض الشامل المنظم)
+// ============================================================================
 export function GoalsBankManagerModal({ onClose }) {
   const { toast } = useApp();
   
-  // حالات الفلترة والبحث
+  // حالات الفلترة العامة
   const [filterProgram, setFilterProgram] = useState('all');
   const [filterDomain, setFilterDomain] = useState('all');
   const [searchText, setSearchText] = useState('');
-  
-  // حالة نموذج الإضافة اليدوية
   const [showAddForm, setShowAddForm] = useState(false);
+  
+  // بيانات النموذج الجديد
   const [newProgram, setNewProgram] = useState('custom');
   const [newDomain, setNewDomain] = useState(DOMAINS[0].key);
   const [newText, setNewText] = useState('');
 
-  // جلب البيانات ومعالجتها
   const allGoals = useMemo(() => getAllGoalsList(), []);
-  
+
+  // فلترة البيانات
   const filteredGoals = useMemo(() => {
     return allGoals.filter(g => {
       const matchProgram = filterProgram === 'all' || g.program === filterProgram;
@@ -44,49 +42,61 @@ export function GoalsBankManagerModal({ onClose }) {
     });
   }, [allGoals, filterProgram, filterDomain, searchText]);
 
-  // تجميع الأهداف لعرضها بشكل أفضل (اختياري، لكن هنا سنعرضها قائمة مسطحة مع badges للوضوح)
-  
+  // تجميع البيانات هرمياً: Program -> Domain -> Category (اختياري) -> Items
+  // ملاحظة: بما أن البيانات الحالية لا تحتوي على حقل "category" صريح في كل العناصر،
+  // سنعرضها grouped by Program ثم Domain مباشرة لضمان الشمولية.
+  const groupedData = useMemo(() => {
+    const groups = {};
+    
+    filteredGoals.forEach(goal => {
+      if (!groups[goal.program]) groups[goal.program] = {};
+      if (!groups[goal.program][goal.domain]) groups[goal.program][goal.domain] = [];
+      groups[goal.program][goal.domain].push(goal);
+    });
+    
+    return groups;
+  }, [filteredGoals]);
+
   function handleAddItem() {
     if (!newText.trim()) { toast('⚠️ اكتب نص الهدف', 'er'); return; }
     lsAdd('progGoalsBank', { id: uid(), program: newProgram, domain: newDomain, text: newText.trim() });
     setNewText('');
-    setShowAddForm(false);
-    toast('✅ تمت الإضافة لبنك المركز', 'ok');
+    toast('✅ تمت الإضافة', 'ok');
   }
 
   function handleDel(id, isSeed) {
-    if (isSeed) {
-      toast('⚠️ لا يمكن حذف الأهداف المرجعية (بورتاج/لوفاس)', 'er');
-      return;
-    }
-    if (!window.confirm('حذف هذا البند من بنك المركز؟')) return;
+    if (isSeed) { toast('⚠️ لا يمكن حذف الأهداف المرجعية', 'er'); return; }
+    if (!window.confirm('حذف هذا البند؟')) return;
     lsDel('progGoalsBank', id);
     toast('🗑️ تم الحذف', 'ok');
   }
+
+  // حساب الإجماليات للعرض
+  const totalPrograms = Object.keys(groupedData).length;
+  const totalGoals = filteredGoals.length;
 
   return (
     <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '95vh', display: 'flex', flexDirection: 'column' }}>
         
-        {/* الرأس: العنوان والأزرار */}
-        <div className="fhd" style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-color)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {/* Header */}
+        <div className="fhd" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', background: '#fff' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
             <div>
-              <h2>🗂️ بنك الأهداف الشامل</h2>
-              <p style={{ fontSize: '.8rem', opacity: .85, marginTop: 4 }}>
-                عرض وأهداف بورتاج، لوفاس، وإضافات مركزك ({filteredGoals.length} هدف)
+              <h2 style={{ margin: 0, fontSize: '1.2rem' }}>🗂️ بنك الأهداف الشامل</h2>
+              <p style={{ margin: '4px 0 0', fontSize: '.85rem', color: 'var(--g5)' }}>
+                عرض منظم لأهداف بورتاج، لوفاس، وإضافاتك ({totalGoals} هدف في {totalPrograms} برامج)
               </p>
             </div>
             <button type="button" className="btn btn-p btn-sm" onClick={() => setShowAddForm(!showAddForm)}>
-              {showAddForm ? '❌ إلغاء' : '➕ إضافة هدف'}
+              {showAddForm ? '❌ إغلاق النموذج' : '➕ إضافة هدف جديد'}
             </button>
           </div>
         </div>
 
-        {/* نموذج الإضافة اليدوية (يظهر عند الطلب) */}
+        {/* Add Form (Collapsible) */}
         {showAddForm && (
           <div style={{ padding: '16px 20px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)' }}>
-            <div style={{ fontSize: '.85rem', fontWeight: 700, marginBottom: 10 }}>إضافة بند جديد للبنك</div>
             <div className="fg c4">
               <div className="fl"><label>البرنامج</label>
                 <select value={newProgram} onChange={e => setNewProgram(e.target.value)}>
@@ -98,10 +108,10 @@ export function GoalsBankManagerModal({ onClose }) {
                   {DOMAINS.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
                 </select>
               </div>
-              <div className="fl full" style={{ gridColumn: 'span 2' }}>
+              <div className="fl full" style={{ gridColumn: 'span 4' }}>
                 <label>نص الهدف</label>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <input value={newText} onChange={e => setNewText(e.target.value)} placeholder="اكتب نص الهدف..." autoFocus onKeyDown={e => e.key === 'Enter' && handleAddItem()} style={{ flex: 1 }} />
+                  <input value={newText} onChange={e => setNewText(e.target.value)} placeholder="اكتب النص هنا..." autoFocus onKeyDown={e => e.key === 'Enter' && handleAddItem()} style={{ flex: 1 }} />
                   <button type="button" className="btn btn-s" onClick={handleAddItem}>حفظ</button>
                 </div>
               </div>
@@ -109,120 +119,139 @@ export function GoalsBankManagerModal({ onClose }) {
           </div>
         )}
 
-        {/* شريط الفلترة والبحث */}
-        <div style={{ padding: '12px 20px', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', background: '#fff' }}>
-          <select value={filterProgram} onChange={e => setFilterProgram(e.target.value)} style={{ minWidth: 150 }}>
+        {/* Filters Bar */}
+        <div style={{ padding: '12px 20px', background: '#f8fafc', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', borderBottom: '1px solid var(--border-color)' }}>
+          <span style={{ fontWeight: 700, fontSize: '.9rem', color: 'var(--g6)' }}>تصفية العرض:</span>
+          <select value={filterProgram} onChange={e => setFilterProgram(e.target.value)} style={{ minWidth: 160, padding: '6px 10px', borderRadius: 6, border: '1px solid #cbd5e1' }}>
             <option value="all">كل البرامج</option>
             {PROGRAMS.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
           </select>
           
-          <select value={filterDomain} onChange={e => setFilterDomain(e.target.value)} style={{ minWidth: 150 }}>
+          <select value={filterDomain} onChange={e => setFilterDomain(e.target.value)} style={{ minWidth: 160, padding: '6px 10px', borderRadius: 6, border: '1px solid #cbd5e1' }}>
             <option value="all">كل المجالات</option>
             {DOMAINS.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
           </select>
 
           <input 
             type="text" 
-            placeholder="🔍 ابحث في نص الهدف..." 
+            placeholder="🔍 بحث في النص..." 
             value={searchText}
             onChange={e => setSearchText(e.target.value)}
-            style={{ flex: 1, minWidth: 200, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-color)' }}
+            style={{ flex: 1, minWidth: 200, padding: '6px 12px', borderRadius: 6, border: '1px solid #cbd5e1' }}
           />
         </div>
 
-        {/* قائمة النتائج */}
-        <div className="modal-body-scroll" style={{ padding: '0 20px 20px', flex: 1 }}>
-          {filteredGoals.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--g4)' }}>
-              لا توجد أهداف تطابق بحثك. جرب تغيير الفلتر.
+        {/* Scrollable Content - Hierarchical View */}
+        <div className="modal-body-scroll" style={{ padding: '20px', background: '#f1f5f9' }}>
+          {totalGoals === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--g5)', background: '#fff', borderRadius: 12 }}>
+              لا توجد أهداف تطابق معايير البحث.
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 10, marginTop: 10 }}>
-              {filteredGoals.map(g => (
-                <div key={g.id} className="card" style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: 6, position: 'relative' }}>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '.7rem', fontWeight: 800, color: programColor(g.program), background: programColor(g.program) + '15', padding: '2px 8px', borderRadius: 12 }}>
-                      {programLabel(g.program)}
-                    </span>
-                    <span style={{ fontSize: '.7rem', color: 'var(--g5)', background: 'var(--g0)', padding: '2px 8px', borderRadius: 12 }}>
-                      {domainLabel(g.domain)}
-                    </span>
+            Object.entries(groupedData).map(([progKey, domainsObj]) => {
+              const pConfig = PROGRAMS.find(p => p.key === progKey) || { label: progKey, color: '#64748b' };
+              
+              return (
+                <div key={progKey} style={{ marginBottom: 24, background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                  {/* Program Header */}
+                  <div style={{ padding: '12px 16px', background: pConfig.color + '10', borderBottom: `2px solid ${pConfig.color}` }}>
+                    <h3 style={{ margin: 0, color: pConfig.color, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ width: 12, height: 12, borderRadius: '50%', background: pConfig.color }}></span>
+                      {pConfig.label}
+                    </h3>
                   </div>
-                  <div style={{ fontSize: '.9rem', fontWeight: 500, lineHeight: 1.4 }}>{g.text}</div>
-                  {!g.isSeed && (
-                    <button type="button" className="btn btn-xs btn-d" style={{ alignSelf: 'flex-end', marginTop: 4 }} onClick={() => handleDel(g.id, g.isSeed)}>
-                      🗑️ حذف
-                    </button>
-                  )}
+
+                  {/* Domains Grid */}
+                  <div style={{ padding: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+                    {Object.entries(domainsObj).map(([domKey, items]) => (
+                      <div key={domKey} style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 12, background: '#fff' }}>
+                        <div style={{ fontWeight: 700, marginBottom: 10, color: '#334155', fontSize: '.95rem', borderBottom: '1px dashed #e2e8f0', paddingBottom: 6 }}>
+                          {domainLabel(domKey)} <span style={{fontWeight:400, color:'var(--g5)', fontSize:'.8rem'}}>({items.length})</span>
+                        </div>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 300, overflowY: 'auto', paddingRight: 4 }}>
+                          {items.map(g => (
+                            <div key={g.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, padding: '6px 8px', borderRadius: 6, background: g.isSeed ? '#f8fafc' : '#fffbeb', border: '1px solid #e2e8f0' }}>
+                              <span style={{ fontSize: '.85rem', lineHeight: 1.4, flex: 1 }}>{g.text}</span>
+                              {!g.isSeed && (
+                                <button type="button" onClick={() => handleDel(g.id, g.isSeed)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 0, fontSize: '.9rem' }}>🗑️</button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
+              );
+            })
           )}
         </div>
 
-        {/* التذييل */}
-        <div className="fa" style={{ borderTop: '1px solid var(--border-color)', padding: '12px 20px' }}>
+        {/* Footer */}
+        <div className="fa" style={{ borderTop: '1px solid var(--border-color)', padding: '12px 20px', background: '#fff' }}>
           <button type="button" className="btn btn-g" onClick={onClose}>إغلاق</button>
-          <div style={{ fontSize: '.8rem', color: 'var(--g5)' }}>
-            إجمالي المعروض: {filteredGoals.length} من {allGoals.length}
-          </div>
         </div>
       </div>
     </div>
   );
 }
 
-/**
- * نافذة اختيار الأهداف (تستخدم عند إنشاء برنامج)
- * لم تتغير وظيفتها الأساسية، لكنها ستستفيد من البيانات المحدثة
- */
+// ============================================================================
+// 2. نافذة اختيار الأهداف (للبرامج طويلة المدى) - مع تحديد الكل الذكي
+// ============================================================================
 export function GoalPickerModal({ domain, alreadySelected, onConfirm, onClose }) {
   const [checked, setChecked] = useState(() => new Set((alreadySelected || []).map(g => g.text)));
   const [customText, setCustomText] = useState('');
   const [customProgram, setCustomProgram] = useState('custom');
   const [saveToBank, setSaveToBank] = useState(true);
-  const [searchText, setSearchText] = useState(''); // إضافة بحث سريع هنا أيضاً
+  const [searchText, setSearchText] = useState('');
 
-  const allGoals = getAllGoalsList().filter(g => g.domain === domain);
-  
-  // فلترة حسب البحث النصي داخل النافذة المنبثقة
-  const filteredGoals = allGoals.filter(g => 
-    searchText === '' || g.text.includes(searchText)
-  );
+  // جلب الأهداف للمجال المحدد فقط
+  const allDomainGoals = useMemo(() => {
+    return getAllGoalsList().filter(g => g.domain === domain);
+  }, [domain]);
 
-  const byProgram = PROGRAMS.map(p => ({ 
-    ...p, 
-    items: filteredGoals.filter(g => g.program === p.key) 
-  })).filter(p => p.items.length > 0);
+  // فلترة البحث
+  const filteredGoals = useMemo(() => {
+    return allDomainGoals.filter(g => searchText === '' || g.text.includes(searchText));
+  }, [allDomainGoals, searchText]);
 
-  function toggle(goal) {
+  // ت grouping: Program -> SubCategory (إذا وجد) -> Items
+  // ملاحظة: لاستخراج "الفئة" من نص الهدف (مثل: "يقلد حركات كبرى: قفز")
+  // سنقوم بتحليل النص. إذا كان يحتوي على ":" نعتبر ما قبله فئة.
+  const groupedByProgram = useMemo(() => {
+    const groups = {};
+    
+    filteredGoals.forEach(g => {
+      if (!groups[g.program]) groups[g.program] = {};
+      
+      // محاولة استخراج الفئة من النص (مثال: "العنوان: التفصيل")
+      let category = 'عام';
+      if (g.text.includes(':')) {
+        category = g.text.split(':')[0].trim();
+      } else if (g.text.includes('-')) {
+        category = g.text.split('-')[0].trim();
+      }
+      
+      if (!groups[g.program][category]) groups[g.program][category] = [];
+      groups[g.program][category].push(g);
+    });
+    
+    return groups;
+  }, [filteredGoals]);
+
+  function toggleGoal(text) {
     setChecked(prev => {
       const next = new Set(prev);
-      if (next.has(goal.text)) next.delete(goal.text);
-      else next.add(goal.text);
+      if (next.has(text)) next.delete(text);
+      else next.add(text);
       return next;
     });
   }
 
-  function addCustomNow() {
-    if (!customText.trim()) return;
-    if (saveToBank) {
-      lsAdd('progGoalsBank', { id: uid(), program: customProgram, domain, text: customText.trim() });
-    }
-    setChecked(prev => new Set(prev).add(customText.trim()));
-    setCustomText('');
-  }
-
-  function confirm() {
-    const selected = allGoals.filter(g => checked.has(g.text));
-    const rawExtras = [...checked].filter(t => !allGoals.some(g => g.text === t))
-      .map(t => ({ program: customProgram, domain, text: t }));
-    onConfirm([...selected, ...rawExtras]);
-  }
-
-  // دالة لتحديد الكل لبرنامج معين
-  function toggleProgram(programKey) {
-    const items = filteredGoals.filter(g => g.program === programKey);
+  function toggleCategory(programKey, categoryName) {
+    const items = groupedByProgram[programKey][categoryName];
     const allChecked = items.every(i => checked.has(i.text));
     
     setChecked(prev => {
@@ -235,82 +264,150 @@ export function GoalPickerModal({ domain, alreadySelected, onConfirm, onClose })
     });
   }
 
+  function toggleProgram(programKey) {
+    const allItems = filteredGoals.filter(g => g.program === programKey);
+    const allChecked = allItems.every(i => checked.has(i.text));
+    
+    setChecked(prev => {
+      const next = new Set(prev);
+      allItems.forEach(i => {
+        if (allChecked) next.delete(i.text);
+        else next.add(i.text);
+      });
+      return next;
+    });
+  }
+
+  function addCustomNow() {
+    if (!customText.trim()) return;
+    if (saveToBank) lsAdd('progGoalsBank', { id: uid(), program: customProgram, domain, text: customText.trim() });
+    setChecked(prev => new Set(prev).add(customText.trim()));
+    setCustomText('');
+  }
+
+  function confirm() {
+    const selected = allDomainGoals.filter(g => checked.has(g.text));
+    const rawExtras = [...checked].filter(t => !allDomainGoals.some(g => g.text === t))
+      .map(t => ({ program: customProgram, domain, text: t }));
+    onConfirm([...selected, ...rawExtras]);
+  }
+
   return (
     <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
-        <div className="fhd" style={{ padding: '14px 20px' }}>
-          <h2>🎯 اختيار أهداف — {domainLabel(domain)}</h2>
-          <p style={{ fontSize: '.8rem', opacity: .85, marginTop: 4 }}>حدد الأهداف المطلوبة من البرامج المختلفة</p>
-        </div>
+      <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '95vh', display: 'flex', flexDirection: 'column' }}>
         
-        {/* شريط بحث داخل نافذة الاختيار */}
-        <div style={{ padding: '10px 20px', background: 'var(--g0)' }}>
+        {/* Header */}
+        <div className="fhd" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
+          <h2>🎯 اختيار أهداف — {domainLabel(domain)}</h2>
+          <p style={{ fontSize: '.85rem', opacity: 0.8, marginTop: 4 }}>حدد الأهداف من الفئات أدناه (يمكن تحديد فئة كاملة)</p>
+        </div>
+
+        {/* Search Bar */}
+        <div style={{ padding: '12px 20px', background: '#f8fafc' }}>
           <input 
             type="text" 
-            placeholder="🔍 بحث سريع في الأهداف..." 
+            placeholder="🔍 تصفية الأهداف في هذا المجال..." 
             value={searchText}
             onChange={e => setSearchText(e.target.value)}
-            style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--border-color)' }}
+            style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: '.95rem' }}
           />
         </div>
 
-        <div className="modal-body-scroll" style={{ padding: '16px 20px' }}>
-          {byProgram.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--g4)' }}>
-              لا توجد بنود في هذا المجال بعد.
-            </div>
-          )}
-          
-          {byProgram.map(p => {
-            const allChecked = p.items.every(i => checked.has(i.text));
+        {/* Content */}
+        <div className="modal-body-scroll" style={{ padding: '20px' }}>
+          {Object.entries(groupedByProgram).map(([progKey, categories]) => {
+            const pConfig = PROGRAMS.find(p => p.key === progKey) || { label: progKey, color: '#64748b' };
+            const programTotalItems = filteredGoals.filter(g => g.program === progKey).length;
+            const programCheckedCount = filteredGoals.filter(g => g.program === progKey && checked.has(g.text)).length;
+            const isProgramFullyChecked = programTotalItems > 0 && programTotalItems === programCheckedCount;
+
             return (
-              <div key={p.key} style={{ marginBottom: 20 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingBottom: 8, borderBottom: '2px solid ' + p.color + '33' }}>
-                  <div style={{ fontSize: '.9rem', fontWeight: 900, color: p.color, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.color }} /> 
-                    {p.label} <span style={{fontSize: '.8rem', opacity: 0.7}}>({p.items.length})</span>
+              <div key={progKey} style={{ marginBottom: 24, border: `1px solid ${pConfig.color}40`, borderRadius: 12, overflow: 'hidden' }}>
+                {/* Program Header with Select All */}
+                <div style={{ padding: '12px 16px', background: pConfig.color + '15', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `2px solid ${pConfig.color}` }}>
+                  <div style={{ fontWeight: 800, color: pConfig.color, fontSize: '1.05rem' }}>
+                    {pConfig.label} <span style={{fontWeight:400, fontSize:'.85rem', color:'var(--g6)'}}>({programCheckedCount}/{programTotalItems})</span>
                   </div>
-                  <button type="button" className="btn btn-xs btn-g" onClick={() => toggleProgram(p.key)}>
-                    {allChecked ? '☑️ تحديد الكل' : '⬜ تحديد الكل'}
+                  <button 
+                    type="button" 
+                    className="btn btn-xs" 
+                    style={{ background: '#fff', border: `1px solid ${pConfig.color}`, color: pConfig.color, fontWeight: 700 }}
+                    onClick={() => toggleProgram(progKey)}
+                  >
+                    {isProgramFullyChecked ? '☑️ إلغاء تحديد الكل' : '⬜ تحديد البرنامج كاملاً'}
                   </button>
                 </div>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 6 }}>
-                  {p.items.map(g => (
-                    <label key={g.id || g.text} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', border: '1px solid var(--border-color)', borderRadius: 8, cursor: 'pointer', background: checked.has(g.text) ? 'var(--ok-l)' : 'transparent', fontSize: '.9rem', transition: 'background 0.2s' }}>
-                      <input type="checkbox" checked={checked.has(g.text)} onChange={() => toggle(g)} style={{ marginTop: 3, transform: 'scale(1.2)' }} />
-                      <span style={{ flex: 1, lineHeight: 1.5 }}>{g.text}</span>
-                    </label>
-                  ))}
+
+                {/* Categories Grid */}
+                <div style={{ padding: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16, background: '#fff' }}>
+                  {Object.entries(categories).map(([catName, items]) => {
+                    const catCheckedCount = items.filter(i => checked.has(i.text)).length;
+                    const isCatFullyChecked = catCheckedCount === items.length;
+
+                    return (
+                      <div key={catName} style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 12, background: '#f8fafc' }}>
+                        {/* Category Header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingBottom: 8, borderBottom: '1px dashed #cbd5e1' }}>
+                          <span style={{ fontWeight: 700, fontSize: '.9rem', color: '#334155' }}>{catName}</span>
+                          <button 
+                            type="button" 
+                            onClick={() => toggleCategory(progKey, catName)}
+                            style={{ fontSize: '.75rem', background: 'none', border: 'none', cursor: 'pointer', color: isCatFullyChecked ? 'var(--ok)' : 'var(--pr)', fontWeight: 700 }}
+                          >
+                            {isCatFullyChecked ? '☑️ الكل' : '⬜ الكل'}
+                          </button>
+                        </div>
+
+                        {/* Items List */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {items.map(g => (
+                            <label key={g.id || g.text} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', fontSize: '.88rem', lineHeight: 1.4 }}>
+                              <input 
+                                type="checkbox" 
+                                checked={checked.has(g.text)} 
+                                onChange={() => toggleGoal(g.text)} 
+                                style={{ marginTop: 3, accentColor: pConfig.color }} 
+                              />
+                              <span style={{ color: checked.has(g.text) ? '#1e293b' : '#64748b' }}>
+                                {g.text.replace(`${catName}:`, '').replace(`${catName} -`, '').trim()}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
           })}
 
-          <div style={{ marginTop: 20, padding: 14, background: 'var(--g0)', borderRadius: 10, borderTop: '2px dashed var(--border-color)' }}>
-            <div style={{ fontSize: '.85rem', fontWeight: 800, marginBottom: 10 }}>➕ إضافة هدف مخصص سريع</div>
+          {/* Custom Input Area */}
+          <div style={{ marginTop: 24, padding: 16, background: '#fffbeb', borderRadius: 10, border: '1px dashed #f59e0b' }}>
+            <div style={{ fontWeight: 700, marginBottom: 10, color: '#92400e' }}>➕ إضافة هدف سريع غير موجود</div>
             <div className="fg c2">
               <div className="fl"><label>البرنامج</label>
                 <select value={customProgram} onChange={e => setCustomProgram(e.target.value)}>
                   {PROGRAMS.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
                 </select>
               </div>
-              <div className="fl"><label style={{ display: 'flex', alignItems: 'center', gap: 6, height: '100%' }}>
+              <div className="fl"><label style={{display:'flex', alignItems:'center', gap:6, height:'100%'}}>
                 <input type="checkbox" checked={saveToBank} onChange={e => setSaveToBank(e.target.checked)} />
-                <span style={{fontSize: '.8rem'}}>حفظ في البنك</span>
+                <span style={{fontSize:'.85rem'}}>حفظ في البنك</span>
               </label></div>
-              <div className="fl full"><label>نص الهدف</label>
+              <div className="fl full"><label>النص</label>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <input value={customText} onChange={e => setCustomText(e.target.value)} placeholder="اكتب نص الهدف..." style={{ flex: 1 }} onKeyDown={e => e.key === 'Enter' && addCustomNow()} />
+                  <input value={customText} onChange={e => setCustomText(e.target.value)} placeholder="اكتب الهدف..." onKeyDown={e => e.key === 'Enter' && addCustomNow()} style={{ flex: 1 }} />
                   <button type="button" className="btn btn-s btn-sm" onClick={addCustomNow}>إضافة</button>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        
-        <div className="fa">
-          <button type="button" className="btn btn-p" onClick={confirm}>✅ تأكيد الاختيار ({checked.size})</button>
+
+        {/* Footer */}
+        <div className="fa" style={{ borderTop: '1px solid var(--border-color)' }}>
+          <button type="button" className="btn btn-p" onClick={confirm}>✅ تأكيد ({checked.size}) هدف مختار</button>
           <button type="button" className="btn btn-g" onClick={onClose}>إلغاء</button>
         </div>
       </div>
