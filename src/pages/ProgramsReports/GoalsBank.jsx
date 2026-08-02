@@ -9,13 +9,14 @@ import { PROGRAMS, DOMAINS, SEED_GOALS, programLabel, programColor, domainLabel 
  */
 export function getAllGoals() {
   const custom = lsGet('progGoalsBank');
+  // تحويل الأهداف الثابتة (Seeds) إلى كائنات مع معرف فريد
   const seeds = SEED_GOALS.map((g, i) => ({ ...g, id: `seed-${i}`, isSeed: true }));
   return [...seeds, ...custom];
 }
 
 /**
  * 1️⃣ نافذة اختيار الأهداف (تظهر عند إنشاء برنامج)
- * التعديلات: إضافة زر "تحديد الكل" لكل برنامج + شريط بحث سريع
+ * تم تحسينها لتوضيح مصدر الأهداف وطريقة عمل الفلترة حسب المجال
  */
 export function GoalPickerModal({ domain, alreadySelected, onConfirm, onClose }) {
   const [checked, setChecked] = useState(() => new Set((alreadySelected || []).map(g => g.text)));
@@ -24,19 +25,19 @@ export function GoalPickerModal({ domain, alreadySelected, onConfirm, onClose })
   const [saveToBank, setSaveToBank] = useState(true);
   const [searchText, setSearchText] = useState('');
 
-  // فلترة الأهداف حسب المجال المختار + البحث النصي
+  // فلترة الأهداف: نجلب فقط الأهداف التابعة للمجال المختار حالياً
   const allGoals = useMemo(() => {
     const goals = getAllGoals().filter(g => g.domain === domain);
     if (!searchText.trim()) return goals;
-    return goals.filter(g => g.text.includes(searchText));
+    return goals.filter(g => g.text.toLowerCase().includes(searchText.toLowerCase()));
   }, [domain, searchText]);
 
-  // تجميع الأهداف حسب البرنامج
+  // تجميع الأهداف حسب البرنامج لعرضها في أقسام منفصلة
   const byProgram = useMemo(() => {
     return PROGRAMS.map(p => ({
       ...p,
       items: allGoals.filter(g => g.program === p.key)
-    })).filter(p => p.items.length > 0);
+    })).filter(p => p.items.length > 0); // إخفاء البرامج التي لا تملك أهدافاً في هذا المجال
   }, [allGoals]);
 
   function toggle(goal) {
@@ -83,27 +84,46 @@ export function GoalPickerModal({ domain, alreadySelected, onConfirm, onClose })
     <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
         
-        {/* الرأس */}
-        <div className="fhd" style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-color)' }}>
+        {/* الرأس مع شرح واضح */}
+        <div className="fhd" style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-color)', background: 'var(--g0)' }}>
           <h2>🎯 اختيار أهداف — {domainLabel(domain)}</h2>
-          <p style={{ fontSize: '.8rem', opacity: .85, marginTop: 4 }}>يمكنك الاختيار من أكثر من برنامج معاً</p>
+          <div style={{ fontSize: '.85rem', color: 'var(--g5)', marginTop: 8, lineHeight: 1.5 }}>
+            <strong>كيف يعمل هذا الشاشة؟</strong><br/>
+            النظام يعرض هنا <u>جميع الأهداف المتاحة</u> في مجال "{domainLabel(domain)}" من المصادر التالية:<br/>
+            ✅ الأهداف الجاهزة المدمجة (لوفاس، بورتاج، إيبلز)<br/>
+            ✅ الأهداف المخصصة التي أضافها مركزك سابقاً<br/>
+            <span style={{color: 'var(--primary)'}}>💡 ملاحظة: البرامج مرتبة حسب عدد الأهداف المتوفرة فيها لهذا المجال.</span>
+          </div>
         </div>
 
         {/* شريط البحث */}
-        <div style={{ padding: '12px 20px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)' }}>
+        <div style={{ padding: '12px 20px', background: '#fff', borderBottom: '1px solid var(--border-color)' }}>
           <input 
             type="text" 
-            placeholder="🔍 ابحث عن هدف معين..." 
+            placeholder="🔍 ابحث عن نص هدف معين داخل هذا المجال..." 
             value={searchText}
             onChange={e => setSearchText(e.target.value)}
-            style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--border-color)', fontSize: '0.9rem' }}
+            style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--border-color)', fontSize: '0.9rem', outline: 'none' }}
           />
         </div>
 
-        <div className="modal-body-scroll" style={{ padding: '20px' }}>
+        <div className="modal-body-scroll" style={{ padding: '20px', flex: 1 }}>
           {byProgram.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--g4)' }}>
-              لا توجد أهداف في هذا المجال حتى الآن.
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--g4)' }}>
+              <div style={{ fontSize: '3rem', marginBottom: 10 }}>📭</div>
+              <h3>لا توجد أهداف مسجلة في هذا المجال حتى الآن</h3>
+              <p style={{ maxWidth: 400, margin: '0 auto 20px' }}>
+                هذا يعني أنه لا توجد أهداف جاهزة (من لوفاس/بورتاج) ولا أهداف مضافة يدوياً لمركزك في مجال "{domainLabel(domain)}".
+              </p>
+              
+              <div style={{ background: 'var(--g0)', padding: 15, borderRadius: 8, textAlign: 'right', maxWidth: 500, margin: '0 auto' }}>
+                <strong>💡 ماذا يمكنك أن تفعل؟</strong>
+                <ol style={{ paddingRight: 20, marginTop: 8, fontSize: '0.9rem' }}>
+                  <li>تحقق من اختيارك للمجال (ربما تحتاج مجالاً آخر).</li>
+                  <li>استخدم النموذج في الأسفل لإضافة هدف جديد يدوياً.</li>
+                  <li>سيتم حفظ الهدف الجديد ليظهر دائماً عند اختيار هذا المجال مستقبلاً.</li>
+                </ol>
+              </div>
             </div>
           ) : (
             byProgram.map(p => {
@@ -111,37 +131,48 @@ export function GoalPickerModal({ domain, alreadySelected, onConfirm, onClose })
               const allChecked = count > 0 && p.items.every(i => checked.has(i.text));
               
               return (
-                <div key={p.key} style={{ marginBottom: 24 }}>
-                  {/* عنوان البرنامج مع زر تحديد الكل */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.color }} />
-                      <span style={{ fontWeight: 800, fontSize: '1.05rem', color: p.color }}>{p.label}</span>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--g5)', background: 'var(--g1)', padding: '2px 8px', borderRadius: 12 }}>{count}</span>
+                <div key={p.key} style={{ marginBottom: 30 }}>
+                  {/* عنوان البرنامج مع زر تحديد الكل وشرح مصغر */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ width: 14, height: 14, borderRadius: '50%', background: p.color, display: 'inline-block' }} />
+                      <span style={{ fontWeight: 800, fontSize: '1.1rem', color: p.color }}>{p.label}</span>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--g6)', background: 'var(--g1)', padding: '2px 10px', borderRadius: 20, fontWeight: 600 }}>
+                        {count} هدف متاح
+                      </span>
                     </div>
                     <button 
                       type="button" 
                       className={`btn btn-xs ${allChecked ? 'btn-s' : 'btn-g'}`}
                       onClick={() => toggleProgram(p.key)}
+                      style={{ fontWeight: 600 }}
                     >
-                      {allChecked ? '☑️ إلغاء الكل' : '⬜ تحديد الكل'}
+                      {allChecked ? '☑️ إلغاء تحديد الكل' : '⬜ تحديد الكل'}
                     </button>
                   </div>
 
+                  {/* شرح صغير تحت العنوان */}
+                  <div style={{ fontSize: '0.85rem', color: 'var(--g5)', marginBottom: 10, background: `${p.color}10`, padding: '6px 12px', borderRadius: 6, display: 'inline-block' }}>
+                    📌 هذه أهداف برنامج <strong>{p.label}</strong> الخاصة بمجال <strong>{domainLabel(domain)}</strong>. اختر ما يناسب خطة الطالب.
+                  </div>
+
                   {/* قائمة الأهداف */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {p.items.map(g => (
                       <label key={g.id || g.text} style={{ 
-                        display: 'flex', alignItems: 'flex-start', gap: 10, 
-                        padding: '10px 12px', 
+                        display: 'flex', alignItems: 'flex-start', gap: 12, 
+                        padding: '12px 14px', 
                         border: '1px solid var(--border-color)', 
-                        borderRadius: 8, 
+                        borderRadius: 10, 
                         cursor: 'pointer', 
-                        background: checked.has(g.text) ? 'var(--ok-l)' : 'transparent',
-                        transition: 'all 0.2s'
+                        background: checked.has(g.text) ? 'var(--ok-l)' : '#fff',
+                        transition: 'all 0.2s',
+                        boxShadow: checked.has(g.text) ? '0 2px 8px rgba(0,0,0,0.05)' : 'none'
                       }}>
-                        <input type="checkbox" checked={checked.has(g.text)} onChange={() => toggle(g)} style={{ marginTop: 3, transform: 'scale(1.2)' }} />
-                        <span style={{ flex: 1, lineHeight: 1.5, fontSize: '0.95rem' }}>{g.text}</span>
+                        <input type="checkbox" checked={checked.has(g.text)} onChange={() => toggle(g)} style={{ marginTop: 4, transform: 'scale(1.3)', accentColor: p.color }} />
+                        <span style={{ flex: 1, lineHeight: 1.6, fontSize: '0.95rem', color: checked.has(g.text) ? '#000' : 'var(--g7)' }}>{g.text}</span>
+                        {g.isSeed && <span title="هدف جاهز من النظام" style={{fontSize: '0.7rem', color: 'var(--g5)'}}>🏛️</span>}
+                        {!g.isSeed && <span title="هدف مضاف من قبلكم" style={{fontSize: '0.7rem', color: 'var(--primary)'}}>✏️</span>}
                       </label>
                     ))}
                   </div>
@@ -151,30 +182,51 @@ export function GoalPickerModal({ domain, alreadySelected, onConfirm, onClose })
           )}
 
           {/* إضافة هدف مخصص سريع */}
-          <div style={{ marginTop: 20, padding: 16, background: 'var(--g0)', borderRadius: 10, borderTop: '2px dashed var(--border-color)' }}>
-            <div style={{ fontSize: '.9rem', fontWeight: 700, marginBottom: 10 }}>➕ إضافة هدف يدوي لهذا المجال</div>
-            <div className="fg c2">
-              <div className="fl"><label>البرنامج</label>
-                <select value={customProgram} onChange={e => setCustomProgram(e.target.value)}>
+          <div style={{ marginTop: 30, padding: 20, background: 'var(--g0)', borderRadius: 12, borderTop: '3px solid var(--primary)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+              <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--primary)' }}>➕ إضافة هدف يدوي جديد</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--g5)', maxWidth: 300, textAlign: 'right' }}>
+                <strong>لماذا أكتب نص الهدف هنا؟</strong><br/>
+                استخدم هذا القسم إذا لم تجد الهدف الذي تريده في القوائم أعلاه. سيتم إضافته فوراً وتحديدُه.
+              </div>
+            </div>
+            
+            <div className="fg c2" style={{ gap: 15 }}>
+              <div className="fl" style={{ flex: 1 }}>
+                <label style={{ fontWeight: 600, marginBottom: 6, display: 'block' }}>البرنامج التابع له</label>
+                <select value={customProgram} onChange={e => setCustomProgram(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--border-color)' }}>
                   {PROGRAMS.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
                 </select>
               </div>
-              <div className="fl"><label style={{ display: 'flex', alignItems: 'center', gap: 6, height: '100%' }}>
-                <input type="checkbox" checked={saveToBank} onChange={e => setSaveToBank(e.target.checked)} />
-                <span style={{fontSize: '.85rem'}}>حفظ في البنك</span>
-              </label></div>
-              <div className="fl full"><label>نص الهدف</label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input value={customText} onChange={e => setCustomText(e.target.value)} placeholder="اكتب الهدف..." style={{ flex: 1 }} onKeyDown={e => e.key === 'Enter' && addCustomNow()} />
-                  <button type="button" className="btn btn-s btn-sm" onClick={addCustomNow}>إضافة</button>
+              
+              <div className="fl" style={{ flex: 1, display: 'flex', alignItems: 'flex-end', paddingBottom: 8 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
+                  <input type="checkbox" checked={saveToBank} onChange={e => setSaveToBank(e.target.checked)} style={{ transform: 'scale(1.2)' }} />
+                  <span style={{fontSize: '0.9rem', fontWeight: 600}}>💾 حفظ في بنك المركز للاستخدام المستقبلي</span>
+                </label>
+              </div>
+              
+              <div className="fl full">
+                <label style={{ fontWeight: 600, marginBottom: 6, display: 'block' }}>نص الهدف</label>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <input 
+                    value={customText} 
+                    onChange={e => setCustomText(e.target.value)} 
+                    placeholder="اكتب نص الهدف بدقة كما تريد أن يظهر في الخطة..." 
+                    style={{ flex: 1, padding: '10px', borderRadius: 6, border: '1px solid var(--border-color)' }} 
+                    onKeyDown={e => e.key === 'Enter' && addCustomNow()} 
+                  />
+                  <button type="button" className="btn btn-p" onClick={addCustomNow} disabled={!customText.trim()}>إضافة وتحديد</button>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="fa" style={{ borderTop: '1px solid var(--border-color)' }}>
-          <button type="button" className="btn btn-p" onClick={confirm}>✅ تأكيد ({checked.size})</button>
+        <div className="fa" style={{ borderTop: '1px solid var(--border-color)', padding: '15px 20px', background: '#fff' }}>
+          <button type="button" className="btn btn-p" onClick={confirm} style={{ fontSize: '1rem', padding: '10px 30px' }}>
+            ✅ تأكيد الاختيار ({checked.size}) هدف
+          </button>
           <button type="button" className="btn btn-g" onClick={onClose}>إلغاء</button>
         </div>
       </div>
@@ -184,7 +236,7 @@ export function GoalPickerModal({ domain, alreadySelected, onConfirm, onClose })
 
 /**
  * 2️⃣ نافذة إدارة بنك الأهداف (للمشرفين فقط)
- * تعرض فقط الإضافات اليدوية للمركز، ولا تعرض الـ 800 هدف الجاهز لتجنب الزحمة.
+ * تعرض فقط الإضافات اليدوية للمركز، وتوضح الفرق بينها وبين الأهداف الجاهزة.
  */
 export function GoalsBankManagerModal({ onClose }) {
   const { toast } = useApp();
@@ -197,15 +249,15 @@ export function GoalsBankManagerModal({ onClose }) {
   function reload() { setCustomBank(lsGet('progGoalsBank')); }
 
   function addItem() {
-    if (!newText.trim()) { toast('⚠️ اكتب نص الهدف', 'er'); return; }
+    if (!newText.trim()) { toast('⚠️ يرجى كتابة نص الهدف', 'er'); return; }
     lsAdd('progGoalsBank', { id: uid(), program: newProgram, domain: newDomain, text: newText.trim() });
     setNewText('');
-    toast('✅ تمت الإضافة لبنك المركز', 'ok');
+    toast('✅ تمت الإضافة لبنك المركز بنجاح', 'ok');
     reload();
   }
 
   function del(id) {
-    if (!window.confirm('حذف هذا البند من بنك المركز؟')) return;
+    if (!window.confirm('هل أنت متأكد من حذف هذا البند من بنك المركز؟\nهذا الإجراء لا يؤثر على الأهداف الجاهزة المدمجة.')) return;
     lsDel('progGoalsBank', id);
     toast('🗑️ تم الحذف', 'ok');
     reload();
@@ -216,61 +268,83 @@ export function GoalsBankManagerModal({ onClose }) {
   return (
     <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
-        <div className="fhd" style={{ padding: '14px 20px' }}>
+        <div className="fhd" style={{ padding: '14px 20px', background: 'var(--g0)' }}>
           <h2>🗂️ إدارة بنك أهداف المركز</h2>
-          <p style={{ fontSize: '.8rem', opacity: .85, marginTop: 4 }}>أضف هنا البنود الخاصة بدليلكم المرخّص (لا تظهر هنا أهداف لوفاس/بورتاج الجاهزة)</p>
+          <div style={{ fontSize: '.85rem', opacity: .9, marginTop: 8, lineHeight: 1.6 }}>
+            <strong>ما هو "مخصص للمركز"؟</strong><br/>
+            هذه الصفحة تعرض <u>فقط</u> الأهداف التي قام فريقكم بإضافتها يدوياً. <br/>
+            الأهداف الجاهزة (لوفاس، بورتاج، إيبلز) لا تظهر هنا لأنها مثبتة في النظام ولا يمكن تعديلها أو حذفها من قبل المركز.
+          </div>
         </div>
         
         <div className="modal-body-scroll" style={{ padding: '20px' }}>
           {/* نموذج الإضافة */}
-          <div style={{ padding: 16, background: 'var(--g0)', borderRadius: 10, marginBottom: 20 }}>
-            <div style={{ fontSize: '.9rem', fontWeight: 700, marginBottom: 10 }}>➕ إضافة بند جديد للبنك</div>
-            <div className="fg c3">
-              <div className="fl"><label>البرنامج</label>
-                <select value={newProgram} onChange={e => setNewProgram(e.target.value)}>
+          <div style={{ padding: 20, background: '#fff', borderRadius: 12, marginBottom: 25, border: '1px solid var(--border-color)', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div style={{ fontSize: '1rem', fontWeight: 800, marginBottom: 15, color: 'var(--primary)' }}>➕ إضافة بند جديد للبنك</div>
+            <div className="fg c3" style={{ gap: 15 }}>
+              <div className="fl"><label style={{ fontWeight: 600 }}>البرنامج</label>
+                <select value={newProgram} onChange={e => setNewProgram(e.target.value)} style={{ width: '100%' }}>
                   {PROGRAMS.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
                 </select>
               </div>
-              <div className="fl"><label>المجال</label>
-                <select value={newDomain} onChange={e => setNewDomain(e.target.value)}>
+              <div className="fl"><label style={{ fontWeight: 600 }}>المجال</label>
+                <select value={newDomain} onChange={e => setNewDomain(e.target.value)} style={{ width: '100%' }}>
                   {DOMAINS.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
                 </select>
               </div>
-              <div className="fl"><label>&nbsp;</label>
-                <button type="button" className="btn btn-p" onClick={addItem}>➕ حفظ</button>
+              <div className="fl full"><label style={{ fontWeight: 600 }}>نص الهدف</label>
+                <input 
+                  value={newText} 
+                  onChange={e => setNewText(e.target.value)} 
+                  placeholder="اكتب نص الهدف كما في دليلكم المرخّص..." 
+                  onKeyDown={e => e.key === 'Enter' && addItem()} 
+                  style={{ width: '100%' }}
+                />
               </div>
-              <div className="fl full"><label>نص الهدف</label>
-                <input value={newText} onChange={e => setNewText(e.target.value)} placeholder="اكتب نص الهدف كما في دليلكم..." onKeyDown={e => e.key === 'Enter' && addItem()} />
+              <div className="fl" style={{ alignSelf: 'flex-end' }}>
+                <button type="button" className="btn btn-p" onClick={addItem} style={{ width: '100%', fontWeight: 700 }}>➕ حفظ في البنك</button>
               </div>
             </div>
           </div>
 
           {/* الفلتر */}
-          <div className="tabs" style={{ marginBottom: 16, overflowX: 'auto', whiteSpace: 'nowrap' }}>
-            <button type="button" className={`tab ${filterDomain === 'all' ? 'on' : ''}`} onClick={() => setFilterDomain('all')}>الكل ({customBank.length})</button>
-            {DOMAINS.map(d => (
-              <button key={d.key} type="button" className={`tab ${filterDomain === d.key ? 'on' : ''}`} onClick={() => setFilterDomain(d.key)}>{d.label}</button>
-            ))}
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ fontWeight: 700, marginBottom: 10, display: 'block' }}>تصفية حسب المجال:</label>
+            <div className="tabs" style={{ overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: 5 }}>
+              <button type="button" className={`tab ${filterDomain === 'all' ? 'on' : ''}`} onClick={() => setFilterDomain('all')}>الكل ({customBank.length})</button>
+              {DOMAINS.map(d => {
+                const count = customBank.filter(g => g.domain === d.key).length;
+                return (
+                  <button key={d.key} type="button" className={`tab ${filterDomain === d.key ? 'on' : ''}`} onClick={() => setFilterDomain(d.key)}>
+                    {d.label} ({count})
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* القائمة */}
           {filtered.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--g4)' }}>لا توجد إضافات محلية في هذا الفلتر بعد.</div>
+            <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--g4)', background: 'var(--g0)', borderRadius: 12 }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: 10 }}>📝</div>
+              <h3>لا توجد إضافات محلية</h3>
+              <p>لم يقم المركز بإضافة أي أهداف يدوياً في هذا التصنيف حتى الآن.</p>
+            </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 15 }}>
               {filtered.map(g => (
-                <div key={g.id} className="card" style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '.7rem', fontWeight: 800, color: programColor(g.program), background: programColor(g.program) + '15', padding: '2px 8px', borderRadius: 12 }}>
+                <div key={g.id} className="card" style={{ padding: '15px', display: 'flex', flexDirection: 'column', gap: 10, border: '1px solid var(--border-color)', borderRadius: 10, background: '#fff' }}>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: programColor(g.program), background: programColor(g.program) + '15', padding: '4px 10px', borderRadius: 20 }}>
                       {programLabel(g.program)}
                     </span>
-                    <span style={{ fontSize: '.7rem', color: 'var(--g5)', background: 'var(--g1)', padding: '2px 8px', borderRadius: 12 }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--g6)', background: 'var(--g1)', padding: '4px 10px', borderRadius: 20 }}>
                       {domainLabel(g.domain)}
                     </span>
                   </div>
-                  <div style={{ fontSize: '.9rem', fontWeight: 500, lineHeight: 1.4 }}>{g.text}</div>
-                  <div style={{ textAlign: 'right' }}>
-                    <button type="button" className="btn btn-xs btn-d" onClick={() => del(g.id)}>🗑️ حذف</button>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 600, lineHeight: 1.5, color: '#333' }}>{g.text}</div>
+                  <div style={{ textAlign: 'left', marginTop: 'auto', paddingTop: 10, borderTop: '1px dashed var(--border-color)' }}>
+                    <button type="button" className="btn btn-xs btn-d" onClick={() => del(g.id)}>🗑️ حذف من البنك</button>
                   </div>
                 </div>
               ))}
@@ -278,8 +352,8 @@ export function GoalsBankManagerModal({ onClose }) {
           )}
         </div>
 
-        <div className="fa">
-          <button type="button" className="btn btn-g" onClick={onClose}>إغلاق</button>
+        <div className="fa" style={{ borderTop: '1px solid var(--border-color)' }}>
+          <button type="button" className="btn btn-g" onClick={onClose}>إغلاق النافذة</button>
         </div>
       </div>
     </div>
