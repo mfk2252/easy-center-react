@@ -361,7 +361,7 @@ export default function Calendar() {
       }}>
         <div>
           {/* تم جعل العنوان الكبير هو الشهر الحالي مع السنة بدلاً من الكلمة السابقة */}
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 850, margin: 0, display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-main)' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 850, margin: 0, display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text)' }}>
             <span>🗓️</span> {MONTHS_AR[month]} {year}
           </h2>
           {/* النص الرفيع بالأسفل */}
@@ -376,7 +376,7 @@ export default function Calendar() {
             <button 
               type="button" 
               className="btn btn-sm" 
-              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '4px 10px', color: 'var(--text-main)', fontWeight: 'bold' }} 
+              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '4px 10px', color: 'var(--text)', fontWeight: 'bold' }} 
               onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() - 1); return n; })}
             >
               → السابق
@@ -384,7 +384,7 @@ export default function Calendar() {
             <button 
               type="button" 
               className="btn btn-sm" 
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 6, padding: '4px 12px', fontWeight: 'bold', color: 'var(--text-main)' }} 
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 6, padding: '4px 12px', fontWeight: 'bold', color: 'var(--text)' }} 
               onClick={() => setCur(new Date())}
             >
               اليوم
@@ -392,7 +392,7 @@ export default function Calendar() {
             <button 
               type="button" 
               className="btn btn-sm" 
-              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '4px 10px', color: 'var(--text-main)', fontWeight: 'bold' }} 
+              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '4px 10px', color: 'var(--text)', fontWeight: 'bold' }} 
               onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() + 1); return n; })}
             >
               التالي ←
@@ -430,7 +430,7 @@ export default function Calendar() {
                   textAlign: 'center', 
                   fontSize: '0.85rem', 
                   fontWeight: 'bold', 
-                  color: 'var(--text-main)', // يعتمد على لون النص الرئيسي للثيم وليس الخافت
+                  color: 'var(--text)', // يعتمد على لون النص الرئيسي للثيم وليس الخافت
                   padding: '8px 0', 
                   borderBottom: '1px solid var(--border-color)',
                   opacity: 0.95
@@ -442,30 +442,27 @@ export default function Calendar() {
           </div>
           
           {/* خلايا الأيام */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 6 }}>
             {cells.map((d, i) => {
-              if (!d) return <div key={i} style={{ minHeight: '80px', background: 'var(--g0)', borderRadius: 8, opacity: 0.15 }} />;
+              if (!d) return <div key={i} style={{ minHeight: '72px', background: 'var(--g0)', borderRadius: 10, opacity: 0.15 }} />;
               const ds = dateStr(d);
               const row = itemsOnDay(d);
               const isToday = ds === today;
               const isSel = d === selDay;
 
-              // معالجة ذكية ومباشرة للألوان لمنع حدوث أي تداخل مع الألوان الداكنة
               let cellBg = 'var(--bg-card)';
               let borderStyle = '1px solid var(--border-color)';
-              let textWeight = '600';
-              let numColor = 'var(--text-main)'; // أبيض في الثيم الداكن، رمادي غامق في الفاتح
+              let textWeight = '700';
+              let numColor = 'var(--text)';
 
               if (isToday) {
-                cellBg = 'rgba(236, 72, 153, 0.12)'; // خلفية وردية خفيفة ملائمة للون الـ Border الحالي
-                borderStyle = '2px solid var(--pr)'; // حد وردي بارز جداً
-                textWeight = '900';
-                numColor = 'var(--text-main)'; // أبيض واضح
+                cellBg = 'rgba(59, 130, 246, 0.08)';
+                borderStyle = '1.5px solid var(--pr)';
+                textWeight = '800';
               } else if (isSel) {
                 cellBg = 'var(--pr-l)';
                 borderStyle = '1px solid var(--pr)';
                 textWeight = '800';
-                numColor = 'var(--text-main)';
               }
 
               return (
@@ -477,66 +474,71 @@ export default function Calendar() {
                     setSelItem(null);
                   }}
                   style={{
-                    minHeight: '80px',
+                    minHeight: '72px',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     alignItems: 'stretch',
                     border: borderStyle,
-                    borderRadius: 8,
-                    padding: '8px',
+                    borderRadius: 10,
+                    padding: '6px 7px 8px',
                     background: cellBg,
                     cursor: 'pointer',
                     textAlign: 'right',
                     position: 'relative',
                     outline: 'none',
-                    transition: 'all 0.15s ease'
+                    transition: 'all 0.15s ease',
+                    boxShadow: isToday || isSel ? '0 2px 8px rgba(0,0,0,0.04)' : 'none',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(15, 23, 42, 0.08)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'none';
-                    e.currentTarget.style.boxShadow = 'none';
+                    e.currentTarget.style.boxShadow = isToday || isSel ? '0 2px 8px rgba(0,0,0,0.04)' : 'none';
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                    {/* رقم اليوم بخط واضح وبارز وبألوان الثيم الديناميكية */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', gap: 4 }}>
                     <span style={{ 
-                      fontSize: '0.95rem', 
+                      fontSize: '0.82rem', 
                       fontWeight: textWeight, 
                       color: numColor,
-                      width: 24,
-                      height: 24,
+                      width: 22,
+                      height: 22,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      borderRadius: '50%'
+                      borderRadius: '50%',
+                      background: isToday ? 'rgba(59, 130, 246, 0.12)' : 'transparent'
                     }}>
                       {d}
                     </span>
                     {row.length > 0 && (
-                      <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--pr)' }}>
-                        ●
+                      <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: 'var(--pr)' }}>
+                        •
                       </span>
                     )}
                   </div>
 
-                  {/* نقاط ملونة ممتازة لتمثيل الجلسات والأحداث */}
-                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
-                    {row.map(it => (
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
+                    {row.slice(0, 3).map(it => (
                       <span 
                         key={it.id} 
                         style={{ 
-                          width: 8, 
-                          height: 8, 
+                          width: 7, 
+                          height: 7, 
                           borderRadius: '50%', 
-                          background: getColorStyles(it.color).text 
+                          background: getColorStyles(it.color).text,
+                          display: 'inline-block',
+                          flexShrink: 0
                         }} 
                         title={it.title}
                       />
                     ))}
+                    {row.length > 3 && (
+                      <span style={{ fontSize: '0.58rem', fontWeight: 700, color: 'var(--text-sub)' }}>+{row.length - 3}</span>
+                    )}
                   </div>
                 </button>
               );
@@ -557,7 +559,7 @@ export default function Calendar() {
           {/* قائمة المهام والأحداث */}
           <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 12 }}>
             <div className="wg-h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', padding: '12px 16px' }}>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text)' }}>
                 📅 جدول يوم {selDay} {MONTHS_AR[month]}
               </h3>
               <div style={{ display: 'flex', gap: 4 }}>
@@ -566,14 +568,14 @@ export default function Calendar() {
               </div>
             </div>
             
-            <div className="wg-b" style={{ padding: 16, maxHeight: 320, overflowY: 'auto' }}>
+            <div className="wg-b" style={{ padding: 14, maxHeight: 320, overflowY: 'auto' }}>
               {dayItems.length === 0 ? (
-                <div style={{ color: 'var(--text-sub)', textAlign: 'center', padding: '24px 0' }}>
-                  <p style={{ fontSize: '1.5rem', margin: 0 }}>☕</p>
+                <div style={{ color: 'var(--text-sub)', textAlign: 'center', padding: '22px 0' }}>
+                  <p style={{ fontSize: '1.3rem', margin: 0 }}>☕</p>
                   <p style={{ fontSize: '0.8rem', margin: '4px 0 0 0' }}>لا توجد عناصر مجدولة اليوم.</p>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {dayItems.map(it => {
                     const colorTheme = getColorStyles(it.color);
                     const isSelected = selItem?.id === it.id;
@@ -586,7 +588,7 @@ export default function Calendar() {
                           display: 'block',
                           width: '100%',
                           textAlign: 'right',
-                          padding: '10px 14px',
+                          padding: '8px 10px',
                           borderRadius: 8,
                           border: isSelected ? '2px solid var(--pr)' : '1px solid var(--border-color)',
                           background: isSelected ? 'var(--pr-l)' : 'var(--bg-card)',
@@ -594,9 +596,9 @@ export default function Calendar() {
                           transition: 'all 0.15s',
                         }}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, gap: 8 }}>
                           <span style={{ 
-                            fontSize: '0.68rem', 
+                            fontSize: '0.64rem', 
                             padding: '2px 6px', 
                             borderRadius: 4, 
                             background: colorTheme.bg, 
@@ -605,9 +607,9 @@ export default function Calendar() {
                           }}>
                             {it.source}
                           </span>
-                          {it.time && <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)' }}>🕐 {it.time}</span>}
+                          {it.time && <span style={{ fontSize: '0.7rem', color: 'var(--text-sub)' }}>🕐 {it.time}</span>}
                         </div>
-                        <div style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--text-main)' }}>{it.title}</div>
+                        <div style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--text)' }}>{it.title}</div>
                       </button>
                     );
                   })}
@@ -619,33 +621,33 @@ export default function Calendar() {
           {/* معاينة التفاصيل بالكامل */}
           <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 12 }}>
             <div className="wg-h" style={{ borderBottom: '1px solid var(--border-color)', padding: '12px 16px' }}>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>📌 بطاقة التفاصيل</h3>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text)' }}>📌 بطاقة التفاصيل</h3>
             </div>
             <div className="wg-b" style={{ padding: 16 }}>
               {selItem ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: 6, background: 'var(--g0)', color: 'var(--text-main)', fontWeight: 'bold' }}>
+                    <span style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: 6, background: 'var(--g0)', color: 'var(--text)', fontWeight: 'bold' }}>
                       المصدر: {selItem.source}
                     </span>
-                    <span style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: 6, background: 'var(--g0)', color: 'var(--text-main)', fontWeight: 'bold' }}>
+                    <span style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: 6, background: 'var(--g0)', color: 'var(--text)', fontWeight: 'bold' }}>
                       التاريخ: {selItem.date}
                     </span>
                   </div>
 
-                  <h4 style={{ margin: '4px 0 0 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                  <h4 style={{ margin: '4px 0 0 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--text)' }}>
                     {selItem.title}
                   </h4>
 
                   {selItem.time && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--g0)', padding: '8px 12px', borderRadius: 8 }}>
                       <span style={{ fontSize: '1rem' }}>🕒</span>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-main)' }}>{selItem.time}</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text)' }}>{selItem.time}</div>
                     </div>
                   )}
 
                   {selItem.detail && (
-                    <div style={{ background: 'var(--g0)', padding: 12, borderRadius: 8, fontSize: '0.85rem', lineHeight: 1.5, color: 'var(--text-main)' }}>
+                    <div style={{ background: 'var(--g0)', padding: 12, borderRadius: 8, fontSize: '0.85rem', lineHeight: 1.5, color: 'var(--text)' }}>
                       {selItem.detail}
                     </div>
                   )}
@@ -899,7 +901,7 @@ export default function Calendar() {
       {showEval && (
         <div className="mbg" onClick={e => e.target === e.currentTarget && setShowEval(false)}>
           <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
-            <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0, background: 'var(--warn)' }}>
+            <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0, background: 'var(--or)' }}>
               <h2 style={{ color: '#fff', margin: 0, fontSize: '1.15rem' }}>📋 تقييم مستفيد جديد</h2>
             </div>
             <div className="modal-body-scroll" style={{ padding: '20px' }}>
@@ -931,7 +933,7 @@ export default function Calendar() {
               </div>
             </div>
             <div className="fa" style={{ padding: '12px 20px', background: 'var(--g0)' }}>
-              <button type="button" className="btn btn-p" style={{ background: 'var(--warn)', borderColor: 'var(--warn)' }} onClick={saveEval}>💾 تسجيل موعد التقييم</button>
+              <button type="button" className="btn btn-p" style={{ background: 'var(--or)', borderColor: 'var(--or)' }} onClick={saveEval}>💾 تسجيل موعد التقييم</button>
               <button type="button" className="btn btn-g" onClick={() => setShowEval(false)}>إلغاء</button>
             </div>
           </div>
