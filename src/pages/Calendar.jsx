@@ -576,7 +576,7 @@ export default function Calendar() {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', gap: 2 }}>
                     <span style={{
-                      fontSize: '0.58rem',
+                      fontSize: '0.80rem',
                       fontWeight: textWeight,
                       color: numColor,
                       width: 15,
