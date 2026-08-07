@@ -357,20 +357,20 @@ export default function Calendar() {
         alignItems: 'center',
         flexWrap: 'wrap',
         gap: 16,
-        marginBottom: 16,
-        background: 'linear-gradient(135deg, rgba(59,130,246,0.06), rgba(168,85,247,0.04))',
-        padding: '16px 20px',
-        borderRadius: 18,
+        marginBottom: 14,
+        padding: '18px 20px',
+        borderRadius: 22,
         border: '1px solid var(--border-color)',
-        boxShadow: '0 10px 30px rgba(15, 23, 42, 0.04)'
+        background: 'linear-gradient(135deg, rgba(26, 86, 219, 0.12), rgba(124, 58, 237, 0.08))',
+        boxShadow: '0 16px 40px rgba(15, 23, 42, 0.08)'
       }}>
         <div>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: 8,
-            background: 'var(--pr-l)',
-            border: '1px solid rgba(59,130,246,0.15)',
+            background: 'rgba(255,255,255,0.75)',
+            border: '1px solid rgba(59,130,246,0.16)',
             color: 'var(--pr)',
             padding: '6px 10px',
             borderRadius: 999,
@@ -380,17 +380,20 @@ export default function Calendar() {
           }}>
             <span>🗓️</span> التقويم
           </div>
-          <h2 style={{ fontSize: 'clamp(1.5rem, 2vw, 2rem)', fontWeight: 900, margin: 0, color: 'var(--text)' }}>
+          <h2 style={{ fontSize: 'clamp(1.35rem, 2vw, 1.9rem)', fontWeight: 900, margin: 0, color: 'var(--text-main)' }}>
             {MONTHS_AR[month]} {year}
           </h2>
+          <div style={{ marginTop: 6, fontSize: '0.82rem', color: 'var(--text-sub)' }}>
+            نظرة موحدة بالشهر مع الأحداث والمواعيد المهمة
+          </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', background: 'var(--g0)', padding: 4, borderRadius: 12, border: '1px solid var(--border-color)' }}>
+          <div style={{ display: 'flex', background: 'var(--bg-card)', padding: 4, borderRadius: 12, border: '1px solid var(--border-color)', boxShadow: 'var(--sh)' }}>
             <button
               type="button"
               className="btn btn-sm"
-              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '5px 10px', color: 'var(--text)', fontWeight: 700 }}
+              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '6px 10px', color: 'var(--text-main)', fontWeight: 700 }}
               onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() - 1); return n; })}
             >
               السابق
@@ -398,7 +401,7 @@ export default function Calendar() {
             <button
               type="button"
               className="btn btn-sm"
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 8, padding: '5px 12px', fontWeight: 700, color: 'var(--text)' }}
+              style={{ background: 'var(--pr-l)', border: '1px solid rgba(59,130,246,0.18)', borderRadius: 8, padding: '6px 12px', fontWeight: 800, color: 'var(--pr)' }}
               onClick={() => setCur(new Date())}
             >
               اليوم
@@ -406,7 +409,7 @@ export default function Calendar() {
             <button
               type="button"
               className="btn btn-sm"
-              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '5px 10px', color: 'var(--text)', fontWeight: 700 }}
+              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '6px 10px', color: 'var(--text-main)', fontWeight: 700 }}
               onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() + 1); return n; })}
             >
               التالي
@@ -430,41 +433,41 @@ export default function Calendar() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '8px 12px', borderRadius: 999 }}>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '8px 12px', borderRadius: 999, boxShadow: 'var(--sh)' }}>
           <span style={{ fontSize: '0.8rem', color: 'var(--pr)' }}>📌</span>
           <span style={{ fontSize: '0.76rem', color: 'var(--text-sub)' }}>إجمالي</span>
-          <strong style={{ fontSize: '0.84rem', color: 'var(--text)' }}>{monthSummary.total}</strong>
+          <strong style={{ fontSize: '0.84rem', color: 'var(--text-main)' }}>{monthSummary.total}</strong>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '8px 12px', borderRadius: 999 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '8px 12px', borderRadius: 999, boxShadow: 'var(--sh)' }}>
           <span style={{ fontSize: '0.8rem', color: '#10b981' }}>🩺</span>
           <span style={{ fontSize: '0.76rem', color: 'var(--text-sub)' }}>جلسات</span>
-          <strong style={{ fontSize: '0.84rem', color: 'var(--text)' }}>{monthSummary.sessions}</strong>
+          <strong style={{ fontSize: '0.84rem', color: 'var(--text-main)' }}>{monthSummary.sessions}</strong>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '8px 12px', borderRadius: 999 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '8px 12px', borderRadius: 999, boxShadow: 'var(--sh)' }}>
           <span style={{ fontSize: '0.8rem', color: '#3b82f6' }}>📅</span>
           <span style={{ fontSize: '0.76rem', color: 'var(--text-sub)' }}>مواعيد</span>
-          <strong style={{ fontSize: '0.84rem', color: 'var(--text)' }}>{monthSummary.appointments}</strong>
+          <strong style={{ fontSize: '0.84rem', color: 'var(--text-main)' }}>{monthSummary.appointments}</strong>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '8px 12px', borderRadius: 999 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '8px 12px', borderRadius: 999, boxShadow: 'var(--sh)' }}>
           <span style={{ fontSize: '0.8rem', color: '#f59e0b' }}>⚡</span>
           <span style={{ fontSize: '0.76rem', color: 'var(--text-sub)' }}>أحداث</span>
-          <strong style={{ fontSize: '0.84rem', color: 'var(--text)' }}>{monthSummary.events}</strong>
+          <strong style={{ fontSize: '0.84rem', color: 'var(--text-main)' }}>{monthSummary.events}</strong>
         </div>
       </div>
 
-      <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 18, overflow: 'hidden', boxShadow: '0 8px 24px rgba(15, 23, 42, 0.03)' }}>
-        <div className="wg-b" style={{ padding: 14, background: 'var(--bg-card)' }}>
+      <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 22, overflow: 'hidden', boxShadow: '0 14px 36px rgba(15, 23, 42, 0.06)', background: 'var(--bg-card)' }}>
+        <div className="wg-b" style={{ padding: '12px 12px 14px', background: 'var(--bg-card)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 8, marginBottom: 8 }}>
             {DAYS_AR.map(d => (
               <div
                 key={d}
                 style={{
                   textAlign: 'center',
-                  fontSize: '0.8rem',
+                  fontSize: '0.76rem',
                   fontWeight: 800,
                   color: 'var(--text-sub)',
-                  padding: '10px 0',
+                  padding: '8px 0 10px',
                   borderBottom: '1px solid var(--border-color)',
                   letterSpacing: '0.02em'
                 }}
@@ -476,7 +479,7 @@ export default function Calendar() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 8 }}>
             {cells.map((d, i) => {
-              if (!d) return <div key={i} style={{ minHeight: '96px', background: 'rgba(148,163,184,0.04)', borderRadius: 12, opacity: 0.4 }} />;
+              if (!d) return <div key={i} style={{ minHeight: '82px', background: 'rgba(148,163,184,0.04)', borderRadius: 14, opacity: 0.45 }} />;
               const ds = dateStr(d);
               const row = itemsOnDay(d);
               const isToday = ds === today;
@@ -485,14 +488,14 @@ export default function Calendar() {
               let cellBg = 'var(--bg-card)';
               let borderStyle = '1px solid var(--border-color)';
               let textWeight = '700';
-              let numColor = 'var(--text)';
+              let numColor = 'var(--text-main)';
 
               if (isToday) {
-                cellBg = 'rgba(59, 130, 246, 0.07)';
-                borderStyle = '1.5px solid rgba(59,130,246,0.6)';
+                cellBg = 'rgba(59, 130, 246, 0.11)';
+                borderStyle = '1.5px solid rgba(59,130,246,0.7)';
                 textWeight = '800';
               } else if (isSel) {
-                cellBg = 'rgba(59, 130, 246, 0.08)';
+                cellBg = 'rgba(26, 86, 219, 0.12)';
                 borderStyle = '1.5px solid var(--pr)';
                 textWeight = '800';
               }
@@ -506,29 +509,29 @@ export default function Calendar() {
                     setSelItem(null);
                   }}
                   style={{
-                    minHeight: '96px',
+                    minHeight: '82px',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     alignItems: 'stretch',
                     border: borderStyle,
-                    borderRadius: 12,
-                    padding: '8px 8px 7px',
+                    borderRadius: 14,
+                    padding: '8px 8px 9px',
                     background: cellBg,
                     cursor: 'pointer',
                     textAlign: 'right',
                     position: 'relative',
                     outline: 'none',
                     transition: 'all 0.16s ease',
-                    boxShadow: isToday || isSel ? '0 6px 18px rgba(59,130,246,0.08)' : 'none',
+                    boxShadow: isToday || isSel ? '0 8px 20px rgba(59,130,246,0.12)' : 'none',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 8px 18px rgba(15,23,42,0.08)';
+                    e.currentTarget.style.boxShadow = '0 10px 22px rgba(15,23,42,0.08)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'none';
-                    e.currentTarget.style.boxShadow = isToday || isSel ? '0 6px 18px rgba(59,130,246,0.08)' : 'none';
+                    e.currentTarget.style.boxShadow = isToday || isSel ? '0 8px 20px rgba(59,130,246,0.12)' : 'none';
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', gap: 4 }}>
@@ -542,7 +545,8 @@ export default function Calendar() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       borderRadius: '50%',
-                      background: isToday ? 'rgba(59,130,246,0.12)' : 'transparent'
+                      background: isToday ? 'rgba(59,130,246,0.16)' : 'transparent',
+                      fontVariantNumeric: 'tabular-nums'
                     }}>
                       {d}
                     </span>
@@ -551,24 +555,37 @@ export default function Calendar() {
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
-                    {row.slice(0, 2).map(it => (
-                      <span
-                        key={it.id}
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: getColorStyles(it.color).text,
-                          display: 'inline-block',
-                          flexShrink: 0,
-                          boxShadow: '0 0 0 2px rgba(255,255,255,0.15)'
-                        }}
-                        title={it.title}
-                      />
-                    ))}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginTop: 4 }}>
+                    {row.slice(0, 2).map(it => {
+                      const colorTheme = getColorStyles(it.color);
+                      return (
+                        <div
+                          key={it.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            padding: '4px 6px',
+                            borderRadius: 8,
+                            background: colorTheme.bg,
+                            color: colorTheme.text,
+                            fontSize: '0.6rem',
+                            fontWeight: 800,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}
+                          title={it.title}
+                        >
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: colorTheme.text, flexShrink: 0 }} />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {it.title.length > 16 ? `${it.title.slice(0, 16)}…` : it.title}
+                          </span>
+                        </div>
+                      );
+                    })}
                     {row.length > 2 && (
-                      <span style={{ fontSize: '0.56rem', fontWeight: 700, color: 'var(--text-sub)' }}>+{row.length - 2}</span>
+                      <div style={{ fontSize: '0.58rem', fontWeight: 700, color: 'var(--text-sub)' }}>+{row.length - 2} إضافية</div>
                     )}
                   </div>
                 </button>
@@ -586,35 +603,35 @@ export default function Calendar() {
           marginTop: 18,
           animation: 'fadeIn 0.2s ease'
         }}>
-          <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 18 }}>
-            <div className="wg-h" style={{ borderBottom: '1px solid var(--border-color)', padding: '14px 16px' }}>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text)' }}>📌 تفاصيل اليوم</h3>
+          <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 18, overflow: 'hidden', background: 'var(--bg-card)' }}>
+            <div className="wg-h" style={{ borderBottom: '1px solid var(--border-color)', padding: '14px 16px', background: 'linear-gradient(135deg, var(--pr-l), transparent)' }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>📌 تفاصيل اليوم</h3>
             </div>
-            <div className="wg-b" style={{ padding: 16 }}>
+            <div className="wg-b" style={{ padding: 16, background: 'var(--bg-card)' }}>
               {selItem ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.72rem', padding: '4px 8px', borderRadius: 999, background: 'var(--g0)', color: 'var(--text)', fontWeight: 700 }}>
+                    <span style={{ fontSize: '0.72rem', padding: '4px 8px', borderRadius: 999, background: 'var(--g0)', color: 'var(--text-main)', fontWeight: 700 }}>
                       {selItem.source}
                     </span>
-                    <span style={{ fontSize: '0.72rem', padding: '4px 8px', borderRadius: 999, background: 'var(--g0)', color: 'var(--text)', fontWeight: 700 }}>
+                    <span style={{ fontSize: '0.72rem', padding: '4px 8px', borderRadius: 999, background: 'var(--g0)', color: 'var(--text-main)', fontWeight: 700 }}>
                       {selItem.date}
                     </span>
                   </div>
 
-                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text)' }}>
+                  <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)' }}>
                     {selItem.title}
                   </h4>
 
                   {selItem.time && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--g0)', padding: '10px 12px', borderRadius: 10 }}>
                       <span style={{ fontSize: '1rem' }}>🕒</span>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)' }}>{selItem.time}</div>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)' }}>{selItem.time}</div>
                     </div>
                   )}
 
                   {selItem.detail && (
-                    <div style={{ background: 'var(--g0)', padding: 12, borderRadius: 12, fontSize: '0.85rem', lineHeight: 1.7, color: 'var(--text)', border: '1px solid var(--border-color)' }}>
+                    <div style={{ background: 'var(--g0)', padding: 12, borderRadius: 12, fontSize: '0.85rem', lineHeight: 1.7, color: 'var(--text-main)', border: '1px solid var(--border-color)' }}>
                       {selItem.detail}
                     </div>
                   )}
@@ -639,9 +656,9 @@ export default function Calendar() {
             </div>
           </div>
 
-          <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 18 }}>
-            <div className="wg-h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', padding: '14px 16px' }}>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text)' }}>
+          <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 18, overflow: 'hidden', background: 'var(--bg-card)' }}>
+            <div className="wg-h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', padding: '14px 16px', background: 'var(--g0)' }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>
                 📅 {selDay} {MONTHS_AR[month]}
               </h3>
               <div style={{ display: 'flex', gap: 6 }}>
@@ -650,7 +667,7 @@ export default function Calendar() {
               </div>
             </div>
 
-            <div className="wg-b" style={{ padding: 14, maxHeight: 420, overflowY: 'auto' }}>
+            <div className="wg-b" style={{ padding: 14, maxHeight: 320, overflowY: 'auto', background: 'var(--bg-card)' }}>
               {dayItems.length === 0 ? (
                 <div style={{ color: 'var(--text-sub)', textAlign: 'center', padding: '28px 10px' }}>
                   <p style={{ fontSize: '1.5rem', margin: 0 }}>☕</p>
@@ -692,7 +709,7 @@ export default function Calendar() {
                           </span>
                           {it.time && <span style={{ fontSize: '0.7rem', color: 'var(--text-sub)' }}>🕐 {it.time}</span>}
                         </div>
-                        <div style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text)' }}>{it.title}</div>
+                        <div style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-main)' }}>{it.title}</div>
                       </button>
                     );
                   })}
