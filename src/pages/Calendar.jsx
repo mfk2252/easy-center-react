@@ -501,7 +501,7 @@ export default function Calendar() {
                 key={d}
                 style={{
                   textAlign: 'center',
-                  fontSize: '0.58rem',
+                  fontSize: '0.70rem',
                   fontWeight: 800,
                   color: 'var(--text-sub)',
                   padding: '2px 0 4px',
