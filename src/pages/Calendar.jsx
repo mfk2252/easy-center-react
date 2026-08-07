@@ -456,20 +456,21 @@ export default function Calendar() {
         </div>
       </div>
 
-      <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 22, overflow: 'hidden', boxShadow: '0 14px 36px rgba(15, 23, 42, 0.06)', background: 'var(--bg-card)' }}>
-        <div className="wg-b" style={{ padding: '12px 12px 14px', background: 'var(--bg-card)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 5, marginBottom: 6 }}>
+      <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 18, overflow: 'hidden', boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)', background: 'var(--bg-card)' }}>
+        <div className="wg-b" style={{ padding: '6px 8px 8px', background: 'var(--bg-card)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 3, marginBottom: 2 }}>
             {DAYS_AR.map(d => (
               <div
                 key={d}
                 style={{
                   textAlign: 'center',
-                  fontSize: '0.68rem',
+                  fontSize: '0.58rem',
                   fontWeight: 800,
                   color: 'var(--text-sub)',
-                  padding: '6px 0 8px',
+                  padding: '2px 0 4px',
                   borderBottom: '1px solid var(--border-color)',
-                  letterSpacing: '0.02em'
+                  letterSpacing: '0.02em',
+                  lineHeight: 1
                 }}
               >
                 {d}
@@ -477,9 +478,9 @@ export default function Calendar() {
             ))}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 5 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 3 }}>
             {cells.map((d, i) => {
-              if (!d) return <div key={i} style={{ minHeight: '44px', background: 'rgba(148,163,184,0.04)', borderRadius: 12, opacity: 0.45 }} />;
+              if (!d) return <div key={i} style={{ minHeight: '26px', background: 'rgba(148,163,184,0.04)', borderRadius: 6, opacity: 0.45 }} />;
               const ds = dateStr(d);
               const row = itemsOnDay(d);
               const isToday = ds === today;
@@ -509,53 +510,55 @@ export default function Calendar() {
                     setSelItem(null);
                   }}
                   style={{
-                    minHeight: '44px',
+                    minHeight: '26px',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'flex-start',
                     alignItems: 'stretch',
                     border: borderStyle,
-                    borderRadius: 10,
-                    padding: '4px 5px 6px',
+                    borderRadius: 7,
+                    padding: '2px 3px 4px',
                     background: cellBg,
                     cursor: 'pointer',
                     textAlign: 'right',
                     position: 'relative',
                     outline: 'none',
                     transition: 'all 0.16s ease',
-                    boxShadow: isToday || isSel ? '0 6px 14px rgba(59,130,246,0.12)' : 'none',
+                    boxShadow: isToday || isSel ? '0 4px 12px rgba(59,130,246,0.12)' : 'none',
+                    lineHeight: 1.1
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-1px)';
-                    e.currentTarget.style.boxShadow = '0 8px 14px rgba(15,23,42,0.08)';
+                    e.currentTarget.style.boxShadow = '0 6px 12px rgba(15,23,42,0.08)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'none';
-                    e.currentTarget.style.boxShadow = isToday || isSel ? '0 6px 14px rgba(59,130,246,0.12)' : 'none';
+                    e.currentTarget.style.boxShadow = isToday || isSel ? '0 4px 12px rgba(59,130,246,0.12)' : 'none';
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', gap: 4 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', gap: 2 }}>
                     <span style={{
-                      fontSize: '0.7rem',
+                      fontSize: '0.58rem',
                       fontWeight: textWeight,
                       color: numColor,
-                      width: 20,
-                      height: 20,
+                      width: 15,
+                      height: 15,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       borderRadius: '50%',
                       background: isToday ? 'rgba(59,130,246,0.16)' : 'transparent',
-                      fontVariantNumeric: 'tabular-nums'
+                      fontVariantNumeric: 'tabular-nums',
+                      lineHeight: 1
                     }}>
                       {d}
                     </span>
                     {row.length > 0 && (
-                      <span style={{ fontSize: '0.52rem', fontWeight: 800, color: 'var(--pr)' }}>●</span>
+                      <span style={{ fontSize: '0.49rem', fontWeight: 800, color: 'var(--pr)' }}>●</span>
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginTop: 2 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 1 }}>
                     {row.slice(0, 1).map(it => {
                       const colorTheme = getColorStyles(it.color);
                       return (
@@ -564,28 +567,29 @@ export default function Calendar() {
                           style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 4,
+                            gap: 3,
                             padding: '2px 4px',
-                            borderRadius: 6,
+                            borderRadius: 5,
                             background: colorTheme.bg,
                             color: colorTheme.text,
-                            fontSize: '0.55rem',
+                            fontSize: '0.48rem',
                             fontWeight: 800,
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
-                            textOverflow: 'ellipsis'
+                            textOverflow: 'ellipsis',
+                            lineHeight: 1
                           }}
                           title={it.title}
                         >
-                          <span style={{ width: 5, height: 5, borderRadius: '50%', background: colorTheme.text, flexShrink: 0 }} />
+                          <span style={{ width: 4, height: 4, borderRadius: '50%', background: colorTheme.text, flexShrink: 0 }} />
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {it.title.length > 12 ? `${it.title.slice(0, 12)}…` : it.title}
+                            {it.title.length > 9 ? `${it.title.slice(0, 9)}…` : it.title}
                           </span>
                         </div>
                       );
                     })}
                     {row.length > 1 && (
-                      <div style={{ fontSize: '0.54rem', fontWeight: 700, color: 'var(--text-sub)' }}>+{row.length - 1}</div>
+                      <div style={{ fontSize: '0.51rem', fontWeight: 700, color: 'var(--text-sub)' }}>+{row.length - 1}</div>
                     )}
                   </div>
                 </button>
