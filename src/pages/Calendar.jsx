@@ -350,6 +350,43 @@ export default function Calendar() {
   };
 
   return (
+    <>
+      <style>{`
+        @media (max-width: 767px) {
+          .calendar-detail-layout {
+            grid-template-columns: minmax(0, 1fr) !important;
+          }
+          .calendar-detail-left-panel,
+          .calendar-detail-right-panel {
+            min-width: 0;
+          }
+          .calendar-detail-right-panel .wg-b {
+            max-height: 280px;
+          }
+        }
+        @media (min-width: 768px) and (max-width: 1120px) {
+          .calendar-cell {
+            min-height: clamp(48px, 7vh, 76px) !important;
+          }
+        }
+        @media (min-width: 1121px) {
+          .calendar-cell {
+            min-height: clamp(54px, 6vh, 92px) !important;
+          }
+        }
+        @media (max-width: 767px) {
+          .calendar-cell {
+            min-height: clamp(44px, 7vh, 58px) !important;
+            padding-inline: 3px !important;
+          }
+          .calendar-cell .calendar-title-chip {
+            font-size: 0.46rem !important;
+          }
+          .calendar-cell .calendar-more {
+            font-size: 0.48rem !important;
+          }
+        }
+      `}</style>
     <div style={{ maxWidth: 1440, margin: '0 auto', padding: '16px 18px 24px', fontFamily: 'inherit' }}>
       <div style={{
         display: 'flex',
@@ -505,12 +542,13 @@ export default function Calendar() {
                 <button
                   type="button"
                   key={i}
+                  className="calendar-cell"
                   onClick={() => {
                     setSelDay(d === selDay ? null : d);
                     setSelItem(null);
                   }}
                   style={{
-                    minHeight: '26px',
+                    minHeight: 'clamp(44px, 6vh, 80px)',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'flex-start',
@@ -564,6 +602,7 @@ export default function Calendar() {
                       return (
                         <div
                           key={it.id}
+                          className="calendar-title-chip"
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -589,7 +628,7 @@ export default function Calendar() {
                       );
                     })}
                     {row.length > 1 && (
-                      <div style={{ fontSize: '0.51rem', fontWeight: 700, color: 'var(--text-sub)' }}>+{row.length - 1}</div>
+                      <div className="calendar-more" style={{ fontSize: '0.51rem', fontWeight: 700, color: 'var(--text-sub)' }}>+{row.length - 1}</div>
                     )}
                   </div>
                 </button>
@@ -600,14 +639,14 @@ export default function Calendar() {
       </div>
 
       {selDay && (
-        <div style={{
+        <div className="calendar-detail-layout" style={{
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 1.15fr) minmax(280px, 0.85fr)',
           gap: 16,
           marginTop: 18,
           animation: 'fadeIn 0.2s ease'
         }}>
-          <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 18, overflow: 'hidden', background: 'var(--bg-card)' }}>
+          <div className="wg calendar-detail-left-panel" style={{ border: '1px solid var(--border-color)', borderRadius: 18, overflow: 'hidden', background: 'var(--bg-card)' }}>
             <div className="wg-h" style={{ borderBottom: '1px solid var(--border-color)', padding: '14px 16px', background: 'linear-gradient(135deg, var(--pr-l), transparent)' }}>
               <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>📌 تفاصيل اليوم</h3>
             </div>
@@ -660,7 +699,7 @@ export default function Calendar() {
             </div>
           </div>
 
-          <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 18, overflow: 'hidden', background: 'var(--bg-card)' }}>
+          <div className="wg calendar-detail-right-panel" style={{ border: '1px solid var(--border-color)', borderRadius: 18, overflow: 'hidden', background: 'var(--bg-card)' }}>
             <div className="wg-h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', padding: '14px 16px', background: 'var(--g0)' }}>
               <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>
                 📅 {selDay} {MONTHS_AR[month]}
@@ -984,5 +1023,6 @@ export default function Calendar() {
         </div>
       )}
     </div>
+    </>
   );
 }
