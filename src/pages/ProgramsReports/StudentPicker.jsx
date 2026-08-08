@@ -16,7 +16,7 @@ export function StudentPicker({ form, setForm, students, emps, showExtra = false
     if (val === '__other__') {
       setForm(f => ({
         ...f, mode: 'other', stuId: '', studentName: '',
-        dob: '', diagnosis: '', age: '',
+        dob: '', diagnosis: '', age: '', fileNo: '', specialistName: '',
       }));
       return;
     }
@@ -26,6 +26,7 @@ export function StudentPicker({ form, setForm, students, emps, showExtra = false
       return;
     }
     const spec = emps.find(e => e.id === stu.specialistId);
+    const ageText = stu.dob ? calcAge(stu.dob) : '';
     setForm(f => ({
       ...f,
       mode: 'registered',
@@ -33,9 +34,12 @@ export function StudentPicker({ form, setForm, students, emps, showExtra = false
       studentName: stu.name || '',
       dob: stu.dob || f.dob,
       diagnosis: stu.diagnosis || f.diagnosis,
-      age: stu.dob ? calcAge(stu.dob) : f.age,
+      age: ageText || f.age,
+      fileNo: stu.fileNo || stu.file || f.fileNo,
       photo: stu.photo || f.photo,
-      specialistName: spec?.name || f.specialistName,
+      specialistName: spec?.name || stu.specialistName || f.specialistName,
+      className: stu.className || f.className,
+      birthDate: stu.dob || f.birthDate,
     }));
   }
 
