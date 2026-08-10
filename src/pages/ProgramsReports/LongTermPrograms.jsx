@@ -342,7 +342,7 @@ export default function LongTermPrograms({ onBack }) {
               {/* بنك الأهداف */}
               <div className="fs"><div className="fsh" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span>🎯 الأهداف ({form.goals.length})</span>
-                <button type="button" className="btn btn-s btn-sm" onClick={() => setShowGoalPicker(true)}>➕ اختيار من البنك</button>
+                <button type="button" className="btn btn-s btn-sm" onClick={() => { setPickerDomain('all'); setShowGoalPicker(true); }}>➕ اختيار من البنك (كل المجالات)</button>
               </div>
               <div className="fsb">
                 {form.goals.length === 0 ? (
@@ -352,7 +352,10 @@ export default function LongTermPrograms({ onBack }) {
                 ) : (
                   Object.entries(goalsByDomain).map(([dk, goals]) => (
                     <div key={dk} style={{ marginBottom: 12 }}>
-                      <div style={{ fontSize: '.78rem', fontWeight: 900, color: 'var(--pr)', marginBottom: 6 }}>{domainLabel(dk)} ({goals.length})</div>
+                      <div style={{ fontSize: '.78rem', fontWeight: 900, color: 'var(--pr)', marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span>{domainLabel(dk)} ({goals.length})</span>
+                        <button type="button" className="btn btn-xs btn-s" onClick={() => { setPickerDomain(dk); setShowGoalPicker(true); }}>➕</button>
+                      </div>
                       {goals.map(g => (
                         <div key={g.text} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', border: '1px solid var(--border-color)', borderRadius: 8, fontSize: '.84rem', marginBottom: 4 }}>
                           <span style={{ fontSize: '.68rem', fontWeight: 800, color: programColor(g.program), background: programColor(g.program) + '18', padding: '2px 7px', borderRadius: 20, whiteSpace: 'nowrap' }}>{programLabel(g.program)}</span>
@@ -388,7 +391,7 @@ export default function LongTermPrograms({ onBack }) {
       {/* Modals */}
       {showGoalPicker && (
         <GoalPickerModal
-          domain="cognitive"
+          domain={pickerDomain}
           alreadySelected={form.goals}
           onClose={() => setShowGoalPicker(false)}
           onConfirm={goals => { setForm(f => ({ ...f, goals })); setShowGoalPicker(false); }}
