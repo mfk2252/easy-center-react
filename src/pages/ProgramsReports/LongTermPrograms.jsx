@@ -150,6 +150,7 @@ export default function LongTermPrograms({ onBack }) {
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState(EMPTY_PROG);
   const [showGoalPicker, setShowGoalPicker] = useState(false);
+  const [pickerDomain, setPickerDomain] = useState('cognitive');
   const [showBankManager, setShowBankManager] = useState(false);
   const [showBulk, setShowBulk] = useState(false);
   const [searchQ, setSearchQ] = useState('');
