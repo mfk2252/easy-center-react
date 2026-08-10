@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "easy-center-goals-bank-v1",
+  "title": "Easy Center Goals Bank Schema",
+  "description": "الهيكل المعياري لاستيراد أهداف البرامج التربوية الفردية عبر BulkImporter",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["program", "domain", "text"],
+    "properties": {
+      "program": {
+        "type": "string",
+        "enum": ["lovaas", "portage", "ablls", "pep3", "help", "custom"],
+        "description": "رمز البرنامج: lovaas | portage | ablls | pep3 | help | custom"
+      },
+      "domain": {
+        "type": "string",
+        "enum": [
+          "cognitive",
+          "receptive_language",
+          "expressive_communication",
+          "social",
+          "gross_motor",
+          "fine_motor",
+          "selfhelp",
+          "pre_academic",
+          "academic",
+          "independence"
+        ],
+        "description": "المجال التنموي"
+      },
+      "code": {
+        "type": "string",
+        "description": "الكود المرجعي في الدليل الأصلي",
+        "examples": ["ABLLS:C14", "Portage:Cog-03", "Lovaas:L2-04", "PEP3:B12"]
+      },
+      "text": {
+        "type": "string",
+        "minLength": 3,
+        "description": "نص الهدف كما هو في الدليل"
+      },
+      "mastery": {
+        "type": "string",
+        "description": "معيار الإتقان",
+        "examples": ["4 من 5 محاولات عشوائية", "3 أيام متتالية بدون تلقين", "5/5 في جلستين متتاليتين"]
+      },
+      "tools": {
+        "type": "string",
+        "description": "الأدوات والمواد الموصى بها"
+      },
+      "ageRange": {
+        "type": "string",
+        "description": "النطاق العمري التقريبي",
+        "examples": ["0-1 سنة", "1-2 سنة", "2-3 سنوات", "3-4 سنوات", "4-5 سنوات", "5-6 سنوات", "+6 سنوات"]
+      }
+    }
+  },
+  "_csvColumns": {
+    "description": "ترتيب أعمدة ملف CSV عند الاستيراد عبر BulkImporter",
+    "order": ["program", "domain", "code", "text", "mastery", "tools", "ageRange"],
+    "example": "ablls,receptive_language,ABLLS:C14,يتبع تعليمة ثنائية الخطوات,4/5 عشوائي,أشياء يومية,2-3 سنوات"
+  },
+  "_notes": [
+    "السطر الأول في CSV يُتجاهل تلقائياً إن كان رأساً (header)",
+    "أي قيمة program غير معروفة تُحوَّل تلقائياً إلى custom",
+    "أي قيمة domain غير معروفة تُحوَّل تلقائياً إلى cognitive",
+    "الحقل text إلزامي، باقي الحقول اختيارية"
+  ]
+}
