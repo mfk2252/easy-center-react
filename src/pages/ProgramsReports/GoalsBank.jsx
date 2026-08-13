@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { lsGet, lsAdd, lsDel } from '../../hooks/useStorage';
+import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { uid } from '../../utils/dateHelpers';
 import { PROGRAMS, DOMAINS, SEED_GOALS, programLabel, programColor, domainLabel, domainsForProgram } from '../../utils/goalsBank';
 
@@ -10,27 +10,28 @@ export function getAllGoals() {
   return [...seeds, ...custom];
 }
 
-export function GoalPickerModal({ domain, alreadySelected, onConfirm, onClose }) {
+export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelected = [], onConfirm, onClose }) {
   const [checked, setChecked] = useState(() => new Set((alreadySelected || []).map(g => `${g.program}::${g.domain}::${g.text}`)));
   const [customText, setCustomText] = useState('');
-  const [customProgram, setCustomProgram] = useState('custom');
+  const [customProgram, setCustomProgram] = useState(program || 'custom');
   const [goalCode, setGoalCode] = useState('');
   const [customDomain, setCustomDomain] = useState(domain || DOMAINS[0].key);
   const [saveToBank, setSaveToBank] = useState(true);
-  const [programFilter, setProgramFilter] = useState('all');
+  const [programFilter, setProgramFilter] = useState(program || 'all');
+  const [domainFilter, setDomainFilter] = useState(domain || 'all');
   const [keyword, setKeyword] = useState('');
 
   const allGoals = getAllGoals();
 
   const visibleGoals = useMemo(() => {
     return allGoals.filter(goal => {
-      const matchesDomain = domain ? goal.domain === domain : true;
+      const matchesDomain = domainFilter === 'all' || goal.domain === domainFilter;
       const matchesProgram = programFilter === 'all' || goal.program === programFilter;
       const q = keyword.trim().toLowerCase();
       const matchesKeyword = !q || (goal.text || '').toLowerCase().includes(q) || (goal.goalCode || '').toLowerCase().includes(q);
       return matchesDomain && matchesProgram && matchesKeyword;
     });
-  }, [allGoals, domain, programFilter, keyword]);
+  }, [allGoals, domainFilter, programFilter, keyword]);
 
   const byProgram = PROGRAMS.map(p => ({ ...p, items: visibleGoals.filter(g => g.program === p.key) })).filter(p => p.items.length > 0);
 
@@ -83,7 +84,7 @@ export function GoalPickerModal({ domain, alreadySelected, onConfirm, onClose })
     <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
         <div className="fhd" style={{ padding: '14px 20px' }}>
-          <h2>🎯 اختيار أهداف — {domain ? domainLabel(domain) : 'جميع المجالات'}</h2>
+          <h2>🎯 اختيار أهداف — {domain && domain !== 'all' ? domainLabel(domain) : 'جميع المجالات'}</h2>
           <p style={{ fontSize: '.8rem', opacity: .85, marginTop: 4 }}>يمكنك الاختيار من أكثر من برنامج معاً لنفس المجال</p>
         </div>
         <div className="modal-body-scroll" style={{ padding: '16px 20px' }}>
@@ -91,6 +92,10 @@ export function GoalPickerModal({ domain, alreadySelected, onConfirm, onClose })
             <select value={programFilter} onChange={e => setProgramFilter(e.target.value)}>
               <option value="all">جميع البرامج</option>
               {PROGRAMS.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
+            </select>
+            <select value={domainFilter} onChange={e => setDomainFilter(e.target.value)}>
+              <option value="all">كل المجالات</option>
+              {DOMAINS.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
             </select>
             <input value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="بحث سريع بالكلمات/الرمز..." style={{ minWidth: 260 }} />
           </div>
@@ -166,10 +171,19 @@ export function GoalsBankManagerModal({ onClose }) {
   const [newDomain, setNewDomain] = useState(availableDomains[0]?.key || DOMAINS[0].key);
   const [newText, setNewText] = useState('');
   const [newCode, setNewCode] = useState('');
+  const [editingId, setEditingId] = useState(null);
   const [bulkPaste, setBulkPaste] = useState('');
   const [search, setSearch] = useState('');
 
   function reload() { setCustomBank(lsGet('progGoalsBank') || []); }
+
+  function resetForm() {
+    setEditingId(null);
+    setNewProgram('custom');
+    setNewDomain(domainsForProgram('custom')[0]?.key || DOMAINS[0].key);
+    setNewText('');
+    setNewCode('');
+  }
 
   function handleProgramChange(programKey) {
     setNewProgram(programKey);
@@ -179,18 +193,35 @@ export function GoalsBankManagerModal({ onClose }) {
 
   function addItem() {
     if (!newText.trim()) { toast('⚠️ اكتب نص الهدف', 'er'); return; }
-    const payload = { id: uid(), program: newProgram, domain: newDomain, text: newText.trim(), goalCode: newCode.trim() || undefined };
-    lsAdd('progGoalsBank', payload);
-    setNewText('');
-    setNewCode('');
-    toast('✅ تمت الإضافة لبنك المركز', 'ok');
+
+    const payload = { program: newProgram, domain: newDomain, text: newText.trim(), goalCode: newCode.trim() || undefined };
+
+    if (editingId) {
+      lsUpd('progGoalsBank', editingId, payload);
+      toast('✅ تم تحديث البند في بنك المركز', 'ok');
+    } else {
+      lsAdd('progGoalsBank', { id: uid(), ...payload });
+      toast('✅ تمت الإضافة لبنك المركز', 'ok');
+    }
+
+    resetForm();
     reload();
+  }
+
+  function editItem(goal) {
+    setEditingId(goal.id);
+    setNewProgram(goal.program || 'custom');
+    const domains = domainsForProgram(goal.program || 'custom');
+    setNewDomain(goal.domain || domains[0]?.key || DOMAINS[0].key);
+    setNewText(goal.text || '');
+    setNewCode(goal.goalCode || '');
   }
 
   function del(id) {
     if (!window.confirm('حذف هذا البند من بنك المركز؟')) return;
     lsDel('progGoalsBank', id);
     toast('🗑️ تم الحذف', 'ok');
+    if (editingId === id) resetForm();
     reload();
   }
 
@@ -277,7 +308,7 @@ export function GoalsBankManagerModal({ onClose }) {
         </div>
         <div className="modal-body-scroll" style={{ padding: '16px 20px' }}>
           <div style={{ padding: 14, background: 'var(--g0)', borderRadius: 10, marginBottom: 16 }}>
-            <div style={{ fontSize: '.8rem', fontWeight: 800, marginBottom: 8 }}>➕ إضافة بند جديد للبنك</div>
+            <div style={{ fontSize: '.8rem', fontWeight: 800, marginBottom: 8 }}>{editingId ? '✏️ تحديث بند من البنك' : '➕ إضافة بند جديد للبنك'}</div>
             <div className="fg c3">
               <div className="fl"><label>1️⃣ البرنامج <span className="req">*</span></label>
                 <select value={newProgram} onChange={e => handleProgramChange(e.target.value)}>
@@ -294,8 +325,9 @@ export function GoalsBankManagerModal({ onClose }) {
               <div className="fl full"><label>3️⃣ نص الهدف <span className="req">*</span></label>
                 <input value={newText} onChange={e => setNewText(e.target.value)} placeholder="اكتب نص الهدف كما في دليلكم..." onKeyDown={e => e.key === 'Enter' && addItem()} />
               </div>
-              <div className="fl full">
-                <button type="button" className="btn btn-p" onClick={addItem}>➕ إضافة</button>
+              <div className="fl full" style={{ display: 'flex', gap: 8 }}>
+                <button type="button" className="btn btn-p" onClick={addItem}>{editingId ? '💾 تحديث' : '➕ إضافة'}</button>
+                {editingId && <button type="button" className="btn btn-g" onClick={resetForm}>إلغاء</button>}
               </div>
             </div>
           </div>
@@ -346,7 +378,10 @@ export function GoalsBankManagerModal({ onClose }) {
                   <div className="cn">{g.text}</div>
                   <div className="cm">{programLabel(g.program)} · {domainLabel(g.domain)}{g.goalCode ? ` · ${g.goalCode}` : ''}</div>
                 </div>
-                <div className="c-acts"><button type="button" className="btn btn-xs btn-d" onClick={() => del(g.id)}>🗑️</button></div>
+                <div className="c-acts" style={{ display: 'flex', gap: 6 }}>
+                  <button type="button" className="btn btn-xs btn-g" onClick={() => editItem(g)}>✏️</button>
+                  <button type="button" className="btn btn-xs btn-d" onClick={() => del(g.id)}>🗑️</button>
+                </div>
               </div>
             ))
           )}
