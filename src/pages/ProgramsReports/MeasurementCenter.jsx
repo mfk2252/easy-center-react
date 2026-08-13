@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { uid, todayStr } from '../../utils/dateHelpers';
-import { DEFAULT_SCALE_LIBRARY, MEASUREMENT_CATEGORIES, getScaleById, buildAssessmentResult } from '../../utils/measurementBank';
+import {
+  DEFAULT_SCALE_LIBRARY,
+  MEASUREMENT_CATEGORIES,
+  getScaleById,
+  buildAssessmentResult,
+  groupScalesByCategory,
+} from '../../utils/measurementBank';
 import { StudentPicker, validateStudentPick, EMPTY_STU_PICK } from './StudentPicker';
 
 const EMPTY_MEASURE = {
@@ -45,6 +51,7 @@ export default function MeasurementCenter({ onBack }) {
   const [measureModal, setMeasureModal] = useState(false);
   const [assessmentModal, setAssessmentModal] = useState(false);
   const [selectedScaleId, setSelectedScaleId] = useState('cars');
+  const [selectedCategoryId, setSelectedCategoryId] = useState('autism');
   const [assessments, setAssessments] = useState([]);
 
   function reload() {
@@ -56,11 +63,17 @@ export default function MeasurementCenter({ onBack }) {
   useEffect(() => { reload(); }, []);
 
   const categoryMap = useMemo(() => Object.fromEntries(MEASUREMENT_CATEGORIES.map(c => [c.id, c])), []);
+  const groupedScales = useMemo(() => groupScalesByCategory(scales), [scales]);
 
   const selectedScale = useMemo(() => {
     const list = getAvailableScales();
     return list.find(scale => scale.id === selectedScaleId) || list[0] || null;
   }, [selectedScaleId, scales]);
+
+  const visibleCategoryScales = useMemo(() => {
+    const current = groupedScales[selectedCategoryId] || [];
+    return current;
+  }, [groupedScales, selectedCategoryId]);
 
   function openMeasureModal() {
     setMeasureForm({ ...EMPTY_MEASURE, category: 'autism' });
@@ -196,37 +209,63 @@ export default function MeasurementCenter({ onBack }) {
         <div className="wg-h"><h3>📚 فئات المقاييس</h3></div>
         <div className="wg-b" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 }}>
           {MEASUREMENT_CATEGORIES.map(cat => {
-            const count = scales.filter(scale => scale.category === cat.id).length;
+            const count = groupedScales[cat.id]?.length || 0;
+            const isActive = selectedCategoryId === cat.id;
             return (
-              <div key={cat.id} className="card" style={{ padding: 14 }}>
+              <button
+                key={cat.id}
+                type="button"
+                className="card"
+                onClick={() => setSelectedCategoryId(cat.id)}
+                style={{
+                  padding: 14,
+                  textAlign: 'right',
+                  cursor: 'pointer',
+                  border: isActive ? '2px solid var(--p)' : '1px solid var(--border-color)',
+                  background: isActive ? 'var(--bg-soft)' : 'var(--bg-card)',
+                }}
+              >
                 <div style={{ fontSize: '1.6rem' }}>{cat.icon}</div>
                 <div style={{ fontWeight: 800 }}>{cat.name}</div>
                 <div style={{ color: 'var(--g5)', fontSize: '.8rem' }}>{count} مقياس</div>
-              </div>
+              </button>
             );
           })}
         </div>
       </div>
 
       <div className="wg" style={{ marginBottom: 18 }}>
-        <div className="wg-h"><h3>🧩 المقاييس المتاحة</h3></div>
+        <div className="wg-h" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <h3>{categoryMap[selectedCategoryId]?.icon || '🧩'} {categoryMap[selectedCategoryId]?.name || 'المقاييس'}</h3>
+          {visibleCategoryScales.length > 0 && (
+            <button type="button" className="btn btn-p btn-sm" onClick={() => openAssessmentModal(visibleCategoryScales[0].id)}>
+              تطبيق أول مقياس
+            </button>
+          )}
+        </div>
         <div className="wg-b" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
-          {scales.map(scale => (
-            <div key={scale.id} className="card" style={{ padding: 14 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                <div style={{ fontSize: '1.4rem' }}>{scale.icon || '🧪'}</div>
-                {!scale.isDefault && (
-                  <span className="bdg b-or">مخصص للمركز</span>
-                )}
-              </div>
-              <div style={{ fontWeight: 800, marginTop: 8 }}>{scale.name}</div>
-              <div style={{ color: 'var(--g5)', fontSize: '.8rem', marginTop: 4 }}>{scale.description}</div>
-              <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span className="bdg b-cy">{categoryMap[scale.category]?.name || 'أخرى'}</span>
-                <button type="button" className="btn btn-p btn-sm" onClick={() => { setSelectedScaleId(scale.id); openAssessmentModal(scale.id); }}>تطبيق</button>
-              </div>
+          {visibleCategoryScales.length === 0 ? (
+            <div style={{ padding: 24, textAlign: 'center', color: 'var(--g5)' }}>
+              لا توجد مقاييس في هذه الفئة حالياً.
             </div>
-          ))}
+          ) : (
+            visibleCategoryScales.map(scale => (
+              <div key={scale.id} className="card" style={{ padding: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                  <div style={{ fontSize: '1.4rem' }}>{scale.icon || '🧪'}</div>
+                  {!scale.isDefault && (
+                    <span className="bdg b-or">مخصص للمركز</span>
+                  )}
+                </div>
+                <div style={{ fontWeight: 800, marginTop: 8 }}>{scale.name}</div>
+                <div style={{ color: 'var(--g5)', fontSize: '.8rem', marginTop: 4 }}>{scale.description}</div>
+                <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span className="bdg b-cy">{categoryMap[scale.category]?.name || 'أخرى'}</span>
+                  <button type="button" className="btn btn-p btn-sm" onClick={() => { setSelectedScaleId(scale.id); openAssessmentModal(scale.id); }}>تطبيق</button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

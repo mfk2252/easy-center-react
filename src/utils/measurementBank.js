@@ -149,6 +149,13 @@ export function getScaleById(scaleId) {
   return DEFAULT_SCALE_LIBRARY.find(scale => scale.id === scaleId) || null;
 }
 
+export function groupScalesByCategory(scales = []) {
+  return MEASUREMENT_CATEGORIES.reduce((acc, category) => {
+    acc[category.id] = scales.filter(scale => scale.category === category.id);
+    return acc;
+  }, {});
+}
+
 function getScaleMax(scale) {
   return scale?.maxScore || 100;
 }

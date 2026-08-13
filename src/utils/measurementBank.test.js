@@ -4,6 +4,7 @@ import {
   DEFAULT_SCALE_LIBRARY,
   buildAssessmentResult,
   getScaleById,
+  groupScalesByCategory,
 } from './measurementBank.js';
 
 test('default scale library includes autism and speech categories', () => {
@@ -36,4 +37,14 @@ test('buildAssessmentResult calculates total and percentage', () => {
   assert.equal(result.total, 34);
   assert.equal(result.percentage, 68.0);
   assert.equal(result.level, 'متوسط');
+});
+
+test('groupScalesByCategory groups all scales by their category', () => {
+  const grouped = groupScalesByCategory(DEFAULT_SCALE_LIBRARY);
+
+  assert.ok(grouped.autism.some(scale => scale.id === 'cars'));
+  assert.equal(grouped.autism.length, 3);
+  assert.equal(grouped.speech.length, 1);
+  assert.equal(grouped.learning.length, 1);
+  assert.equal(grouped.other.length, 0);
 });
