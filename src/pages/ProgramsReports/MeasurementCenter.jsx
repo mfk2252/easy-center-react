@@ -7,6 +7,7 @@ import {
   getScaleById,
   buildAssessmentResult,
   groupScalesByCategory,
+  getScaleOptions,
 } from '../../utils/measurementBank';
 import { StudentPicker, validateStudentPick, EMPTY_STU_PICK } from './StudentPicker';
 
@@ -344,24 +345,27 @@ export default function MeasurementCenter({ onBack }) {
                 <div className="fl full"><label>ملاحظات</label><textarea value={assessmentForm.notes} onChange={e => setAssessmentForm(f => ({ ...f, notes: e.target.value }))} rows={3} /></div>
               </div>
 
-              {(selectedScale.items || []).map((item, index) => (
-                <div key={item.id} style={{ border: '1px solid var(--border-color)', borderRadius: 12, padding: 12, marginTop: 12 }}>
-                  <div style={{ fontWeight: 700, marginBottom: 8 }}>{index + 1}. {item.text}</div>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {(selectedScale.responseType === 'yesno' ? ['لا', 'نعم'] : Array.from({ length: (selectedScale.maxValue || 5) - (selectedScale.minValue || 0) + 1 }, (_, i) => String(i + (selectedScale.minValue || 0)))).map(opt => (
-                      <label key={opt} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--border-color)', borderRadius: 8, padding: '8px 10px', background: 'var(--bg-card)' }}>
-                        <input
-                          type="radio"
-                          name={item.id}
-                          checked={String(assessmentForm.results?.[item.id] ?? '') === String(opt)}
-                          onChange={() => handleAnswerChange(item.id, opt)}
-                        />
-                        <span>{opt}</span>
-                      </label>
-                    ))}
+              {(selectedScale.items || []).map((item, index) => {
+                const options = getScaleOptions(selectedScale);
+                return (
+                  <div key={item.id} style={{ border: '1px solid var(--border-color)', borderRadius: 12, padding: 12, marginTop: 12 }}>
+                    <div style={{ fontWeight: 700, marginBottom: 8 }}>{index + 1}. {item.text}</div>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {options.map(opt => (
+                        <label key={`${item.id}-${opt}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--border-color)', borderRadius: 8, padding: '8px 10px', background: 'var(--bg-card)' }}>
+                          <input
+                            type="radio"
+                            name={item.id}
+                            checked={String(assessmentForm.results?.[item.id] ?? '') === String(opt)}
+                            onChange={() => handleAnswerChange(item.id, opt)}
+                          />
+                          <span>{opt}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div className="fa">
               <button type="button" className="btn btn-p" onClick={saveAssessment}>💾 حفظ التقييم</button>

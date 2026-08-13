@@ -10,7 +10,7 @@ import {
 test('default scale library includes autism and speech categories', () => {
   assert.ok(DEFAULT_SCALE_LIBRARY.length >= 3);
   const names = DEFAULT_SCALE_LIBRARY.map(scale => scale.name);
-  assert.ok(names.includes('كارز (CARS)'));
+  assert.ok(names.includes('كارز (CARS-2)'));
   assert.ok(names.includes('سجل ملاحظات النطق'));
 });
 
@@ -37,7 +37,7 @@ test('buildAssessmentResult calculates total and percentage using the correct CA
   assert.equal(scale.maxScore, 60);
   assert.equal(result.total, 34);
   assert.equal(result.percentage, 56.7);
-  assert.equal(result.level, 'متوسط');
+  assert.equal(result.level, 'بسيط إلى متوسط التوحد');
 });
 
 test('groupScalesByCategory groups all scales by their category', () => {

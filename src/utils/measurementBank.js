@@ -9,21 +9,81 @@ export const MEASUREMENT_CATEGORIES = [
 ];
 
 const CARS_ITEMS = [
-  { id: 'c1', text: 'العلاقات مع الناس', domain: 'social' },
-  { id: 'c2', text: 'التقليد', domain: 'social' },
-  { id: 'c3', text: 'الاستجابة الانفعالية', domain: 'emotion' },
-  { id: 'c4', text: 'استخدام الجسم', domain: 'motor' },
-  { id: 'c5', text: 'استخدام الأشياء', domain: 'play' },
-  { id: 'c6', text: 'التكيّف مع التغيير', domain: 'behavior' },
-  { id: 'c7', text: 'الاستجابة البصرية', domain: 'sensory' },
-  { id: 'c8', text: 'الاستجابة السمعية', domain: 'sensory' },
-  { id: 'c9', text: 'الاستجابة الحسية واللمسية والتذوقية والشمية', domain: 'sensory' },
-  { id: 'c10', text: 'الخوف والقلق', domain: 'emotion' },
-  { id: 'c11', text: 'التواصل اللفظي', domain: 'communication' },
-  { id: 'c12', text: 'التواصل غير اللفظي', domain: 'communication' },
-  { id: 'c13', text: 'مستوى النشاط', domain: 'behavior' },
-  { id: 'c14', text: 'مستوى ثبات الاستجابة الفكرية', domain: 'cognitive' },
-  { id: 'c15', text: 'الانطباع العام', domain: 'general' },
+  {
+    id: 'c1',
+    text: 'الاتصال بالآخرين: مستوى مهارة الطفل في التفاعل الاجتماعي المباشر مع الآخرين.',
+    domain: 'social',
+  },
+  {
+    id: 'c2',
+    text: 'التقليد: قدرة الطفل على محاكاة الأصوات والكلمات والحركات المناسبة لعمره.',
+    domain: 'social',
+  },
+  {
+    id: 'c3',
+    text: 'الاستجابة الانفعالية: مدى ملاءمة ردود فعل الطفل العاطفية للحدث أو الموقف.',
+    domain: 'emotion',
+  },
+  {
+    id: 'c4',
+    text: 'استخدام الجسم: تنسيق الحركات، التوازن، التكرار الحركي، وملاءمة الحركة لعمر الطفل.',
+    domain: 'motor',
+  },
+  {
+    id: 'c5',
+    text: 'استخدام الأشياء: طبيعة التفاعل مع الألعاب والأشياء والاهتمام بها.',
+    domain: 'play',
+  },
+  {
+    id: 'c6',
+    text: 'التكيّف مع التغيير: قدرة الطفل على قبول التغير في الروتين أو النشاط.',
+    domain: 'behavior',
+  },
+  {
+    id: 'c7',
+    text: 'الاستجابة البصرية: مدى انتباه الطفل البصري وكيفية استخدامه للرؤية في التعرف على المثيرات.',
+    domain: 'sensory',
+  },
+  {
+    id: 'c8',
+    text: 'الاستجابة السمعية: مدى استجابة الطفل للأصوات، وتشتت انتباهه أو فرط حساسيته لها.',
+    domain: 'sensory',
+  },
+  {
+    id: 'c9',
+    text: 'اللمس، الشم، والتذوق: مدى تفاعل الطفل مع المثيرات الحسية واللمسية والمذاقية.',
+    domain: 'sensory',
+  },
+  {
+    id: 'c10',
+    text: 'الخوف أو العصبية: مدى ملاءمة رد فعل الطفل تجاه المواقف المخيفة أو المجهدة.',
+    domain: 'emotion',
+  },
+  {
+    id: 'c11',
+    text: 'التواصل اللفظي: قدرة الطفل على استخدام الكلام وبنيته ومعناه.',
+    domain: 'communication',
+  },
+  {
+    id: 'c12',
+    text: 'التواصل غير اللفظي: قدرة الطفل على الإشارة، التعبير، وفهم الإشارات غير اللفظية.',
+    domain: 'communication',
+  },
+  {
+    id: 'c13',
+    text: 'مستوى النشاط: مدى ملاءمة مستوى الحركة والنشاط للطفل في الموقف.',
+    domain: 'behavior',
+  },
+  {
+    id: 'c14',
+    text: 'اتساق واستقرار الاستجابة العقلية: مستوى التناسق العام في الأداء المعرفي والاستجابة.',
+    domain: 'cognitive',
+  },
+  {
+    id: 'c15',
+    text: 'انطباع الفاحص العام: مدى ظهور السمات السلوكية المميزة للتوحد في الطفل.',
+    domain: 'general',
+  },
 ];
 
 function generateItems(prefix, count) {
@@ -40,19 +100,20 @@ const SRS_ITEMS = generateItems('s', 65);
 const DEFAULT_SCALE_LIBRARY = [
   {
     id: 'cars',
-    name: 'كارز (CARS)',
-    nameEn: 'CARS',
+    name: 'كارز (CARS-2)',
+    nameEn: 'CARS-2',
     category: 'autism',
-    description: 'مقياس تقييم التوحد للأطفال — 15 بنداً، بدرجات من 1 إلى 4 لكل بند',
+    description: 'مقياس تقدير الذاتوية في الطفولة — 15 بنداً، درجات من 1.0 إلى 4.0 بنصف درجة',
     icon: '🧩',
     color: '#1a56db',
     scoreMode: 'sum',
     responseType: 'scale',
     minValue: 1,
     maxValue: 4,
+    step: 0.5,
     maxScore: 60,
     items: CARS_ITEMS,
-    thresholdText: 'أقل من 30 = غير مميز أو منخفض، 30–36 = متوسط/معتدل، أكثر من 36 = شديد/مرتفع',
+    thresholdText: 'أقل من 30 = غير توحدي، من 30 إلى 36.5 = بسيط إلى متوسط التوحد، من 37 إلى 60 = شديد / حاد التوحد',
     isDefault: true,
   },
   {
@@ -149,6 +210,24 @@ export function getScaleById(scaleId) {
   return DEFAULT_SCALE_LIBRARY.find(scale => scale.id === scaleId) || null;
 }
 
+export function getScaleOptions(scale) {
+  if (!scale) return [];
+
+  if (scale.responseType === 'yesno') return ['لا', 'نعم'];
+  if (scale.responseType === 'number') return Array.from({ length: 11 }, (_, i) => i);
+
+  const minValue = Number(scale.minValue ?? 1);
+  const maxValue = Number(scale.maxValue ?? 4);
+  const step = Number(scale.step ?? 0.5);
+  const options = [];
+
+  for (let value = minValue; value <= maxValue + 0.0001; value = Number((value + step).toFixed(2))) {
+    options.push(Number(value.toFixed(2)));
+  }
+
+  return options;
+}
+
 export function groupScalesByCategory(scales = []) {
   return MEASUREMENT_CATEGORIES.reduce((acc, category) => {
     acc[category.id] = scales.filter(scale => scale.category === category.id);
@@ -175,13 +254,13 @@ export function buildAssessmentResult(scale, answers = {}) {
 
   if (scale?.id === 'cars') {
     if (total < 30) {
-      level = 'غير مميز';
+      level = 'غير توحدي';
       color = '#10b981';
-    } else if (total <= 36) {
-      level = 'متوسط';
+    } else if (total <= 36.5) {
+      level = 'بسيط إلى متوسط التوحد';
       color = '#f59e0b';
     } else {
-      level = 'شديد';
+      level = 'شديد / حاد التوحد';
       color = '#ef4444';
     }
   } else if (percentage >= 70) {
