@@ -199,9 +199,6 @@ export default function MeasurementCenter({ onBack }) {
         </div>
         <div className="ph-a" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button type="button" className="btn btn-p" onClick={openMeasureModal}>➕ إضافة مقياس جديد</button>
-          {selectedScale && (
-            <button type="button" className="btn btn-bl" onClick={() => openAssessmentModal(selectedScale.id)}>📝 تطبيق مقياس على طالب</button>
-          )}
           <button type="button" className="btn btn-g" onClick={onBack}>← رجوع</button>
         </div>
       </div>
@@ -247,11 +244,6 @@ export default function MeasurementCenter({ onBack }) {
       <div className="wg" style={{ marginBottom: 18 }}>
         <div className="wg-h" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <h3>{categoryMap[selectedCategoryId]?.icon || '🧩'} {categoryMap[selectedCategoryId]?.name || 'المقاييس'}</h3>
-          {visibleCategoryScales.length > 0 && (
-            <button type="button" className="btn btn-p btn-sm" onClick={() => openAssessmentModal(visibleCategoryScales[0].id)}>
-              تطبيق أول مقياس
-            </button>
-          )}
         </div>
         <div className="wg-b" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
           {visibleCategoryScales.length === 0 ? (
