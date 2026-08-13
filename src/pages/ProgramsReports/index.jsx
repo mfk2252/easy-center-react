@@ -3,6 +3,7 @@ import { useLang } from '../../context/LanguageContext';
 import { lsGet } from '../../hooks/useStorage';
 import InitialAssessment from './InitialAssessment';
 import LongTermPrograms from './LongTermPrograms';
+import MeasurementCenter from './MeasurementCenter';
 import GenericSystem from './GenericSystem';
 
 /**
@@ -17,6 +18,7 @@ import GenericSystem from './GenericSystem';
 const SYSTEMS = [
   { key: 'initial', title: 'التقرير المبدئي', icon: '📋', collectionKey: 'progEvaluations', color: '#1a56db', custom: true },
   { key: 'longterm', title: 'البرامج طويلة المدى', icon: '📘', collectionKey: 'progPrograms', color: '#7c3aed', custom: true },
+  { key: 'measurements', title: 'المقاييس والتقييمات', icon: '🧪', collectionKey: 'measurements', color: '#f97316', custom: true },
   { key: 'weekly', title: 'التقارير الأسبوعية', icon: '📅', collectionKey: 'progWeeklyReports', color: '#059669' },
   { key: 'monthly', title: 'التقارير الشهرية', icon: '🗓️', collectionKey: 'progMonthlyReports', color: '#0891b2' },
   { key: 'parentMeeting', title: 'تقارير لقاء ولي الأمر', icon: '👨‍👩‍👧', collectionKey: 'progParentMeetings', color: '#db2777' },
@@ -38,6 +40,7 @@ export default function ProgramsReportsHub() {
   if (system) {
     if (system.key === 'initial') return <InitialAssessment onBack={goBack} />;
     if (system.key === 'longterm') return <LongTermPrograms onBack={goBack} />;
+    if (system.key === 'measurements') return <MeasurementCenter onBack={goBack} />;
     return (
       <GenericSystem
         title={system.title}

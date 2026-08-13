@@ -76,6 +76,7 @@ export const SYSTEM_DATA_KEYS = [
   'progWeeklyReports', 'progMonthlyReports', 'progParentMeetings',
   'progSemiAnnualReports', 'progAnnualReports', 'progBehaviorReports',
   'progLearningDifficultyReports',
+  'measurements', 'measureItems', 'studentAssessments',
   'bonuses',
   'progGoalsBank',
   'partners', 'custody', 'centerVisits', 'buses', 'centerDocs',
@@ -114,6 +115,7 @@ export async function pushToFirebase(centerId) {
     'progWeeklyReports','progMonthlyReports','progParentMeetings',
     'progSemiAnnualReports','progAnnualReports','progBehaviorReports',
     'progLearningDifficultyReports',
+    'measurements','measureItems','studentAssessments',
     'bonuses',
     'progGoalsBank',
   ];

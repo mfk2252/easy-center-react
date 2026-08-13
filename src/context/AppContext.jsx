@@ -20,6 +20,7 @@ const ALL_KEYS = [
   'progWeeklyReports','progMonthlyReports','progParentMeetings',
   'progSemiAnnualReports','progAnnualReports','progBehaviorReports',
   'progLearningDifficultyReports',
+  'measurements','measureItems','studentAssessments',
   'bonuses',
   'progGoalsBank',
 ];
