@@ -218,16 +218,25 @@ export default function MeasurementCenter({ onBack }) {
                 className="card"
                 onClick={() => setSelectedCategoryId(cat.id)}
                 style={{
+                  width: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  justifyContent: 'center',
+                  gap: 8,
                   padding: 14,
                   textAlign: 'right',
                   cursor: 'pointer',
-                  border: isActive ? '2px solid var(--p)' : '1px solid var(--border-color)',
-                  background: isActive ? 'var(--bg-soft)' : 'var(--bg-card)',
+                  border: isActive ? '2px solid var(--pr)' : '1px solid var(--border-color)',
+                  background: isActive ? 'var(--pr-l)' : 'var(--bg-card)',
+                  color: 'var(--text-main)',
+                  fontFamily: 'Tajawal, sans-serif',
+                  boxShadow: 'var(--sh)',
                 }}
               >
-                <div style={{ fontSize: '1.6rem' }}>{cat.icon}</div>
-                <div style={{ fontWeight: 800 }}>{cat.name}</div>
-                <div style={{ color: 'var(--g5)', fontSize: '.8rem' }}>{count} مقياس</div>
+                <div style={{ fontSize: '1.6rem', lineHeight: 1 }}>{cat.icon}</div>
+                <div style={{ fontWeight: 800, color: 'var(--text-main)', fontFamily: 'Tajawal, sans-serif' }}>{cat.name}</div>
+                <div style={{ color: 'var(--text-sub)', fontSize: '.8rem', fontFamily: 'Tajawal, sans-serif' }}>{count} مقياس</div>
               </button>
             );
           })}
