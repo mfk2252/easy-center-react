@@ -14,7 +14,7 @@ test('default scale library includes autism and speech categories', () => {
   assert.ok(names.includes('سجل ملاحظات النطق'));
 });
 
-test('buildAssessmentResult calculates total and percentage', () => {
+test('buildAssessmentResult calculates total and percentage using the correct CARS scoring range', () => {
   const scale = getScaleById('cars');
   const result = buildAssessmentResult(scale, {
     c1: 2,
@@ -34,8 +34,9 @@ test('buildAssessmentResult calculates total and percentage', () => {
     c15: 1,
   });
 
+  assert.equal(scale.maxScore, 60);
   assert.equal(result.total, 34);
-  assert.equal(result.percentage, 68.0);
+  assert.equal(result.percentage, 56.7);
   assert.equal(result.level, 'متوسط');
 });
 
