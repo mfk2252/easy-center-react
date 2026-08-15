@@ -18,7 +18,8 @@
 .nav-logout{background:transparent;color:var(--g5);border:1px solid rgba(255,255,255,.12);padding:6px 12px;border-radius:7px;font-family:'Tajawal',sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
 .nav-logout:hover{background:var(--err-l);color:var(--err);border-color:var(--err)}
 .page{padding:18px 16px;max-width:1280px;margin:0 auto}
-.mbg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:flex-start;justify-content:center;padding:max(8px,1.5vh) 12px 20px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:flex-start;justify-content:center;padding:max(8px,1.5vh) 12px 20px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;pointer-events:none}
+.mbg>.mb{pointer-events:auto}
 .mb{background:var(--bg-card);border-radius:var(--r);width:100%;max-width:min(540px,calc(100vw - 24px));max-height:min(94vh,calc(100dvh - 20px));margin-top:auto;margin-bottom:auto;overflow:hidden;box-shadow:var(--sh3);position:relative;display:flex;flex-direction:column}
 .mb-large{max-width:min(700px,calc(100vw - 24px))}.mb-xl{max-width:min(860px,calc(100vw - 20px))}.mb-sm{max-width:min(420px,calc(100vw - 24px))}
 .modal-body-scroll{overflow-y:auto;max-height:min(74vh,calc(100dvh - 150px));flex:1;min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding-bottom:4px}
