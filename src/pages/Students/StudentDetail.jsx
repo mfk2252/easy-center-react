@@ -667,7 +667,7 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
 
           {/* Fee Form Modal */}
           {showFeeForm && (
-            <div className="mbg" onClick={e => e.target === e.currentTarget && setShowFeeForm(false)}>
+            <div className="mbg">
               <div className="mb" style={{ padding:0, borderRadius:12, overflow:'hidden' }}>
                 <div className="fhd" style={{ padding:'14px 20px' }}><h2>💳 تعديل الرسوم</h2></div>
                 <div style={{ padding:'18px 20px' }}>
@@ -702,7 +702,7 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
 
           {/* Payment Form Modal */}
           {showPaymentForm && (
-            <div className="mbg" onClick={e => e.target === e.currentTarget && setShowPaymentForm(false)}>
+            <div className="mbg">
               <div className="mb" style={{ padding:0, borderRadius:12, overflow:'hidden' }}>
                 <div className="fhd" style={{ padding:'14px 20px' }}><h2>💳 تسجيل دفعة جديدة</h2></div>
                 <div style={{ padding:'18px 20px' }}>
