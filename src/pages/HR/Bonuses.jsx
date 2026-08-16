@@ -112,7 +112,7 @@ export default function Bonuses() {
       )}
 
       {showForm && (
-        <div className="mbg" onClick={e => e.target === e.currentTarget && setShowForm(false)}>
+        <div className="mbg">
           <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
             <div className="fhd" style={{ padding: '14px 20px' }}>
               <h2>⭐ مكافأة جديدة</h2>
