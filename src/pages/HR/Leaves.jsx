@@ -119,7 +119,7 @@ export default function Leaves() {
       }
 
       {showForm && (
-        <div className="mbg" onClick={e => { if (e.target === e.currentTarget) setShowForm(false); }}>
+        <div className="mbg">
           <div className="mb" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
             <div className="fhd" style={{ padding: '14px 20px', borderRadius: 0 }}>
               <h2>{editId ? '✏️ تعديل طلب الإجازة' : '🌴 طلب إجازة جديد'}</h2>
