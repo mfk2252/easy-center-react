@@ -406,7 +406,7 @@ export default function StudentsPage() {
       )}
 
       {showQuickSession && (
-        <div className="mbg" onClick={e => e.target === e.currentTarget && setShowQuickSession(false)}>
+        <div className="mbg">
           <div className="mb mb-xl" style={{ padding:0, overflow:'hidden', borderRadius:16 }}>
             <div className="fhd" style={{ padding:'16px 20px', borderRadius:0 }}>
               <h2>🩺 تسجيل جلسة علاجية</h2>
@@ -443,7 +443,7 @@ export default function StudentsPage() {
 
       {/* Consultation Modal */}
       {showConsult && (
-        <div className="mbg" onClick={e => e.target === e.currentTarget && setShowConsult(false)}>
+        <div className="mbg">
           <div className="mb mb-xl" style={{ padding:0, overflow:'hidden', borderRadius:16 }}>
             <div className="fhd" style={{ padding:'16px 20px', borderRadius:0 }}>
               <h2>💬 تسجيل استشارة</h2>
