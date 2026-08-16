@@ -764,7 +764,7 @@ export default function Calendar() {
       )}
 
       {showForm && (
-        <div className="mbg" onClick={e => e.target === e.currentTarget && setShowForm(false)}>
+        <div className="mbg">
           <div className="mb mb-sm" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
             <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0, background: 'var(--pr)' }}>
               <h2 style={{ color: '#fff', margin: 0, fontSize: '1.15rem' }}>{editId ? '✏️ تعديل الحدث' : '➕ إضافة حدث جديد'}</h2>
@@ -823,7 +823,7 @@ export default function Calendar() {
       )}
 
       {showStuAppt && (
-        <div className="mbg" onClick={e => e.target === e.currentTarget && setShowStuAppt(false)}>
+        <div className="mbg">
           <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
             <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0 }}>
               <h2 style={{ margin: 0, fontSize: '1.15rem' }}>📅 تسجيل موعد مرتبط بطالب</h2>
@@ -902,7 +902,7 @@ export default function Calendar() {
       )}
 
       {showStuSess && (
-        <div className="mbg" onClick={e => e.target === e.currentTarget && setShowStuSess(false)}>
+        <div className="mbg">
           <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
             <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0 }}>
               <h2 style={{ margin: 0, fontSize: '1.15rem' }}>🩺 تسجيل جلسة علاجية وتوثيقها</h2>
@@ -982,7 +982,7 @@ export default function Calendar() {
       )}
 
       {showEval && (
-        <div className="mbg" onClick={e => e.target === e.currentTarget && setShowEval(false)}>
+        <div className="mbg">
           <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
             <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0, background: 'var(--or)' }}>
               <h2 style={{ color: '#fff', margin: 0, fontSize: '1.15rem' }}>📋 تقييم مستفيد جديد</h2>
