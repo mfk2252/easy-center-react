@@ -81,7 +81,7 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
   }
 
   return (
-    <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="mbg">
       <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
         <div className="fhd" style={{ padding: '14px 20px' }}>
           <h2>🎯 اختيار أهداف — {domain && domain !== 'all' ? domainLabel(domain) : 'جميع المجالات'}</h2>
@@ -300,7 +300,7 @@ export function GoalsBankManagerModal({ onClose }) {
   });
 
   return (
-    <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="mbg">
       <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
         <div className="fhd" style={{ padding: '14px 20px' }}>
           <h2>🗂️ إدارة بنك الأهداف الخاص بمركزك</h2>

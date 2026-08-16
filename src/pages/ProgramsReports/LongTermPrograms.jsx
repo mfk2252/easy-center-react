@@ -296,7 +296,7 @@ export default function LongTermPrograms({ onBack }) {
 
       {/* Modal إضافة/تعديل برنامج */}
       {modalOpen && (
-        <div className="mbg" onClick={e => e.target === e.currentTarget && setModalOpen(false)}>
+        <div className="mbg">
           <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '95vh', display: 'flex', flexDirection: 'column' }}>
             <div className="fhd" style={{ padding: '14px 20px' }}>
               <h2>📘 {editId ? 'تعديل برنامج' : 'برنامج/خطة تربوية جديدة'}</h2>
