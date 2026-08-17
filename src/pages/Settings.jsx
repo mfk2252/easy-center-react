@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { lsGet, lsAdd, lsUpd, lsDel, refreshAllSystemData, getCenterId } from '../hooks/useStorage';
-import { uid, todayStr } from '../utils/dateHelpers';
+import { lsGet, refreshAllSystemData, getCenterId } from '../hooks/useStorage';
+import { todayStr } from '../utils/dateHelpers';
 import { ROLES } from '../utils/constants';
-import { updateCenterSettings, getCenterUsers } from '../firebase/db';
-import { createStaffAccount } from '../firebase/auth';
+import { updateCenterSettings, getCenterUsers, getCenterSettings } from '../firebase/db';
+import { createStaffAccount, checkSubscriptionStatus, isPlatformAdminEmail } from '../firebase/auth';
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useLang } from '../context/LanguageContext';
@@ -31,13 +31,24 @@ const PERMISSIONS = [
 const EMPTY_USER_FORM = { username:'', password:'', name:'', contactEmail:'', role:'specialist', title:'', studentId:'', phone:'', permissions:{} };
 
 // دالة مساعدة لتنسيق التاريخ
-const formatDate = (timestamp) => {
-  if (!timestamp) return '—';
+const formatDate = (val) => {
+  if (!val) return '—';
   try {
-    // التعامل مع Timestamp对象 من Firebase أو Date
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    let date;
+    if (val?.toDate && typeof val.toDate === 'function') {
+      date = val.toDate();
+    } else if (val?.seconds) {
+      date = new Date(val.seconds * 1000);
+    } else if (val instanceof Date) {
+      date = val;
+    } else {
+      date = new Date(val);
+    }
+    if (isNaN(date.getTime())) return '—';
     return new Intl.DateTimeFormat('ar-SA', {
-      year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
     }).format(date);
   } catch (e) {
     return '—';
@@ -81,17 +92,68 @@ export default function Settings() {
 
   const isManager = currentUser?.role === 'manager';
   const centerId = currentUser?.centerId || currentUser?.uid || getCenterId();
+  const [liveSub, setLiveSub] = useState(null);
 
-  // استخراج بيانات الاشتراك من كائن المركز
-  // الإصلاح: subscriptionStatus هو المصدر الصحيح (center.subscription لا يُملأ في applyCenter)
-  const sub = subscriptionStatus || currentUser?.subscription || {};
-  const subData = sub;
-  const isActiveSub = ['active', 'super_admin', 'platform_admin'].includes(sub?.reason);
-  const daysLeft = typeof sub?.daysLeft === 'number'
+  useEffect(() => {
+    async function fetchLiveSubscription() {
+      if (!centerId) return;
+      try {
+        const cData = await getCenterSettings(centerId);
+        if (cData) {
+          const status = checkSubscriptionStatus(cData);
+          setLiveSub(status);
+        }
+      } catch (e) {
+        console.warn('Failed to fetch live sub:', e);
+      }
+    }
+    fetchLiveSubscription();
+  }, [centerId]);
+
+  // استخراج بيانات الاشتراك من المصادر المتاحة
+  const sub = liveSub || subscriptionStatus || currentUser?.subscription || (center?.subscription ? checkSubscriptionStatus(center) : null) || {};
+  const isPlatformAdmin = isPlatformAdminEmail(currentUser?.email) || sub?.reason === 'platform_admin' || sub?.reason === 'super_admin';
+  const isPermanent = sub?.isPermanent || isPlatformAdmin;
+  const isTrial = sub?.reason === 'trial' || sub?.status === 'trial';
+  const isActiveSub = isPlatformAdmin || sub?.reason === 'active' || sub?.status === 'active' || isTrial;
+
+  const daysLeft = isPermanent ? 9999 : (typeof sub?.daysLeft === 'number'
     ? sub.daysLeft
-    : sub?.trialExpiry
-      ? Math.max(0, Math.ceil((new Date(sub.trialExpiry) - new Date()) / 86400000))
-      : 0;
+    : (sub?.trialExpiry || sub?.expiryDate)
+      ? Math.max(0, Math.ceil((new Date(sub.trialExpiry || sub.expiryDate) - new Date()) / 86400000))
+      : (isTrial ? 5 : 0));
+
+  const activationDateStr = isPlatformAdmin
+    ? 'حساب دائم (مالك المنصة)'
+    : formatDate(sub?.activatedAt || sub?.createdAt || center?.createdAt || new Date());
+
+  const expiryDateStr = isPermanent
+    ? 'غير محدد (اشتراك دائم ♾️)'
+    : (sub?.expiryDate || sub?.trialExpiry)
+      ? formatDate(sub.expiryDate || sub.trialExpiry)
+      : daysLeft > 0
+        ? `خلال ${daysLeft} يوم`
+        : 'منتهي الصلاحية';
+
+  const durationStr = isPermanent
+    ? 'دائم ♾️'
+    : sub?.months
+      ? `${sub.months} شهر`
+      : isTrial
+        ? 'فترة تجريبية (5 أيام)'
+        : 'اشتراك سنوي';
+
+  const statusLabel = isPlatformAdmin
+    ? 'مالك المنصة 👑'
+    : (sub?.status === 'active' || sub?.reason === 'active')
+      ? 'نشط ومفعّل ✅'
+      : isTrial
+        ? 'تجريبي نشط ⏳'
+        : sub?.status === 'suspended'
+          ? 'موقوف مؤقتاً 🔒'
+          : (!sub?.allowed || sub?.status === 'expired' || sub?.reason === 'expired' || sub?.reason === 'trial_expired')
+            ? 'منتهي الصلاحية ❌'
+            : 'نشط ✅';
 
   useEffect(() => {
     reloadUsers();
@@ -479,34 +541,45 @@ export default function Settings() {
           {/* بطاقة معلومات الاشتراك - تظهر للمدير فقط */}
           {isManager && (
             <div className="wg" style={{ marginBottom: 14, border: '1px solid var(--pr)', background: 'var(--pr-l)' }}>
-              <div className="wg-h" style={{ background: 'var(--pr)', color: '#fff' }}>
-                <h3>📋 حالة اشتراك المركز</h3>
+              <div className="wg-h" style={{ background: 'var(--pr)', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0, color: '#fff' }}>📋 حالة اشتراك المركز</h3>
+                <span style={{ fontSize: '.8rem', background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: 4 }}>
+                  {isPermanent ? 'اشتراك غير محدود' : daysLeft > 0 ? `متبقي ${daysLeft} يوم` : 'منتهي'}
+                </span>
               </div>
               <div className="wg-b">
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
                   <div>
                     <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>تاريخ بدء التفعيل</div>
-                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{sub?.reason === 'trial' ? 'فترة تجريبية' : sub?.activatedAt ? formatDate(sub.activatedAt) : '—'}</div>
+                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{activationDateStr}</div>
                   </div>
                   <div>
                     <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>تاريخ انتهاء الصلاحية</div>
-                    <div style={{ fontWeight: 700, fontSize: '1rem', color: daysLeft < 30 ? 'var(--err)' : 'var(--ok)' }}>
-                      {sub?.trialExpiry ? new Date(sub.trialExpiry).toLocaleDateString('ar-SA') : daysLeft > 0 ? `${daysLeft} يوم متبقياً` : '—'}
+                    <div style={{ fontWeight: 700, fontSize: '1rem', color: (!isPermanent && daysLeft < 30) ? 'var(--warn)' : 'var(--ok)' }}>
+                      {expiryDateStr}
                     </div>
                   </div>
                   <div>
                     <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>مدة الاشتراك</div>
-                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{sub?.months ? sub.months + ' شهر' : sub?.reason === 'trial' ? 'تجريبي' : sub?.reason === 'platform_admin' ? 'دائم ∞' : '—'}</div>
+                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{durationStr}</div>
                   </div>
                   <div>
                     <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>الحالة الحالية</div>
-                    <div style={{ display: 'inline-block', padding: '4px 12px', borderRadius: 20, fontSize: '.85rem', fontWeight: 700, background: isActiveSub ? 'var(--ok)' : 'var(--g4)', color: isActiveSub ? '#fff' : '#000' }}>
-                      {isActiveSub ? 'نشط ✅' : 'غير نشط ⏸️'}
+                    <div style={{
+                      display: 'inline-block',
+                      padding: '4px 12px',
+                      borderRadius: 20,
+                      fontSize: '.85rem',
+                      fontWeight: 700,
+                      background: isActiveSub ? 'var(--ok)' : 'var(--err)',
+                      color: '#fff'
+                    }}>
+                      {statusLabel}
                     </div>
                   </div>
-                  {daysLeft > 0 && daysLeft <= 30 && (
+                  {!isPermanent && daysLeft > 0 && daysLeft <= 30 && (
                     <div style={{ gridColumn: '1 / -1', padding: '10px', background: 'var(--warn-l)', color: 'var(--warn)', borderRadius: 8, fontSize: '.9rem', fontWeight: 600 }}>
-                      ⚠️ تنبيه: يتبقى {daysLeft} يوم على انتهاء الاشتراك. يرجى التجديد لتجنب انقطاع الخدمة.
+                      ⚠️ تنبيه: يتبقى {daysLeft} يوم على انتهاء الاشتراك. يرجى التواصل مع الإدارة للتجديد لتجنب انقطاع الخدمة.
                     </div>
                   )}
                 </div>
