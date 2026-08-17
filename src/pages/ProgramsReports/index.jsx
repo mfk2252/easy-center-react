@@ -1,114 +1,185 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLang } from '../../context/LanguageContext';
+import { useApp } from '../../context/AppContext';
 import { lsGet } from '../../hooks/useStorage';
-import InitialAssessment from './InitialAssessment';
-import LongTermPrograms from './LongTermPrograms';
-import MeasurementCenter from './MeasurementCenter';
-import GenericSystem from './GenericSystem';
+import PillarAssessment from './PillarAssessment';
+import PillarPlans from './PillarPlans';
+import PillarProgress from './PillarProgress';
+import PillarFamily from './PillarFamily';
 
 /**
- * لوحة الأنظمة العشرة — نقطة الدخول الوحيدة لقسم "البرامج والتقارير".
- * كل نظام معزول بمجموعة بيانات (collectionKey) خاصة به، ومحمي تلقائياً
- * حسب المركز الحالي عبر lsGet/lsAdd (نفس آلية باقي التطبيق).
- *
- * الأنظمة 1 و2 لها ملفات مخصصة (منطق موجود مسبقاً). باقي الأنظمة تستخدم
- * GenericSystem كقالب فعلي وعامل الآن، وتُستبدل لاحقاً بملفات مخصصة فور
- * استلام التصميم النهائي لكل نظام — دون أي تعديل على هذا الملف.
+ * قسم البرامج والتقارير في Easy Center
+ * هيكلة منظمة وواضحة عبر 4 محاور أساسية تمثل رحلة الطالب الكاملة داخل المركز
  */
-const SYSTEMS = [
-  { key: 'initial', title: 'التقرير المبدئي', icon: '📋', collectionKey: 'progEvaluations', color: '#1a56db', custom: true },
-  { key: 'longterm', title: 'البرامج طويلة المدى', icon: '📘', collectionKey: 'progPrograms', color: '#7c3aed', custom: true },
-  { key: 'measurements', title: 'المقاييس والتقييمات', icon: '🧪', collectionKey: 'measurements', color: '#f97316', custom: true },
-  { key: 'weekly', title: 'التقارير الأسبوعية', icon: '📅', collectionKey: 'progWeeklyReports', color: '#059669' },
-  { key: 'monthly', title: 'التقارير الشهرية', icon: '🗓️', collectionKey: 'progMonthlyReports', color: '#0891b2' },
-  { key: 'parentMeeting', title: 'تقارير لقاء ولي الأمر', icon: '👨‍👩‍👧', collectionKey: 'progParentMeetings', color: '#db2777' },
-  { key: 'semiAnnual', title: 'التقرير النصف سنوي', icon: '📊', collectionKey: 'progSemiAnnualReports', color: '#d97706' },
-  { key: 'annual', title: 'التقرير السنوي', icon: '📈', collectionKey: 'progAnnualReports', color: '#dc2626' },
-  { key: 'behaviorMod', title: 'تقارير خطة تعديل السلوك', icon: '📐', collectionKey: 'progBehaviorReports', color: '#7c3aed' },
-  { key: 'learningDiff', title: 'تقارير صعوبات التعلم', icon: '🧩', collectionKey: 'progLearningDifficultyReports', color: '#0f172a' },
-  { key: 'generic', title: 'التقارير (عام)', icon: '📑', collectionKey: 'progReports', color: '#64748b' },
+const PILLARS = [
+  {
+    id: 'assessment',
+    title: 'مركز التقييم والتشخيص',
+    subtitle: 'المقاييس المقننة، التقييم المبدئي الشامل، ومستوى الأداء الحالي',
+    icon: '🎯',
+    color: '#1a56db',
+    accentClass: 'blue',
+  },
+  {
+    id: 'plans',
+    title: 'الخطط والبرامج الفردية (IEP)',
+    subtitle: 'الخطط طويلة وقصيرة المدى، بنك الأهداف التخصصي، وتعديل السلوك',
+    icon: '📋',
+    color: '#7c3aed',
+    accentClass: 'purple',
+  },
+  {
+    id: 'progress',
+    title: 'التقارير الدورية ومتابعة الإنجاز',
+    subtitle: 'التقارير الأسبوعية والشهرية والفصليّة والسنوية، ونسب الإتقان',
+    icon: '📊',
+    color: '#059669',
+    accentClass: 'green',
+  },
+  {
+    id: 'family',
+    title: 'الشراكة والتواصل الأسري',
+    subtitle: 'محاضر لقاءات أولياء الأمور، التوجيه المنزلي، والإرسال عبر WhatsApp',
+    icon: '👨‍👩‍👧',
+    color: '#db2777',
+    accentClass: 'pink',
+  },
 ];
 
 export default function ProgramsReportsHub() {
   const { t } = useLang();
-  const [activeSystem, setActiveSystem] = useState(null);
+  const { center } = useApp();
+  const [activePillar, setActivePillar] = useState('assessment');
+  const [stats, setStats] = useState({
+    evalCount: 0,
+    planCount: 0,
+    reportCount: 0,
+    meetingCount: 0,
+  });
 
-  const system = SYSTEMS.find(s => s.key === activeSystem);
+  useEffect(() => {
+    const evals = lsGet('progEvaluations').length + (lsGet('studentAssessments') || []).length;
+    const plans = (lsGet('progPrograms') || []).length + (lsGet('progBehaviorReports') || []).length;
+    const reports = (lsGet('progWeeklyReports') || []).length +
+      (lsGet('progMonthlyReports') || []).length +
+      (lsGet('progSemiAnnualReports') || []).length +
+      (lsGet('progAnnualReports') || []).length;
+    const meetings = (lsGet('progParentMeetings') || []).length;
 
-  function goBack() { setActiveSystem(null); }
-
-  if (system) {
-    if (system.key === 'initial') return <InitialAssessment onBack={goBack} />;
-    if (system.key === 'longterm') return <LongTermPrograms onBack={goBack} />;
-    if (system.key === 'measurements') return <MeasurementCenter onBack={goBack} />;
-    return (
-      <GenericSystem
-        title={system.title}
-        icon={system.icon}
-        collectionKey={system.collectionKey}
-        onBack={goBack}
-      />
-    );
-  }
+    setStats({
+      evalCount: evals,
+      planCount: plans,
+      reportCount: reports,
+      meetingCount: meetings,
+    });
+  }, [activePillar]);
 
   return (
     <div>
+      {/* Page Header */}
       <div className="ph">
         <div className="ph-t">
-          <h2>📚 {t('progReports.title')}</h2>
-          <p>عشرة أنظمة متخصصة لتوثيق رحلة كل طالب — كل بياناتك معزولة بالكامل عن أي مركز آخر</p>
+          <h2>📚 {t('progReports.title') || 'البرامج والخطط التأهيلية والتقارير'}</h2>
+          <p>
+            منظومة متكاملة لتوثيق وتشخيص رحلة كل طالب، وبناء خططه الفردية (IEP)، وإصدار التقارير ومشاركتها مع أولياء الأمور
+          </p>
         </div>
       </div>
 
+      {/* 4 Pillars Navigation Bar */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
-          gap: 14,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+          gap: 12,
+          marginBottom: 20,
         }}
       >
-        {SYSTEMS.map(s => {
-          const count = lsGet(s.collectionKey).length;
+        {PILLARS.map(p => {
+          const isActive = activePillar === p.id;
+          let count = 0;
+          if (p.id === 'assessment') count = stats.evalCount;
+          if (p.id === 'plans') count = stats.planCount;
+          if (p.id === 'progress') count = stats.reportCount;
+          if (p.id === 'family') count = stats.meetingCount;
+
           return (
             <button
-              key={s.key}
+              key={p.id}
               type="button"
-              onClick={() => setActiveSystem(s.key)}
+              onClick={() => setActivePillar(p.id)}
               style={{
                 textAlign: 'right',
                 cursor: 'pointer',
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-                borderRadius: 16,
-                padding: '20px 18px',
-                boxShadow: 'var(--sh)',
-                transition: 'transform .18s, box-shadow .18s, border-color .18s',
+                background: isActive ? 'var(--bg-card)' : 'var(--bg-card)',
+                border: isActive ? `2px solid ${p.color}` : '1px solid var(--border-color)',
+                borderRadius: 14,
+                padding: '14px 16px',
+                boxShadow: isActive ? 'var(--sh2)' : 'var(--sh)',
                 display: 'flex',
-                flexDirection: 'column',
-                gap: 10,
-                fontFamily: 'inherit',
+                alignItems: 'center',
+                gap: 12,
+                transition: 'all .18s ease',
+                position: 'relative',
+                overflow: 'hidden',
               }}
-              onMouseEnter={ev => { ev.currentTarget.style.transform = 'translateY(-3px)'; ev.currentTarget.style.boxShadow = 'var(--sh2)'; ev.currentTarget.style.borderColor = s.color; }}
-              onMouseLeave={ev => { ev.currentTarget.style.transform = 'translateY(0)'; ev.currentTarget.style.boxShadow = 'var(--sh)'; ev.currentTarget.style.borderColor = 'var(--border-color)'; }}
             >
+              {isActive && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    left: 0,
+                    height: 3,
+                    background: p.color,
+                  }}
+                />
+              )}
               <div
                 style={{
-                  width: 46, height: 46, borderRadius: 12,
-                  background: s.color + '18', color: s.color,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '1.35rem',
+                  width: 44,
+                  height: 44,
+                  borderRadius: 10,
+                  background: isActive ? p.color : p.color + '15',
+                  color: isActive ? '#fff' : p.color,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.3rem',
+                  flexShrink: 0,
                 }}
               >
-                {s.icon}
+                {p.icon}
               </div>
-              <div style={{ fontWeight: 800, fontSize: '.94rem', color: 'var(--text-main)' }}>{s.title}</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
-                <span style={{ fontSize: '.76rem', color: 'var(--g5)' }}>{count} سجل</span>
-                <span style={{ fontSize: '.78rem', fontWeight: 700, color: s.color }}>فتح ←</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    fontWeight: 800,
+                    fontSize: '.92rem',
+                    color: isActive ? p.color : 'var(--text-main)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {p.title}
+                </div>
+                <div style={{ fontSize: '.76rem', color: 'var(--g5)', marginTop: 2 }}>
+                  {count} سجل مسجل
+                </div>
               </div>
             </button>
           );
         })}
+      </div>
+
+      {/* Active Pillar Container */}
+      <div className="tab-content" style={{ marginTop: 8 }}>
+        {activePillar === 'assessment' && <PillarAssessment />}
+        {activePillar === 'plans' && <PillarPlans />}
+        {activePillar === 'progress' && <PillarProgress />}
+        {activePillar === 'family' && <PillarFamily />}
       </div>
     </div>
   );
