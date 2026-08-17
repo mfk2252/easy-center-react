@@ -83,11 +83,15 @@ export default function Settings() {
   const centerId = currentUser?.centerId || currentUser?.uid || getCenterId();
 
   // استخراج بيانات الاشتراك من كائن المركز
-  const subData = center?.subscription;
-  const isActiveSub = subData?.status === 'active';
-  const daysLeft = subData?.expiryDate 
-    ? Math.ceil((subData.expiryDate.toDate().getTime() - new Date().getTime()) / (1000 * 3600 * 24))
-    : 0;
+  // الإصلاح: subscriptionStatus هو المصدر الصحيح (center.subscription لا يُملأ في applyCenter)
+  const sub = subscriptionStatus || currentUser?.subscription || {};
+  const subData = sub;
+  const isActiveSub = ['active', 'super_admin', 'platform_admin'].includes(sub?.reason);
+  const daysLeft = typeof sub?.daysLeft === 'number'
+    ? sub.daysLeft
+    : sub?.trialExpiry
+      ? Math.max(0, Math.ceil((new Date(sub.trialExpiry) - new Date()) / 86400000))
+      : 0;
 
   useEffect(() => {
     reloadUsers();
@@ -482,17 +486,17 @@ export default function Settings() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
                   <div>
                     <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>تاريخ بدء التفعيل</div>
-                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{formatDate(subData?.activatedAt)}</div>
+                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{sub?.reason === 'trial' ? 'فترة تجريبية' : sub?.activatedAt ? formatDate(sub.activatedAt) : '—'}</div>
                   </div>
                   <div>
                     <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>تاريخ انتهاء الصلاحية</div>
-                    <div style={{ fontWeight: 700, fontSize: '1rem', color: daysLeft < 30 ? 'var(--error)' : 'var(--ok)' }}>
-                      {formatDate(subData?.expiryDate)}
+                    <div style={{ fontWeight: 700, fontSize: '1rem', color: daysLeft < 30 ? 'var(--err)' : 'var(--ok)' }}>
+                      {sub?.trialExpiry ? new Date(sub.trialExpiry).toLocaleDateString('ar-SA') : daysLeft > 0 ? `${daysLeft} يوم متبقياً` : '—'}
                     </div>
                   </div>
                   <div>
                     <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>مدة الاشتراك</div>
-                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{subData?.months || 0} شهر</div>
+                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{sub?.months ? sub.months + ' شهر' : sub?.reason === 'trial' ? 'تجريبي' : sub?.reason === 'platform_admin' ? 'دائم ∞' : '—'}</div>
                   </div>
                   <div>
                     <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginBottom: 4 }}>الحالة الحالية</div>
