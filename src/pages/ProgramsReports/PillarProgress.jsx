@@ -29,9 +29,9 @@ const EMPTY_REPORT = {
   notes: '',
 };
 
-export default function PillarProgress() {
+export default function PillarProgress({ onDataChange }) {
   const { toast, center } = useApp();
-  const [activeType, setActiveType] = useState('weekly');
+  const [activeType, setActiveType] = useState('weekly'); // 'weekly' | 'monthly' | 'semiAnnual' | 'annual' | 'general'
   const [students, setStudents] = useState([]);
   const [emps, setEmps] = useState([]);
   const [reports, setReports] = useState([]);
@@ -49,6 +49,7 @@ export default function PillarProgress() {
     setStudents(lsGet('students'));
     setEmps(lsGet('employees'));
     setReports((lsGet(currentTypeConfig.collection) || []).sort((a, b) => (b.date || '').localeCompare(a.date || '')));
+    if (onDataChange) onDataChange();
   }
 
   useEffect(() => {
@@ -144,12 +145,12 @@ export default function PillarProgress() {
     <div>
       {/* Types Switcher */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        <div className="tabs" style={{ margin: 0, flexWrap: 'wrap' }}>
           {REPORT_TYPES.map(type => (
             <button
               key={type.key}
               type="button"
-              className={`btn ${activeType === type.key ? 'btn-p' : 'btn-g'}`}
+              className={`tab ${activeType === type.key ? 'on' : ''}`}
               onClick={() => setActiveType(type.key)}
             >
               {type.icon} {type.label}
