@@ -39,7 +39,7 @@ const EMPTY_ASSESSMENT = {
   recommendations: '',
 };
 
-export default function PillarAssessment() {
+export default function PillarAssessment({ onDataChange }) {
   const { toast, center, currentUser } = useApp();
   const [subTab, setSubTab] = useState('initial'); // 'initial' | 'scales' | 'results'
   const [students, setStudents] = useState([]);
@@ -65,6 +65,7 @@ export default function PillarAssessment() {
     setEmps(lsGet('employees'));
     setEvaluations(lsGet('progEvaluations').sort((a, b) => (b.date || '').localeCompare(a.date || '')));
     setAssessments((lsGet('studentAssessments') || []).sort((a, b) => (b.date || '').localeCompare(a.date || '')));
+    if (onDataChange) onDataChange();
   }
 
   useEffect(() => { reload(); }, []);
@@ -141,57 +142,50 @@ export default function PillarAssessment() {
     setScaleModal(true);
   }
 
-  function handleScaleOptionChange(itemId, scoreVal) {
-    setScaleResponses(prev => ({ ...prev, [itemId]: Number(scoreVal) }));
+  function handleScaleOptionChange(itemId, value) {
+    setScaleResponses(prev => ({
+      ...prev,
+      [itemId]: Number(value),
+    }));
   }
 
   function saveScaleAssessment() {
     if (!validateStudentPick(scaleForm)) { toast('⚠️ اختر الطالب أولاً', 'er'); return; }
-    if (!activeScale) { toast('⚠️ اختر المقياس المطلوب', 'er'); return; }
+    if (!activeScale) { toast('⚠️ المقياس غير محدد', 'er'); return; }
 
-    const items = activeScale.items || [];
-    let totalScore = 0;
-    items.forEach(it => {
-      totalScore += scaleResponses[it.id] || 0;
-    });
-
-    const maxScore = activeScale.maxScore || (items.length * (activeScale.maxValue || 4));
-    const percentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
-    let level = 'طبيعي / بسيط';
-    if (percentage > 70) level = 'شديد جداً';
-    else if (percentage > 50) level = 'متوسط إلى شديد';
-    else if (percentage > 30) level = 'بسيط إلى متوسط';
+    // Calculate score
+    const resultObj = buildAssessmentResult(activeScale, scaleResponses);
 
     const payload = {
       ...scaleForm,
-      id: uid(),
       measureId: activeScale.id,
       measureName: activeScale.name,
-      score: totalScore,
-      maxScore,
-      percentage: `${percentage}%`,
-      level,
-      responses: scaleResponses,
-      createdAt: new Date().toISOString(),
+      score: resultObj.score,
+      maxScore: resultObj.maxScore,
+      percentage: resultObj.percentage,
+      level: resultObj.level,
+      results: scaleResponses,
+      updatedAt: new Date().toISOString(),
     };
 
-    lsAdd('studentAssessments', payload);
-    toast('✅ تم تسجيل وتوثيق نتيجة المقياس بنجاح', 'ok');
+    lsAdd('studentAssessments', { ...payload, id: uid(), createdAt: new Date().toISOString() });
+    toast(`✅ تم حفظ نتيجة المقياس (${resultObj.score}/${resultObj.maxScore}) بنجاح`, 'ok');
     setScaleModal(false);
+    setSubTab('results');
     reload();
   }
 
   function delScaleAssessment(id) {
-    if (!window.confirm('حذف هذا التقييم المقنن؟')) return;
+    if (!window.confirm('هل أنت متأكد من حذف هذه النتيجة؟')) return;
     lsDel('studentAssessments', id);
-    toast('🗑️ تم الحذف', 'ok');
+    toast('🗑️ تم حذف النتيجة', 'ok');
     reload();
   }
 
   // Printing
   function printEvalItem(item) {
     const html = `
-      <div style="direction:rtl;text-align:right;">
+      <div style="direction:rtl;text-align:right;font-family:'Tajawal',sans-serif;">
         <h2 style="color:#1a56db;border-bottom:2px solid #1a56db;padding-bottom:8px;margin-bottom:14px;">
           🎯 تقرير التقييم والتشخيص المبدئي الشامل
         </h2>
@@ -237,26 +231,26 @@ export default function PillarAssessment() {
 
   return (
     <div>
-      {/* Pillar Header & Controls */}
+      {/* Pillar Header & Controls using native Easy Center Tab System */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="tabs" style={{ margin: 0, flexWrap: 'wrap' }}>
           <button
             type="button"
-            className={`btn ${subTab === 'initial' ? 'btn-p' : 'btn-g'}`}
+            className={`tab ${subTab === 'initial' ? 'on' : ''}`}
             onClick={() => setSubTab('initial')}
           >
             📋 التقييم والتشخيص المبدئي ({evaluations.length})
           </button>
           <button
             type="button"
-            className={`btn ${subTab === 'scales' ? 'btn-p' : 'btn-g'}`}
+            className={`tab ${subTab === 'scales' ? 'on' : ''}`}
             onClick={() => setSubTab('scales')}
           >
-            🧪 مقاييس وتشخيص مقنن ({allScales.length} مقياس)
+            🧪 مقاييس وتشخيص مقنن ({allScales.length})
           </button>
           <button
             type="button"
-            className={`btn ${subTab === 'results' ? 'btn-p' : 'btn-g'}`}
+            className={`tab ${subTab === 'results' ? 'on' : ''}`}
             onClick={() => setSubTab('results')}
           >
             📊 نتائج المقاييس المسجلة ({assessments.length})
@@ -311,25 +305,25 @@ export default function PillarAssessment() {
                 <div key={item.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--pr-l)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--pr-l)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', color: 'var(--pr)' }}>
                         {item.photo ? <img src={item.photo} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}/> : '👦'}
                       </div>
                       <div>
-                        <div style={{ fontWeight: 800, fontSize: '.96rem' }}>{item.studentName}</div>
-                        <div style={{ fontSize: '.76rem', color: 'var(--g5)' }}>{item.diagnosis || 'تشخيص عام'} · {item.date}</div>
+                        <div style={{ fontWeight: 800, fontSize: '.96rem', color: 'var(--text-main)' }}>{item.studentName}</div>
+                        <div style={{ fontSize: '.76rem', color: 'var(--text-sub)' }}>{item.diagnosis || 'تشخيص عام'} · {item.date}</div>
                       </div>
                     </div>
                     <span className="bdg b-bl">{item.domain || 'تربية خاصة'}</span>
                   </div>
 
                   {item.summary && (
-                    <div style={{ fontSize: '.84rem', color: 'var(--g6)', background: 'var(--g0)', padding: '8px 10px', borderRadius: 8, lineHeight: 1.5, maxHeight: 60, overflow: 'hidden' }}>
+                    <div style={{ fontSize: '.84rem', color: 'var(--text-sub)', background: 'var(--g0)', padding: '8px 10px', borderRadius: 8, lineHeight: 1.5, maxHeight: 60, overflow: 'hidden' }}>
                       {item.summary}
                     </div>
                   )}
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: 8, borderTop: '1px solid var(--border-color)', fontSize: '.78rem' }}>
-                    <span style={{ color: 'var(--g5)' }}>الأخصائي: <strong>{item.specialistName || '—'}</strong></span>
+                    <span style={{ color: 'var(--text-sub)' }}>الأخصائي: <strong style={{ color: 'var(--text-main)' }}>{item.specialistName || '—'}</strong></span>
                     <div style={{ display: 'flex', gap: 6 }}>
                       {item.parentPhone && (
                         <button
@@ -374,10 +368,10 @@ export default function PillarAssessment() {
               <div key={scale.id} className="card" style={{ border: selectedScaleId === scale.id ? '2px solid var(--pr)' : '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                   <span className="bdg b-or">{scale.categoryLabel || 'مقياس مقنن'}</span>
-                  <span style={{ fontSize: '.75rem', color: 'var(--g5)' }}>{scale.items?.length || 15} بنداً</span>
+                  <span style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>{scale.items?.length || 15} بنداً</span>
                 </div>
-                <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem' }}>{scale.name}</h4>
-                <p style={{ fontSize: '.82rem', color: 'var(--g5)', marginBottom: 14, minHeight: 40, lineHeight: 1.5 }}>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem', color: 'var(--text-main)' }}>{scale.name}</h4>
+                <p style={{ fontSize: '.82rem', color: 'var(--text-sub)', marginBottom: 14, minHeight: 40, lineHeight: 1.5 }}>
                   {scale.description || 'مقياس تشخيصي مقنن لتقدير مستوى الأداء والأعراض بدقة.'}
                 </p>
                 <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
@@ -407,8 +401,8 @@ export default function PillarAssessment() {
                 <div key={item.id} className="card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                     <div>
-                      <div style={{ fontWeight: 800, fontSize: '.98rem' }}>{item.studentName}</div>
-                      <div style={{ fontSize: '.78rem', color: 'var(--g5)' }}>{item.measureName} · {item.date}</div>
+                      <div style={{ fontWeight: 800, fontSize: '.98rem', color: 'var(--text-main)' }}>{item.studentName}</div>
+                      <div style={{ fontSize: '.78rem', color: 'var(--text-sub)' }}>{item.measureName} · {item.date}</div>
                     </div>
                     <span className="bdg b-gr" style={{ fontSize: '.82rem', fontWeight: 800 }}>
                       الدرجة: {item.score} / {item.maxScore}
@@ -423,11 +417,11 @@ export default function PillarAssessment() {
                   </div>
 
                   <div style={{ fontSize: '.84rem', margin: '6px 0' }}>
-                    <span style={{ color: 'var(--g5)' }}>المستوى التقديري: </span>
+                    <span style={{ color: 'var(--text-sub)' }}>المستوى التقديري: </span>
                     <strong style={{ color: 'var(--pr)' }}>{item.level}</strong>
                   </div>
 
-                  {item.notes && <div style={{ fontSize: '.8rem', color: 'var(--g6)', marginTop: 4 }}>{item.notes}</div>}
+                  {item.notes && <div style={{ fontSize: '.8rem', color: 'var(--text-sub)', marginTop: 4 }}>{item.notes}</div>}
 
                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginTop: 12, borderTop: '1px solid var(--border-color)', paddingTop: 8 }}>
                     {item.parentPhone && (
@@ -529,7 +523,7 @@ export default function PillarAssessment() {
 
               <div style={{ background: 'var(--g0)', padding: '12px 16px', borderRadius: 10, marginBottom: 16 }}>
                 <h4 style={{ margin: '0 0 4px 0' }}>بنود المقياس ({activeScale.items?.length || 0} بنداً):</h4>
-                <p style={{ fontSize: '.8rem', color: 'var(--g5)', margin: 0 }}>حدد تقدير الدرجة لكل بند بناءً على الملاحظة المباشرة وسلوك الطفل</p>
+                <p style={{ fontSize: '.8rem', color: 'var(--text-sub)', margin: 0 }}>حدد تقدير الدرجة لكل بند بناءً على الملاحظة المباشرة وسلوك الطفل</p>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
