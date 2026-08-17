@@ -21,9 +21,9 @@ const EMPTY_MEETING = {
   notes: '',
 };
 
-export default function PillarFamily() {
+export default function PillarFamily({ onDataChange }) {
   const { toast, center } = useApp();
-  const [subTab, setSubTab] = useState('meetings');
+  const [subTab, setSubTab] = useState('meetings'); // 'meetings' | 'whatsapp'
   const [students, setStudents] = useState([]);
   const [emps, setEmps] = useState([]);
   const [meetings, setMeetings] = useState([]);
@@ -44,6 +44,7 @@ export default function PillarFamily() {
     setStudents(lsGet('students'));
     setEmps(lsGet('employees'));
     setMeetings((lsGet('progParentMeetings') || []).sort((a, b) => (b.date || '').localeCompare(a.date || '')));
+    if (onDataChange) onDataChange();
   }
 
   useEffect(() => { reload(); }, []);
@@ -163,17 +164,17 @@ export default function PillarFamily() {
     <div>
       {/* Sub Tabs */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="tabs" style={{ margin: 0, flexWrap: 'wrap' }}>
           <button
             type="button"
-            className={`btn ${subTab === 'meetings' ? 'btn-p' : 'btn-g'}`}
+            className={`tab ${subTab === 'meetings' ? 'on' : ''}`}
             onClick={() => setSubTab('meetings')}
           >
             👨‍👩‍👧 محاضر ولقاءات أولياء الأمور ({meetings.length})
           </button>
           <button
             type="button"
-            className={`btn ${subTab === 'whatsapp' ? 'btn-p' : 'btn-g'}`}
+            className={`tab ${subTab === 'whatsapp' ? 'on' : ''}`}
             onClick={() => setSubTab('whatsapp')}
           >
             📱 مركز الإرسال المباشر لولي الأمر (واتساب)
