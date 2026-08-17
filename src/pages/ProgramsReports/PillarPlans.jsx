@@ -30,7 +30,7 @@ const EMPTY_BIP = {
   status: 'active',
 };
 
-export default function PillarPlans() {
+export default function PillarPlans({ onDataChange }) {
   const { toast, center } = useApp();
   const [subTab, setSubTab] = useState('iep'); // 'iep' | 'bank' | 'behavior'
   const [students, setStudents] = useState([]);
@@ -60,11 +60,14 @@ export default function PillarPlans() {
     setEmps(lsGet('employees'));
     setPrograms((lsGet('progPrograms') || []).sort((a, b) => (b.startDate || '').localeCompare(a.startDate || '')));
     setBipList((lsGet('progBehaviorReports') || []).sort((a, b) => (b.date || '').localeCompare(a.date || '')));
+    if (onDataChange) onDataChange();
   }
 
   useEffect(() => { reload(); }, []);
 
+  // ----------------------------------------------------
   // IEP Programs Actions
+  // ----------------------------------------------------
   function openNewProg() {
     setProgForm({ ...EMPTY_PROG, startDate: todayStr() });
     setProgEditId(null);
@@ -122,7 +125,9 @@ export default function PillarPlans() {
     }));
   }
 
+  // ----------------------------------------------------
   // Behavior Plans (BIP) Actions
+  // ----------------------------------------------------
   function openNewBip() {
     setBipForm({ ...EMPTY_BIP, date: todayStr() });
     setBipEditId(null);
@@ -267,24 +272,24 @@ export default function PillarPlans() {
     <div>
       {/* Sub Tabs */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="tabs" style={{ margin: 0, flexWrap: 'wrap' }}>
           <button
             type="button"
-            className={`btn ${subTab === 'iep' ? 'btn-p' : 'btn-g'}`}
+            className={`tab ${subTab === 'iep' ? 'on' : ''}`}
             onClick={() => setSubTab('iep')}
           >
             📘 خطط البرامج الفردية IEP ({programs.length})
           </button>
           <button
             type="button"
-            className={`btn ${subTab === 'bank' ? 'btn-p' : 'btn-g'}`}
+            className={`tab ${subTab === 'bank' ? 'on' : ''}`}
             onClick={() => setSubTab('bank')}
           >
             🎯 بنك الأهداف التخصصي
           </button>
           <button
             type="button"
-            className={`btn ${subTab === 'behavior' ? 'btn-p' : 'btn-g'}`}
+            className={`tab ${subTab === 'behavior' ? 'on' : ''}`}
             onClick={() => setSubTab('behavior')}
           >
             📐 خطط تعديل السلوك BIP ({bipList.length})
