@@ -1,147 +1,220 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { db, auth } from '../firebase/config';
-import { doc, getDoc } from 'firebase/firestore';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { checkSubscriptionStatus, isPlatformAdminEmail, logoutUser as fbLogout } from '../firebase/auth';
-import { setCenterId, getCenterId, clearCenterId, seedDemoIfEmpty } from '../hooks/useStorage';
+import { auth } from '../firebase/config';
+import { getCenterSettings } from '../firebase/db';
+import { signOutUser, checkSubscriptionStatus, isPlatformAdminEmail } from '../firebase/auth';
+import { syncFromFirebase } from '../hooks/useStorage';
+import { getWelcomeMessage } from './LanguageContext';
+import { persistCenterMeta } from '../utils/centerMeta';
+import { updateFavicon, updateManifestIcon } from '../utils/favicon';
 
-const AppContext = createContext();
+const AppContext = createContext(null);
 
-const STORAGE_KEYS = {
-  theme: 'scs_theme',
-  user: 'scs_user',
-  center: 'scs_center',
-  sidebarOpen: 'scs_sidebar_open',
-};
+const ALL_KEYS = [
+  'students','employees','sessions','appointments','iepGoals',
+  'attStu','attEmp','income','expenses','salaries','leaves',
+  'calEvents','centerActivities','parentInteractions','consultations',
+  'evaluations','warnings','stuReports','behaviorPlans',
+  'studentFees','payments','notifs','manualAlerts','users',
+  'progEvaluations','progPrograms','progReports',
+  'progWeeklyReports','progMonthlyReports','progParentMeetings',
+  'progSemiAnnualReports','progAnnualReports','progBehaviorReports',
+  'progLearningDifficultyReports',
+  'measurements','measureItems','studentAssessments',
+  'bonuses',
+  'progGoalsBank',
+];
 
-const DEFAULT_PERMISSIONS = {
-  manager: { all: true },
-  vice: { dash: true, students: true, hr: true, reports: true, docs: true, parents: true, partnerships: true, visits: true, calendar: true },
-  specialist_speech: { dash: true, students: true, reports: true, calendar: true },
-  specialist_physio: { dash: true, students: true, reports: true, calendar: true },
-  specialist_behavior: { dash: true, students: true, reports: true, calendar: true },
-  specialist_occupational: { dash: true, students: true, reports: true, calendar: true },
-  specialist: { dash: true, students: true, reports: true, calendar: true },
-  reception: { dash: true, students: true, visits: true, calendar: true },
-  admin: { dash: true, students: true, hr: true, finance: true, docs: true, calendar: true },
-  technician: { dash: true, settings: true },
-  parent: { dash: true, reports: true, docs: true },
-};
+function applyTheme(color) {
+  if (!color) return;
+  document.documentElement.style.setProperty('--pr', color);
+  const h = color.replace('#','');
+  const r=parseInt(h.substr(0,2),16), g=parseInt(h.substr(2,2),16), b=parseInt(h.substr(4,2),16);
+  document.documentElement.style.setProperty('--pr-d',`rgb(${Math.max(0,r-35)},${Math.max(0,g-35)},${Math.max(0,b-35)})`);
+  document.documentElement.style.setProperty('--pr-l',`rgba(${r},${g},${b},0.1)`);
+}
+
+function buildPlatformAdminUser(fbUser) {
+  return {
+    uid: fbUser.uid,
+    email: fbUser.email,
+    name: fbUser.displayName || 'مالك المنصة',
+    role: 'manager',
+    centerId: fbUser.uid,
+    isPlatformAdmin: true,
+    subscription: { allowed: true, reason: 'platform_admin' },
+  };
+}
 
 export function AppProvider({ children }) {
-  const [theme, setTheme] = useState(() => localStorage.getItem(STORAGE_KEYS.theme) || 'light');
-  const [sidebarOpen, setSidebarOpen] = useState(() => localStorage.getItem(STORAGE_KEYS.sidebarOpen) !== 'false');
+  const [screen, setScreen] = useState('loading');
+  const [center, setCenter] = useState({ name:'', logo:'', color:'#1a56db', configured:false });
+  const [currentUser, setCurrentUser] = useState(null);
+  const [activeView, setActiveView] = useState('dash');
+  const [darkMode, setDarkMode] = useState(false);
   const [toasts, setToasts] = useState([]);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+  const toastTimers = useRef({});
 
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.user);
-      return saved ? JSON.parse(saved) : null;
-    } catch { return null; }
-  });
-
-  const [center, setCenter] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.center);
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return {
-      name: 'مركز الأمل للتربية الخاصة',
-      nameEn: 'Al-Amal Special Education Center',
-      type: 'تربية خاصة وتأهيل',
-      phone: '0501234567',
-      phoneCode: '+966',
-      email: 'info@alamal-center.com',
-      address: 'الرياض - حي الملز',
-      color: '#1a56db',
-      configured: true,
-      shifts: {
-        morning: { from: '07:00', to: '12:00' },
-        evening: { from: '16:00', to: '20:00' },
-      },
-      socialLinks: {},
-      currency: 'SAR',
-      logo: '',
-      barcode: '',
-      status: 'active',
-      subscription: null,
-      createdAt: null,
-    };
-  });
-
-  const [subscriptionStatus, setSubscriptionStatus] = useState(() => {
-    return { allowed: true, reason: 'trial', daysLeft: 5 };
-  });
-
-  // مزامنة حالة الاشتراك بناءً على كائن المركز والمستخدم الحالي
   useEffect(() => {
-    if (!currentUser) return;
-    if (isPlatformAdminEmail(currentUser.email)) {
-      setSubscriptionStatus({ allowed: true, reason: 'platform_admin' });
+    const dm = localStorage.getItem('darkMode') === '1';
+    if (dm) { document.body.classList.add('dark'); setDarkMode(true); }
+    const fs = localStorage.getItem('scs_fontsize');
+    const fw = localStorage.getItem('scs_fontweight');
+    if (fs) document.documentElement.style.setProperty('--fs', fs+'px');
+    if (fw) document.documentElement.style.setProperty('--fw', fw);
+  }, []);
+
+  useEffect(() => {
+    updateFavicon(center.logo);
+    updateManifestIcon(center.logo, { appName: center.name });
+  }, [center.logo, center.name]);
+
+  useEffect(() => {
+    const loadingTimeout = setTimeout(() => {
+      setScreen(prev => prev === 'loading' ? 'login' : prev);
+    }, 8000);
+
+    const savedSession = (() => {
+      try { return JSON.parse(localStorage.getItem('scs_session') || 'null'); }
+      catch(e) { return null; }
+    })();
+
+    if (savedSession?.centerId) {
+      clearTimeout(loadingTimeout);
+      localStorage.setItem('scs_current_uid', savedSession.centerId);
+      (async () => {
+        const centerData = await getCenterSettings(savedSession.centerId);
+        const subStatus = checkSubscriptionStatus(centerData);
+        const updatedUser = { ...savedSession, subscription: subStatus };
+        localStorage.setItem('scs_session', JSON.stringify(updatedUser));
+        setCurrentUser(updatedUser);
+        setSubscriptionStatus(subStatus);
+        if (!subStatus.allowed) {
+          setScreen('subscription');
+          return;
+        }
+        if (centerData) applyCenter(centerData);
+        setSyncing(true);
+        syncFromFirebase(savedSession.centerId, ALL_KEYS)
+          .finally(() => { setSyncing(false); setScreen('app'); });
+      })();
       return;
     }
-    if (center && (center.subscription || center.createdAt)) {
-      const status = checkSubscriptionStatus(center);
-      setSubscriptionStatus(status);
-    }
-  }, [currentUser, center]);
 
-  const toast = useCallback((msg, type = 'ok') => {
-    const id = Date.now() + Math.random();
-    setToasts(prev => [...prev, { id, msg, type }]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, 3500);
-  }, []);
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      clearTimeout(loadingTimeout);
+      if (fbUser) {
+        if (isPlatformAdminEmail(fbUser.email)) {
+          const adminUser = buildPlatformAdminUser(fbUser);
+          localStorage.setItem('scs_current_uid', fbUser.uid);
+          setCurrentUser(adminUser);
+          setSubscriptionStatus(adminUser.subscription);
+          setScreen('app');
+          setActiveView('admin');
+          return;
+        }
 
-  const persistConfig = useCallback((newConfig) => {
-    setCenter(prev => {
-      const merged = { ...prev, ...newConfig };
-      try {
-        localStorage.setItem(STORAGE_KEYS.center, JSON.stringify(merged));
-      } catch (e) {
-        console.warn('Failed to save center config to localStorage:', e);
+        localStorage.setItem('scs_current_uid', fbUser.uid);
+
+        const centerData = await getCenterSettings(fbUser.uid);
+        const subStatus = checkSubscriptionStatus(centerData);
+
+        const user = {
+          uid: fbUser.uid,
+          email: fbUser.email,
+          name: fbUser.displayName || 'المدير',
+          photo: fbUser.photoURL,
+          role: 'manager',
+          centerId: fbUser.uid,
+          subscription: subStatus
+        };
+
+        setCurrentUser(user);
+        setSubscriptionStatus(subStatus);
+
+        if (!subStatus.allowed) {
+          setScreen('subscription');
+          return;
+        }
+
+        if (!needsCenterSetup(centerData)) {
+          applyCenter(centerData);
+          setSyncing(true);
+          syncFromFirebase(fbUser.uid, ALL_KEYS)
+            .finally(() => { setSyncing(false); setScreen('app'); });
+        } else {
+          applyCenter(centerData || {});
+          setScreen('setup');
+        }
+      } else {
+        localStorage.removeItem('scs_current_uid');
+        setCurrentUser(null);
+        setSubscriptionStatus(null);
+        setScreen('login');
       }
-      return merged;
     });
+
+    return () => {
+      clearTimeout(loadingTimeout);
+      unsubscribe();
+    };
   }, []);
 
-  const updateCenterColor = useCallback((color) => {
-    document.documentElement.style.setProperty('--pr', color);
-    persistConfig({ color });
-  }, [persistConfig]);
+  useEffect(() => {
+    const centerId = currentUser?.centerId;
+    if (!centerId || screen !== 'app' || currentUser?.isPlatformAdmin) return;
 
-  const persistCenterMeta = useCallback((meta) => {
-    if (!meta) return;
-    try {
-      if (meta.name) localStorage.setItem('scs_center_name', meta.name);
-      if (meta.nameEn) localStorage.setItem('scs_center_name_en', meta.nameEn);
-      if (meta.phoneCode) localStorage.setItem('scs_center_phone_code', meta.phoneCode);
-      if (meta.address) localStorage.setItem('scs_center_address', meta.address);
-      if (meta.logo) localStorage.setItem('scs_center_logo', meta.logo);
-      if (meta.barcode) localStorage.setItem('scs_center_barcode', meta.barcode);
-    } catch (e) {
-      console.warn('persistCenterMeta failed:', e);
+    async function refreshSub() {
+      const centerData = await getCenterSettings(centerId);
+      const subStatus = checkSubscriptionStatus(centerData);
+      setSubscriptionStatus(subStatus);
+      setCurrentUser(prev => {
+        if (!prev) return prev;
+        const next = { ...prev, subscription: subStatus };
+        try {
+          const s = JSON.parse(localStorage.getItem('scs_session') || 'null');
+          if (s?.centerId === centerId) {
+            localStorage.setItem('scs_session', JSON.stringify({ ...s, subscription: subStatus }));
+          }
+        } catch (_) { /* ignore */ }
+        return next;
+      });
+      if (!subStatus.allowed) setScreen('subscription');
     }
-  }, []);
 
-  const applyCenter = useCallback((data) => {
-    if (!data) return;
+    refreshSub();
+    const timer = setInterval(refreshSub, 60 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, [currentUser?.centerId, screen, currentUser?.isPlatformAdmin]);
+
+  function needsCenterSetup(data) {
+    if (!data) return true;
+    if (data.setupCompleted === true && data.status === 'active') return false;
+    if (data.isSetup === true && data.status !== 'pending_setup') return false;
+    return data.status === 'pending_setup' || !data.isSetup || !data.setupCompleted;
+  }
+
+  function applyCenter(data) {
+    const social = data.socialLinks || data.social || {};
     const c = {
       name: data.centerName || data.name || '',
-      nameEn: data.nameEn || '',
+      nameEn: data.nameEn || data.centerNameEn || '',
+      logo: data.logoUrl || data.logo || '',
+      color: data.color || '#1a56db',
       type: data.type || '',
       phone: data.phone || '',
       phoneCode: data.phoneCode || '+966',
-      email: data.email || '',
+      email: data.email || data.ownerEmail || '',
       address: data.address || '',
-      color: data.color || '#1a56db',
-      shifts: data.shifts || { morning: { from: '07:00', to: '12:00' }, evening: { from: '16:00', to: '20:00' } },
-      socialLinks: data.socialLinks || {},
       currency: data.currency || 'SAR',
-      logo: data.logo || '',
+      website: social.website || data.website || '',
+      whatsapp: social.whatsapp || data.whatsapp || '',
+      instagram: social.instagram || data.instagram || '',
       barcode: data.barcode || '',
+      shifts: data.shifts || {},
       status: data.status || 'active',
       setupCompleted: !!data.setupCompleted,
       configured: data.setupCompleted || data.isSetup || false,
@@ -152,161 +225,153 @@ export function AppProvider({ children }) {
     persistCenterMeta({
       name: c.name,
       nameEn: c.nameEn,
-      phoneCode: c.phoneCode,
-      address: c.address,
       logo: c.logo,
+      address: c.address,
+      phone: c.phone,
+      phoneCode: c.phoneCode,
+      email: c.email,
+      currency: c.currency,
       barcode: c.barcode,
+      socialLinks: { website: c.website, whatsapp: c.whatsapp, instagram: c.instagram },
+      shifts: c.shifts,
     });
-    try {
-      localStorage.setItem(STORAGE_KEYS.center, JSON.stringify(c));
-    } catch {}
-    if (c.color) {
-      document.documentElement.style.setProperty('--pr', c.color);
-    }
-  }, [persistCenterMeta]);
+    if (data.fontSize) localStorage.setItem('scs_fontsize', String(data.fontSize));
+    if (data.fontWeight) localStorage.setItem('scs_fontweight', String(data.fontWeight));
+    if (data.platformLang) localStorage.setItem('scs_lang', data.platformLang);
+    applyTheme(c.color);
+    document.title = c.name || 'نظام إدارة المركز';
+    return c;
+  }
 
-  const loadCenterData = useCallback(async (cId) => {
-    if (!cId) return;
-    try {
-      const snap = await getDoc(doc(db, 'centers', cId));
-      if (snap.exists()) {
-        const data = snap.data();
-        applyCenter(data);
-        const sub = checkSubscriptionStatus(data);
-        setSubscriptionStatus(sub);
-      }
-    } catch (e) {
-      console.warn('loadCenterData error:', e);
-    }
-  }, [applyCenter]);
+  async function loadCenterData(centerId) {
+    const data = await getCenterSettings(centerId);
+    if (data) applyCenter(data);
+  }
 
-  // استماع لحالة المصادقة
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      setAuthLoading(true);
-      if (user) {
-        const savedCId = getCenterId() || user.uid;
-        if (savedCId) {
-          setCenterId(savedCId);
-          await loadCenterData(savedCId);
-        }
-      } else {
-        const storedUser = localStorage.getItem(STORAGE_KEYS.user);
-        if (!storedUser) {
-          setCurrentUser(null);
-        }
-      }
-      setAuthLoading(false);
+    const handler = (e) => {
+      if ((e.ctrlKey||e.metaKey)&&e.key==='k') { e.preventDefault(); setSearchOpen(true); }
+      if (e.key==='Escape') setSearchOpen(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  const toast = useCallback((msg, type='ok') => {
+    const id = Date.now()+Math.random();
+    setToasts(prev=>[...prev,{id,msg,type}]);
+    toastTimers.current[id] = setTimeout(() => {
+      setToasts(prev=>prev.filter(t=>t.id!==id));
+      delete toastTimers.current[id];
+    }, 3500);
+  }, []);
+
+  const toggleDark = useCallback(() => {
+    setDarkMode(d => {
+      const next=!d;
+      document.body.classList.toggle('dark',next);
+      localStorage.setItem('darkMode',next?'1':'0');
+      return next;
     });
-    return () => unsub();
-  }, [loadCenterData]);
+  }, []);
 
-  const loginUser = useCallback((userObj, centerData, subStatus) => {
-    setCurrentUser(userObj);
-    try {
-      localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(userObj));
-    } catch {}
-
-    const cId = userObj.centerId || userObj.uid || getCenterId();
-    if (cId) setCenterId(cId);
-
-    if (centerData) {
-      applyCenter(centerData);
-    } else if (cId) {
-      loadCenterData(cId);
+  const login = useCallback(async (user) => {
+    if (user.isPlatformAdmin) {
+      localStorage.setItem('scs_current_uid', user.centerId);
+      setCurrentUser(user);
+      setSubscriptionStatus(user.subscription);
+      setScreen('app');
+      setActiveView('admin');
+      return;
     }
 
-    if (subStatus) {
-      setSubscriptionStatus(subStatus);
+    if (user.role !== 'manager') {
+      localStorage.setItem('scs_session', JSON.stringify(user));
+    }
+    localStorage.setItem('scs_current_uid', user.centerId);
+    setCurrentUser(user);
+    setSubscriptionStatus(user.subscription);
+
+    if (user.subscription && !user.subscription.allowed) {
+      setScreen('subscription');
+      return;
     }
 
-    seedDemoIfEmpty(cId);
-  }, [applyCenter, loadCenterData]);
+    const centerData = await getCenterSettings(user.centerId);
+    applyCenter(centerData || {});
 
-  const logoutUser = useCallback(async () => {
-    try {
-      await fbLogout();
-    } catch (e) {
-      console.warn('Firebase logout failed:', e);
+    if (user.needsSetup || user.isNewCenter || (user.role === 'manager' && needsCenterSetup(centerData))) {
+      setScreen('setup');
+      return;
     }
-    setCurrentUser(null);
-    clearCenterId();
-    localStorage.removeItem(STORAGE_KEYS.user);
-    toast('تم تسجيل الخروج بنجاح', 'ok');
+
+    const lang = localStorage.getItem('scs_lang') || 'ar';
+    if (!user._skipWelcome) {
+      toast('✅ ' + getWelcomeMessage(user.name, user.centerId, lang), 'ok');
+    }
+
+    setSyncing(true);
+    syncFromFirebase(user.centerId, ALL_KEYS)
+      .finally(() => { setSyncing(false); setScreen('app'); setActiveView('dash'); });
   }, [toast]);
 
-  const hasPermission = useCallback((permKey) => {
-    if (!currentUser) return false;
-    if (currentUser.role === 'manager') return true;
-    if (isPlatformAdminEmail(currentUser.email)) return true;
-    if (currentUser.permissions && typeof currentUser.permissions[permKey] === 'boolean') {
-      return currentUser.permissions[permKey];
-    }
-    const rolePerms = DEFAULT_PERMISSIONS[currentUser.role];
-    if (rolePerms?.all) return true;
-    return !!rolePerms?.[permKey];
-  }, [currentUser]);
-
-  const toggleTheme = useCallback(() => {
-    setTheme(prev => {
-      const next = prev === 'light' ? 'dark' : 'light';
-      localStorage.setItem(STORAGE_KEYS.theme, next);
-      document.documentElement.setAttribute('data-theme', next);
-      return next;
-    });
+  const logout = useCallback(async () => {
+    try { await signOutUser(); } catch(e) {}
+    localStorage.removeItem('scs_session');
+    localStorage.removeItem('userPerms');
+    localStorage.removeItem('scs_current_uid');
+    setCurrentUser(null);
+    setSubscriptionStatus(null);
+    setCenter({ name:'', logo:'', color:'#1a56db', configured:false });
+    setScreen('login');
   }, []);
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
+  const go = useCallback((view) => setActiveView(view), []);
 
-  const toggleSidebar = useCallback(() => {
-    setSidebarOpen(prev => {
-      const next = !prev;
-      localStorage.setItem(STORAGE_KEYS.sidebarOpen, String(next));
-      return next;
-    });
+  const updateCenterData = useCallback((c) => {
+    setCenter(c);
+    applyTheme(c.color);
+    document.title = c.name || 'نظام إدارة المركز';
   }, []);
 
-  const value = useMemo(() => ({
-    theme,
-    toggleTheme,
-    sidebarOpen,
-    toggleSidebar,
-    toasts,
-    toast,
-    currentUser,
-    center,
-    subscriptionStatus,
-    authLoading,
-    loginUser,
-    logoutUser,
-    hasPermission,
-    persistConfig,
-    updateCenterColor,
-    loadCenterData,
-    applyCenter,
-  }), [
-    theme, toggleTheme,
-    sidebarOpen, toggleSidebar,
-    toasts, toast,
-    currentUser, center,
-    subscriptionStatus, authLoading,
-    loginUser, logoutUser,
-    hasPermission,
-    persistConfig, updateCenterColor,
-    loadCenterData, applyCenter,
-  ]);
+  const updateCenterColor = useCallback((color) => {
+    applyTheme(color);
+    setCenter(prev=>({...prev,color}));
+  }, []);
+
+  const persistConfig = useCallback((c) => updateCenterData(c), [updateCenterData]);
+
+  const resetCenter = useCallback(() => {
+    if (!window.confirm('تسجيل الخروج؟')) return;
+    logout();
+  }, [logout]);
+
+  if (syncing) {
+    return (
+      <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',background:'var(--bg)',flexDirection:'column',gap:16}}>
+        <div style={{fontSize:'3rem'}}>☁️</div>
+        <div style={{fontWeight:700,fontSize:'1.1rem'}}>جارٍ مزامنة البيانات...</div>
+        <div style={{color:'var(--g5)',fontSize:'.85rem'}}>يتم جلب بياناتك من Firebase</div>
+      </div>
+    );
+  }
 
   return (
-    <AppContext.Provider value={value}>
+    <AppContext.Provider value={{
+      screen, center, currentUser, activeView, darkMode,
+      toasts, searchOpen, syncing, subscriptionStatus,
+      fbCfg:{}, fbReady:true,
+      setScreen, persistConfig, login, logout, go, toast,
+      toggleDark, setSearchOpen, resetCenter, updateCenterColor,
+      updateCenterData, applyTheme, loadCenterData
+    }}>
       {children}
     </AppContext.Provider>
   );
 }
 
 export function useApp() {
-  const context = useContext(AppContext);
-  if (!context) throw new Error('useApp must be used within AppProvider');
-  return context;
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error('useApp must be used inside AppProvider');
+  return ctx;
 }
