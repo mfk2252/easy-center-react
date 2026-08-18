@@ -81,6 +81,15 @@ export const DOMAINS = [
   { key: 'vbmapp_reading', label: '14. مهارات القراءة (Reading)' },
   { key: 'vbmapp_writing', label: '15. مهارات الكتابة (Writing)' },
   { key: 'vbmapp_math', label: '16. مهارات الحساب والرياضيات (Math)' },
+  // HELP (Hawaii Early Learning Profile) 8 Domains
+  { key: 'help_sensory', label: '1. التنظيم الحسي والتناسقي (Sensory)' },
+  { key: 'help_cognitive', label: '2. المجال العقلي والمعرفي (Cognitive / Academic)' },
+  { key: 'help_language', label: '3. اللغة والتواصل الاستقبالي والتعبيري (Language)' },
+  { key: 'help_gross_motor', label: '4. الحركي الكبير والتوازن (Gross Motor)' },
+  { key: 'help_fine_motor', label: '5. الحركي الدقيق والقص والكتابة (Fine Motor)' },
+  { key: 'help_social', label: '6. المجال الاجتماعي والوجداني (Social-Emotional)' },
+  { key: 'help_selfhelp', label: '7. مساعدة الذات والرعاية اليومية (Self-Help)' },
+  { key: 'help_communication', label: '8. التواصل الشامل وآداب الحوار (Communication)' },
 ];
 
 export const AGE_RANGES = [
@@ -128,7 +137,16 @@ export const PROGRAM_DOMAINS = {
     'ablls_v', 'ablls_w', 'ablls_x', 'ablls_y', 'ablls_z',
   ],
   pep3: ['cognitive', 'expressive_communication', 'receptive_language', 'fine_motor', 'gross_motor', 'social', 'selfhelp', 'pre_academic'],
-  help: ['infant', 'cognitive', 'receptive_language', 'expressive_communication', 'gross_motor', 'fine_motor', 'social', 'selfhelp', 'independence'],
+  help: [
+    'help_sensory',
+    'help_cognitive',
+    'help_language',
+    'help_gross_motor',
+    'help_fine_motor',
+    'help_social',
+    'help_selfhelp',
+    'help_communication',
+  ],
   custom: DOMAINS.map(d => d.key),
 };
 
