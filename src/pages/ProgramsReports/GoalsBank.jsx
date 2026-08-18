@@ -8,6 +8,7 @@ import { ALL_ABLLS_GOALS } from '../../data/abllsGoals';
 import { ALL_LOVAAS_GOALS } from '../../data/lovaasGoals';
 import { ALL_VBMAPP_GOALS } from '../../data/vbmappGoals';
 import { ALL_HELP_GOALS, HELP_DOMAINS, HELP_AGE_MATRIX, HELP_SCORING_KEYS } from '../../data/helpGoals';
+import { ALL_TEACCH_GOALS, TEACCH_AGE_MATRIX, TEACCH_SCORING_KEYS, TEACCH_STRUCTURE_PILLARS } from '../../data/teacchGoals';
 
 // Pre-compute static goals ONCE at module load to avoid 1500+ object re-allocations on every render
 const PORTAGE_MASTER_GOALS = (ALL_PORTAGE_GOALS || []).map((g) => {
@@ -91,6 +92,20 @@ const HELP_MASTER_GOALS = (ALL_HELP_GOALS || []).map((g) => ({
   isSeed: true,
 }));
 
+const TEACCH_MASTER_GOALS = (ALL_TEACCH_GOALS || []).map((g) => ({
+  id: g.id,
+  program: 'teacch',
+  domain: g.domain,
+  text: g.text || g.title,
+  goalCode: g.goalCode || g.code || `TEACCH:${g.id}`,
+  ageGroup: g.ageGroup,
+  ageRange: g.ageRange,
+  scoreScale: g.scoreScale || 'P: منجز | E: بزوغ | F: إخفاق',
+  mastery: g.mastery,
+  tools: g.tools,
+  isSeed: true,
+}));
+
 const SEEDS_MASTER_GOALS = SEED_GOALS.map((g, i) => ({ ...g, id: `seed-${i}`, isSeed: true }));
 
 const STATIC_MASTER_GOALS = [
@@ -99,6 +114,7 @@ const STATIC_MASTER_GOALS = [
   ...LOVAAS_MASTER_GOALS,
   ...VBMAPP_MASTER_GOALS,
   ...HELP_MASTER_GOALS,
+  ...TEACCH_MASTER_GOALS,
   ...SEEDS_MASTER_GOALS,
 ];
 
@@ -369,6 +385,73 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
                   <span key={sk.symbol} style={{ fontSize: '.7rem', color: 'var(--text-sub)' }}>
                     <strong style={{ color: sk.color, fontWeight: 900 }}>{sk.symbol}</strong> {sk.label}
                   </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TEACCH Program Developmental Matrix and Scoring Guide Banner */}
+          {programFilter === 'teacch' && (
+            <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 12, padding: '12px 16px', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '1.2rem' }}>🎓</span>
+                  <div>
+                    <strong style={{ color: '#0369a1', fontSize: '.92rem' }}>برنامج تيتش والملف التربوي النفسي (TEACCH / PEP)</strong>
+                    <div style={{ fontSize: '.75rem', color: '#075985' }}>التعليم المنظم والمنهج الهيكلي للأطفال ذوي اضطراب طيف التوحد وصعوبات التواصل</div>
+                  </div>
+                </div>
+                <span style={{ fontSize: '.75rem', background: '#0284c7', color: '#fff', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>
+                  برنامج TEACCH المعتمد
+                </span>
+              </div>
+
+              {/* Age Bands Matrix */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                {TEACCH_AGE_MATRIX.map(mat => (
+                  <button
+                    key={mat.key}
+                    type="button"
+                    onClick={() => {
+                      if (mat.range) setAgeFilter(mat.range);
+                      setDisplayLimit(INITIAL_RENDER_LIMIT);
+                    }}
+                    style={{
+                      fontSize: '.74rem',
+                      padding: '4px 8px',
+                      borderRadius: 6,
+                      border: '1px solid #0284c7',
+                      background: '#fff',
+                      color: '#075985',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                    }}
+                    title={mat.desc}
+                  >
+                    👶 {mat.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* TEACCH Scoring Legend */}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', background: '#fff', padding: '6px 10px', borderRadius: 8, border: '1px solid #e0f2fe' }}>
+                <span style={{ fontSize: '.72rem', fontWeight: 800, color: '#0369a1' }}>مفاتيح تقييم PEP:</span>
+                {TEACCH_SCORING_KEYS.map(sk => (
+                  <span key={sk.symbol} style={{ fontSize: '.7rem', color: 'var(--text-sub)' }}>
+                    <strong style={{ color: sk.color || '#0284c7', fontWeight: 900 }}>{sk.symbol}</strong> {sk.label}
+                  </span>
+                ))}
+              </div>
+
+              {/* Structural Pillars */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8, marginTop: 10 }}>
+                {TEACCH_STRUCTURE_PILLARS.map((p, i) => (
+                  <div key={i} style={{ background: '#fff', padding: 8, borderRadius: 8, border: '1px solid #f0f9ff' }}>
+                    <div style={{ fontSize: '.75rem', fontWeight: 800, color: '#0369a1', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span>{p.icon}</span> <span>{p.title}</span>
+                    </div>
+                    <div style={{ fontSize: '.68rem', color: 'var(--text-sub)', marginTop: 2, lineHeight: 1.3 }}>{p.desc}</div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -833,6 +916,73 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
                   <span key={sk.symbol} style={{ fontSize: '.7rem', color: 'var(--text-sub)' }}>
                     <strong style={{ color: sk.color, fontWeight: 900 }}>{sk.symbol}</strong> {sk.label}
                   </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TEACCH Program Developmental Matrix and Scoring Guide Banner in Manager */}
+          {filterProgram === 'teacch' && (
+            <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 12, padding: '12px 16px', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '1.2rem' }}>🎓</span>
+                  <div>
+                    <strong style={{ color: '#0369a1', fontSize: '.92rem' }}>برنامج تيتش والملف التربوي النفسي (TEACCH / PEP)</strong>
+                    <div style={{ fontSize: '.75rem', color: '#075985' }}>التعليم المنظم والمنهج الهيكلي للأطفال ذوي اضطراب طيف التوحد وصعوبات التواصل</div>
+                  </div>
+                </div>
+                <span style={{ fontSize: '.75rem', background: '#0284c7', color: '#fff', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>
+                  برنامج TEACCH المعتمد
+                </span>
+              </div>
+
+              {/* Age Bands Matrix */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                {TEACCH_AGE_MATRIX.map(mat => (
+                  <button
+                    key={mat.key}
+                    type="button"
+                    onClick={() => {
+                      if (mat.range) setFilterAge(mat.range);
+                      setDisplayLimit(INITIAL_RENDER_LIMIT);
+                    }}
+                    style={{
+                      fontSize: '.74rem',
+                      padding: '4px 8px',
+                      borderRadius: 6,
+                      border: '1px solid #0284c7',
+                      background: '#fff',
+                      color: '#075985',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                    }}
+                    title={mat.desc}
+                  >
+                    👶 {mat.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* TEACCH Scoring Legend */}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', background: '#fff', padding: '6px 10px', borderRadius: 8, border: '1px solid #e0f2fe' }}>
+                <span style={{ fontSize: '.72rem', fontWeight: 800, color: '#0369a1' }}>مفاتيح تقييم PEP:</span>
+                {TEACCH_SCORING_KEYS.map(sk => (
+                  <span key={sk.symbol} style={{ fontSize: '.7rem', color: 'var(--text-sub)' }}>
+                    <strong style={{ color: sk.color || '#0284c7', fontWeight: 900 }}>{sk.symbol}</strong> {sk.label}
+                  </span>
+                ))}
+              </div>
+
+              {/* Structural Pillars */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8, marginTop: 10 }}>
+                {TEACCH_STRUCTURE_PILLARS.map((p, i) => (
+                  <div key={i} style={{ background: '#fff', padding: 8, borderRadius: 8, border: '1px solid #f0f9ff' }}>
+                    <div style={{ fontSize: '.75rem', fontWeight: 800, color: '#0369a1', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span>{p.icon}</span> <span>{p.title}</span>
+                    </div>
+                    <div style={{ fontSize: '.68rem', color: 'var(--text-sub)', marginTop: 2, lineHeight: 1.3 }}>{p.desc}</div>
+                  </div>
                 ))}
               </div>
             </div>
