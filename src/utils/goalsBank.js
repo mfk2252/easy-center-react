@@ -8,6 +8,7 @@ export const PROGRAMS = [
   { key: 'vbmapp', label: 'في بي ماب (VB-MAPP)', color: '#ea580c', labelEn: 'VB-MAPP' },
   { key: 'portage', label: 'بورتاج', color: '#059669', labelEn: 'Portage' },
   { key: 'ablls', label: 'إيبلز (ABLLS-R)', color: '#7c3aed', labelEn: 'ABLLS-R' },
+  { key: 'teacch', label: 'تيتش (TEACCH / PEP)', color: '#0284c7', labelEn: 'TEACCH' },
   { key: 'pep3', label: 'بيب 3 (PEP-3)', color: '#0891b2', labelEn: 'PEP-3' },
   { key: 'help', label: 'هيلب (HELP)', color: '#db2777', labelEn: 'HELP' },
   { key: 'custom', label: 'مخصص المركز', color: '#d97706', labelEn: 'Custom' },
@@ -90,6 +91,17 @@ export const DOMAINS = [
   { key: 'help_social', label: '6. المجال الاجتماعي والوجداني (Social-Emotional)' },
   { key: 'help_selfhelp', label: '7. مساعدة الذات والرعاية اليومية (Self-Help)' },
   { key: 'help_communication', label: '8. التواصل الشامل وآداب الحوار (Communication)' },
+  // TEACCH (Structured Teaching / PEP) 10 Domains
+  { key: 'teacch_imitation', label: '1. التقليد والمحاكاة (Imitation)' },
+  { key: 'teacch_perception', label: '2. الإدراك الحسي والبصري (Perception)' },
+  { key: 'teacch_gross_motor', label: '3. الحركة العامة والتوازن (Gross Motor)' },
+  { key: 'teacch_fine_motor', label: '4. الحركة الدقيقة والتناول (Fine Motor)' },
+  { key: 'teacch_eye_hand', label: '5. التنسيق بين العين واليد (Eye-Hand)' },
+  { key: 'teacch_cognitive', label: '6. الأداء والإدراك المعرفي (Cognitive)' },
+  { key: 'teacch_language', label: '7. الكفاءة والمهارات اللغوية (Language)' },
+  { key: 'teacch_selfhelp', label: '8. الاستقلالية والرعاية الذاتية (Self-Help)' },
+  { key: 'teacch_social', label: '9. التآلف والتفاعل الاجتماعي (Social)' },
+  { key: 'teacch_behavior', label: '10. إدارة وتعديل السلوك والتعليم المنظم (Behavior)' },
 ];
 
 export const AGE_RANGES = [
@@ -135,6 +147,18 @@ export const PROGRAM_DOMAINS = {
     'ablls_k', 'ablls_l', 'ablls_m', 'ablls_n', 'ablls_p',
     'ablls_q', 'ablls_r', 'ablls_s', 'ablls_t', 'ablls_u',
     'ablls_v', 'ablls_w', 'ablls_x', 'ablls_y', 'ablls_z',
+  ],
+  teacch: [
+    'teacch_imitation',
+    'teacch_perception',
+    'teacch_gross_motor',
+    'teacch_fine_motor',
+    'teacch_eye_hand',
+    'teacch_cognitive',
+    'teacch_language',
+    'teacch_selfhelp',
+    'teacch_social',
+    'teacch_behavior',
   ],
   pep3: ['cognitive', 'expressive_communication', 'receptive_language', 'fine_motor', 'gross_motor', 'social', 'selfhelp', 'pre_academic'],
   help: [
