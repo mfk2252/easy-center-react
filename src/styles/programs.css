@@ -261,7 +261,7 @@
   margin-top: 2px;
 }
 
-/* Goal Bank Program Cards */
+/* Goal Bank & Scale Program Cards */
 .prog-bank-card {
   display: flex;
   flex-direction: column;
@@ -271,12 +271,32 @@
   border: 1px solid var(--border-color);
   border-radius: var(--r);
   box-shadow: var(--sh);
-  min-height: 140px;
+  min-height: 130px;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   font-family: 'Tajawal', sans-serif;
 }
 
 .prog-bank-card:hover {
   transform: translateY(-2px);
+  box-shadow: var(--sh2);
+}
+
+.prog-scale-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--r);
+  box-shadow: var(--sh);
+  min-height: 125px;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  font-family: 'Tajawal', sans-serif;
+}
+
+.prog-scale-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--pr);
   box-shadow: var(--sh2);
 }
