@@ -260,7 +260,6 @@ export default function MeasurementCenter({ onBack }) {
                   )}
                 </div>
                 <div style={{ fontWeight: 800, marginTop: 8 }}>{scale.name}</div>
-                <div style={{ color: 'var(--g5)', fontSize: '.8rem', marginTop: 4 }}>{scale.description}</div>
                 <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span className="bdg b-cy">{categoryMap[scale.category]?.name || 'أخرى'}</span>
                   <button type="button" className="btn btn-p btn-sm" onClick={() => { setSelectedScaleId(scale.id); openAssessmentModal(scale.id); }}>تطبيق</button>

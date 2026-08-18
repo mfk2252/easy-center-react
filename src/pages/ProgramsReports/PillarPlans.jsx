@@ -47,6 +47,7 @@ export default function PillarPlans({ onDataChange }) {
   // Modals for Goal Picker & Bank Manager
   const [goalPickerOpen, setGoalPickerOpen] = useState(false);
   const [bankManagerOpen, setBankManagerOpen] = useState(false);
+  const [selectedBankProgram, setSelectedBankProgram] = useState('all');
   const [bulkImporterOpen, setBulkImporterOpen] = useState(false);
 
   // BIP Behavior Plans state
@@ -454,6 +455,7 @@ export default function PillarPlans({ onDataChange }) {
                       boxSizing: 'border-box'
                     }}
                     onClick={() => {
+                      setSelectedBankProgram(prog.key);
                       setBankManagerOpen(true);
                     }}
                   >
@@ -738,6 +740,7 @@ export default function PillarPlans({ onDataChange }) {
       {/* MODAL: GOALS BANK MANAGER */}
       {bankManagerOpen && (
         <GoalsBankManagerModal
+          defaultProgram={selectedBankProgram}
           onClose={() => {
             setBankManagerOpen(false);
             reload();

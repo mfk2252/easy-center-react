@@ -3,14 +3,26 @@ import { useApp } from '../../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { uid } from '../../utils/dateHelpers';
 import { PROGRAMS, DOMAINS, SEED_GOALS, programLabel, programColor, domainLabel, domainsForProgram } from '../../utils/goalsBank';
+import { ALL_PORTAGE_GOALS } from '../../data/portageGoals';
 
 export function getAllGoals() {
   const custom = lsGet('progGoalsBank') || [];
   const seeds = SEED_GOALS.map((g, i) => ({ ...g, id: `seed-${i}`, isSeed: true }));
-  return [...seeds, ...custom];
+  const portageMasterGoals = (ALL_PORTAGE_GOALS || []).map((g) => ({
+    id: g.id,
+    program: g.program,
+    domain: g.domain,
+    text: g.text || g.title,
+    goalCode: g.goalCode || `${g.domain.toUpperCase()}-${g.goalNumber}`,
+    ageRange: g.ageRange || `${g.ageGroup} سنوات`,
+    mastery: '3 محاولات متتالية',
+    isSeed: true,
+  }));
+
+  return [...portageMasterGoals, ...seeds, ...custom];
 }
 
-export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelected = [], onConfirm, onClose }) {
+export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelected = [], onConfirm, onSelect, onClose }) {
   const [checked, setChecked] = useState(() => new Set((alreadySelected || []).map(g => `${g.program}::${g.domain}::${g.text}`)));
   const [customText, setCustomText] = useState('');
   const [customProgram, setCustomProgram] = useState(program || 'custom');
@@ -77,7 +89,9 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
       return { program, domain: goalDomain, text };
     });
 
-    onConfirm([...selected, ...rawExtras]);
+    const result = [...selected, ...rawExtras];
+    if (onSelect) onSelect(result);
+    if (onConfirm) onConfirm(result);
   }
 
   return (
@@ -114,12 +128,28 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
                 {p.items.map(g => {
                   const key = `${g.program}::${g.domain}::${g.text}`;
                   return (
-                    <label key={key} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 10px', border: '1px solid var(--border-color)', borderRadius: 8, cursor: 'pointer', background: checked.has(key) ? 'var(--ok-l)' : 'transparent', fontSize: '.86rem' }}>
-                      <input type="checkbox" checked={checked.has(key)} onChange={() => toggle(g)} style={{ marginTop: 2 }} />
-                      <span style={{ flex: 1 }}>{g.text}</span>
-                      <span style={{ fontSize: '.7rem', color: 'var(--g5)' }}>{g.goalCode || ''}</span>
+                    <label key={key} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 12px', border: '1px solid var(--border-color)', borderRadius: 8, cursor: 'pointer', background: checked.has(key) ? 'var(--ok-l)' : 'var(--bg-card)', fontSize: '.86rem', transition: 'background 0.15s ease' }}>
+                      <input type="checkbox" checked={checked.has(key)} onChange={() => toggle(g)} style={{ marginTop: 3 }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{g.text}</div>
+                        <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap', alignItems: 'center' }}>
+                          <span style={{ fontSize: '.72rem', background: 'var(--g1)', color: 'var(--text-sub)', padding: '1px 6px', borderRadius: 4 }}>
+                            {domainLabel(g.domain)}
+                          </span>
+                          {g.ageRange && (
+                            <span style={{ fontSize: '.72rem', background: 'var(--pr-l)', color: 'var(--pr)', padding: '1px 6px', borderRadius: 4 }}>
+                              👶 {g.ageRange}
+                            </span>
+                          )}
+                          {g.goalCode && (
+                            <span style={{ fontSize: '.72rem', color: 'var(--g5)', fontWeight: 700 }}>
+                              {g.goalCode}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </label>
-                  )
+                  );
                 })}
               </div>
             </div>
@@ -161,12 +191,12 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
   );
 }
 
-export function GoalsBankManagerModal({ onClose }) {
+export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
   const { toast } = useApp();
   const [filterDomain, setFilterDomain] = useState('all');
-  const [filterProgram, setFilterProgram] = useState('all');
+  const [filterProgram, setFilterProgram] = useState(defaultProgram || 'all');
   const [customBank, setCustomBank] = useState(lsGet('progGoalsBank') || []);
-  const [newProgram, setNewProgram] = useState('custom');
+  const [newProgram, setNewProgram] = useState(defaultProgram !== 'all' ? defaultProgram : 'custom');
   const availableDomains = domainsForProgram(newProgram);
   const [newDomain, setNewDomain] = useState(availableDomains[0]?.key || DOMAINS[0].key);
   const [newText, setNewText] = useState('');
@@ -174,6 +204,8 @@ export function GoalsBankManagerModal({ onClose }) {
   const [editingId, setEditingId] = useState(null);
   const [bulkPaste, setBulkPaste] = useState('');
   const [search, setSearch] = useState('');
+
+  const allGoals = getAllGoals();
 
   function reload() { setCustomBank(lsGet('progGoalsBank') || []); }
 
@@ -291,7 +323,7 @@ export function GoalsBankManagerModal({ onClose }) {
     reload();
   }
 
-  const filtered = (customBank || []).filter(g => {
+  const filtered = (allGoals || []).filter(g => {
     const domainMatch = filterDomain === 'all' || g.domain === filterDomain;
     const programMatch = filterProgram === 'all' || g.program === filterProgram;
     const q = search.trim().toLowerCase();
@@ -369,19 +401,46 @@ export function GoalsBankManagerModal({ onClose }) {
           </div>
 
           {filtered.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--g4)' }}>لا توجد بنود مخصّصة بعد في هذا الفلتر</div>
+            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--g4)' }}>لا توجد بنود في هذا الفلتر</div>
           ) : (
             filtered.map(g => (
-              <div key={g.id} className="card">
-                <div className="av" style={{ background: programColor(g.program) + '22', color: programColor(g.program) }}>{programLabel(g.program).slice(0, 2)}</div>
-                <div className="ci">
-                  <div className="cn">{g.text}</div>
-                  <div className="cm">{programLabel(g.program)} · {domainLabel(g.domain)}{g.goalCode ? ` · ${g.goalCode}` : ''}</div>
+              <div key={g.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, padding: '10px 14px' }}>
+                <div className="av" style={{ background: programColor(g.program) + '22', color: programColor(g.program), fontWeight: 800, minWidth: 36, textAlign: 'center' }}>{programLabel(g.program).slice(0, 2)}</div>
+                <div className="ci" style={{ flex: 1 }}>
+                  <div className="cn" style={{ fontWeight: 600, fontSize: '.9rem' }}>{g.text}</div>
+                  <div className="cm" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginTop: 4 }}>
+                    <span style={{ fontWeight: 700, color: programColor(g.program) }}>{programLabel(g.program)}</span>
+                    <span>·</span>
+                    <span>{domainLabel(g.domain)}</span>
+                    {g.ageRange && (
+                      <>
+                        <span>·</span>
+                        <span style={{ fontSize: '.72rem', background: 'var(--pr-l)', color: 'var(--pr)', padding: '1px 6px', borderRadius: 4 }}>
+                          👶 {g.ageRange}
+                        </span>
+                      </>
+                    )}
+                    {g.goalCode && (
+                      <>
+                        <span>·</span>
+                        <span style={{ fontSize: '.72rem', color: 'var(--g5)', fontWeight: 700 }}>
+                          {g.goalCode}
+                        </span>
+                      </>
+                    )}
+                    {g.isSeed && (
+                      <span style={{ fontSize: '.68rem', background: 'var(--g1)', color: 'var(--text-sub)', padding: '1px 6px', borderRadius: 4 }}>
+                        دليل قياسي
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="c-acts" style={{ display: 'flex', gap: 6 }}>
-                  <button type="button" className="btn btn-xs btn-g" onClick={() => editItem(g)}>✏️</button>
-                  <button type="button" className="btn btn-xs btn-d" onClick={() => del(g.id)}>🗑️</button>
-                </div>
+                {!g.isSeed && (
+                  <div className="c-acts" style={{ display: 'flex', gap: 6 }}>
+                    <button type="button" className="btn btn-xs btn-g" onClick={() => editItem(g)}>✏️</button>
+                    <button type="button" className="btn btn-xs btn-d" onClick={() => del(g.id)}>🗑️</button>
+                  </div>
+                )}
               </div>
             ))
           )}
