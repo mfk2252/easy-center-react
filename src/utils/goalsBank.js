@@ -13,13 +13,15 @@ export const PROGRAMS = [
 ];
 
 export const DOMAINS = [
-  { key: 'cognitive', label: 'معرفي' },
+  { key: 'cognitive', label: 'المجال المعرفي' },
+  { key: 'language', label: 'المجال اللغوي والتواصلي' },
   { key: 'receptive_language', label: 'لغة استقبالية' },
   { key: 'expressive_communication', label: 'تواصل تعبيري' },
-  { key: 'social', label: 'تفاعل اجتماعي' },
+  { key: 'social', label: 'المجال الاجتماعي والتنشئة' },
+  { key: 'motor', label: 'المجال الحركي (عام)' },
   { key: 'gross_motor', label: 'حركي كبير' },
   { key: 'fine_motor', label: 'حركي دقيق' },
-  { key: 'selfhelp', label: 'عناية ذاتية' },
+  { key: 'selfhelp', label: 'مجال رعاية الذات' },
   { key: 'pre_academic', label: 'ما قبل الأكاديمي' },
   { key: 'academic', label: 'أكاديمي' },
   { key: 'independence', label: 'استقلالية' },
@@ -32,7 +34,7 @@ export const AGE_RANGES = [
 
 export const PROGRAM_DOMAINS = {
   lovaas: ['cognitive', 'receptive_language', 'expressive_communication', 'social', 'gross_motor', 'fine_motor', 'selfhelp', 'independence'],
-  portage: ['cognitive', 'receptive_language', 'expressive_communication', 'social', 'gross_motor', 'fine_motor', 'selfhelp', 'pre_academic'],
+  portage: ['cognitive', 'language', 'social', 'motor', 'selfhelp', 'receptive_language', 'expressive_communication', 'gross_motor', 'fine_motor', 'pre_academic'],
   ablls: ['receptive_language', 'expressive_communication', 'cognitive', 'social', 'gross_motor', 'fine_motor', 'selfhelp', 'pre_academic', 'academic'],
   pep3: ['cognitive', 'expressive_communication', 'receptive_language', 'fine_motor', 'gross_motor', 'social', 'selfhelp', 'pre_academic'],
   help: ['cognitive', 'receptive_language', 'expressive_communication', 'gross_motor', 'fine_motor', 'social', 'selfhelp', 'independence'],
