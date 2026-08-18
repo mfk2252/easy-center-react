@@ -13,6 +13,7 @@ export const PROGRAMS = [
 ];
 
 export const DOMAINS = [
+  { key: 'infant', label: 'نمو الرضيع' },
   { key: 'cognitive', label: 'المجال المعرفي' },
   { key: 'language', label: 'المجال اللغوي والتواصلي' },
   { key: 'receptive_language', label: 'لغة استقبالية' },
@@ -28,16 +29,16 @@ export const DOMAINS = [
 ];
 
 export const AGE_RANGES = [
-  '0-1 سنة', '1-2 سنة', '2-3 سنوات',
+  'الرضيع (0-4 أشهر)', '0-1 سنة', '1-2 سنة', '2-3 سنوات',
   '3-4 سنوات', '4-5 سنوات', '5-6 سنوات', '+6 سنوات',
 ];
 
 export const PROGRAM_DOMAINS = {
+  portage: ['infant', 'motor', 'cognitive', 'language', 'social', 'selfhelp'],
   lovaas: ['cognitive', 'receptive_language', 'expressive_communication', 'social', 'gross_motor', 'fine_motor', 'selfhelp', 'independence'],
-  portage: ['cognitive', 'language', 'social', 'motor', 'selfhelp', 'receptive_language', 'expressive_communication', 'gross_motor', 'fine_motor', 'pre_academic'],
   ablls: ['receptive_language', 'expressive_communication', 'cognitive', 'social', 'gross_motor', 'fine_motor', 'selfhelp', 'pre_academic', 'academic'],
   pep3: ['cognitive', 'expressive_communication', 'receptive_language', 'fine_motor', 'gross_motor', 'social', 'selfhelp', 'pre_academic'],
-  help: ['cognitive', 'receptive_language', 'expressive_communication', 'gross_motor', 'fine_motor', 'social', 'selfhelp', 'independence'],
+  help: ['infant', 'cognitive', 'receptive_language', 'expressive_communication', 'gross_motor', 'fine_motor', 'social', 'selfhelp', 'independence'],
   custom: DOMAINS.map(d => d.key),
 };
 
