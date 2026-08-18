@@ -321,23 +321,24 @@ export default function PillarPlans({ onDataChange }) {
       </div>
 
       {/* Filter bar */}
-      <div className="card" style={{ padding: '12px 16px', marginBottom: 16, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ flex: 1, minWidth: 200 }}>
-          <input
-            type="text"
-            placeholder="🔍 بحث باسم الطالب أو عنوان الخطة..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div style={{ minWidth: 200 }}>
-          <select value={selectedStudentFilter} onChange={e => setSelectedStudentFilter(e.target.value)}>
-            <option value="">— تصفية بكل الطلاب —</option>
-            {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        </div>
+      <div className="prog-filter-bar">
+        <input
+          type="text"
+          className="prog-search-input"
+          placeholder="🔍 بحث باسم الطالب أو عنوان الخطة..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+        />
+        <select
+          className="prog-select-filter"
+          value={selectedStudentFilter}
+          onChange={e => setSelectedStudentFilter(e.target.value)}
+        >
+          <option value="">— تصفية بكل الطلاب —</option>
+          {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
         {(searchTerm || selectedStudentFilter) && (
-          <button type="button" className="btn btn-xs btn-g" onClick={() => { setSearchTerm(''); setSelectedStudentFilter(''); }}>
+          <button type="button" className="btn btn-sm btn-g" onClick={() => { setSearchTerm(''); setSelectedStudentFilter(''); }}>
             إلغاء التصفية ✖
           </button>
         )}
@@ -353,28 +354,28 @@ export default function PillarPlans({ onDataChange }) {
               {filteredPrograms.map(item => {
                 const goalsCount = item.goals?.length || 0;
                 return (
-                  <div key={item.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div key={item.id} className="prog-item-card" style={{ gap: 10 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                       <div>
-                        <div style={{ fontWeight: 800, fontSize: '1.02rem', color: 'var(--text-main)' }}>{item.title}</div>
-                        <div style={{ fontSize: '.8rem', color: 'var(--g5)' }}>
-                          الطالب: <strong>{item.studentName}</strong> {item.diagnosis && `· (${item.diagnosis})`}
+                        <div className="prog-student-name" style={{ fontSize: '1.02rem' }}>{item.title}</div>
+                        <div className="prog-student-meta">
+                          الطالب: <strong style={{ color: 'var(--text-main)' }}>{item.studentName}</strong> {item.diagnosis && `· (${item.diagnosis})`}
                         </div>
                       </div>
-                      <span className={`bdg ${item.status === 'completed' ? 'b-gr' : 'b-or'}`}>
+                      <span className={`bdg ${item.status === 'completed' ? 'b-gr' : 'b-or'}`} style={{ flexShrink: 0 }}>
                         {item.status === 'completed' ? 'مكتملة ✅' : 'نشطة ⏳'}
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', gap: 12, fontSize: '.78rem', color: 'var(--g5)', background: 'var(--g0)', padding: '8px 10px', borderRadius: 8 }}>
-                      <div>🗓️ البدء: <strong>{item.startDate || '—'}</strong></div>
-                      <div>🎯 الأهداف: <strong>{goalsCount} هدف</strong></div>
-                      <div>⏳ المدة: <strong>{item.duration || 'فصل'}</strong></div>
+                    <div style={{ display: 'flex', gap: 12, fontSize: '0.78rem', color: 'var(--text-sub)', background: 'var(--g0)', padding: '8px 10px', borderRadius: 'var(--r3)', flexWrap: 'wrap' }}>
+                      <div>🗓️ البدء: <strong style={{ color: 'var(--text-main)' }}>{item.startDate || '—'}</strong></div>
+                      <div>🎯 الأهداف: <strong style={{ color: 'var(--text-main)' }}>{goalsCount} هدف</strong></div>
+                      <div>⏳ المدة: <strong style={{ color: 'var(--text-main)' }}>{item.duration || 'فصل'}</strong></div>
                     </div>
 
                     {item.goals && item.goals.length > 0 && (
-                      <div style={{ fontSize: '.8rem', color: 'var(--g6)', maxHeight: 65, overflow: 'hidden' }}>
-                        <div style={{ fontWeight: 700, marginBottom: 4 }}>أبرز الأهداف:</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)', maxHeight: 68, overflow: 'hidden' }}>
+                        <div style={{ fontWeight: 700, marginBottom: 4, color: 'var(--text-main)' }}>أبرز الأهداف:</div>
                         <ul style={{ margin: 0, paddingRight: 18 }}>
                           {item.goals.slice(0, 2).map((g, i) => (
                             <li key={i}>{g.text}</li>
@@ -383,9 +384,9 @@ export default function PillarPlans({ onDataChange }) {
                       </div>
                     )}
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: 8, borderTop: '1px solid var(--border-color)', fontSize: '.78rem' }}>
-                      <span style={{ color: 'var(--g5)' }}>الأخصائي: <strong>{item.specialistName || '—'}</strong></span>
-                      <div style={{ display: 'flex', gap: 6 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: 8, borderTop: '1px solid var(--border-color)', fontSize: '0.78rem', flexWrap: 'wrap', gap: 8 }}>
+                      <span style={{ color: 'var(--text-sub)' }}>الأخصائي: <strong style={{ color: 'var(--text-main)' }}>{item.specialistName || '—'}</strong></span>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         {item.parentPhone && (
                           <button
                             type="button"
@@ -428,32 +429,35 @@ export default function PillarPlans({ onDataChange }) {
         <div>
           <div className="card" style={{ marginBottom: 16, background: 'var(--pr-l)', border: '1px solid var(--pr)' }}>
             <h3 style={{ margin: '0 0 6px 0', color: 'var(--pr)' }}>🎯 بنك الأهداف التخصصي للمركز</h3>
-            <p style={{ fontSize: '.86rem', color: 'var(--text-main)', margin: 0 }}>
+            <p style={{ fontSize: '0.86rem', color: 'var(--text-main)', margin: 0 }}>
               يحتوي على مئات الأهداف الإجرائية المقننة والموزعة حسب البرامج العالمية (لوفاس، بورتاج، إيبلز، بيب-3، هيلب) والمجالات النمائية.
               يمكنك ربطها مباشرة بأي خطة فردية (IEP)، أو تخصيص بنك الأهداف الخاص بمركزك.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 14 }}>
             {PROGRAMS.map(prog => (
-              <div key={prog.key} className="card" style={{ borderTop: `4px solid ${prog.color}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <h4 style={{ margin: 0, fontSize: '1.05rem', color: prog.color }}>{prog.label}</h4>
+              <div key={prog.key} className="prog-bank-card" style={{ borderTop: `4px solid ${prog.color}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8 }}>
+                  <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 800, color: prog.color }}>{prog.label}</h4>
                   <span className="bdg b-bl">{prog.labelEn}</span>
                 </div>
-                <p style={{ fontSize: '.82rem', color: 'var(--g5)', minHeight: 40 }}>
-                  أهداف وبرامج موجهة لـ {prog.label} تشمل المجالات المعرفية والتواصلية والحركية.
-                </p>
-                <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
+                <div style={{ display: 'flex', gap: 8, marginTop: 'auto', paddingTop: 8 }}>
                   <button
                     type="button"
                     className="btn btn-p btn-sm"
-                    style={{ flex: 1 }}
+                    style={{
+                      width: '100%',
+                      justifyContent: 'center',
+                      background: prog.color,
+                      borderColor: prog.color,
+                      boxSizing: 'border-box'
+                    }}
                     onClick={() => {
                       setBankManagerOpen(true);
                     }}
                   >
-                    استعراض الأهداف 🔍
+                    🔍 استعراض الأهداف
                   </button>
                 </div>
               </div>

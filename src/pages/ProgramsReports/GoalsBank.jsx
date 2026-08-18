@@ -89,15 +89,15 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
         </div>
         <div className="modal-body-scroll" style={{ padding: '16px 20px' }}>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-            <select value={programFilter} onChange={e => setProgramFilter(e.target.value)}>
+            <select className="fsel" value={programFilter} onChange={e => setProgramFilter(e.target.value)}>
               <option value="all">جميع البرامج</option>
               {PROGRAMS.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
             </select>
-            <select value={domainFilter} onChange={e => setDomainFilter(e.target.value)}>
+            <select className="fsel" value={domainFilter} onChange={e => setDomainFilter(e.target.value)}>
               <option value="all">كل المجالات</option>
               {DOMAINS.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
             </select>
-            <input value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="بحث سريع بالكلمات/الرمز..." style={{ minWidth: 260 }} />
+            <input className="srch" value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="بحث سريع بالكلمات/الرمز..." style={{ minWidth: 260 }} />
           </div>
 
           {byProgram.length === 0 && (

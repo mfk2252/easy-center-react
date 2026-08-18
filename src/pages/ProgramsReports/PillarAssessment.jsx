@@ -272,23 +272,24 @@ export default function PillarAssessment({ onDataChange }) {
       </div>
 
       {/* Filter Bar */}
-      <div className="card" style={{ padding: '12px 16px', marginBottom: 16, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ flex: 1, minWidth: 200 }}>
-          <input
-            type="text"
-            placeholder="🔍 بحث باسم الطالب أو المجال أو المقياس..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div style={{ minWidth: 200 }}>
-          <select value={selectedStudentFilter} onChange={e => setSelectedStudentFilter(e.target.value)}>
-            <option value="">— تصفية بكل الطلاب —</option>
-            {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        </div>
+      <div className="prog-filter-bar">
+        <input
+          type="text"
+          className="prog-search-input"
+          placeholder="🔍 بحث باسم الطالب أو المجال أو المقياس..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+        />
+        <select
+          className="prog-select-filter"
+          value={selectedStudentFilter}
+          onChange={e => setSelectedStudentFilter(e.target.value)}
+        >
+          <option value="">— تصفية بكل الطلاب —</option>
+          {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
         {(searchTerm || selectedStudentFilter) && (
-          <button type="button" className="btn btn-xs btn-g" onClick={() => { setSearchTerm(''); setSelectedStudentFilter(''); }}>
+          <button type="button" className="btn btn-sm btn-g" onClick={() => { setSearchTerm(''); setSelectedStudentFilter(''); }}>
             إلغاء التصفية ✖
           </button>
         )}
@@ -302,29 +303,29 @@ export default function PillarAssessment({ onDataChange }) {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14 }}>
               {filteredEvals.map(item => (
-                <div key={item.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--pr-l)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', color: 'var(--pr)' }}>
-                        {item.photo ? <img src={item.photo} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}/> : '👦'}
+                <div key={item.id} className="prog-item-card" style={{ gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                      <div className="prog-student-avatar">
+                        {item.photo ? <img src={item.photo} alt="" /> : '👦'}
                       </div>
-                      <div>
-                        <div style={{ fontWeight: 800, fontSize: '.96rem', color: 'var(--text-main)' }}>{item.studentName}</div>
-                        <div style={{ fontSize: '.76rem', color: 'var(--text-sub)' }}>{item.diagnosis || 'تشخيص عام'} · {item.date}</div>
+                      <div style={{ minWidth: 0 }}>
+                        <div className="prog-student-name">{item.studentName}</div>
+                        <div className="prog-student-meta">{item.diagnosis || 'تشخيص عام'} · {item.date}</div>
                       </div>
                     </div>
-                    <span className="bdg b-bl">{item.domain || 'تربية خاصة'}</span>
+                    <span className="bdg b-bl" style={{ flexShrink: 0 }}>{item.domain || 'تربية خاصة'}</span>
                   </div>
 
                   {item.summary && (
-                    <div style={{ fontSize: '.84rem', color: 'var(--text-sub)', background: 'var(--g0)', padding: '8px 10px', borderRadius: 8, lineHeight: 1.5, maxHeight: 60, overflow: 'hidden' }}>
+                    <div style={{ fontSize: '0.84rem', color: 'var(--text-sub)', background: 'var(--g0)', padding: '8px 10px', borderRadius: 'var(--r3)', lineHeight: 1.55, maxHeight: 68, overflow: 'hidden' }}>
                       {item.summary}
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: 8, borderTop: '1px solid var(--border-color)', fontSize: '.78rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: 8, borderTop: '1px solid var(--border-color)', fontSize: '0.78rem', flexWrap: 'wrap', gap: 8 }}>
                     <span style={{ color: 'var(--text-sub)' }}>الأخصائي: <strong style={{ color: 'var(--text-main)' }}>{item.specialistName || '—'}</strong></span>
-                    <div style={{ display: 'flex', gap: 6 }}>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       {item.parentPhone && (
                         <button
                           type="button"

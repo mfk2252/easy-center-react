@@ -164,23 +164,24 @@ export default function PillarProgress({ onDataChange }) {
       </div>
 
       {/* Filter Bar */}
-      <div className="card" style={{ padding: '12px 16px', marginBottom: 16, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ flex: 1, minWidth: 200 }}>
-          <input
-            type="text"
-            placeholder="🔍 بحث باسم الطالب أو عنوان التقرير..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div style={{ minWidth: 200 }}>
-          <select value={selectedStudentFilter} onChange={e => setSelectedStudentFilter(e.target.value)}>
-            <option value="">— تصفية بكل الطلاب —</option>
-            {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        </div>
+      <div className="prog-filter-bar">
+        <input
+          type="text"
+          className="prog-search-input"
+          placeholder="🔍 بحث باسم الطالب أو عنوان التقرير..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+        />
+        <select
+          className="prog-select-filter"
+          value={selectedStudentFilter}
+          onChange={e => setSelectedStudentFilter(e.target.value)}
+        >
+          <option value="">— تصفية بكل الطلاب —</option>
+          {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
         {(searchTerm || selectedStudentFilter) && (
-          <button type="button" className="btn btn-xs btn-g" onClick={() => { setSearchTerm(''); setSelectedStudentFilter(''); }}>
+          <button type="button" className="btn btn-sm btn-g" onClick={() => { setSearchTerm(''); setSelectedStudentFilter(''); }}>
             إلغاء التصفية ✖
           </button>
         )}
@@ -196,36 +197,36 @@ export default function PillarProgress({ onDataChange }) {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(330px, 1fr))', gap: 14 }}>
           {filteredReports.map(item => (
-            <div key={item.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div key={item.id} className="prog-item-card" style={{ gap: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                 <div>
-                  <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-main)' }}>{item.title}</div>
-                  <div style={{ fontSize: '.8rem', color: 'var(--g5)' }}>
-                    الطالب: <strong>{item.studentName}</strong> · {item.date}
+                  <div className="prog-student-name" style={{ fontSize: '1.02rem' }}>{item.title}</div>
+                  <div className="prog-student-meta">
+                    الطالب: <strong style={{ color: 'var(--text-main)' }}>{item.studentName}</strong> · {item.date}
                   </div>
                 </div>
                 {item.progressRate && (
-                  <span className="bdg b-gr" style={{ fontWeight: 700 }}>
+                  <span className="bdg b-gr" style={{ fontWeight: 700, flexShrink: 0 }}>
                     نسبة الإنجاز: {item.progressRate}
                   </span>
                 )}
               </div>
 
               {item.achievedGoals && (
-                <div style={{ fontSize: '.82rem', background: 'var(--ok-l)', padding: '6px 8px', borderRadius: 6, color: 'var(--ok)' }}>
+                <div style={{ fontSize: '0.82rem', background: 'var(--ok-l)', padding: '6px 8px', borderRadius: 'var(--r3)', color: 'var(--ok)' }}>
                   <strong>الأهداف المنجزة:</strong> {item.achievedGoals}
                 </div>
               )}
 
               {item.recommendations && (
-                <div style={{ fontSize: '.82rem', background: 'var(--g0)', padding: '6px 8px', borderRadius: 6 }}>
-                  <strong>التوصيات:</strong> {item.recommendations}
+                <div style={{ fontSize: '0.82rem', background: 'var(--g0)', padding: '6px 8px', borderRadius: 'var(--r3)', color: 'var(--text-sub)' }}>
+                  <strong style={{ color: 'var(--text-main)' }}>التوصيات:</strong> {item.recommendations}
                 </div>
               )}
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: 8, borderTop: '1px solid var(--border-color)', fontSize: '.78rem' }}>
-                <span style={{ color: 'var(--g5)' }}>الأخصائي: <strong>{item.specialistName || '—'}</strong></span>
-                <div style={{ display: 'flex', gap: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: 8, borderTop: '1px solid var(--border-color)', fontSize: '0.78rem', flexWrap: 'wrap', gap: 8 }}>
+                <span style={{ color: 'var(--text-sub)' }}>الأخصائي: <strong style={{ color: 'var(--text-main)' }}>{item.specialistName || '—'}</strong></span>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {item.parentPhone && (
                     <button
                       type="button"
