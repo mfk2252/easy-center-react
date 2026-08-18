@@ -5,6 +5,8 @@ import { uid } from '../../utils/dateHelpers';
 import { PROGRAMS, DOMAINS, SEED_GOALS, programLabel, programColor, domainLabel, domainsForProgram } from '../../utils/goalsBank';
 import { ALL_PORTAGE_GOALS } from '../../data/portageGoals';
 import { ALL_ABLLS_GOALS } from '../../data/abllsGoals';
+import { ALL_LOVAAS_GOALS } from '../../data/lovaasGoals';
+import { ALL_VBMAPP_GOALS } from '../../data/vbmappGoals';
 
 export function getAllGoals() {
   const custom = lsGet('progGoalsBank') || [];
@@ -43,7 +45,38 @@ export function getAllGoals() {
     isSeed: true,
   }));
 
-  return [...portageMasterGoals, ...abllsMasterGoals, ...seeds, ...custom];
+  const lovaasMasterGoals = (ALL_LOVAAS_GOALS || []).map((g) => ({
+    id: g.id,
+    program: 'lovaas',
+    domain: g.domain,
+    text: g.text || g.title,
+    goalCode: `LOV:${g.goalCode}`,
+    ageGroup: 'مستمر',
+    ageRange: 'ABA / تدخل مبكر',
+    scoreScale: g.scoreScale || 'ضعيف / متوسط / جيد',
+    mastery: g.mastery || 'استجابة صحيحة ومستقلة 80% أو أكثر',
+    tools: 'أدوات تحليل السلوك التطبيقي والبيئة الطبيعية',
+    isSeed: true,
+  }));
+
+  const vbmappMasterGoals = (ALL_VBMAPP_GOALS || []).map((g) => ({
+    id: g.id,
+    program: 'vbmapp',
+    domain: g.domain,
+    level: g.level,
+    milestoneCode: g.milestoneCode,
+    subGoals: g.subGoals,
+    text: g.text || g.title,
+    goalCode: g.goalCode || `VBM:${g.milestoneCode || g.id}`,
+    ageGroup: g.ageGroup || (g.level === 1 ? '0-18 شهر' : g.level === 2 ? '18-30 شهر' : '30-48 شهر'),
+    ageRange: g.ageRange || `المستوى ${g.level} (${g.level === 1 ? '0-18 شهر' : g.level === 2 ? '18-30 شهر' : '30-48 شهر'})`,
+    scoreScale: g.scoreScale || '0 - 0.5 - 1',
+    mastery: g.mastery || 'إتقان تام للاستجابة المعلمية المستقلة',
+    tools: g.tools || 'بيئة التقييم وأدوات السلوك اللفظي المعتمدة',
+    isSeed: true,
+  }));
+
+  return [...portageMasterGoals, ...abllsMasterGoals, ...lovaasMasterGoals, ...vbmappMasterGoals, ...seeds, ...custom];
 }
 
 export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelected = [], onConfirm, onSelect, onClose }) {
