@@ -8,76 +8,87 @@ import { ALL_ABLLS_GOALS } from '../../data/abllsGoals';
 import { ALL_LOVAAS_GOALS } from '../../data/lovaasGoals';
 import { ALL_VBMAPP_GOALS } from '../../data/vbmappGoals';
 
+// Pre-compute static goals ONCE at module load to avoid 1500+ object re-allocations on every render
+const PORTAGE_MASTER_GOALS = (ALL_PORTAGE_GOALS || []).map((g) => {
+  const normalizedDomain = (g.domain === 'gross_motor' || g.domain === 'fine_motor' || g.domain === 'motor') ? 'motor' : g.domain;
+  const ageGroup = g.ageGroup || (g.ageRange ? g.ageRange.replace(' سنة', '').replace(' سنوات', '').trim() : '0-1');
+  const ageRange = g.ageRange || (g.ageGroup ? `${g.ageGroup} سنوات` : '');
+
+  return {
+    id: g.id,
+    program: 'portage',
+    domain: normalizedDomain,
+    subDomain: g.domain,
+    text: g.text || g.title,
+    goalCode: g.goalCode || `P-${normalizedDomain.slice(0, 3).toUpperCase()}-${g.goalNumber}`,
+    ageGroup: ageGroup,
+    ageRange: ageRange,
+    mastery: '3 محاولات متتالية',
+    isSeed: true,
+  };
+});
+
+const ABLLS_MASTER_GOALS = (ALL_ABLLS_GOALS || []).map((g) => ({
+  id: g.id,
+  program: 'ablls',
+  domain: g.domain,
+  text: g.text || g.title,
+  goalCode: `ABLLS:${g.goalCode}`,
+  ageGroup: 'مستمر',
+  ageRange: 'تقييم شامل',
+  scoreScale: g.scoreScale || '0-2',
+  mastery: g.mastery || 'إتقان تام للاستجابة',
+  tools: 'بيئة طبيعية وأدوات تدريب',
+  isSeed: true,
+}));
+
+const LOVAAS_MASTER_GOALS = (ALL_LOVAAS_GOALS || []).map((g) => ({
+  id: g.id,
+  program: 'lovaas',
+  domain: g.domain,
+  text: g.text || g.title,
+  goalCode: `LOV:${g.goalCode}`,
+  ageGroup: 'مستمر',
+  ageRange: 'ABA / تدخل مبكر',
+  scoreScale: g.scoreScale || 'ضعيف / متوسط / جيد',
+  mastery: g.mastery || 'استجابة صحيحة ومستقلة 80% أو أكثر',
+  tools: 'أدوات تحليل السلوك التطبيقي والبيئة الطبيعية',
+  isSeed: true,
+}));
+
+const VBMAPP_MASTER_GOALS = (ALL_VBMAPP_GOALS || []).map((g) => ({
+  id: g.id,
+  program: 'vbmapp',
+  domain: g.domain,
+  level: g.level,
+  milestoneCode: g.milestoneCode,
+  subGoals: g.subGoals,
+  text: g.text || g.title,
+  goalCode: g.goalCode || `VBM:${g.milestoneCode || g.id}`,
+  ageGroup: g.ageGroup || (g.level === 1 ? '0-18 شهر' : g.level === 2 ? '18-30 شهر' : '30-48 شهر'),
+  ageRange: g.ageRange || `المستوى ${g.level} (${g.level === 1 ? '0-18 شهر' : g.level === 2 ? '18-30 شهر' : '30-48 شهر'})`,
+  scoreScale: g.scoreScale || '0 - 0.5 - 1',
+  mastery: g.mastery || 'إتقان تام للاستجابة المعلمية المستقلة',
+  tools: g.tools || 'بيئة التقييم وأدوات السلوك اللفظي المعتمدة',
+  isSeed: true,
+}));
+
+const SEEDS_MASTER_GOALS = SEED_GOALS.map((g, i) => ({ ...g, id: `seed-${i}`, isSeed: true }));
+
+const STATIC_MASTER_GOALS = [
+  ...PORTAGE_MASTER_GOALS,
+  ...ABLLS_MASTER_GOALS,
+  ...LOVAAS_MASTER_GOALS,
+  ...VBMAPP_MASTER_GOALS,
+  ...SEEDS_MASTER_GOALS,
+];
+
 export function getAllGoals() {
   const custom = lsGet('progGoalsBank') || [];
-  const seeds = SEED_GOALS.map((g, i) => ({ ...g, id: `seed-${i}`, isSeed: true }));
-  const portageMasterGoals = (ALL_PORTAGE_GOALS || []).map((g) => {
-    // Portage goals: if domain is gross_motor or fine_motor, map to primary 'motor' domain
-    const normalizedDomain = (g.domain === 'gross_motor' || g.domain === 'fine_motor' || g.domain === 'motor') ? 'motor' : g.domain;
-    const ageGroup = g.ageGroup || (g.ageRange ? g.ageRange.replace(' سنة', '').replace(' سنوات', '').trim() : '0-1');
-    const ageRange = g.ageRange || (g.ageGroup ? `${g.ageGroup} سنوات` : '');
-
-    return {
-      id: g.id,
-      program: 'portage',
-      domain: normalizedDomain,
-      subDomain: g.domain,
-      text: g.text || g.title,
-      goalCode: g.goalCode || `P-${normalizedDomain.slice(0, 3).toUpperCase()}-${g.goalNumber}`,
-      ageGroup: ageGroup,
-      ageRange: ageRange,
-      mastery: '3 محاولات متتالية',
-      isSeed: true,
-    };
-  });
-
-  const abllsMasterGoals = (ALL_ABLLS_GOALS || []).map((g) => ({
-    id: g.id,
-    program: 'ablls',
-    domain: g.domain,
-    text: g.text || g.title,
-    goalCode: `ABLLS:${g.goalCode}`,
-    ageGroup: 'مستمر',
-    ageRange: 'تقييم شامل',
-    scoreScale: g.scoreScale || '0-2',
-    mastery: g.mastery || 'إتقان تام للاستجابة',
-    tools: 'بيئة طبيعية وأدوات تدريب',
-    isSeed: true,
-  }));
-
-  const lovaasMasterGoals = (ALL_LOVAAS_GOALS || []).map((g) => ({
-    id: g.id,
-    program: 'lovaas',
-    domain: g.domain,
-    text: g.text || g.title,
-    goalCode: `LOV:${g.goalCode}`,
-    ageGroup: 'مستمر',
-    ageRange: 'ABA / تدخل مبكر',
-    scoreScale: g.scoreScale || 'ضعيف / متوسط / جيد',
-    mastery: g.mastery || 'استجابة صحيحة ومستقلة 80% أو أكثر',
-    tools: 'أدوات تحليل السلوك التطبيقي والبيئة الطبيعية',
-    isSeed: true,
-  }));
-
-  const vbmappMasterGoals = (ALL_VBMAPP_GOALS || []).map((g) => ({
-    id: g.id,
-    program: 'vbmapp',
-    domain: g.domain,
-    level: g.level,
-    milestoneCode: g.milestoneCode,
-    subGoals: g.subGoals,
-    text: g.text || g.title,
-    goalCode: g.goalCode || `VBM:${g.milestoneCode || g.id}`,
-    ageGroup: g.ageGroup || (g.level === 1 ? '0-18 شهر' : g.level === 2 ? '18-30 شهر' : '30-48 شهر'),
-    ageRange: g.ageRange || `المستوى ${g.level} (${g.level === 1 ? '0-18 شهر' : g.level === 2 ? '18-30 شهر' : '30-48 شهر'})`,
-    scoreScale: g.scoreScale || '0 - 0.5 - 1',
-    mastery: g.mastery || 'إتقان تام للاستجابة المعلمية المستقلة',
-    tools: g.tools || 'بيئة التقييم وأدوات السلوك اللفظي المعتمدة',
-    isSeed: true,
-  }));
-
-  return [...portageMasterGoals, ...abllsMasterGoals, ...lovaasMasterGoals, ...vbmappMasterGoals, ...seeds, ...custom];
+  return [...STATIC_MASTER_GOALS, ...custom];
 }
+
+const INITIAL_RENDER_LIMIT = 40;
 
 export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelected = [], onConfirm, onSelect, onClose }) {
   const [checked, setChecked] = useState(() => new Set((alreadySelected || []).map(g => `${g.program}::${g.domain}::${g.text}`)));
@@ -93,8 +104,9 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
   const [domainFilter, setDomainFilter] = useState(domain || 'all');
   const [ageFilter, setAgeFilter] = useState('all');
   const [keyword, setKeyword] = useState('');
+  const [displayLimit, setDisplayLimit] = useState(INITIAL_RENDER_LIMIT);
 
-  const allGoals = getAllGoals();
+  const allGoals = useMemo(() => getAllGoals(), []);
 
   // Dynamic available domains based on selected program
   const availableDomains = useMemo(() => {
@@ -104,10 +116,26 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
   // Handle program change: reset domain filter if not available in selected program
   function handleProgramFilterChange(newProg) {
     setProgramFilter(newProg);
+    setDisplayLimit(INITIAL_RENDER_LIMIT);
     const validDomains = domainsForProgram(newProg);
     if (domainFilter !== 'all' && !validDomains.some(d => d.key === domainFilter)) {
       setDomainFilter('all');
     }
+  }
+
+  function handleDomainFilterChange(newDomain) {
+    setDomainFilter(newDomain);
+    setDisplayLimit(INITIAL_RENDER_LIMIT);
+  }
+
+  function handleAgeFilterChange(newAge) {
+    setAgeFilter(newAge);
+    setDisplayLimit(INITIAL_RENDER_LIMIT);
+  }
+
+  function handleKeywordChange(newKw) {
+    setKeyword(newKw);
+    setDisplayLimit(INITIAL_RENDER_LIMIT);
   }
 
   // Handle custom program change in addition form
@@ -120,17 +148,28 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
   }
 
   const visibleGoals = useMemo(() => {
+    const q = keyword.trim().toLowerCase();
     return allGoals.filter(goal => {
       const matchesProgram = programFilter === 'all' || goal.program === programFilter;
       const matchesDomain = domainFilter === 'all' || goal.domain === domainFilter;
       const matchesAge = ageFilter === 'all' || goal.ageGroup === ageFilter || (goal.ageRange && goal.ageRange.includes(ageFilter));
-      const q = keyword.trim().toLowerCase();
       const matchesKeyword = !q || (goal.text || '').toLowerCase().includes(q) || (goal.goalCode || '').toLowerCase().includes(q);
       return matchesDomain && matchesProgram && matchesAge && matchesKeyword;
     });
   }, [allGoals, domainFilter, programFilter, ageFilter, keyword]);
 
-  const byProgram = PROGRAMS.map(p => ({ ...p, items: visibleGoals.filter(g => g.program === p.key) })).filter(p => p.items.length > 0);
+  // Slice for fast rendering without lagging the DOM with 1500+ elements
+  const renderedGoals = useMemo(() => {
+    return visibleGoals.slice(0, displayLimit);
+  }, [visibleGoals, displayLimit]);
+
+  const byProgram = useMemo(() => {
+    return PROGRAMS.map(p => ({
+      ...p,
+      items: renderedGoals.filter(g => g.program === p.key),
+      totalFilteredInProg: visibleGoals.filter(g => g.program === p.key),
+    })).filter(p => p.items.length > 0);
+  }, [renderedGoals, visibleGoals]);
 
   // Check if all currently visible goals are selected
   const allVisibleSelected = visibleGoals.length > 0 && visibleGoals.every(g => checked.has(`${g.program}::${g.domain}::${g.text}`));
@@ -219,7 +258,7 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
       <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
         <div className="fhd" style={{ padding: '14px 20px' }}>
           <h2>🎯 اختيار أهداف — {programFilter !== 'all' ? programLabel(programFilter) : 'جميع البرامج'} {domainFilter !== 'all' ? `(${domainLabel(domainFilter)})` : ''}</h2>
-          <p style={{ fontSize: '.8rem', opacity: .85, marginTop: 4 }}>اختر البرنامج والمجال والعمر لتصفية بنود الأهداف بدقة</p>
+          <p style={{ fontSize: '.8rem', opacity: .85, marginTop: 4 }}>اختر البرنامج والمجال والعمر لتصفية بنود الأهداف بدقة فائقة واستجابة فورية</p>
         </div>
         <div className="modal-body-scroll" style={{ padding: '16px 20px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, marginBottom: 14, background: 'var(--g0)', padding: 12, borderRadius: 10 }}>
@@ -232,14 +271,14 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
             </div>
             <div>
               <label style={{ fontSize: '.75rem', fontWeight: 700, display: 'block', marginBottom: 4, color: 'var(--text-sub)' }}>المجال</label>
-              <select className="fsel" style={{ width: '100%' }} value={domainFilter} onChange={e => setDomainFilter(e.target.value)}>
+              <select className="fsel" style={{ width: '100%' }} value={domainFilter} onChange={e => handleDomainFilterChange(e.target.value)}>
                 <option value="all">كل المجالات {programFilter !== 'all' ? `(${availableDomains.length})` : ''}</option>
                 {availableDomains.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
               </select>
             </div>
             <div>
               <label style={{ fontSize: '.75rem', fontWeight: 700, display: 'block', marginBottom: 4, color: 'var(--text-sub)' }}>الفئة العمرية</label>
-              <select className="fsel" style={{ width: '100%' }} value={ageFilter} onChange={e => setAgeFilter(e.target.value)}>
+              <select className="fsel" style={{ width: '100%' }} value={ageFilter} onChange={e => handleAgeFilterChange(e.target.value)}>
                 <option value="all">جميع الأعمار</option>
                 <option value="infant">مرحلة الرضيع (0-4 أشهر)</option>
                 <option value="0-1">من 0 إلى 1 سنة</option>
@@ -253,13 +292,13 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
             </div>
             <div>
               <label style={{ fontSize: '.75rem', fontWeight: 700, display: 'block', marginBottom: 4, color: 'var(--text-sub)' }}>بحث سريع</label>
-              <input className="srch" style={{ width: '100%', height: 38 }} value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="بحث بالكلمات أو الرمز..." />
+              <input className="srch" style={{ width: '100%', height: 38 }} value={keyword} onChange={e => handleKeywordChange(e.target.value)} placeholder="بحث بالكلمات أو الرمز..." />
             </div>
           </div>
 
           {/* Quick Action Bar for Select All */}
           {visibleGoals.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--g0)', borderRadius: 10, marginBottom: 14, border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--g0)', borderRadius: 10, marginBottom: 14, border: '1px solid var(--border-color)', flexWrap: 'wrap', gap: 10 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontWeight: 700, fontSize: '.88rem', margin: 0, color: 'var(--text-main)' }}>
                 <input
                   type="checkbox"
@@ -277,10 +316,10 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
                   onClick={toggleSelectAllVisible}
                   style={{ borderRadius: 6, fontSize: '.78rem' }}
                 >
-                  {allVisibleSelected ? 'إلغاء تحديد الكل' : '✅ تحديد الكل'}
+                  {allVisibleSelected ? 'إلغاء تحديد الكل' : '✅ تحديد كل النتائج'}
                 </button>
-                <span style={{ fontSize: '.8rem', color: 'var(--text-sub)' }}>
-                  المحدد: <strong style={{ color: 'var(--pr)' }}>{checked.size}</strong>
+                <span style={{ fontSize: '.85rem', color: 'var(--text-sub)', background: 'var(--bg-card)', padding: '3px 8px', borderRadius: 6, border: '1px solid var(--border-color)' }}>
+                  المحدد: <strong style={{ color: 'var(--pr)', fontWeight: 800 }}>{checked.size}</strong>
                 </span>
               </div>
             </div>
@@ -288,26 +327,26 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
 
           {byProgram.length === 0 && (
             <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--g4)' }}>
-              لا توجد بنود في هذا المجال بعد — أضف بنداً مخصصاً بالأسفل
+              {visibleGoals.length === 0 ? 'لا توجد أهداف مطابقة لشروط التصفية والبحث الحالية' : 'لا توجد بنود في هذا المجال بعد — أضف بنداً مخصصاً بالأسفل'}
             </div>
           )}
+
           {byProgram.map(p => {
-            const allInProg = p.items.length > 0 && p.items.every(g => checked.has(`${g.program}::${g.domain}::${g.text}`));
-            const someInProg = p.items.some(g => checked.has(`${g.program}::${g.domain}::${g.text}`));
+            const allInProg = p.totalFilteredInProg.length > 0 && p.totalFilteredInProg.every(g => checked.has(`${g.program}::${g.domain}::${g.text}`));
 
             return (
               <div key={p.key} style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: '.82rem', fontWeight: 900, color: p.color, marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: p.color + '10', padding: '6px 10px', borderRadius: 8 }}>
+                <div style={{ fontSize: '.82rem', fontWeight: 900, color: p.color, marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: p.color + '10', padding: '6px 12px', borderRadius: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: p.color }} /> {p.label} ({p.items.length})
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: p.color }} /> {p.label} (معروض {p.items.length} من {p.totalFilteredInProg.length})
                   </div>
                   <button
                     type="button"
                     className="btn btn-xs"
-                    onClick={() => toggleProgramGroup(p.items)}
+                    onClick={() => toggleProgramGroup(p.totalFilteredInProg)}
                     style={{ background: 'var(--bg-card)', border: `1px solid ${p.color}40`, color: p.color, fontSize: '.72rem', padding: '2px 8px', borderRadius: 4 }}
                   >
-                    {allInProg ? 'إلغاء تحديد القسم' : 'تحديد قسم ' + p.label}
+                    {allInProg ? 'إلغاء تحديد كل القسم' : 'تحديد كل قسم ' + p.label + ` (${p.totalFilteredInProg.length})`}
                   </button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -342,11 +381,38 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
           );
         })}
 
+          {/* Incremental loading footer to prevent lag with 1500+ goals */}
+          {visibleGoals.length > displayLimit && (
+            <div style={{ margin: '16px 0', padding: '14px 16px', background: 'var(--g0)', borderRadius: 10, border: '1px dashed var(--border-color)', textAlign: 'center' }}>
+              <div style={{ fontSize: '.84rem', color: 'var(--text-sub)', marginBottom: 10 }}>
+                ⚡ يتم عرض <strong>{displayLimit}</strong> من إجمالي <strong>{visibleGoals.length}</strong> هدفاً لتسريع التصفح والاستجابة الفورية
+              </div>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn btn-s btn-sm"
+                  onClick={() => setDisplayLimit(prev => prev + 50)}
+                  style={{ borderRadius: 8 }}
+                >
+                  ➕ عرض 50 هدف إضافي
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-g btn-sm"
+                  onClick={() => setDisplayLimit(visibleGoals.length)}
+                  style={{ borderRadius: 8 }}
+                >
+                  👁️ عرض جميع النتائج المتبقية ({visibleGoals.length})
+                </button>
+              </div>
+            </div>
+          )}
+
           <div style={{ marginTop: 16, padding: 14, background: 'var(--g0)', borderRadius: 10 }}>
             <div style={{ fontSize: '.8rem', fontWeight: 800, marginBottom: 8 }}>➕ إضافة هدف مخصص لهذا المجال</div>
             <div className="fg c2">
               <div className="fl"><label>البرنامج المصدر</label>
-                <select value={customProgram} onChange={e => setCustomProgram(e.target.value)}>
+                <select value={customProgram} onChange={e => handleCustomProgramChange(e.target.value)}>
                   {PROGRAMS.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
                 </select>
               </div>
@@ -392,8 +458,11 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
   const [editingId, setEditingId] = useState(null);
   const [bulkPaste, setBulkPaste] = useState('');
   const [search, setSearch] = useState('');
+  const [displayLimit, setDisplayLimit] = useState(INITIAL_RENDER_LIMIT);
 
-  const allGoals = getAllGoals();
+  const allGoals = useMemo(() => {
+    return [...STATIC_MASTER_GOALS, ...customBank];
+  }, [customBank]);
 
   const filterAvailableDomains = useMemo(() => {
     return domainsForProgram(filterProgram);
@@ -411,10 +480,16 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
 
   function handleProgramFilterChange(progKey) {
     setFilterProgram(progKey);
+    setDisplayLimit(INITIAL_RENDER_LIMIT);
     const valid = domainsForProgram(progKey);
     if (filterDomain !== 'all' && !valid.some(d => d.key === filterDomain)) {
       setFilterDomain('all');
     }
+  }
+
+  function handleDomainFilterChange(dKey) {
+    setFilterDomain(dKey);
+    setDisplayLimit(INITIAL_RENDER_LIMIT);
   }
 
   function handleProgramChange(programKey) {
@@ -523,21 +598,27 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
     reload();
   }
 
-  const filtered = (allGoals || []).filter(g => {
-    const domainMatch = filterDomain === 'all' || g.domain === filterDomain;
-    const programMatch = filterProgram === 'all' || g.program === filterProgram;
-    const ageMatch = filterAge === 'all' || g.ageGroup === filterAge || (g.ageRange && g.ageRange.includes(filterAge));
+  const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const textMatch = !q || (g.text || '').toLowerCase().includes(q) || (g.goalCode || '').toLowerCase().includes(q);
-    return domainMatch && programMatch && ageMatch && textMatch;
-  });
+    return (allGoals || []).filter(g => {
+      const domainMatch = filterDomain === 'all' || g.domain === filterDomain;
+      const programMatch = filterProgram === 'all' || g.program === filterProgram;
+      const ageMatch = filterAge === 'all' || g.ageGroup === filterAge || (g.ageRange && g.ageRange.includes(filterAge));
+      const textMatch = !q || (g.text || '').toLowerCase().includes(q) || (g.goalCode || '').toLowerCase().includes(q);
+      return domainMatch && programMatch && ageMatch && textMatch;
+    });
+  }, [allGoals, filterDomain, filterProgram, filterAge, search]);
+
+  const renderedFiltered = useMemo(() => {
+    return filtered.slice(0, displayLimit);
+  }, [filtered, displayLimit]);
 
   return (
     <div className="mbg">
       <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
         <div className="fhd" style={{ padding: '14px 20px' }}>
           <h2>🗂️ إدارة بنك الأهداف الخاص بمركزك</h2>
-          <p style={{ fontSize: '.8rem', opacity: .85, marginTop: 4 }}>أضف بنودك، استورد مجموعات، أو استعرض أهداف البرامج القياسية المقننة</p>
+          <p style={{ fontSize: '.8rem', opacity: .85, marginTop: 4 }}>أضف بنودك، استورد مجموعات، أو استعرض أهداف البرامج القياسية المقننة بأداء سريع</p>
         </div>
         <div className="modal-body-scroll" style={{ padding: '16px 20px' }}>
           <div style={{ padding: 14, background: 'var(--g0)', borderRadius: 10, marginBottom: 16 }}>
@@ -582,11 +663,11 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
 
           {/* DYNAMIC DOMAIN TABS BASED ON SELECTED PROGRAM */}
           <div className="tabs" style={{ marginBottom: 12, overflowX: 'auto', display: 'flex', gap: 4 }}>
-            <button type="button" className={`tab ${filterDomain === 'all' ? 'on' : ''}`} onClick={() => setFilterDomain('all')}>
+            <button type="button" className={`tab ${filterDomain === 'all' ? 'on' : ''}`} onClick={() => handleDomainFilterChange('all')}>
               كل المجالات ({filterAvailableDomains.length})
             </button>
             {filterAvailableDomains.map(d => (
-              <button key={d.key} type="button" className={`tab ${filterDomain === d.key ? 'on' : ''}`} onClick={() => setFilterDomain(d.key)}>
+              <button key={d.key} type="button" className={`tab ${filterDomain === d.key ? 'on' : ''}`} onClick={() => handleDomainFilterChange(d.key)}>
                 {d.label}
               </button>
             ))}
@@ -602,7 +683,7 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
             </div>
             <div className="fl">
               <label>الفئة العمرية</label>
-              <select value={filterAge} onChange={e => setFilterAge(e.target.value)}>
+              <select value={filterAge} onChange={e => { setFilterAge(e.target.value); setDisplayLimit(INITIAL_RENDER_LIMIT); }}>
                 <option value="all">جميع الأعمار</option>
                 <option value="infant">مرحلة الرضيع (0-4 أشهر)</option>
                 <option value="0-1">من 0 إلى 1 سنة</option>
@@ -616,14 +697,14 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
             </div>
             <div className="fl">
               <label>بحث بالكلمات أو الرمز</label>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="ابحث عن كلمة/رمز..." />
+              <input value={search} onChange={e => { setSearch(e.target.value); setDisplayLimit(INITIAL_RENDER_LIMIT); }} placeholder="ابحث عن كلمة/رمز..." />
             </div>
           </div>
 
           {filtered.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--g4)' }}>لا توجد بنود في هذا الفلتر</div>
+            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--g4)' }}>لا توجد بنود مطابقة لهذا الفلتر</div>
           ) : (
-            filtered.map(g => (
+            renderedFiltered.map(g => (
               <div key={g.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, padding: '10px 14px' }}>
                 <div className="av" style={{ background: programColor(g.program) + '22', color: programColor(g.program), fontWeight: 800, minWidth: 36, textAlign: 'center' }}>{programLabel(g.program).slice(0, 2)}</div>
                 <div className="ci" style={{ flex: 1 }}>
@@ -663,6 +744,33 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
                 )}
               </div>
             ))
+          )}
+
+          {/* Incremental loading in Manager Modal */}
+          {filtered.length > displayLimit && (
+            <div style={{ margin: '16px 0', padding: '14px 16px', background: 'var(--g0)', borderRadius: 10, border: '1px dashed var(--border-color)', textAlign: 'center' }}>
+              <div style={{ fontSize: '.84rem', color: 'var(--text-sub)', marginBottom: 10 }}>
+                ⚡ يتم عرض <strong>{displayLimit}</strong> من إجمالي <strong>{filtered.length}</strong> هدفاً
+              </div>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn btn-s btn-sm"
+                  onClick={() => setDisplayLimit(prev => prev + 50)}
+                  style={{ borderRadius: 8 }}
+                >
+                  ➕ عرض 50 هدف إضافي
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-g btn-sm"
+                  onClick={() => setDisplayLimit(filtered.length)}
+                  style={{ borderRadius: 8 }}
+                >
+                  👁️ عرض جميع النتائج ({filtered.length})
+                </button>
+              </div>
+            </div>
           )}
         </div>
         <div className="fa">
