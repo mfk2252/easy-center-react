@@ -84,6 +84,41 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
 
   const byProgram = PROGRAMS.map(p => ({ ...p, items: visibleGoals.filter(g => g.program === p.key) })).filter(p => p.items.length > 0);
 
+  // Check if all currently visible goals are selected
+  const allVisibleSelected = visibleGoals.length > 0 && visibleGoals.every(g => checked.has(`${g.program}::${g.domain}::${g.text}`));
+  const someVisibleSelected = visibleGoals.some(g => checked.has(`${g.program}::${g.domain}::${g.text}`));
+
+  function toggleSelectAllVisible() {
+    setChecked(prev => {
+      const next = new Set(prev);
+      if (allVisibleSelected) {
+        // Deselect all visible
+        visibleGoals.forEach(g => {
+          next.delete(`${g.program}::${g.domain}::${g.text}`);
+        });
+      } else {
+        // Select all visible
+        visibleGoals.forEach(g => {
+          next.add(`${g.program}::${g.domain}::${g.text}`);
+        });
+      }
+      return next;
+    });
+  }
+
+  function toggleProgramGroup(programGoals) {
+    const allProgSelected = programGoals.length > 0 && programGoals.every(g => checked.has(`${g.program}::${g.domain}::${g.text}`));
+    setChecked(prev => {
+      const next = new Set(prev);
+      if (allProgSelected) {
+        programGoals.forEach(g => next.delete(`${g.program}::${g.domain}::${g.text}`));
+      } else {
+        programGoals.forEach(g => next.add(`${g.program}::${g.domain}::${g.text}`));
+      }
+      return next;
+    });
+  }
+
   function toggle(goal) {
     const key = `${goal.program}::${goal.domain}::${goal.text}`;
     setChecked(prev => {
@@ -174,17 +209,60 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
             </div>
           </div>
 
+          {/* Quick Action Bar for Select All */}
+          {visibleGoals.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--g0)', borderRadius: 10, marginBottom: 14, border: '1px solid var(--border-color)' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontWeight: 700, fontSize: '.88rem', margin: 0, color: 'var(--text-main)' }}>
+                <input
+                  type="checkbox"
+                  style={{ width: 18, height: 18, cursor: 'pointer' }}
+                  checked={allVisibleSelected}
+                  ref={el => { if (el) el.indeterminate = someVisibleSelected && !allVisibleSelected; }}
+                  onChange={toggleSelectAllVisible}
+                />
+                <span>تحديد كل النتائج المصفاة ({visibleGoals.length} هدف)</span>
+              </label>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="btn btn-s btn-xs"
+                  onClick={toggleSelectAllVisible}
+                  style={{ borderRadius: 6, fontSize: '.78rem' }}
+                >
+                  {allVisibleSelected ? 'إلغاء تحديد الكل' : '✅ تحديد الكل'}
+                </button>
+                <span style={{ fontSize: '.8rem', color: 'var(--text-sub)' }}>
+                  المحدد: <strong style={{ color: 'var(--pr)' }}>{checked.size}</strong>
+                </span>
+              </div>
+            </div>
+          )}
+
           {byProgram.length === 0 && (
             <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--g4)' }}>
               لا توجد بنود في هذا المجال بعد — أضف بنداً مخصصاً بالأسفل
             </div>
           )}
-          {byProgram.map(p => (
-            <div key={p.key} style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: '.8rem', fontWeight: 900, color: p.color, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: p.color }} /> {p.label} ({p.items.length})
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {byProgram.map(p => {
+            const allInProg = p.items.length > 0 && p.items.every(g => checked.has(`${g.program}::${g.domain}::${g.text}`));
+            const someInProg = p.items.some(g => checked.has(`${g.program}::${g.domain}::${g.text}`));
+
+            return (
+              <div key={p.key} style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: '.82rem', fontWeight: 900, color: p.color, marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: p.color + '10', padding: '6px 10px', borderRadius: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: p.color }} /> {p.label} ({p.items.length})
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-xs"
+                    onClick={() => toggleProgramGroup(p.items)}
+                    style={{ background: 'var(--bg-card)', border: `1px solid ${p.color}40`, color: p.color, fontSize: '.72rem', padding: '2px 8px', borderRadius: 4 }}
+                  >
+                    {allInProg ? 'إلغاء تحديد القسم' : 'تحديد قسم ' + p.label}
+                  </button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {p.items.map(g => {
                   const key = `${g.program}::${g.domain}::${g.text}`;
                   return (
@@ -213,7 +291,8 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
                 })}
               </div>
             </div>
-          ))}
+          );
+        })}
 
           <div style={{ marginTop: 16, padding: 14, background: 'var(--g0)', borderRadius: 10 }}>
             <div style={{ fontSize: '.8rem', fontWeight: 800, marginBottom: 8 }}>➕ إضافة هدف مخصص لهذا المجال</div>
