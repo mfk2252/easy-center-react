@@ -8,16 +8,25 @@ import { ALL_PORTAGE_GOALS } from '../../data/portageGoals';
 export function getAllGoals() {
   const custom = lsGet('progGoalsBank') || [];
   const seeds = SEED_GOALS.map((g, i) => ({ ...g, id: `seed-${i}`, isSeed: true }));
-  const portageMasterGoals = (ALL_PORTAGE_GOALS || []).map((g) => ({
-    id: g.id,
-    program: g.program,
-    domain: g.domain,
-    text: g.text || g.title,
-    goalCode: g.goalCode || `${g.domain.toUpperCase()}-${g.goalNumber}`,
-    ageRange: g.ageRange || `${g.ageGroup} سنوات`,
-    mastery: '3 محاولات متتالية',
-    isSeed: true,
-  }));
+  const portageMasterGoals = (ALL_PORTAGE_GOALS || []).map((g) => {
+    // Portage goals: if domain is gross_motor or fine_motor, map to primary 'motor' domain
+    const normalizedDomain = (g.domain === 'gross_motor' || g.domain === 'fine_motor' || g.domain === 'motor') ? 'motor' : g.domain;
+    const ageGroup = g.ageGroup || (g.ageRange ? g.ageRange.replace(' سنة', '').replace(' سنوات', '').trim() : '0-1');
+    const ageRange = g.ageRange || (g.ageGroup ? `${g.ageGroup} سنوات` : '');
+
+    return {
+      id: g.id,
+      program: 'portage',
+      domain: normalizedDomain,
+      subDomain: g.domain,
+      text: g.text || g.title,
+      goalCode: g.goalCode || `P-${normalizedDomain.slice(0, 3).toUpperCase()}-${g.goalNumber}`,
+      ageGroup: ageGroup,
+      ageRange: ageRange,
+      mastery: '3 محاولات متتالية',
+      isSeed: true,
+    };
+  });
 
   return [...portageMasterGoals, ...seeds, ...custom];
 }
@@ -25,25 +34,53 @@ export function getAllGoals() {
 export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelected = [], onConfirm, onSelect, onClose }) {
   const [checked, setChecked] = useState(() => new Set((alreadySelected || []).map(g => `${g.program}::${g.domain}::${g.text}`)));
   const [customText, setCustomText] = useState('');
-  const [customProgram, setCustomProgram] = useState(program || 'custom');
+  const [customProgram, setCustomProgram] = useState(program !== 'all' ? program : 'portage');
   const [goalCode, setGoalCode] = useState('');
-  const [customDomain, setCustomDomain] = useState(domain || DOMAINS[0].key);
+  const [customDomain, setCustomDomain] = useState(() => {
+    const avail = domainsForProgram(program !== 'all' ? program : 'portage');
+    return (domain !== 'all' && avail.some(d => d.key === domain)) ? domain : (avail[0]?.key || DOMAINS[0].key);
+  });
   const [saveToBank, setSaveToBank] = useState(true);
   const [programFilter, setProgramFilter] = useState(program || 'all');
   const [domainFilter, setDomainFilter] = useState(domain || 'all');
+  const [ageFilter, setAgeFilter] = useState('all');
   const [keyword, setKeyword] = useState('');
 
   const allGoals = getAllGoals();
 
+  // Dynamic available domains based on selected program
+  const availableDomains = useMemo(() => {
+    return domainsForProgram(programFilter);
+  }, [programFilter]);
+
+  // Handle program change: reset domain filter if not available in selected program
+  function handleProgramFilterChange(newProg) {
+    setProgramFilter(newProg);
+    const validDomains = domainsForProgram(newProg);
+    if (domainFilter !== 'all' && !validDomains.some(d => d.key === domainFilter)) {
+      setDomainFilter('all');
+    }
+  }
+
+  // Handle custom program change in addition form
+  function handleCustomProgramChange(newProg) {
+    setCustomProgram(newProg);
+    const avail = domainsForProgram(newProg);
+    if (!avail.some(d => d.key === customDomain)) {
+      setCustomDomain(avail[0]?.key || DOMAINS[0].key);
+    }
+  }
+
   const visibleGoals = useMemo(() => {
     return allGoals.filter(goal => {
-      const matchesDomain = domainFilter === 'all' || goal.domain === domainFilter;
       const matchesProgram = programFilter === 'all' || goal.program === programFilter;
+      const matchesDomain = domainFilter === 'all' || goal.domain === domainFilter;
+      const matchesAge = ageFilter === 'all' || goal.ageGroup === ageFilter || (goal.ageRange && goal.ageRange.includes(ageFilter));
       const q = keyword.trim().toLowerCase();
       const matchesKeyword = !q || (goal.text || '').toLowerCase().includes(q) || (goal.goalCode || '').toLowerCase().includes(q);
-      return matchesDomain && matchesProgram && matchesKeyword;
+      return matchesDomain && matchesProgram && matchesAge && matchesKeyword;
     });
-  }, [allGoals, domainFilter, programFilter, keyword]);
+  }, [allGoals, domainFilter, programFilter, ageFilter, keyword]);
 
   const byProgram = PROGRAMS.map(p => ({ ...p, items: visibleGoals.filter(g => g.program === p.key) })).filter(p => p.items.length > 0);
 
@@ -85,8 +122,8 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
 
     const rawEntries = [...checked].filter(key => !allGoals.some(g => `${g.program}::${g.domain}::${g.text}` === key));
     const rawExtras = rawEntries.map(raw => {
-      const [program, goalDomain, text] = raw.split('::');
-      return { program, domain: goalDomain, text };
+      const [progKey, goalDomain, text] = raw.split('::');
+      return { program: progKey, domain: goalDomain, text };
     });
 
     const result = [...selected, ...rawExtras];
@@ -98,20 +135,43 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
     <div className="mbg">
       <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
         <div className="fhd" style={{ padding: '14px 20px' }}>
-          <h2>🎯 اختيار أهداف — {domain && domain !== 'all' ? domainLabel(domain) : 'جميع المجالات'}</h2>
-          <p style={{ fontSize: '.8rem', opacity: .85, marginTop: 4 }}>يمكنك الاختيار من أكثر من برنامج معاً لنفس المجال</p>
+          <h2>🎯 اختيار أهداف — {programFilter !== 'all' ? programLabel(programFilter) : 'جميع البرامج'} {domainFilter !== 'all' ? `(${domainLabel(domainFilter)})` : ''}</h2>
+          <p style={{ fontSize: '.8rem', opacity: .85, marginTop: 4 }}>اختر البرنامج والمجال والعمر لتصفية بنود الأهداف بدقة</p>
         </div>
         <div className="modal-body-scroll" style={{ padding: '16px 20px' }}>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-            <select className="fsel" value={programFilter} onChange={e => setProgramFilter(e.target.value)}>
-              <option value="all">جميع البرامج</option>
-              {PROGRAMS.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
-            </select>
-            <select className="fsel" value={domainFilter} onChange={e => setDomainFilter(e.target.value)}>
-              <option value="all">كل المجالات</option>
-              {DOMAINS.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
-            </select>
-            <input className="srch" value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="بحث سريع بالكلمات/الرمز..." style={{ minWidth: 260 }} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, marginBottom: 14, background: 'var(--g0)', padding: 12, borderRadius: 10 }}>
+            <div>
+              <label style={{ fontSize: '.75rem', fontWeight: 700, display: 'block', marginBottom: 4, color: 'var(--text-sub)' }}>البرنامج</label>
+              <select className="fsel" style={{ width: '100%' }} value={programFilter} onChange={e => handleProgramFilterChange(e.target.value)}>
+                <option value="all">جميع البرامج</option>
+                {PROGRAMS.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: '.75rem', fontWeight: 700, display: 'block', marginBottom: 4, color: 'var(--text-sub)' }}>المجال</label>
+              <select className="fsel" style={{ width: '100%' }} value={domainFilter} onChange={e => setDomainFilter(e.target.value)}>
+                <option value="all">كل المجالات {programFilter !== 'all' ? `(${availableDomains.length})` : ''}</option>
+                {availableDomains.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: '.75rem', fontWeight: 700, display: 'block', marginBottom: 4, color: 'var(--text-sub)' }}>الفئة العمرية</label>
+              <select className="fsel" style={{ width: '100%' }} value={ageFilter} onChange={e => setAgeFilter(e.target.value)}>
+                <option value="all">جميع الأعمار</option>
+                <option value="infant">مرحلة الرضيع (0-4 أشهر)</option>
+                <option value="0-1">من 0 إلى 1 سنة</option>
+                <option value="1-2">من 1 إلى 2 سنة</option>
+                <option value="2-3">من 2 إلى 3 سنوات</option>
+                <option value="3-4">من 3 إلى 4 سنوات</option>
+                <option value="4-5">من 4 إلى 5 سنوات</option>
+                <option value="5-6">من 5 إلى 6 سنوات</option>
+                <option value="+6">+6 سنوات فما فوق</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: '.75rem', fontWeight: 700, display: 'block', marginBottom: 4, color: 'var(--text-sub)' }}>بحث سريع</label>
+              <input className="srch" style={{ width: '100%', height: 38 }} value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="بحث بالكلمات أو الرمز..." />
+            </div>
           </div>
 
           {byProgram.length === 0 && (
@@ -165,7 +225,7 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
               </div>
               <div className="fl"><label>المجال</label>
                 <select value={customDomain} onChange={e => setCustomDomain(e.target.value)}>
-                  {DOMAINS.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
+                  {domainsForProgram(customProgram).map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
                 </select>
               </div>
               <div className="fl"><label>رمز الهدف</label><input value={goalCode} onChange={e => setGoalCode(e.target.value)} placeholder="مثل ABLLS: C14" /></div>
@@ -195,8 +255,9 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
   const { toast } = useApp();
   const [filterDomain, setFilterDomain] = useState('all');
   const [filterProgram, setFilterProgram] = useState(defaultProgram || 'all');
+  const [filterAge, setFilterAge] = useState('all');
   const [customBank, setCustomBank] = useState(lsGet('progGoalsBank') || []);
-  const [newProgram, setNewProgram] = useState(defaultProgram !== 'all' ? defaultProgram : 'custom');
+  const [newProgram, setNewProgram] = useState(defaultProgram !== 'all' ? defaultProgram : 'portage');
   const availableDomains = domainsForProgram(newProgram);
   const [newDomain, setNewDomain] = useState(availableDomains[0]?.key || DOMAINS[0].key);
   const [newText, setNewText] = useState('');
@@ -207,14 +268,26 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
 
   const allGoals = getAllGoals();
 
+  const filterAvailableDomains = useMemo(() => {
+    return domainsForProgram(filterProgram);
+  }, [filterProgram]);
+
   function reload() { setCustomBank(lsGet('progGoalsBank') || []); }
 
   function resetForm() {
     setEditingId(null);
-    setNewProgram('custom');
-    setNewDomain(domainsForProgram('custom')[0]?.key || DOMAINS[0].key);
+    setNewProgram('portage');
+    setNewDomain(domainsForProgram('portage')[0]?.key || DOMAINS[0].key);
     setNewText('');
     setNewCode('');
+  }
+
+  function handleProgramFilterChange(progKey) {
+    setFilterProgram(progKey);
+    const valid = domainsForProgram(progKey);
+    if (filterDomain !== 'all' && !valid.some(d => d.key === filterDomain)) {
+      setFilterDomain('all');
+    }
   }
 
   function handleProgramChange(programKey) {
@@ -326,9 +399,10 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
   const filtered = (allGoals || []).filter(g => {
     const domainMatch = filterDomain === 'all' || g.domain === filterDomain;
     const programMatch = filterProgram === 'all' || g.program === filterProgram;
+    const ageMatch = filterAge === 'all' || g.ageGroup === filterAge || (g.ageRange && g.ageRange.includes(filterAge));
     const q = search.trim().toLowerCase();
     const textMatch = !q || (g.text || '').toLowerCase().includes(q) || (g.goalCode || '').toLowerCase().includes(q);
-    return domainMatch && programMatch && textMatch;
+    return domainMatch && programMatch && ageMatch && textMatch;
   });
 
   return (
@@ -336,7 +410,7 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
       <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
         <div className="fhd" style={{ padding: '14px 20px' }}>
           <h2>🗂️ إدارة بنك الأهداف الخاص بمركزك</h2>
-          <p style={{ fontSize: '.8rem', opacity: .85, marginTop: 4 }}>أضف بنودك، استورد مجموعات، أو استخدم الصياغة السريعة للبنك</p>
+          <p style={{ fontSize: '.8rem', opacity: .85, marginTop: 4 }}>أضف بنودك، استورد مجموعات، أو استعرض أهداف البرامج القياسية المقننة</p>
         </div>
         <div className="modal-body-scroll" style={{ padding: '16px 20px' }}>
           <div style={{ padding: 14, background: 'var(--g0)', borderRadius: 10, marginBottom: 16 }}>
@@ -353,7 +427,7 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
                   {availableDomains.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
                 </select>
               </div>
-              <div className="fl"><label>رمز الهدف</label><input value={newCode} onChange={e => setNewCode(e.target.value)} placeholder="ABLLS: C14" /></div>
+              <div className="fl"><label>رمز الهدف</label><input value={newCode} onChange={e => setNewCode(e.target.value)} placeholder="مثال: P-MOT-15" /></div>
               <div className="fl full"><label>3️⃣ نص الهدف <span className="req">*</span></label>
                 <input value={newText} onChange={e => setNewText(e.target.value)} placeholder="اكتب نص الهدف كما في دليلكم..." onKeyDown={e => e.key === 'Enter' && addItem()} />
               </div>
@@ -365,7 +439,7 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
           </div>
 
           <div style={{ padding: 14, background: 'var(--g0)', borderRadius: 10, marginBottom: 16 }}>
-            <div style={{ fontSize: '.8rem', fontWeight: 800, marginBottom: 8 }}>📥 استيراد جماعي / bulk import</div>
+            <div style={{ fontSize: '.8rem', fontWeight: 800, marginBottom: 8 }}>📥 استيراد جماعي / Bulk Import</div>
             <div className="fg c2">
               <div className="fl">
                 <label>رفع ملف CSV أو JSON</label>
@@ -373,29 +447,48 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
               </div>
               <div className="fl">
                 <label>اللصق السريع للأهداف</label>
-                <textarea value={bulkPaste} onChange={e => setBulkPaste(e.target.value)} rows={5} placeholder="ألصق أهدافاً مفصولة أسطر..." />
+                <textarea value={bulkPaste} onChange={e => setBulkPaste(e.target.value)} rows={3} placeholder="ألصق أهدافاً مفصولة بأطر..." />
                 <div style={{ marginTop: 8 }}><button type="button" className="btn btn-s btn-sm" onClick={addPasteGoals}>إدراج الأهداف</button></div>
               </div>
             </div>
           </div>
 
-          <div className="tabs" style={{ marginBottom: 12 }}>
-            <button type="button" className={`tab ${filterDomain === 'all' ? 'on' : ''}`} onClick={() => setFilterDomain('all')}>كل المجالات</button>
-            {DOMAINS.map(d => (
-              <button key={d.key} type="button" className={`tab ${filterDomain === d.key ? 'on' : ''}`} onClick={() => setFilterDomain(d.key)}>{d.label}</button>
+          {/* DYNAMIC DOMAIN TABS BASED ON SELECTED PROGRAM */}
+          <div className="tabs" style={{ marginBottom: 12, overflowX: 'auto', display: 'flex', gap: 4 }}>
+            <button type="button" className={`tab ${filterDomain === 'all' ? 'on' : ''}`} onClick={() => setFilterDomain('all')}>
+              كل المجالات ({filterAvailableDomains.length})
+            </button>
+            {filterAvailableDomains.map(d => (
+              <button key={d.key} type="button" className={`tab ${filterDomain === d.key ? 'on' : ''}`} onClick={() => setFilterDomain(d.key)}>
+                {d.label}
+              </button>
             ))}
           </div>
 
-          <div className="fg c2" style={{ marginBottom: 12 }}>
+          <div className="fg c3" style={{ marginBottom: 12 }}>
             <div className="fl">
               <label>البرنامج</label>
-              <select value={filterProgram} onChange={e => setFilterProgram(e.target.value)}>
-                <option value="all">الكل</option>
+              <select value={filterProgram} onChange={e => handleProgramFilterChange(e.target.value)}>
+                <option value="all">جميع البرامج</option>
                 {PROGRAMS.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
               </select>
             </div>
             <div className="fl">
-              <label>بحث</label>
+              <label>الفئة العمرية</label>
+              <select value={filterAge} onChange={e => setFilterAge(e.target.value)}>
+                <option value="all">جميع الأعمار</option>
+                <option value="infant">مرحلة الرضيع (0-4 أشهر)</option>
+                <option value="0-1">من 0 إلى 1 سنة</option>
+                <option value="1-2">من 1 إلى 2 سنة</option>
+                <option value="2-3">من 2 إلى 3 سنوات</option>
+                <option value="3-4">من 3 إلى 4 سنوات</option>
+                <option value="4-5">من 4 إلى 5 سنوات</option>
+                <option value="5-6">من 5 إلى 6 سنوات</option>
+                <option value="+6">+6 سنوات فما فوق</option>
+              </select>
+            </div>
+            <div className="fl">
+              <label>بحث بالكلمات أو الرمز</label>
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="ابحث عن كلمة/رمز..." />
             </div>
           </div>
