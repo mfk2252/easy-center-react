@@ -366,15 +366,21 @@ export default function PillarAssessment({ onDataChange }) {
         <div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
             {allScales.map(scale => (
-              <div key={scale.id} className="card" style={{ border: selectedScaleId === scale.id ? '2px solid var(--pr)' : '1px solid var(--border-color)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <div
+                key={scale.id}
+                className="prog-scale-card"
+                style={{
+                  border: selectedScaleId === scale.id ? '2px solid var(--pr)' : '1px solid var(--border-color)',
+                  background: selectedScaleId === scale.id ? 'var(--pr-l)' : 'var(--bg-card)',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <span className="bdg b-or">{scale.categoryLabel || 'مقياس مقنن'}</span>
-                  <span style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>{scale.items?.length || 15} بنداً</span>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)', fontWeight: 600 }}>{scale.items?.length || 15} بنداً</span>
                 </div>
-                <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem', color: 'var(--text-main)' }}>{scale.name}</h4>
-                <p style={{ fontSize: '.82rem', color: 'var(--text-sub)', marginBottom: 14, minHeight: 40, lineHeight: 1.5 }}>
-                  {scale.description || 'مقياس تشخيصي مقنن لتقدير مستوى الأداء والأعراض بدقة.'}
-                </p>
+                <h4 style={{ margin: '0 0 16px 0', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.4 }}>
+                  {scale.name}
+                </h4>
                 <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
                   <button
                     type="button"
@@ -399,13 +405,13 @@ export default function PillarAssessment({ onDataChange }) {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14 }}>
               {filteredAssessments.map(item => (
-                <div key={item.id} className="card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                <div key={item.id} className="prog-item-card">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
                     <div>
-                      <div style={{ fontWeight: 800, fontSize: '.98rem', color: 'var(--text-main)' }}>{item.studentName}</div>
-                      <div style={{ fontSize: '.78rem', color: 'var(--text-sub)' }}>{item.measureName} · {item.date}</div>
+                      <div className="prog-student-name" style={{ fontSize: '1.02rem' }}>{item.studentName}</div>
+                      <div className="prog-student-meta">{item.measureName} · {item.date}</div>
                     </div>
-                    <span className="bdg b-gr" style={{ fontSize: '.82rem', fontWeight: 800 }}>
+                    <span className="bdg b-gr" style={{ fontSize: '0.82rem', fontWeight: 800, flexShrink: 0 }}>
                       الدرجة: {item.score} / {item.maxScore}
                     </span>
                   </div>
@@ -414,15 +420,15 @@ export default function PillarAssessment({ onDataChange }) {
                     <div style={{ flex: 1, background: 'var(--g1)', height: 8, borderRadius: 4, overflow: 'hidden' }}>
                       <div style={{ width: item.percentage || '50%', background: 'var(--pr)', height: '100%' }} />
                     </div>
-                    <span style={{ fontSize: '.75rem', fontWeight: 700 }}>{item.percentage}</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>{item.percentage}</span>
                   </div>
 
-                  <div style={{ fontSize: '.84rem', margin: '6px 0' }}>
+                  <div style={{ fontSize: '0.84rem', margin: '6px 0' }}>
                     <span style={{ color: 'var(--text-sub)' }}>المستوى التقديري: </span>
                     <strong style={{ color: 'var(--pr)' }}>{item.level}</strong>
                   </div>
 
-                  {item.notes && <div style={{ fontSize: '.8rem', color: 'var(--text-sub)', marginTop: 4 }}>{item.notes}</div>}
+                  {item.notes && <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)', marginTop: 4 }}>{item.notes}</div>}
 
                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginTop: 12, borderTop: '1px solid var(--border-color)', paddingTop: 8 }}>
                     {item.parentPhone && (
