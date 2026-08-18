@@ -4,6 +4,7 @@ import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { uid } from '../../utils/dateHelpers';
 import { PROGRAMS, DOMAINS, SEED_GOALS, programLabel, programColor, domainLabel, domainsForProgram } from '../../utils/goalsBank';
 import { ALL_PORTAGE_GOALS } from '../../data/portageGoals';
+import { ALL_ABLLS_GOALS } from '../../data/abllsGoals';
 
 export function getAllGoals() {
   const custom = lsGet('progGoalsBank') || [];
@@ -28,7 +29,21 @@ export function getAllGoals() {
     };
   });
 
-  return [...portageMasterGoals, ...seeds, ...custom];
+  const abllsMasterGoals = (ALL_ABLLS_GOALS || []).map((g) => ({
+    id: g.id,
+    program: 'ablls',
+    domain: g.domain,
+    text: g.text || g.title,
+    goalCode: `ABLLS:${g.goalCode}`,
+    ageGroup: 'مستمر',
+    ageRange: 'تقييم شامل',
+    scoreScale: g.scoreScale || '0-2',
+    mastery: g.mastery || 'إتقان تام للاستجابة',
+    tools: 'بيئة طبيعية وأدوات تدريب',
+    isSeed: true,
+  }));
+
+  return [...portageMasterGoals, ...abllsMasterGoals, ...seeds, ...custom];
 }
 
 export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelected = [], onConfirm, onSelect, onClose }) {
