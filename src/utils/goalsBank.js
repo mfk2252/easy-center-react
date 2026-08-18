@@ -5,6 +5,7 @@
 
 export const PROGRAMS = [
   { key: 'lovaas', label: 'لوفاس (ABA)', color: '#1a56db', labelEn: 'Lovaas' },
+  { key: 'vbmapp', label: 'في بي ماب (VB-MAPP)', color: '#ea580c', labelEn: 'VB-MAPP' },
   { key: 'portage', label: 'بورتاج', color: '#059669', labelEn: 'Portage' },
   { key: 'ablls', label: 'إيبلز (ABLLS-R)', color: '#7c3aed', labelEn: 'ABLLS-R' },
   { key: 'pep3', label: 'بيب 3 (PEP-3)', color: '#0891b2', labelEn: 'PEP-3' },
@@ -52,6 +53,34 @@ export const DOMAINS = [
   { key: 'ablls_x', label: '[X] دخول الحمام والتواليت' },
   { key: 'ablls_y', label: '[Y] مهارات الحركية الكبرى' },
   { key: 'ablls_z', label: '[Z] مهارات الحركية الصغرى' },
+  // LOVAAS (ABA) 10 Domains
+  { key: 'lovaas_attention', label: '1. مهارات الحضور والانتباه' },
+  { key: 'lovaas_imitation', label: '2. مهارات التقليد' },
+  { key: 'lovaas_receptive', label: '3. مهارات فهم اللغة (اللغة الاستقبالية)' },
+  { key: 'lovaas_expressive', label: '4. مهارات اللغة التعبيرية' },
+  { key: 'lovaas_abstract', label: '5. مهارات اللغة المجردة' },
+  { key: 'lovaas_social', label: '6. المهارات الاجتماعية' },
+  { key: 'lovaas_preacademic', label: '7. مهارات ما قبل الأكاديمي' },
+  { key: 'lovaas_academic', label: '8. المهارات الأكاديمية' },
+  { key: 'lovaas_school_readiness', label: '9. مهارات الإعداد للمدرسة' },
+  { key: 'lovaas_self_care', label: '10. مهارات رعاية الذات' },
+  // VB-MAPP 16 Domains
+  { key: 'vbmapp_mand', label: '1. الطلب (Mand)' },
+  { key: 'vbmapp_tact', label: '2. التسمية (Tact)' },
+  { key: 'vbmapp_listener', label: '3. استجابة المستمع (Listener Responding)' },
+  { key: 'vbmapp_vpmts', label: '4. الإدراك البصري ومطابقة العينات (VP-MTS)' },
+  { key: 'vbmapp_play', label: '5. اللعب المستقل (Independent Play)' },
+  { key: 'vbmapp_social', label: '6. السلوك والتفاعل الاجتماعي (Social Behavior)' },
+  { key: 'vbmapp_imitation', label: '7. التقليد الحركي (Motor Imitation)' },
+  { key: 'vbmapp_echoic', label: '8. التقليد الصوتي / الإيكويك (Echoic)' },
+  { key: 'vbmapp_vocal', label: '9. السلوك الصوتي التلقائي (Spontaneous Vocal)' },
+  { key: 'vbmapp_lrffc', label: '10. استجابة المستمع بالوظيفة والسمة والصنف (LRFFC)' },
+  { key: 'vbmapp_intraverbal', label: '11. المحادثة اللفظية (Intraverbal)' },
+  { key: 'vbmapp_group', label: '12. روتين الفصل والمهارات الجماعية (Group Skills)' },
+  { key: 'vbmapp_linguistics', label: '13. التركيب اللغوي (Linguistic Structure)' },
+  { key: 'vbmapp_reading', label: '14. مهارات القراءة (Reading)' },
+  { key: 'vbmapp_writing', label: '15. مهارات الكتابة (Writing)' },
+  { key: 'vbmapp_math', label: '16. مهارات الحساب والرياضيات (Math)' },
 ];
 
 export const AGE_RANGES = [
@@ -61,7 +90,36 @@ export const AGE_RANGES = [
 
 export const PROGRAM_DOMAINS = {
   portage: ['infant', 'motor', 'cognitive', 'language', 'social', 'selfhelp'],
-  lovaas: ['cognitive', 'receptive_language', 'expressive_communication', 'social', 'gross_motor', 'fine_motor', 'selfhelp', 'independence'],
+  lovaas: [
+    'lovaas_attention',
+    'lovaas_imitation',
+    'lovaas_receptive',
+    'lovaas_expressive',
+    'lovaas_abstract',
+    'lovaas_social',
+    'lovaas_preacademic',
+    'lovaas_academic',
+    'lovaas_school_readiness',
+    'lovaas_self_care'
+  ],
+  vbmapp: [
+    'vbmapp_mand',
+    'vbmapp_tact',
+    'vbmapp_listener',
+    'vbmapp_vpmts',
+    'vbmapp_play',
+    'vbmapp_social',
+    'vbmapp_imitation',
+    'vbmapp_echoic',
+    'vbmapp_vocal',
+    'vbmapp_lrffc',
+    'vbmapp_intraverbal',
+    'vbmapp_group',
+    'vbmapp_linguistics',
+    'vbmapp_reading',
+    'vbmapp_writing',
+    'vbmapp_math',
+  ],
   ablls: [
     'ablls_a', 'ablls_b', 'ablls_c', 'ablls_d', 'ablls_e',
     'ablls_f', 'ablls_g', 'ablls_h', 'ablls_i', 'ablls_j',
