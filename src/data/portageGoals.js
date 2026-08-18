@@ -15,8 +15,10 @@ import { PORTAGE_COGNITIVE_GOALS } from "./portageGoalsCognitive";
 import { PORTAGE_LANGUAGE_GOALS } from "./portageGoalsLanguage";
 import { PORTAGE_SOCIAL_GOALS } from "./portageGoalsSocial";
 import { PORTAGE_SELFHELP_GOALS } from "./portageGoalsSelfHelp";
+import { PORTAGE_INFANT_GOALS } from "./portageGoalsInfant";
 
 export const ALL_PORTAGE_GOALS = [
+  ...PORTAGE_INFANT_GOALS,
   ...PORTAGE_MOTOR_GOALS,
   ...PORTAGE_COGNITIVE_GOALS,
   ...PORTAGE_LANGUAGE_GOALS,
@@ -25,6 +27,7 @@ export const ALL_PORTAGE_GOALS = [
 ];
 
 export const PORTAGE_DOMAINS = [
+  { id: "infant", nameAr: "نمو الرضيع", nameEn: "Infant Development", count: PORTAGE_INFANT_GOALS.length },
   { id: "motor", nameAr: "المجال الحركي", nameEn: "Motor Development", count: PORTAGE_MOTOR_GOALS.length },
   { id: "cognitive", nameAr: "المجال المعرفي", nameEn: "Cognitive Development", count: PORTAGE_COGNITIVE_GOALS.length },
   { id: "language", nameAr: "المجال اللغوي والتواصلي", nameEn: "Language & Communication", count: PORTAGE_LANGUAGE_GOALS.length },
@@ -33,6 +36,7 @@ export const PORTAGE_DOMAINS = [
 ];
 
 export const PORTAGE_AGE_GROUPS = [
+  { id: "infant", labelAr: "مرحلة الرضيع (0-4 أشهر)", labelEn: "Infant (0-4 Mo)" },
   { id: "0-1", labelAr: "من 0 إلى 1 سنة", labelEn: "0-1 Years" },
   { id: "1-2", labelAr: "من 1 إلى 2 سنة", labelEn: "1-2 Years" },
   { id: "2-3", labelAr: "من 2 إلى 3 سنوات", labelEn: "2-3 Years" },
@@ -42,6 +46,7 @@ export const PORTAGE_AGE_GROUPS = [
 ];
 
 export {
+  PORTAGE_INFANT_GOALS,
   PORTAGE_MOTOR_GOALS,
   PORTAGE_COGNITIVE_GOALS,
   PORTAGE_LANGUAGE_GOALS,
