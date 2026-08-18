@@ -7,6 +7,7 @@ import { ALL_PORTAGE_GOALS } from '../../data/portageGoals';
 import { ALL_ABLLS_GOALS } from '../../data/abllsGoals';
 import { ALL_LOVAAS_GOALS } from '../../data/lovaasGoals';
 import { ALL_VBMAPP_GOALS } from '../../data/vbmappGoals';
+import { ALL_HELP_GOALS, HELP_DOMAINS, HELP_AGE_MATRIX, HELP_SCORING_KEYS } from '../../data/helpGoals';
 
 // Pre-compute static goals ONCE at module load to avoid 1500+ object re-allocations on every render
 const PORTAGE_MASTER_GOALS = (ALL_PORTAGE_GOALS || []).map((g) => {
@@ -73,6 +74,23 @@ const VBMAPP_MASTER_GOALS = (ALL_VBMAPP_GOALS || []).map((g) => ({
   isSeed: true,
 }));
 
+const HELP_MASTER_GOALS = (ALL_HELP_GOALS || []).map((g) => ({
+  id: g.id,
+  program: 'help',
+  domain: g.domain,
+  subDomain: g.subDomain,
+  stage: g.stage,
+  text: g.text,
+  goalCode: g.goalCode || g.code,
+  ageGroup: g.ageGroup,
+  ageRange: g.ageRange,
+  ageMonths: g.ageMonths,
+  scoreScale: g.scoreScale || '0: غير مناسب | ×: غير موجود | 1: محاولة مبدئية | 2: جزئي | 3: بنجاح تام',
+  mastery: g.mastery,
+  tools: g.tools,
+  isSeed: true,
+}));
+
 const SEEDS_MASTER_GOALS = SEED_GOALS.map((g, i) => ({ ...g, id: `seed-${i}`, isSeed: true }));
 
 const STATIC_MASTER_GOALS = [
@@ -80,6 +98,7 @@ const STATIC_MASTER_GOALS = [
   ...ABLLS_MASTER_GOALS,
   ...LOVAAS_MASTER_GOALS,
   ...VBMAPP_MASTER_GOALS,
+  ...HELP_MASTER_GOALS,
   ...SEEDS_MASTER_GOALS,
 ];
 
@@ -295,6 +314,65 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
               <input className="srch" style={{ width: '100%', height: 38 }} value={keyword} onChange={e => handleKeywordChange(e.target.value)} placeholder="بحث بالكلمات أو الرمز..." />
             </div>
           </div>
+
+          {/* HELP Program Developmental Matrix and Scoring Guide Banner */}
+          {programFilter === 'help' && (
+            <div style={{ background: '#fdf2f8', border: '1px solid #fbcfe8', borderRadius: 12, padding: '12px 16px', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '1.2rem' }}>🌺</span>
+                  <div>
+                    <strong style={{ color: '#be185d', fontSize: '.92rem' }}>مقياس هيلب النمائي والتطوري (Hawaii Early Learning Profile)</strong>
+                    <div style={{ fontSize: '.75rem', color: '#9d174d' }}>مصفوفة المهارات والمجالات من سن الولادة حتى 6 سنوات (تدخل مبكر + روضة)</div>
+                  </div>
+                </div>
+                <span style={{ fontSize: '.75rem', background: '#f472b6', color: '#fff', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>
+                  برنامج HELP المقنن
+                </span>
+              </div>
+
+              {/* Age Bands Matrix */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                {HELP_AGE_MATRIX.map(mat => (
+                  <button
+                    key={mat.key}
+                    type="button"
+                    onClick={() => {
+                      if (mat.key.includes('0-6m') || mat.key.includes('6-12m')) setAgeFilter('0-1');
+                      else if (mat.key.includes('1-2y')) setAgeFilter('1-2');
+                      else if (mat.key.includes('2-3y')) setAgeFilter('2-3');
+                      else if (mat.key.includes('3-4y')) setAgeFilter('3-4');
+                      else if (mat.key.includes('4-5y')) setAgeFilter('4-5');
+                      else if (mat.key.includes('5-6y')) setAgeFilter('5-6');
+                      setDisplayLimit(INITIAL_RENDER_LIMIT);
+                    }}
+                    style={{
+                      fontSize: '.74rem',
+                      padding: '3px 8px',
+                      borderRadius: 6,
+                      border: '1px solid #f472b6',
+                      background: '#fff',
+                      color: '#9d174d',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                    }}
+                  >
+                    👶 {mat.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* HELP Scoring Legend */}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', background: '#fff', padding: '6px 10px', borderRadius: 8, border: '1px solid #fce7f3' }}>
+                <span style={{ fontSize: '.72rem', fontWeight: 800, color: '#831843' }}>مفاتيح التقييم الخماسية:</span>
+                {HELP_SCORING_KEYS.map(sk => (
+                  <span key={sk.symbol} style={{ fontSize: '.7rem', color: 'var(--text-sub)' }}>
+                    <strong style={{ color: sk.color, fontWeight: 900 }}>{sk.symbol}</strong> {sk.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Quick Action Bar for Select All */}
           {visibleGoals.length > 0 && (
@@ -700,6 +778,65 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
               <input value={search} onChange={e => { setSearch(e.target.value); setDisplayLimit(INITIAL_RENDER_LIMIT); }} placeholder="ابحث عن كلمة/رمز..." />
             </div>
           </div>
+
+          {/* HELP Program Developmental Matrix and Scoring Guide Banner in Manager */}
+          {filterProgram === 'help' && (
+            <div style={{ background: '#fdf2f8', border: '1px solid #fbcfe8', borderRadius: 12, padding: '12px 16px', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '1.2rem' }}>🌺</span>
+                  <div>
+                    <strong style={{ color: '#be185d', fontSize: '.92rem' }}>مقياس هيلب النمائي والتطوري (Hawaii Early Learning Profile)</strong>
+                    <div style={{ fontSize: '.75rem', color: '#9d174d' }}>مصفوفة المهارات والمجالات من سن الولادة حتى 6 سنوات (تدخل مبكر + روضة)</div>
+                  </div>
+                </div>
+                <span style={{ fontSize: '.75rem', background: '#f472b6', color: '#fff', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>
+                  برنامج HELP المقنن
+                </span>
+              </div>
+
+              {/* Age Bands Matrix */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                {HELP_AGE_MATRIX.map(mat => (
+                  <button
+                    key={mat.key}
+                    type="button"
+                    onClick={() => {
+                      if (mat.key.includes('0-6m') || mat.key.includes('6-12m')) setFilterAge('0-1');
+                      else if (mat.key.includes('1-2y')) setFilterAge('1-2');
+                      else if (mat.key.includes('2-3y')) setFilterAge('2-3');
+                      else if (mat.key.includes('3-4y')) setFilterAge('3-4');
+                      else if (mat.key.includes('4-5y')) setFilterAge('4-5');
+                      else if (mat.key.includes('5-6y')) setFilterAge('5-6');
+                      setDisplayLimit(INITIAL_RENDER_LIMIT);
+                    }}
+                    style={{
+                      fontSize: '.74rem',
+                      padding: '3px 8px',
+                      borderRadius: 6,
+                      border: '1px solid #f472b6',
+                      background: '#fff',
+                      color: '#9d174d',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                    }}
+                  >
+                    👶 {mat.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* HELP Scoring Legend */}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', background: '#fff', padding: '6px 10px', borderRadius: 8, border: '1px solid #fce7f3' }}>
+                <span style={{ fontSize: '.72rem', fontWeight: 800, color: '#831843' }}>مفاتيح التقييم الخماسية:</span>
+                {HELP_SCORING_KEYS.map(sk => (
+                  <span key={sk.symbol} style={{ fontSize: '.7rem', color: 'var(--text-sub)' }}>
+                    <strong style={{ color: sk.color, fontWeight: 900 }}>{sk.symbol}</strong> {sk.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--g4)' }}>لا توجد بنود مطابقة لهذا الفلتر</div>
