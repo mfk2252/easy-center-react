@@ -192,10 +192,10 @@ export default function PillarPlans({ onDataChange }) {
     const linePath = coords.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x} ${c.y}`).join(' ');
     
     return (
-      <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 12, padding: 12, marginTop: 10 }}>
+      <div style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: 12, padding: 12, marginTop: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <strong style={{ fontSize: '.82rem', color: 'var(--text-main)' }}>📈 الخط البياني لتتبع السلوك (رصد التقدم وتناقص معدل حدوث السلوك المستهدف)</strong>
-          <span style={{ fontSize: '.72rem', color: 'var(--g5)' }}>المعدل الحالي: <strong style={{ color: 'var(--err)' }}>{points[points.length - 1]?.value || 0}</strong></span>
+          <span style={{ fontSize: '.72rem', color: 'var(--text-sub)' }}>المعدل الحالي: <strong style={{ color: 'var(--err)' }}>{points[points.length - 1]?.value || 0}</strong></span>
         </div>
         <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible' }}>
           {/* Grid Lines */}
@@ -204,8 +204,8 @@ export default function PillarPlans({ onDataChange }) {
             const val = Math.round(maxVal * (1 - ratio));
             return (
               <g key={i}>
-                <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="#e2e8f0" strokeDasharray="3 3" />
-                <text x={padding - 8} y={y + 4} textAnchor="end" fontSize="9" fill="#94a3b8">{val}</text>
+                <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="var(--border-color)" strokeDasharray="3 3" />
+                <text x={padding - 8} y={y + 4} textAnchor="end" fontSize="9" fill="var(--text-sub)">{val}</text>
               </g>
             );
           })}
@@ -214,20 +214,20 @@ export default function PillarPlans({ onDataChange }) {
           {coords.length > 1 && (
             <path
               d={`${linePath} L ${coords[coords.length - 1].x} ${height - padding} L ${coords[0].x} ${height - padding} Z`}
-              fill="rgba(239, 68, 68, 0.08)"
+              fill="rgba(239, 68, 68, 0.15)"
             />
           )}
           
           {/* Main Line */}
-          <path d={linePath} fill="none" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={linePath} fill="none" stroke="var(--err)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
           
           {/* Data Points */}
           {coords.map((c, i) => (
             <g key={i}>
-              <circle cx={c.x} cy={c.y} r="5" fill="#fff" stroke="#ef4444" strokeWidth="3" />
-              <circle cx={c.x} cy={c.y} r="2" fill="#ef4444" />
-              <text x={c.x} y={c.y - 10} textAnchor="middle" fontSize="10" fontWeight="bold" fill="#dc2626">{c.value}</text>
-              <text x={c.x} y={height - padding + 15} textAnchor="middle" fontSize="9" fill="#64748b">{c.label}</text>
+              <circle cx={c.x} cy={c.y} r="5" fill="var(--bg-card)" stroke="var(--err)" strokeWidth="3" />
+              <circle cx={c.x} cy={c.y} r="2" fill="var(--err)" />
+              <text x={c.x} y={c.y - 10} textAnchor="middle" fontSize="10" fontWeight="bold" fill="var(--text-main)">{c.value}</text>
+              <text x={c.x} y={height - padding + 15} textAnchor="middle" fontSize="9" fill="var(--text-sub)">{c.label}</text>
             </g>
           ))}
         </svg>
@@ -1291,14 +1291,14 @@ export default function PillarPlans({ onDataChange }) {
                 </div>
 
                 {/* 3. ABC Behavioural Analysis Panel */}
-                <div className="fl full" style={{ border: '1px solid #fca5a5', background: '#fffcfc', borderRadius: 12, padding: 16, marginTop: 12 }}>
-                  <h3 style={{ margin: '0 0 14px 0', fontSize: '.95rem', fontWeight: 800, color: '#991b1b', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div className="fl full" style={{ border: '1px solid var(--err)', background: 'var(--err-l)', borderRadius: 12, padding: 16, marginTop: 12 }}>
+                  <h3 style={{ margin: '0 0 14px 0', fontSize: '.95rem', fontWeight: 800, color: 'var(--err)', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span>🧬</span> <span>التحليل العلمي والوظيفي للسلوك (ABC Behavioral Analysis)</span>
                   </h3>
                   
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14 }}>
                     <div>
-                      <label style={{ fontWeight: 800, fontSize: '.84rem', color: '#7f1d1d', marginBottom: 4, display: 'block' }}>
+                      <label style={{ fontWeight: 800, fontSize: '.84rem', color: 'var(--text-main)', marginBottom: 4, display: 'block' }}>
                         1. السلوك المستهدف إجرائياً (Behavior) <span className="req">*</span>
                       </label>
                       <textarea
@@ -1306,13 +1306,13 @@ export default function PillarPlans({ onDataChange }) {
                         onChange={e => setBipForm(f => ({ ...f, proceduralBehavior: e.target.value }))}
                         rows={3}
                         placeholder="صف السلوك بشكل دقيق وقابل للقياس (مثال: يقوم الطالب بالصراخ ورمي الأدوات الدراسية على الأرض عندما يطلب منه الكتابة)"
-                        style={{ border: '1px solid #fca5a5' }}
+                        style={{ border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-main)' }}
                       />
                     </div>
                     
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
                       <div>
-                        <label style={{ fontWeight: 800, fontSize: '.84rem', color: '#7f1d1d', marginBottom: 4, display: 'block' }}>
+                        <label style={{ fontWeight: 800, fontSize: '.84rem', color: 'var(--text-main)', marginBottom: 4, display: 'block' }}>
                           2. السوابق والمثيرات القبلية (Antecedents)
                         </label>
                         <textarea
@@ -1320,11 +1320,11 @@ export default function PillarPlans({ onDataChange }) {
                           onChange={e => setBipForm(f => ({ ...f, antecedents: e.target.value }))}
                           rows={3}
                           placeholder="ما يحدث قبل ظهور السلوك مباشرة (مثال: طلب أداء مهمة صعبة، رفض تقديم معزز، ضوضاء عالية)"
-                          style={{ border: '1px solid #fca5a5' }}
+                          style={{ border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-main)' }}
                         />
                       </div>
                       <div>
-                        <label style={{ fontWeight: 800, fontSize: '.84rem', color: '#7f1d1d', marginBottom: 4, display: 'block' }}>
+                        <label style={{ fontWeight: 800, fontSize: '.84rem', color: 'var(--text-main)', marginBottom: 4, display: 'block' }}>
                           3. العواقب واللواحق والتدابير الحالية (Consequences)
                         </label>
                         <textarea
@@ -1332,7 +1332,7 @@ export default function PillarPlans({ onDataChange }) {
                           onChange={e => setBipForm(f => ({ ...f, consequences: e.target.value }))}
                           rows={3}
                           placeholder="ما يحدث فوراً بعد السلوك (مثال: يتم استبعاد الطالب من الحصة، أو منحه اللعبة لإسكاته)"
-                          style={{ border: '1px solid #fca5a5' }}
+                          style={{ border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-main)' }}
                         />
                       </div>
                     </div>
@@ -1340,22 +1340,22 @@ export default function PillarPlans({ onDataChange }) {
 
                   {/* Behavior Function radio selector */}
                   <div style={{ marginTop: 16 }}>
-                    <label style={{ fontWeight: 800, fontSize: '.84rem', color: '#7f1d1d', marginBottom: 8, display: 'block' }}>
+                    <label style={{ fontWeight: 800, fontSize: '.84rem', color: 'var(--text-main)', marginBottom: 8, display: 'block' }}>
                       4. الوظيفة الافتراضية للسلوك (الدافع المحرك للسلوك)
                     </label>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
                       {BEHAVIOR_FUNCTIONS.map(fn => (
-                        <label key={fn.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '.78rem', cursor: 'pointer', padding: '10px 12px', borderRadius: 8, border: bipForm.behaviorFunction === fn.id ? '2px solid #b91c1c' : '1px solid #fca5a5', background: bipForm.behaviorFunction === fn.id ? '#fef2f2' : '#fff', margin: 0, transition: 'all 0.2s' }}>
+                        <label key={fn.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '.78rem', cursor: 'pointer', padding: '10px 12px', borderRadius: 8, border: bipForm.behaviorFunction === fn.id ? '2px solid var(--err)' : '1px solid var(--border-color)', background: bipForm.behaviorFunction === fn.id ? 'var(--err-l)' : 'var(--bg-card)', margin: 0, transition: 'all 0.2s' }}>
                           <input
                             type="radio"
                             name="behaviorFunction"
                             checked={bipForm.behaviorFunction === fn.id}
-                            style={{ marginTop: 2, accentColor: '#b91c1c' }}
+                            style={{ marginTop: 2, accentColor: 'var(--err)' }}
                             onChange={() => setBipForm(f => ({ ...f, behaviorFunction: fn.id }))}
                           />
                           <div>
-                            <strong style={{ color: '#7f1d1d', fontSize: '.78rem' }}>{fn.label}</strong>
-                            <div style={{ fontSize: '.68rem', color: '#991b1b', marginTop: 2 }}>{fn.desc}</div>
+                            <strong style={{ color: 'var(--text-main)', fontSize: '.78rem' }}>{fn.label}</strong>
+                            <div style={{ fontSize: '.68rem', color: 'var(--text-sub)', marginTop: 2 }}>{fn.desc}</div>
                           </div>
                         </label>
                       ))}
@@ -1364,40 +1364,40 @@ export default function PillarPlans({ onDataChange }) {
                 </div>
 
                 {/* 4. Measurement & Diagnostics Panel */}
-                <div className="fl full" style={{ border: '1px solid #bbf7d0', background: '#fcfdfc', borderRadius: 12, padding: 16, marginTop: 12 }}>
-                  <h3 style={{ margin: '0 0 14px 0', fontSize: '.95rem', fontWeight: 800, color: '#166534', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div className="fl full" style={{ border: '1px solid var(--ok)', background: 'var(--ok-l)', borderRadius: 12, padding: 16, marginTop: 12 }}>
+                  <h3 style={{ margin: '0 0 14px 0', fontSize: '.95rem', fontWeight: 800, color: 'var(--ok)', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span>🔎</span> <span>تشخيص وقياس السلوك والخط القاعدي القبلي</span>
                   </h3>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
                     <div className="fl full" style={{ margin: 0 }}>
-                      <label style={{ fontWeight: 800, fontSize: '.84rem', color: '#166534' }}>مستوى الخط القاعدي القبلي (القياس قبل التدخل)</label>
+                      <label style={{ fontWeight: 800, fontSize: '.84rem', color: 'var(--text-main)' }}>مستوى الخط القاعدي القبلي (القياس قبل التدخل)</label>
                       <input
                         value={bipForm.baselineLevel}
                         onChange={e => setBipForm(f => ({ ...f, baselineLevel: e.target.value }))}
                         placeholder="مثال: يكرر السلوك ١٥ مرة يومياً / مدة السلوك تستمر لـ ١٠ دقائق"
-                        style={{ border: '1px solid #86efac' }}
+                        style={{ border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-main)' }}
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label style={{ fontWeight: 800, fontSize: '.84rem', color: '#166534', marginBottom: 8, display: 'block' }}>
+                    <label style={{ fontWeight: 800, fontSize: '.84rem', color: 'var(--text-main)', marginBottom: 8, display: 'block' }}>
                       طريقة القياس والملاحظة المعتمدة بالخطة
                     </label>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
                       {OBSERVATION_METHODS.map(obs => (
-                        <label key={obs.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '.78rem', cursor: 'pointer', padding: '10px 12px', borderRadius: 8, border: bipForm.observationMethod === obs.id ? '2px solid #15803d' : '1px solid #86efac', background: bipForm.observationMethod === obs.id ? '#f0fdf4' : '#fff', margin: 0, transition: 'all 0.2s' }}>
+                        <label key={obs.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '.78rem', cursor: 'pointer', padding: '10px 12px', borderRadius: 8, border: bipForm.observationMethod === obs.id ? '2px solid var(--ok)' : '1px solid var(--border-color)', background: bipForm.observationMethod === obs.id ? 'var(--ok-l)' : 'var(--bg-card)', margin: 0, transition: 'all 0.2s' }}>
                           <input
                             type="radio"
                             name="observationMethod"
                             checked={bipForm.observationMethod === obs.id}
-                            style={{ marginTop: 2, accentColor: '#15803d' }}
+                            style={{ marginTop: 2, accentColor: 'var(--ok)' }}
                             onChange={() => setBipForm(f => ({ ...f, observationMethod: obs.id }))}
                           />
                           <div>
-                            <strong style={{ color: '#166534', fontSize: '.78rem' }}>{obs.label}</strong>
-                            <div style={{ fontSize: '.68rem', color: '#15803d', marginTop: 2 }}>{obs.desc}</div>
+                            <strong style={{ color: 'var(--text-main)', fontSize: '.78rem' }}>{obs.label}</strong>
+                            <div style={{ fontSize: '.68rem', color: 'var(--text-sub)', marginTop: 2 }}>{obs.desc}</div>
                           </div>
                         </label>
                       ))}
@@ -1414,10 +1414,10 @@ export default function PillarPlans({ onDataChange }) {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                       {(bipForm.trackingPoints || []).map((pt, idx) => (
-                        <div key={idx} style={{ background: '#fff', border: '1px solid var(--border-color)', borderRadius: 10, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6, position: 'relative', minWidth: 100, flex: '1 1 100px' }}>
+                        <div key={idx} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6, position: 'relative', minWidth: 100, flex: '1 1 100px' }}>
                           <label style={{ fontSize: '.7rem', color: 'var(--g5)', margin: 0 }}>الأسبوع / جلسة القياس</label>
                           <input
-                            style={{ fontSize: '.78rem', padding: '4px 6px', width: '100%' }}
+                            style={{ fontSize: '.78rem', padding: '4px 6px', width: '100%', border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-main)' }}
                             value={pt.date}
                             placeholder="مثال: أسبوع 1"
                             onChange={e => {
@@ -1475,7 +1475,7 @@ export default function PillarPlans({ onDataChange }) {
                           copy.push({ date: `أسبوع ${nextNum}`, value: 5 });
                           setBipForm(f => ({ ...f, trackingPoints: copy }));
                         }}
-                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, minWidth: 100, flex: '1 1 100px', border: '1px dashed var(--pr)', background: '#fff' }}
+                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, minWidth: 100, flex: '1 1 100px', border: '1px dashed var(--pr)', background: 'var(--bg-card)' }}
                       >
                         <span style={{ fontSize: '1.2rem' }}>➕</span>
                         <span style={{ fontSize: '.75rem', fontWeight: 'bold' }}>أضف نقطة تتبع</span>
@@ -1488,14 +1488,14 @@ export default function PillarPlans({ onDataChange }) {
                 </div>
 
                 {/* 6. Interventions & Replacement Behaviour Panel */}
-                <div className="fl full" style={{ border: '1px solid #bae6fd', background: '#fbfeff', borderRadius: 12, padding: 16, marginTop: 12 }}>
-                  <h3 style={{ margin: '0 0 14px 0', fontSize: '.95rem', fontWeight: 800, color: '#075985', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div className="fl full" style={{ border: '1px solid var(--cyan)', background: 'var(--cyan-l)', borderRadius: 12, padding: 16, marginTop: 12 }}>
+                  <h3 style={{ margin: '0 0 14px 0', fontSize: '.95rem', fontWeight: 800, color: 'var(--cyan)', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span>🎯</span> <span>فنيات التدخل المطبقة وتدريب السلوك البديل</span>
                   </h3>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14, marginBottom: 14 }}>
                     <div>
-                      <label style={{ fontWeight: 800, fontSize: '.84rem', color: '#075985', marginBottom: 4, display: 'block' }}>
+                      <label style={{ fontWeight: 800, fontSize: '.84rem', color: 'var(--text-main)', marginBottom: 4, display: 'block' }}>
                         السلوك البديل الإيجابي المقترح والمقبول وظيفياً (Alternative Replacement Behavior)
                       </label>
                       <textarea
@@ -1503,17 +1503,17 @@ export default function PillarPlans({ onDataChange }) {
                         onChange={e => setBipForm(f => ({ ...f, replacementBehaviors: e.target.value }))}
                         rows={2}
                         placeholder="مثال: تدريب الطالب على رفع البطاقة الحمراء أو استخدام نظام بيكس (PECS) لطلب الراحة بدلاً من الصراخ والرمي"
-                        style={{ border: '1px solid #bae6fd' }}
+                        style={{ border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-main)' }}
                       />
                     </div>
                   </div>
 
                   {/* Checkbox checklist of techniques */}
                   <div style={{ marginBottom: 14 }}>
-                    <label style={{ fontWeight: 800, fontSize: '.84rem', color: '#075985', marginBottom: 8, display: 'block' }}>
+                    <label style={{ fontWeight: 800, fontSize: '.84rem', color: 'var(--text-main)', marginBottom: 8, display: 'block' }}>
                       فنيات وإجراءات تعديل السلوك المطبقة بالخطة (حدد كل ما يطبق)
                     </label>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10, background: '#fff', border: '1px solid #bae6fd', padding: 14, borderRadius: 10 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10, background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: 14, borderRadius: 10 }}>
                       {BEHAVIOR_TECHNIQUES.map(tech => {
                         const isChecked = (bipForm.interventionTechniques || []).includes(tech.id);
                         return (
@@ -1521,7 +1521,7 @@ export default function PillarPlans({ onDataChange }) {
                             <input
                               type="checkbox"
                               checked={isChecked}
-                              style={{ marginTop: 2, width: 15, height: 15, accentColor: '#0284c7' }}
+                              style={{ marginTop: 2, width: 15, height: 15, accentColor: 'var(--cyan)' }}
                               onChange={e => {
                                 let copy = [...(bipForm.interventionTechniques || [])];
                                 if (e.target.checked) {
@@ -1533,8 +1533,8 @@ export default function PillarPlans({ onDataChange }) {
                               }}
                             />
                             <div>
-                              <strong style={{ color: '#0369a1', display: 'block' }}>{tech.label}</strong>
-                              <span style={{ fontSize: '.7rem', color: '#64748b' }}>{tech.desc}</span>
+                              <strong style={{ color: 'var(--text-main)', display: 'block' }}>{tech.label}</strong>
+                              <span style={{ fontSize: '.7rem', color: 'var(--text-sub)' }}>{tech.desc}</span>
                             </div>
                           </label>
                         );
@@ -1543,7 +1543,7 @@ export default function PillarPlans({ onDataChange }) {
                   </div>
 
                   <div>
-                    <label style={{ fontWeight: 800, fontSize: '.84rem', color: '#075985', marginBottom: 4, display: 'block' }}>
+                    <label style={{ fontWeight: 800, fontSize: '.84rem', color: 'var(--text-main)', marginBottom: 4, display: 'block' }}>
                       تفاصيل إجراءات التدخل واستراتيجيات تعزيز السلوك البديل
                     </label>
                     <textarea
@@ -1551,7 +1551,7 @@ export default function PillarPlans({ onDataChange }) {
                       onChange={e => setBipForm(f => ({ ...f, reinforcementStrategies: e.target.value }))}
                       rows={3}
                       placeholder="صف بالتفصيل كيف سيتم تعزيز الطالب، نوع المعززات، جدول التعزيز (مستمر/متقطع)، وكيفية إدارة نوبة السلوك في حال حدوثها..."
-                      style={{ border: '1px solid #bae6fd' }}
+                      style={{ border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-main)' }}
                     />
                   </div>
                 </div>
