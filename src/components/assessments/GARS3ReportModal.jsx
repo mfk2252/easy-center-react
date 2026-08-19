@@ -1,17 +1,18 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { printItem } from '../../utils/printUtils';
+import { GARS3_ITEMS, GARS3_DOMAINS, calculateGARS3Psychometrics } from '../../data/gars3Data';
 import { sendReportToWhatsApp } from '../../pages/ProgramsReports/programsWhatsApp';
-import { calculateGARS3Psychometrics, GARS3_DOMAINS } from '../../data/gars3Data';
+import IepBridgeModal from '../../pages/ProgramsReports/IepBridgeModal';
+import { extractRecommendedGoals } from '../../utils/iepBridge';
 
 export default function GARS3ReportModal({
   isOpen,
   onClose,
-  assessment = null,
-  onEdit = null,
-  onOpenBridge = null,
+  assessment,
+  onEdit,
 }) {
   const { center } = useApp();
+  const [bridgeOpen, setBridgeOpen] = useState(false);
 
   const psychometrics = useMemo(() => {
     if (!assessment) return null;
@@ -21,432 +22,522 @@ export default function GARS3ReportModal({
     );
   }, [assessment]);
 
-  if (!isOpen || !assessment) return null;
+  const recommendedGoals = useMemo(() => {
+    if (!assessment) return [];
+    return extractRecommendedGoals(
+      'gars',
+      assessment.results || assessment.scores || {},
+      GARS3_ITEMS
+    );
+  }, [assessment]);
+
+  if (!isOpen || !assessment || !psychometrics) return null;
 
   function handlePrint() {
-    printItem(assessment, 'gars3Report');
+    const domainHtml = psychometrics.domainResults.map(d => `
+      <tr style="border-bottom:1px solid #e2e8f0;">
+        <td style="padding:8px 12px;font-weight:bold;color:#0d9488;">${d.name} (${d.code})</td>
+        <td style="padding:8px 12px;text-align:center;">${d.rawScore} / ${d.maxRaw}</td>
+        <td style="padding:8px 12px;text-align:center;font-weight:bold;color:#0f766e;">${d.scaledScore}</td>
+        <td style="padding:8px 12px;text-align:center;">${d.percentile}%</td>
+        <td style="padding:8px 12px;text-align:center;font-size:0.9em;">
+          ${d.scaledScore >= 13 ? '<span style="color:#e11d48;font-weight:bold;">مرتفع جداً (شديد)</span>' : d.scaledScore >= 11 ? '<span style="color:#d97706;font-weight:bold;">فوق المتوسط (متوسط)</span>' : '<span style="color:#059669;">متوسط / طبيعي</span>'}
+        </td>
+      </tr>
+    `).join('');
+
+    const targetItems = assessment.isVerbal !== false
+      ? GARS3_ITEMS
+      : GARS3_ITEMS.filter(it => it.domainId !== 'cs' && it.domainId !== 'ms');
+
+    const itemsHtml = targetItems.map(it => {
+      const score = assessment.results?.[it.id] !== undefined ? Number(assessment.results[it.id]) : null;
+      const note = assessment.itemNotes?.[it.id] || '';
+      const scoreLabels = ['0 - لم يلاحظ أبداً', '1 - يلاحظ نادراً', '2 - يلاحظ أحياناً', '3 - يلاحظ بكثرة'];
+
+      return `
+        <tr style="border-bottom:1px solid #e2e8f0;background:${score && score >= 3 ? '#fff1f2' : score && score >= 2 ? '#fffbeb' : '#ffffff'};">
+          <td style="padding:6px 10px;text-align:center;font-weight:bold;">${it.id}</td>
+          <td style="padding:6px 10px;font-weight:bold;">${it.title}</td>
+          <td style="padding:6px 10px;text-align:center;font-weight:bold;color:#0d9488;">${score !== null ? scoreLabels[score] || score : '—'}</td>
+          <td style="padding:6px 10px;font-size:0.85em;color:#64748b;">${note || '—'}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const verbalLabel = assessment.isVerbal !== false
+      ? 'نموذج الأطفال الناطقين (6 مقاييس فرعية - 58 بنداً)'
+      : 'نموذج الأطفال غير الناطقين (4 مقاييس فرعية - 44 بنداً)';
+
+    const html = `
+      <div style="direction:rtl;text-align:right;font-family:'Tajawal',sans-serif;color:#1e293b;padding:10px;">
+        <div style="border-bottom:3px solid #0d9488;padding-bottom:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <h1 style="color:#0d9488;font-size:22px;margin:0 0 4px 0;">📊 تقرير التقييم والتشخيص السيكومتري (GARS-3)</h1>
+            <p style="margin:0;font-size:13px;color:#64748b;">مقياس جيليام لتقدير اضطراب طيف التوحد — الإصدار الثالث المقنن وفق DSM-5</p>
+          </div>
+          <div style="text-align:left;font-size:12px;color:#475569;">
+            <div><b>التاريخ:</b> ${assessment.date || '—'}</div>
+            <div><b>النموذج:</b> ${verbalLabel}</div>
+          </div>
+        </div>
+
+        <table style="width:100%;margin-bottom:16px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:10px;font-size:13px;">
+          <tr>
+            <td style="padding:6px 10px;"><b>اسم المفحوص:</b> ${assessment.studentName || '—'}</td>
+            <td style="padding:6px 10px;"><b>العمر الزمني:</b> ${assessment.age || '—'}</td>
+            <td style="padding:6px 10px;"><b>تاريخ الفحص:</b> ${assessment.date || '—'}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 10px;"><b>الأخصائي الفاحص:</b> ${assessment.examinerName || assessment.specialistName || '—'}</td>
+            <td style="padding:6px 10px;"><b>المستجيب / ولي الأمر:</b> ${assessment.raterName || '—'} (${assessment.raterRelation || '—'})</td>
+            <td style="padding:6px 10px;"><b>صيغة التطبيق:</b> ${assessment.isVerbal !== false ? 'ناطق (6 مقاييس)' : 'غير ناطق (4 مقاييس)'}</td>
+          </tr>
+        </table>
+
+        <div style="background:#f0fdfa;border:1.5px solid #99f6e4;border-radius:8px;padding:14px;margin-bottom:18px;">
+          <h3 style="margin:0 0 10px 0;color:#0f766e;font-size:16px;">📈 المؤشرات السيكومترية ومعامل التوحد (AQ Dashboard)</h3>
+          <div style="display:flex;justify-content:space-around;text-align:center;font-size:13px;">
+            <div style="background:#ffffff;padding:8px 14px;border-radius:6px;border:1px solid #99f6e4;">
+              <div style="color:#64748b;">مجموع الدرجات المعيارية</div>
+              <div style="font-size:20px;font-weight:900;color:#0d9488;">${psychometrics.sumScaledScores}</div>
+            </div>
+            <div style="background:#ffffff;padding:8px 14px;border-radius:6px;border:1px solid #99f6e4;">
+              <div style="color:#64748b;">معامل التوحد (AQ)</div>
+              <div style="font-size:22px;font-weight:900;color:#0f766e;">${psychometrics.autismQuotient}</div>
+            </div>
+            <div style="background:#ffffff;padding:8px 14px;border-radius:6px;border:1px solid #99f6e4;">
+              <div style="color:#64748b;">الرتبة المئينية الكلية</div>
+              <div style="font-size:20px;font-weight:900;color:#0f172a;">${psychometrics.overallPercentile}%</div>
+            </div>
+            <div style="background:#ffffff;padding:8px 14px;border-radius:6px;border:1px solid #99f6e4;">
+              <div style="color:#64748b;">مستوى الشدة وفق DSM-5</div>
+              <div style="font-size:15px;font-weight:900;color:${psychometrics.severityColor};margin-top:4px;">
+                ${psychometrics.dsm5Level}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="color:#0f766e;font-size:15px;margin:16px 0 8px 0;">🌐 الأداء على المقاييس الفرعية لـ GARS-3:</h3>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:18px;font-size:13px;border:1px solid #cbd5e1;">
+          <thead style="background:#f1f5f9;">
+            <tr>
+              <th style="padding:8px 12px;text-align:right;">المقياس الفرعي</th>
+              <th style="padding:8px 12px;text-align:center;">الدرجة الخام</th>
+              <th style="padding:8px 12px;text-align:center;">الدرجة المعيارية (1-20)</th>
+              <th style="padding:8px 12px;text-align:center;">الرتبة المئينية</th>
+              <th style="padding:8px 12px;text-align:center;">مستوى التأثر</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${domainHtml}
+          </tbody>
+        </table>
+
+        ${assessment.clinicalSummary ? `
+          <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:12px;margin-bottom:14px;">
+            <h4 style="margin:0 0 6px 0;color:#0f766e;font-size:14px;">📝 الخلاصة الإكلينيكية والتشخيصية:</h4>
+            <p style="margin:0;font-size:13px;line-height:1.7;white-space:pre-wrap;">${assessment.clinicalSummary}</p>
+          </div>
+        ` : ''}
+
+        ${assessment.recommendations ? `
+          <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:12px;margin-bottom:16px;">
+            <h4 style="margin:0 0 6px 0;color:#0f766e;font-size:14px;">💡 التوصيات والبرامج المقترحة:</h4>
+            <p style="margin:0;font-size:13px;line-height:1.7;white-space:pre-wrap;">${assessment.recommendations}</p>
+          </div>
+        ` : ''}
+
+        <h3 style="color:#0f766e;font-size:15px;margin:20px 0 8px 0;">📑 تفريغ استجابات بنود المقياس (${targetItems.length} بنداً):</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;border:1px solid #cbd5e1;">
+          <thead style="background:#f1f5f9;">
+            <tr>
+              <th style="padding:6px 10px;text-align:center;width:40px;">#</th>
+              <th style="padding:6px 10px;text-align:right;">نص العبارة السلوكية</th>
+              <th style="padding:6px 10px;text-align:center;width:150px;">الاستجابة / التكرار</th>
+              <th style="padding:6px 10px;text-align:right;">ملاحظات الفاحص</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    const printWin = window.open('', '_blank');
+    if (printWin) {
+      printWin.document.write(`
+        <!DOCTYPE html>
+        <html dir="rtl" lang="ar">
+        <head>
+          <meta charset="utf-8" />
+          <title>تقرير مقياس GARS-3 - ${assessment.studentName || 'الطالب'}</title>
+          <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+          <style>
+            body { margin: 20px; font-family: 'Tajawal', sans-serif; }
+            @media print {
+              body { margin: 0; }
+              button { display: none !important; }
+            }
+          </style>
+        </head>
+        <body>
+          ${html}
+          <script>
+            window.onload = () => { window.print(); }
+          </script>
+        </body>
+        </html>
+      `);
+      printWin.document.close();
+    }
   }
 
   function handleSendWhatsApp() {
     sendReportToWhatsApp(assessment, 'gars3');
   }
 
-  const verbalLabel = assessment.isVerbal !== false
-    ? 'الأطفال الناطقون (تطبيق 6 مقاييس فرعية)'
-    : 'الأطفال غير الناطقين (تطبيق 4 مقاييس فرعية أساسية)';
-
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 md:p-6" dir="rtl">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        
-        {/* Modal Top Header Actions */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-teal-600 flex items-center justify-center text-xl font-bold shadow-sm">
-              📋
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <span>التقرير التشخيصي الإكلينيكي المعتمد (GARS-3)</span>
-              </h2>
-              <p className="text-xs text-slate-400">
-                مقياس جيليام لتقدير اضطراب طيف التوحد - الإصدار الثالث • DSM-5
-              </p>
-            </div>
+    <div className="mbg" style={{ zIndex: 1100 }}>
+      <div
+        className="mb mb-xl"
+        style={{
+          padding: 0,
+          overflow: 'hidden',
+          borderRadius: 16,
+          maxHeight: '96vh',
+          display: 'flex',
+          flexDirection: 'column',
+          width: 'min(980px, calc(100vw - 20px))',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+        }}
+      >
+        {/* Modal Header */}
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #0d9488, #0f766e)',
+            color: '#fff',
+            padding: '16px 22px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <div>
+            <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>📊</span> <span>تقرير التشخيص والتقييم النفسي المعتمد — GARS-3</span>
+            </h2>
+            <p style={{ margin: '3px 0 0 0', fontSize: '.82rem', opacity: 0.9 }}>
+              Gilliam Autism Rating Scale, 3rd Edition · مقنن وفق DSM-5
+            </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            {onOpenBridge && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="btn btn-sm btn-p"
+              onClick={handlePrint}
+              style={{ background: '#fff', color: '#0d9488', fontWeight: 800, borderRadius: 8 }}
+            >
+              🖨️ طباعة التقرير الرسمي
+            </button>
+            {assessment.parentPhone && (
               <button
                 type="button"
-                onClick={() => {
-                  onClose();
-                  onOpenBridge(assessment);
-                }}
-                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+                className="btn btn-sm btn-s"
+                onClick={handleSendWhatsApp}
+                style={{ borderRadius: 8, fontWeight: 800 }}
               >
-                <span>🌉</span>
-                <span>جسر الربط بالخطة الفردية (IEP)</span>
+                💬 واتساب لولي الأمر
               </button>
             )}
-
-            <button
-              type="button"
-              onClick={handleSendWhatsApp}
-              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
-            >
-              <span>📱</span>
-              <span>واتساب</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
-            >
-              <span>🖨️</span>
-              <span>طباعة التقرير</span>
-            </button>
-
             {onEdit && (
               <button
                 type="button"
-                onClick={() => {
-                  onClose();
-                  onEdit(assessment);
-                }}
-                className="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold transition flex items-center gap-1.5"
+                className="btn btn-sm btn-g"
+                onClick={() => { onClose(); onEdit(assessment); }}
+                style={{ borderRadius: 8, color: '#fff', background: 'rgba(255,255,255,0.2)', border: 'none' }}
               >
-                <span>✏️</span>
-                <span>تعديل</span>
+                ✏️ تعديل
               </button>
             )}
-
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition"
+              style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontWeight: 700 }}
             >
-              ✕
+              ✖ إغلاق
             </button>
           </div>
         </div>
 
-        {/* Printable Report Canvas */}
-        <div id="print-area" className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
-          
-          {/* 1. Official Diagnostic Report Header */}
-          <div className="border-b-2 border-slate-900 dark:border-slate-700 pb-5">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                {center?.logo ? (
-                  <img src={center.logo} alt="Logo" className="w-14 h-14 object-contain rounded-lg" referrerPolicy="no-referrer" />
-                ) : (
-                  <div className="w-14 h-14 rounded-xl bg-teal-700 text-white flex items-center justify-center text-2xl font-bold">
-                    🏛️
-                  </div>
-                )}
-                <div>
-                  <h1 className="text-lg font-black text-slate-900 dark:text-white">
-                    {center?.name || 'مركز الرعاية النهارية والتأهيل الشامل'}
-                  </h1>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    قسم القياس والتشخيص النفسي والتربية الخاصة • {center?.phone || ''}
-                  </p>
-                </div>
+        {/* Modal Scrollable Body */}
+        <div className="modal-body-scroll" style={{ padding: '20px 24px' }}>
+          {/* Header Card with Meta info */}
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 12,
+              padding: 16,
+              marginBottom: 16,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 12,
+            }}
+          >
+            <div>
+              <div style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                {assessment.studentName || 'اسم الطالب'}
               </div>
-
-              <div className="text-left sm:text-right bg-teal-50 dark:bg-teal-950/40 p-3 rounded-xl border border-teal-200 dark:border-teal-800">
-                <span className="text-[11px] font-bold text-teal-800 dark:text-teal-300 block">
-                  تقرير تشخيصي نفسي مقنن
-                </span>
-                <span className="text-xs font-black text-slate-800 dark:text-slate-200">
-                  GARS-3 Diagnostic Assessment
-                </span>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">
-                  تاريخ التقييم: {assessment.date || '—'}
-                </span>
+              <div style={{ fontSize: '.82rem', color: 'var(--text-sub)', marginTop: 3 }}>
+                العمر: {assessment.age || '—'} · تاريخ الجلسة: {assessment.date || '—'} · الفاحص: {assessment.examinerName || assessment.specialistName || '—'}
+              </div>
+              <div style={{ fontSize: '.78rem', color: 'var(--text-sub)', marginTop: 2 }}>
+                المستجيب: {assessment.raterName || '—'} ({assessment.raterRelation || '—'}) · النمط: {assessment.isVerbal !== false ? '🗣️ ناطق (6 مقاييس)' : '🤫 غير ناطق (4 مقاييس)'}
               </div>
             </div>
 
-            <div className="mt-4 text-center">
-              <h2 className="text-base font-black tracking-wide text-teal-900 dark:text-teal-200 uppercase">
-                تقرير مقياس جيليام لتقدير اضطراب طيف التوحد (الإصدار الثالث - GARS-3)
-              </h2>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                وفق معايير الدليل التشخيصي والإحصائي الخامس للأمراض النفسية (DSM-5)
-              </span>
+            {/* IEP Bridge Trigger Button */}
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => setBridgeOpen(true)}
+              style={{
+                background: 'linear-gradient(135deg, #4f46e5, #6366f1)',
+                color: '#fff',
+                fontWeight: 800,
+                borderRadius: 8,
+                padding: '8px 16px',
+                boxShadow: '0 2px 6px rgba(79, 70, 229, 0.3)',
+              }}
+            >
+              🎓 اشتقاق أهداف الخطة الفردية (IEP Bridge) ({recommendedGoals.length})
+            </button>
+          </div>
+
+          {/* Diagnostic Key Psychometrics */}
+          <div
+            style={{
+              background: 'var(--g0)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 12,
+              padding: 16,
+              marginBottom: 18,
+            }}
+          >
+            <div style={{ fontSize: '.85rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 12 }}>
+              📊 المؤشرات السيكومترية والدرجات المعيارية المعتمدة:
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                gap: 12,
+                textAlign: 'center',
+              }}
+            >
+              <div
+                style={{
+                  background: 'var(--bg-card)',
+                  padding: 12,
+                  borderRadius: 10,
+                  border: '1px solid var(--border-color)',
+                }}
+              >
+                <div style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>مجموع الدرجات المعيارية</div>
+                <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0d9488', marginTop: 4 }}>
+                  {psychometrics.sumScaledScores}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  background: 'var(--bg-card)',
+                  padding: 12,
+                  borderRadius: 10,
+                  border: '1px solid var(--border-color)',
+                }}
+              >
+                <div style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>معامل التوحد (AQ)</div>
+                <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0f766e', marginTop: 4 }}>
+                  {psychometrics.autismQuotient}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  background: 'var(--bg-card)',
+                  padding: 12,
+                  borderRadius: 10,
+                  border: '1px solid var(--border-color)',
+                }}
+              >
+                <div style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>الرتبة المئينية (% Rank)</div>
+                <div style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--text-main)', marginTop: 4 }}>
+                  {psychometrics.overallPercentile}%
+                </div>
+              </div>
+
+              <div
+                style={{
+                  background: 'var(--bg-card)',
+                  padding: 12,
+                  borderRadius: 10,
+                  border: `1px solid ${psychometrics.severityColor}40`,
+                }}
+              >
+                <div style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>المستوى وفق DSM-5</div>
+                <div
+                  style={{
+                    fontSize: '.95rem',
+                    fontWeight: 900,
+                    color: psychometrics.severityColor,
+                    marginTop: 6,
+                  }}
+                >
+                  {psychometrics.dsm5Level}
+                </div>
+                <div style={{ fontSize: '.7rem', color: 'var(--text-sub)', marginTop: 2 }}>
+                  {psychometrics.supportLevel}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* 2. Biodata & Examination Profile */}
-          <div className="bg-slate-50 dark:bg-slate-850 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-            <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3 border-b border-slate-200 dark:border-slate-700 pb-1.5 flex items-center gap-1.5">
-              <span>👤</span> بيانات الحالة والملاحظة الإكلينيكية
-            </h3>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block">اسم المفحوص:</span>
-                <span className="font-bold text-slate-800 dark:text-slate-100">{assessment.studentName || '—'}</span>
-              </div>
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block">العمر الزمني:</span>
-                <span className="font-bold text-slate-800 dark:text-slate-100">{assessment.age || '—'}</span>
-              </div>
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block">تاريخ الميلاد:</span>
-                <span className="font-bold text-slate-800 dark:text-slate-100">{assessment.dob || '—'}</span>
-              </div>
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block">الصف / المدرسة:</span>
-                <span className="font-bold text-slate-800 dark:text-slate-100">
-                  {assessment.grade ? `${assessment.grade} (${assessment.school || '—'})` : (assessment.school || '—')}
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block">القائم بالاستجابة (المقدر):</span>
-                <span className="font-bold text-slate-800 dark:text-slate-100">
-                  {assessment.raterName || '—'} ({assessment.raterRelation || 'ولي الأمر'})
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block">صلته بالطفل منذ:</span>
-                <span className="font-bold text-slate-800 dark:text-slate-100">{assessment.relationshipDuration || 'منذ الولادة'}</span>
-              </div>
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block">الفاحص المعتمد:</span>
-                <span className="font-bold text-slate-800 dark:text-slate-100">{assessment.examinerName || 'الأخصائي النفسي'}</span>
-              </div>
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block">صيغة التطبيق:</span>
-                <span className="font-bold text-teal-700 dark:text-teal-400">{verbalLabel}</span>
-              </div>
+          {/* Subscales Performance Table */}
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: '.88rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 10 }}>
+              🌐 تحليل الأداء على المقاييس الفرعية (GARS-3 Subscales):
             </div>
-          </div>
 
-          {/* 3. Executive Diagnostic Summary Banner */}
-          <div className="bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-950/40 dark:to-emerald-950/30 p-5 rounded-2xl border-2 border-teal-300 dark:border-teal-700 shadow-sm">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div>
-                <span className="text-xs font-bold text-teal-800 dark:text-teal-300 block mb-1">
-                  النتيجة والتشخيص النهائي وفق DSM-5
-                </span>
-                <h3 className="text-xl font-black text-teal-950 dark:text-white flex items-center gap-2">
-                  <span>{psychometrics?.dsm5Level}</span>
-                </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
-                  مستوى الدعم المطلوب: <b>{psychometrics?.supportLevel}</b>
-                </p>
-              </div>
-
-              <div className="flex items-center gap-4 text-center shrink-0">
-                <div className="bg-white dark:bg-slate-800 px-4 py-2 rounded-xl border border-teal-200 dark:border-teal-800 shadow-2xs">
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-medium">مجموع المعيارية</span>
-                  <span className="text-xl font-black text-slate-800 dark:text-slate-100">{psychometrics?.sumScaledScores}</span>
-                </div>
-
-                <div className="bg-teal-700 text-white px-5 py-2.5 rounded-xl shadow-md">
-                  <span className="text-[11px] text-teal-100 block font-bold">معامل التوحد (AQ)</span>
-                  <span className="text-2xl font-black">{psychometrics?.autismQuotient}</span>
-                </div>
-
-                <div className="bg-white dark:bg-slate-800 px-4 py-2 rounded-xl border border-teal-200 dark:border-teal-800 shadow-2xs">
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-medium">الرتبة المئينية</span>
-                  <span className="text-xl font-black text-indigo-600 dark:text-indigo-400">{psychometrics?.overallPercentile}%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 4. Subscales Performance Table (جدول الأداء على المقاييس الفرعية) */}
-          <div>
-            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-2 flex items-center gap-1.5">
-              <span>📊</span> نتائج الأداء على المقاييس الفرعية (Subscales Performance Table)
-            </h3>
-
-            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-              <table className="w-full text-xs text-right border-collapse">
-                <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold">
-                  <tr>
-                    <th className="p-2.5 border-b border-slate-200 dark:border-slate-700">م</th>
-                    <th className="p-2.5 border-b border-slate-200 dark:border-slate-700">المقياس الفرعي</th>
-                    <th className="p-2.5 border-b border-slate-200 dark:border-slate-700 text-center">الرمز</th>
-                    <th className="p-2.5 border-b border-slate-200 dark:border-slate-700 text-center">الدرجة الخام</th>
-                    <th className="p-2.5 border-b border-slate-200 dark:border-slate-700 text-center bg-teal-50/70 dark:bg-teal-950/30 text-teal-800 dark:text-teal-300">
-                      الدرجة المعيارية (1-20)
-                    </th>
-                    <th className="p-2.5 border-b border-slate-200 dark:border-slate-700 text-center">الرتبة المئينية</th>
-                    <th className="p-2.5 border-b border-slate-200 dark:border-slate-700 text-center">الخطأ المعياري</th>
-                    <th className="p-2.5 border-b border-slate-200 dark:border-slate-700 text-center">المستوى الوصفي</th>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.84rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 8 }}>
+                <thead>
+                  <tr style={{ background: 'var(--g0)', borderBottom: '1px solid var(--border-color)' }}>
+                    <th style={{ padding: '10px 14px', textAlign: 'right' }}>المقياس الفرعي</th>
+                    <th style={{ padding: '10px 14px', textAlign: 'center' }}>الدرجة الخام</th>
+                    <th style={{ padding: '10px 14px', textAlign: 'center' }}>الدرجة المعيارية</th>
+                    <th style={{ padding: '10px 14px', textAlign: 'center' }}>الرتبة المئينية</th>
+                    <th style={{ padding: '10px 14px', textAlign: 'center' }}>مستوى التأثر</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                  {psychometrics?.domainResults.map((d, idx) => {
-                    let desc = 'ضمن المتوسط (طبيعي)';
-                    let descClass = 'text-emerald-600 dark:text-emerald-400';
-                    if (d.scaledScore >= 13) {
-                      desc = 'مرتفع جداً (شديد)';
-                      descClass = 'text-rose-600 dark:text-rose-400 font-bold';
-                    } else if (d.scaledScore >= 11) {
-                      desc = 'فوق المتوسط (متوسط)';
-                      descClass = 'text-amber-600 dark:text-amber-400 font-bold';
-                    }
-
-                    return (
-                      <tr key={d.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                        <td className="p-2.5 font-bold text-slate-500">{idx + 1}</td>
-                        <td className="p-2.5 font-semibold text-slate-800 dark:text-slate-100">
-                          {d.name} <span className="text-[10px] text-slate-400">({d.englishName})</span>
-                        </td>
-                        <td className="p-2.5 text-center font-bold" style={{ color: d.color }}>{d.code}</td>
-                        <td className="p-2.5 text-center font-bold">{d.rawScore} / {d.maxRaw}</td>
-                        <td className="p-2.5 text-center font-black text-teal-700 dark:text-teal-300 bg-teal-50/40 dark:bg-teal-950/20 text-sm">
-                          {d.scaledScore}
-                        </td>
-                        <td className="p-2.5 text-center font-bold text-indigo-600 dark:text-indigo-400">{d.percentile}%</td>
-                        <td className="p-2.5 text-center text-slate-500">±{d.sem}</td>
-                        <td className={`p-2.5 text-center ${descClass}`}>{desc}</td>
-                      </tr>
-                    );
-                  })}
+                <tbody>
+                  {psychometrics.domainResults.map(dr => (
+                    <tr key={dr.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '10px 14px', fontWeight: 800, color: dr.color }}>
+                        {dr.name} ({dr.code})
+                      </td>
+                      <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                        {dr.rawScore} / {dr.maxRaw}
+                      </td>
+                      <td style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 900, color: dr.color }}>
+                        {dr.scaledScore}
+                      </td>
+                      <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                        {dr.percentile}%
+                      </td>
+                      <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                        <span
+                          style={{
+                            fontSize: '.75rem',
+                            fontWeight: 800,
+                            padding: '3px 8px',
+                            borderRadius: 6,
+                            background: dr.scaledScore >= 13 ? '#e11d4820' : dr.scaledScore >= 11 ? '#d9770620' : '#05966920',
+                            color: dr.scaledScore >= 13 ? '#e11d48' : dr.scaledScore >= 11 ? '#d97706' : '#059669',
+                          }}
+                        >
+                          {dr.scaledScore >= 13 ? 'شديد (مرتفع جداً)' : dr.scaledScore >= 11 ? 'متوسط (فوق المتوسط)' : 'ضمن المتوسط'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
-                <tfoot className="bg-slate-50 dark:bg-slate-800 font-bold">
-                  <tr>
-                    <td colSpan={3} className="p-2.5 text-slate-700 dark:text-slate-200">المجموع الكلي:</td>
-                    <td className="p-2.5 text-center text-slate-900 dark:text-slate-100 font-black">{psychometrics?.totalRawScore}</td>
-                    <td className="p-2.5 text-center text-teal-800 dark:text-teal-200 font-black text-sm bg-teal-100/50 dark:bg-teal-900/30">
-                      {psychometrics?.sumScaledScores}
-                    </td>
-                    <td colSpan={3} className="p-2.5 text-center text-slate-500">
-                      معامل التوحد: <b>{psychometrics?.autismQuotient}</b> (رتبة مئينية {psychometrics?.overallPercentile}%)
-                    </td>
-                  </tr>
-                </tfoot>
               </table>
             </div>
           </div>
 
-          {/* 5. Visual Profile of Subscale Scores */}
-          <div className="bg-slate-50 dark:bg-slate-850 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-            <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3 flex items-center justify-between">
-              <span>📈 المظهر الجانبي للدرجات المعيارية (Subscale Profile)</span>
-              <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400">
-                المتوسط المعياري = 10 • الانحراف المعياري = 3
-              </span>
-            </h3>
-
-            <div className="space-y-3">
-              {psychometrics?.domainResults.map(d => {
-                const percentage = Math.min(100, Math.max(5, (d.scaledScore / 20) * 100));
-                return (
-                  <div key={d.id} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs font-semibold">
-                      <span className="flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
-                        <span>{d.name} ({d.code})</span>
-                      </span>
-                      <span className="font-bold">
-                        معياري: <b style={{ color: d.color }}>{d.scaledScore}</b> / 20 (مئيني: {d.percentile}%)
-                      </span>
-                    </div>
-
-                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 relative overflow-hidden">
-                      {/* Mean Line indicator at 10 (50%) */}
-                      <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-slate-400 z-10" title="المتوسط = 10" />
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${percentage}%`,
-                          backgroundColor: d.color,
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 6. DSM-5 Diagnostic Matrix (الدليل التفسيري للدرجات) */}
-          <div>
-            <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-              📋 الدليل التفسيري لمعامل التوحد ومستوى الشدة وفق معايير DSM-5
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 text-center text-xs">
-              <div className={`p-3 rounded-xl border ${
-                psychometrics?.autismQuotient <= 54
-                  ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-500 ring-2 ring-emerald-400 font-bold'
-                  : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 opacity-70'
-              }`}>
-                <span className="block font-black text-sm mb-0.5">54 فأقل</span>
-                <span className="block text-emerald-700 dark:text-emerald-400 font-bold">غير محتمل</span>
-                <span className="block text-[11px] mt-1 text-slate-600 dark:text-slate-300">غير توحد / لا يحتاج دعماً نوعياً</span>
+          {/* Clinical Summary & Impressions */}
+          {assessment.clinicalSummary && (
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 12,
+                padding: 16,
+                marginBottom: 16,
+              }}
+            >
+              <div style={{ fontWeight: 800, fontSize: '.9rem', color: 'var(--text-main)', marginBottom: 8 }}>
+                📝 الخلاصة الإكلينيكية والتشخيصية:
               </div>
-
-              <div className={`p-3 rounded-xl border ${
-                psychometrics?.autismQuotient >= 55 && psychometrics?.autismQuotient <= 70
-                  ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-500 ring-2 ring-blue-400 font-bold'
-                  : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 opacity-70'
-              }`}>
-                <span className="block font-black text-sm mb-0.5">55 - 70</span>
-                <span className="block text-blue-700 dark:text-blue-400 font-bold">محتمل (بسيط)</span>
-                <span className="block text-[11px] mt-1 text-slate-600 dark:text-slate-300">المستوى 1 / يتطلب حداً أدنى من الدعم</span>
-              </div>
-
-              <div className={`p-3 rounded-xl border ${
-                psychometrics?.autismQuotient >= 71 && psychometrics?.autismQuotient <= 100
-                  ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-500 ring-2 ring-amber-400 font-bold'
-                  : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 opacity-70'
-              }`}>
-                <span className="block font-black text-sm mb-0.5">71 - 100</span>
-                <span className="block text-amber-700 dark:text-amber-400 font-bold">ملائم / مؤكد (متوسط)</span>
-                <span className="block text-[11px] mt-1 text-slate-600 dark:text-slate-300">المستوى 2 / يتطلب دعماً كبيراً</span>
-              </div>
-
-              <div className={`p-3 rounded-xl border ${
-                psychometrics?.autismQuotient >= 101
-                  ? 'bg-rose-50 dark:bg-rose-950/50 border-rose-500 ring-2 ring-rose-400 font-bold'
-                  : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 opacity-70'
-              }`}>
-                <span className="block font-black text-sm mb-0.5">101 فأكثر</span>
-                <span className="block text-rose-700 dark:text-rose-400 font-bold">ملائم جداً (شديد)</span>
-                <span className="block text-[11px] mt-1 text-slate-600 dark:text-slate-300">المستوى 3 / يتطلب دعماً كبيراً جداً</span>
+              <div style={{ fontSize: '.84rem', color: 'var(--text-main)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                {assessment.clinicalSummary}
               </div>
             </div>
-          </div>
+          )}
 
-          {/* 7. Clinical Psychological Summary & Recommendations */}
-          <div className="space-y-4 pt-2">
-            {assessment.clinicalSummary && (
-              <div className="bg-slate-50 dark:bg-slate-850 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center gap-1.5">
-                  <span>📝</span> التقرير والملخص الإكلينيكي (Clinical Summary)
-                </h4>
-                <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed">
-                  {assessment.clinicalSummary}
-                </p>
+          {/* Recommendations */}
+          {assessment.recommendations && (
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 12,
+                padding: 16,
+                marginBottom: 16,
+              }}
+            >
+              <div style={{ fontWeight: 800, fontSize: '.9rem', color: 'var(--text-main)', marginBottom: 8 }}>
+                💡 التوصيات والبرامج العلاجية والتربوية:
               </div>
-            )}
-
-            {assessment.recommendations && (
-              <div className="bg-slate-50 dark:bg-slate-850 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-                <h4 className="text-xs font-bold text-teal-800 dark:text-teal-300 mb-2 flex items-center gap-1.5">
-                  <span>💡</span> التوصيات التأهيلية والعلاجية (Intervention Recommendations)
-                </h4>
-                <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed">
-                  {assessment.recommendations}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* 8. MDT Signatures & Stamp */}
-          <div className="mt-8 pt-6 border-t-2 border-slate-200 dark:border-slate-700 grid grid-cols-3 gap-4 text-center text-xs">
-            <div>
-              <span className="block text-slate-500 dark:text-slate-400 mb-1">الأخصائي النفسي / الفاحص</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">{assessment.examinerName || '—'}</span>
-              <div className="mt-6 border-b border-dashed border-slate-400 w-28 mx-auto" />
-            </div>
-
-            <div>
-              <span className="block text-slate-500 dark:text-slate-400 mb-1">المشرف الفني والأكاديمي</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">د. المشرف الأكاديمي</span>
-              <div className="mt-6 border-b border-dashed border-slate-400 w-28 mx-auto" />
-            </div>
-
-            <div>
-              <span className="block text-slate-500 dark:text-slate-400 mb-1">ختم المركز والاعتماد</span>
-              <div className="w-20 h-14 border-2 border-slate-300 dark:border-slate-700 rounded-xl mx-auto flex items-center justify-center text-slate-300 dark:text-slate-600 font-bold text-[10px]">
-                ختم الإدارة
+              <div style={{ fontSize: '.84rem', color: 'var(--text-main)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                {assessment.recommendations}
               </div>
             </div>
-          </div>
-
+          )}
         </div>
 
+        {/* Modal Footer */}
+        <div
+          className="fa"
+          style={{
+            padding: '12px 22px',
+            borderTop: '1px solid var(--border-color)',
+            background: 'var(--g0)',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 10,
+          }}
+        >
+          <button type="button" className="btn btn-g" onClick={onClose}>
+            إغلاق
+          </button>
+        </div>
       </div>
+
+      {/* IEP Bridge Modal Integration */}
+      {bridgeOpen && (
+        <IepBridgeModal
+          isOpen={bridgeOpen}
+          onClose={() => setBridgeOpen(false)}
+          student={{ id: assessment.stuId, name: assessment.studentName }}
+          assessmentData={{
+            ...assessment,
+            scaleType: 'gars',
+            results: assessment.results || assessment.scores || {},
+          }}
+        />
+      )}
     </div>
   );
 }

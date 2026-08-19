@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
-import { uid, todayStr, calcAge } from '../../utils/dateHelpers';
+import { uid, todayStr } from '../../utils/dateHelpers';
 import { lsAdd, lsUpd } from '../../hooks/useStorage';
 import {
   GARS3_ITEMS,
@@ -24,7 +24,7 @@ const EMPTY_GARS3_FORM = {
   examinerName: '',
   examinerRole: 'أخصائي نفسي / تشخيص',
   date: todayStr(),
-  isVerbal: true, // true: 6 subscales, false: 4 subscales (non-verbal)
+  isVerbal: true, // true: 6 subscales (58 items), false: 4 subscales (44 items)
   notes: '',
   itemNotes: {},
   scores: {},
@@ -218,502 +218,573 @@ export default function GARS3AssessmentModal({
     onClose();
   }
 
+  const totalRequiredItems = form.isVerbal ? 58 : 44;
+
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 md:p-6" dir="rtl">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        
-        {/* Modal Top Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-teal-700 via-emerald-700 to-teal-800 text-white flex items-center justify-between shrink-0 shadow-md">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center text-xl font-bold border border-white/20">
-              📊
-            </div>
-            <div>
-              <h2 className="text-lg font-bold flex items-center gap-2">
-                <span>مقياس جيليام لتقدير اضطراب طيف التوحد - الإصدار الثالث (GARS-3)</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-white/20 font-medium">
-                  {form.isVerbal ? '6 مقاييس (ناطق)' : '4 مقاييس (غير ناطق)'}
-                </span>
+    <div className="mbg" style={{ zIndex: 1100 }}>
+      <div
+        className="mb mb-xl"
+        style={{
+          padding: 0,
+          overflow: 'hidden',
+          borderRadius: 16,
+          maxHeight: '96vh',
+          display: 'flex',
+          flexDirection: 'column',
+          width: 'min(1040px, calc(100vw - 20px))',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+        }}
+      >
+        {/* Modal Header */}
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #0d9488, #0f766e)',
+            color: '#ffffff',
+            padding: '16px 22px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: '1.4rem' }}>📊</span>
+              <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#fff' }}>
+                مقياس جيليام لتقدير اضطراب طيف التوحد — الإصدار الثالث (GARS-3)
               </h2>
-              <p className="text-xs text-teal-100 mt-0.5">
-                مقنن وفق الدليل التشخيصي والإحصائي الخامس DSM-5 • للأعمار من 3 إلى 22 عاماً
-              </p>
+              <span
+                style={{
+                  fontSize: '.72rem',
+                  padding: '3px 9px',
+                  borderRadius: 20,
+                  background: 'rgba(255, 255, 255, 0.25)',
+                  fontWeight: 800,
+                  color: '#fff',
+                }}
+              >
+                {form.isVerbal ? '6 مقاييس (ناطق)' : '4 مقاييس (غير ناطق)'}
+              </span>
             </div>
+            <p style={{ margin: '3px 0 0 0', fontSize: '.8rem', opacity: 0.9 }}>
+              Gilliam Autism Rating Scale, 3rd Edition · مقنن وفق معايير DSM-5 للأعمار من 3 إلى 22 عاماً
+            </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <button
+              type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition"
-              title="إغلاق"
+              style={{
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: 'none',
+                color: '#fff',
+                borderRadius: 8,
+                padding: '6px 12px',
+                cursor: 'pointer',
+                fontWeight: 700,
+                fontSize: '.85rem',
+              }}
             >
-              ✕
+              ✖ إغلاق
             </button>
           </div>
         </div>
 
-        {/* Modal Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
-
-          {/* 1. Student Picker & Biodata */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700/70">
-            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-3 flex items-center gap-2">
-              <span>👤</span> بيانات الحالة والفحص
-            </h3>
-            
-            <StudentPicker
-              form={form}
-              setForm={setForm}
-              students={students}
-              showDob={true}
-              showDiagnosis={true}
-            />
-
-            {/* Additional GARS-3 Case Fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  الصف / المستوى الدراسي
-                </label>
-                <input
-                  type="text"
-                  value={form.grade || ''}
-                  onChange={e => setForm(f => ({ ...f, grade: e.target.value }))}
-                  placeholder="مثال: الروضة / الصف الأول"
-                  className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  المدرسة / الروضة
-                </label>
-                <input
-                  type="text"
-                  value={form.school || ''}
-                  onChange={e => setForm(f => ({ ...f, school: e.target.value }))}
-                  placeholder="اسم المدرسة أو الروضة"
-                  className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  اسم المقدر (ولي الأمر / المعلم)
-                </label>
-                <input
-                  type="text"
-                  value={form.raterName || ''}
-                  onChange={e => setForm(f => ({ ...f, raterName: e.target.value }))}
-                  placeholder="اسم القائم بالاستجابة"
-                  className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  صلته بالطفل
-                </label>
-                <input
-                  type="text"
-                  value={form.raterRelation || ''}
-                  onChange={e => setForm(f => ({ ...f, raterRelation: e.target.value }))}
-                  placeholder="الأم / الأب / المعلمة"
-                  className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  على علاقة بالطفل منذ
-                </label>
-                <input
-                  type="text"
-                  value={form.relationshipDuration || ''}
-                  onChange={e => setForm(f => ({ ...f, relationshipDuration: e.target.value }))}
-                  placeholder="مثال: منذ الولادة / سنة وشهرين"
-                  className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  اسم الفاحص / الأخصائي
-                </label>
-                <input
-                  type="text"
-                  value={form.examinerName || ''}
-                  onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
-                  placeholder="اسم الأخصائي النفسي"
-                  className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  تاريخ التقييم
-                </label>
-                <input
-                  type="date"
-                  value={form.date || todayStr()}
-                  onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                  className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* 2. Scale Mode Switcher (Verbal vs Non-Verbal) */}
-          <div className="bg-gradient-to-r from-slate-100 to-teal-50 dark:from-slate-800 dark:to-slate-800/90 p-4 rounded-xl border border-teal-200 dark:border-teal-900/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        {/* Floating Psychometrics Status Banner */}
+        <div
+          style={{
+            background: 'var(--g0)',
+            borderBottom: '1px solid var(--border-color)',
+            padding: '12px 20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-400 block mb-0.5">
-                المرونة السيكومترية للمقياس (Psychometric Flexibility)
-              </span>
-              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                اختر نموذج التطبيق المناسب للحالة اللغوية للطفل:
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm shrink-0">
-              <button
-                type="button"
-                onClick={() => setForm(f => ({ ...f, isVerbal: true }))}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
-                  form.isVerbal
-                    ? 'bg-teal-600 text-white shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                }`}
-              >
-                <span>🗣️</span>
-                <span>الأطفال الناطقون (6 مقاييس)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setForm(f => ({ ...f, isVerbal: false }))}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
-                  !form.isVerbal
-                    ? 'bg-teal-600 text-white shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                }`}
-              >
-                <span>🤫</span>
-                <span>غير الناطقين (4 مقاييس أساسية)</span>
-              </button>
-            </div>
-          </div>
-
-          {/* 3. Live Psychometric Results Dashboard Card */}
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border-2 border-teal-500/30 shadow-md">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-700 pb-3 mb-3">
-              <div>
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">مؤشرات القياس اللحظية</span>
-                <h4 className="text-base font-bold text-slate-800 dark:text-slate-100">
-                  لوحة الدرجات المعيارية ومعامل التوحد (AQ Dashboard)
-                </h4>
+              <span style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>معامل التوحد (AQ):</span>
+              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0d9488' }}>
+                {psychometrics.autismQuotient}{' '}
+                <span style={{ fontSize: '.8rem', color: 'var(--text-sub)' }}>
+                  (مجموع المعيارية: {psychometrics.sumScaledScores})
+                </span>
               </div>
+            </div>
 
-              {/* Severity Badge */}
-              <div className="flex items-center gap-2">
-                <span className={`text-xs px-3 py-1.5 rounded-xl font-bold border ${psychometrics.severityBadgeClass}`}>
+            <div style={{ height: 28, width: 1, background: 'var(--border-color)' }} />
+
+            <div>
+              <span style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>الرتبة المئينية (%):</span>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                {psychometrics.overallPercentile}%
+              </div>
+            </div>
+
+            <div style={{ height: 28, width: 1, background: 'var(--border-color)' }} />
+
+            <div>
+              <span style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>التصنيف والشدة (DSM-5):</span>
+              <div>
+                <span
+                  style={{
+                    fontSize: '.8rem',
+                    fontWeight: 800,
+                    padding: '3px 8px',
+                    borderRadius: 6,
+                    background: `${psychometrics.severityColor}20`,
+                    color: psychometrics.severityColor,
+                    border: `1px solid ${psychometrics.severityColor}50`,
+                  }}
+                >
                   {psychometrics.dsm5Level}
                 </span>
-                <span className="text-xs px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium">
-                  {psychometrics.answeredCount} / {psychometrics.totalItemsCount} عبارة ({psychometrics.completionPercentage}%)
-                </span>
               </div>
             </div>
+          </div>
 
-            {/* Metrics Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-              <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
-                <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">الدرجة الخام الكلية</span>
-                <span className="text-xl font-black text-slate-800 dark:text-slate-100">
-                  {psychometrics.totalRawScore}
-                </span>
-              </div>
-
-              <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
-                <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">مجموع المعيارية (Sum)</span>
-                <span className="text-xl font-black text-teal-600 dark:text-teal-400">
-                  {psychometrics.sumScaledScores}
-                </span>
-              </div>
-
-              <div className="bg-teal-50 dark:bg-teal-950/40 p-2.5 rounded-xl border border-teal-200 dark:border-teal-800">
-                <span className="text-xs text-teal-700 dark:text-teal-300 block mb-1 font-semibold">معامل التوحد (AQ)</span>
-                <span className="text-2xl font-black text-teal-700 dark:text-teal-300">
-                  {psychometrics.autismQuotient}
-                </span>
-              </div>
-
-              <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
-                <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">الرتبة المئينية (Rank)</span>
-                <span className="text-xl font-black text-indigo-600 dark:text-indigo-400">
-                  {psychometrics.overallPercentile}%
-                </span>
-              </div>
-            </div>
-
-            {/* Subscales Quick Bar Indicators */}
-            <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-3 border-t border-slate-100 dark:border-slate-700">
-              {psychometrics.domainResults.map(d => (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ textAlign: 'left' }}>
+              <span style={{ fontSize: '.78rem', color: 'var(--text-sub)' }}>
+                المقيمة: <strong>{psychometrics.answeredCount}</strong> / {totalRequiredItems} عبارة
+              </span>
+              <div style={{ width: 100, height: 8, background: 'var(--border-color)', borderRadius: 4, overflow: 'hidden', marginTop: 3 }}>
                 <div
-                  key={d.id}
-                  className="bg-white dark:bg-slate-900 p-2 rounded-lg border text-center shadow-2xs"
-                  style={{ borderColor: d.color + '40' }}
+                  style={{
+                    width: `${(psychometrics.answeredCount / totalRequiredItems) * 100}%`,
+                    height: '100%',
+                    background: psychometrics.isComplete ? 'var(--ok)' : '#0d9488',
+                    transition: 'width 0.2s',
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Scrollable Body */}
+        <div className="modal-body-scroll" style={{ padding: '18px 22px' }}>
+          {/* Student Picker & Examiner Setup */}
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 12,
+              padding: 16,
+              marginBottom: 18,
+            }}
+          >
+            <div className="fg c2">
+              <StudentPicker form={form} setForm={setForm} students={students} emps={emps} showExtra />
+
+              <div className="fl">
+                <label style={{ fontWeight: 800, fontSize: '.84rem' }}>تاريخ جلسة الفحص <span className="req">*</span></label>
+                <input
+                  type="date"
+                  value={form.date}
+                  onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                />
+              </div>
+
+              <div className="fl">
+                <label style={{ fontWeight: 800, fontSize: '.84rem' }}>الأخصائي الفاحص المعتمد</label>
+                <input
+                  value={form.examinerName}
+                  onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
+                  placeholder="اسم الأخصائي النفسي أو الفاحص التشخيصي..."
+                />
+              </div>
+
+              <div className="fl">
+                <label style={{ fontWeight: 800, fontSize: '.84rem' }}>اسم المقيم / ولي الأمر</label>
+                <input
+                  value={form.raterName}
+                  onChange={e => setForm(f => ({ ...f, raterName: e.target.value }))}
+                  placeholder="اسم القائم بالاستجابة (الأم، الأب، المعلم...)"
+                />
+              </div>
+
+              <div className="fl">
+                <label style={{ fontWeight: 800, fontSize: '.84rem' }}>صلة القرابة / العلاقة</label>
+                <input
+                  value={form.raterRelation}
+                  onChange={e => setForm(f => ({ ...f, raterRelation: e.target.value }))}
+                  placeholder="الأم / الأب / المعلم..."
+                />
+              </div>
+            </div>
+
+            {/* Verbal vs Non-Verbal Switch */}
+            <div
+              style={{
+                marginTop: 14,
+                padding: '12px 14px',
+                borderRadius: 10,
+                background: 'var(--g0)',
+                border: '1px solid var(--border-color)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 10,
+              }}
+            >
+              <div>
+                <div style={{ fontWeight: 800, fontSize: '.88rem', color: 'var(--text-main)' }}>
+                  🗣️ المرونة السيكومترية (الحالة اللغوية للمفحوص):
+                </div>
+                <div style={{ fontSize: '.78rem', color: 'var(--text-sub)' }}>
+                  اختر النموذج المطابق للطفل لحساب معامل التوحد الدقيق وفق معايير GARS-3
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  className="btn btn-xs"
+                  onClick={() => setForm(f => ({ ...f, isVerbal: true }))}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 8,
+                    fontWeight: 800,
+                    background: form.isVerbal ? '#0d9488' : 'var(--bg-card)',
+                    color: form.isVerbal ? '#fff' : 'var(--text-main)',
+                    border: `1px solid ${form.isVerbal ? '#0d9488' : 'var(--border-color)'}`,
+                  }}
                 >
-                  <span className="text-[11px] font-bold block truncate" style={{ color: d.color }}>
-                    {d.code} - {d.name}
-                  </span>
-                  <div className="flex items-center justify-center gap-1.5 mt-1 text-xs">
-                    <span className="text-slate-500 dark:text-slate-400">خام: {d.rawScore}</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">معيارية: {d.scaledScore}</span>
+                  🗣️ ناطق (6 مقاييس فرعية - 58 بنداً)
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-xs"
+                  onClick={() => setForm(f => ({ ...f, isVerbal: false }))}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 8,
+                    fontWeight: 800,
+                    background: !form.isVerbal ? '#e11d48' : 'var(--bg-card)',
+                    color: !form.isVerbal ? '#fff' : 'var(--text-main)',
+                    border: `1px solid ${!form.isVerbal ? '#e11d48' : 'var(--border-color)'}`,
+                  }}
+                >
+                  🤫 غير ناطق (4 مقاييس فرعية أساسية - 44 بنداً)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Subscales Quick Overview Matrix */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: '.85rem', fontWeight: 800, marginBottom: 8, color: 'var(--text-main)' }}>
+              📈 مؤشرات الأداء الحالية على المقاييس الفرعية:
+            </div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                gap: 8,
+              }}
+            >
+              {psychometrics.domainResults.map(dr => (
+                <div
+                  key={dr.id}
+                  style={{
+                    background: 'var(--bg-card)',
+                    border: `1px solid ${dr.color}40`,
+                    borderTop: `3px solid ${dr.color}`,
+                    borderRadius: 8,
+                    padding: '8px 10px',
+                    textAlign: 'center',
+                  }}
+                >
+                  <div style={{ fontSize: '.75rem', fontWeight: 700, color: 'var(--text-sub)' }}>
+                    {dr.name}
+                  </div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 900, color: dr.color, margin: '2px 0' }}>
+                    {dr.scaledScore}{' '}
+                    <span style={{ fontSize: '.7rem', color: 'var(--text-sub)' }}>معيارية</span>
+                  </div>
+                  <div style={{ fontSize: '.72rem', color: 'var(--text-sub)' }}>
+                    خام: {dr.rawScore}/{dr.maxRaw} ({dr.percentile}%)
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* 4. Domain Filter Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-200 dark:border-slate-700">
+          {/* Domains Filter Bar */}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
             <button
               type="button"
+              className="btn btn-xs"
               onClick={() => setActiveDomainFilter('all')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
-                activeDomainFilter === 'all'
-                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
-              }`}
+              style={{
+                borderRadius: 8,
+                padding: '6px 12px',
+                background: activeDomainFilter === 'all' ? '#0d9488' : 'var(--bg-card)',
+                color: activeDomainFilter === 'all' ? '#fff' : 'var(--text-main)',
+                border: '1px solid var(--border-color)',
+                fontWeight: 700,
+              }}
             >
-              جميع البنود ({displayedDomains.reduce((acc, d) => acc + d.itemsCount, 0)})
+              🌐 جميع العبارات ({totalRequiredItems})
             </button>
-
             {displayedDomains.map(d => {
-              const res = psychometrics.domainResults.find(r => r.id === d.id);
-              const isDomainComplete = res?.isComplete;
+              const domainResult = psychometrics.domainResults.find(dr => dr.id === d.id);
+              const isActive = activeDomainFilter === d.id;
               return (
                 <button
                   key={d.id}
                   type="button"
+                  className="btn btn-xs"
                   onClick={() => setActiveDomainFilter(d.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
-                    activeDomainFilter === d.id
-                      ? 'bg-teal-600 text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
-                  }`}
+                  style={{
+                    borderRadius: 8,
+                    padding: '6px 12px',
+                    background: isActive ? d.color : 'var(--bg-card)',
+                    color: isActive ? '#fff' : 'var(--text-main)',
+                    border: `1px solid ${isActive ? d.color : 'var(--border-color)'}`,
+                    fontWeight: 700,
+                  }}
                 >
-                  <span>{d.name}</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                    isDomainComplete ? 'bg-emerald-500 text-white' : 'bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                  }`}>
-                    {res?.answeredCount || 0}/{d.itemsCount}
-                  </span>
+                  {d.name} ({domainResult?.answeredCount || 0}/{d.itemCount})
                 </button>
               );
             })}
           </div>
 
-          {/* Quick Fill Helpers (for testing convenience) */}
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800">
-            <span>تعبئة سريعة للتجربة:</span>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => autoFillSample('none')}
-                className="px-2 py-0.5 rounded bg-white dark:bg-slate-800 border hover:bg-slate-100 text-slate-700 dark:text-slate-300"
-              >
-                طبيعي
-              </button>
-              <button
-                type="button"
-                onClick={() => autoFillSample('mild')}
-                className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/50 border border-blue-200 text-blue-700 dark:text-blue-300"
-              >
-                بسيط
-              </button>
-              <button
-                type="button"
-                onClick={() => autoFillSample('moderate')}
-                className="px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/50 border border-amber-200 text-amber-700 dark:text-amber-300"
-              >
-                متوسط
-              </button>
-              <button
-                type="button"
-                onClick={() => autoFillSample('severe')}
-                className="px-2 py-0.5 rounded bg-red-50 dark:bg-red-950/50 border border-red-200 text-red-700 dark:text-red-300"
-              >
-                شديد
-              </button>
-            </div>
-          </div>
-
-          {/* 5. GARS-3 Items Assessment Form */}
-          <div className="space-y-4">
-            {filteredItems.map(item => {
-              const currentScore = form.scores[item.id];
-              const isSelected = currentScore !== undefined && currentScore !== null;
-              const domain = GARS3_DOMAINS.find(d => d.id === item.domainId);
+          {/* Diagnostic Items List */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {filteredItems.map(it => {
+              const currentScore = form.scores[it.id] !== undefined ? Number(form.scores[it.id]) : null;
+              const domain = GARS3_DOMAINS.find(d => d.id === it.domainId);
 
               return (
                 <div
-                  key={item.id}
-                  className={`p-4 rounded-xl border transition-all ${
-                    isSelected
-                      ? 'bg-white dark:bg-slate-800 border-teal-300 dark:border-teal-700/70 shadow-sm'
-                      : 'bg-white dark:bg-slate-850 border-slate-200 dark:border-slate-800'
-                  }`}
+                  key={it.id}
+                  style={{
+                    background: 'var(--bg-card)',
+                    border: `1px solid ${currentScore !== null ? 'var(--border-color)' : 'rgba(239, 68, 68, 0.4)'}`,
+                    borderRadius: 12,
+                    padding: '14px 18px',
+                    boxShadow: currentScore !== null ? '0 1px 3px rgba(0,0,0,0.03)' : '0 0 0 1px rgba(239,68,68,0.1)',
+                  }}
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                    <div className="flex items-start gap-2.5">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span
-                        className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 text-white"
-                        style={{ backgroundColor: domain?.color || '#0d9488' }}
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
+                          background: domain?.color || 'var(--pr)',
+                          color: '#fff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 900,
+                          fontSize: '.8rem',
+                          flexShrink: 0,
+                        }}
                       >
-                        {item.id}
+                        {it.id}
                       </span>
                       <div>
-                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 inline-block mb-1">
-                          {item.domainCode} • {domain?.name}
-                        </span>
-                        <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-relaxed">
-                          {item.text}
-                        </h4>
+                        <div style={{ fontWeight: 800, fontSize: '.95rem', color: 'var(--text-main)' }}>
+                          {it.title}
+                        </div>
+                        <div style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>
+                          المقياس الفرعي: <strong style={{ color: domain?.color }}>{domain?.name}</strong>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Current Score Tag */}
-                    {isSelected && (
-                      <span className="self-end sm:self-auto text-xs px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/50 border border-teal-300 dark:border-teal-800 text-teal-800 dark:text-teal-300 font-bold shrink-0">
-                        الدرجة: {currentScore}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                      <span style={{ fontSize: '.8rem', color: 'var(--text-sub)' }}>الدرجة:</span>
+                      <span
+                        style={{
+                          fontSize: '1rem',
+                          fontWeight: 900,
+                          padding: '2px 8px',
+                          borderRadius: 6,
+                          background: currentScore !== null ? `${domain?.color || 'var(--pr)'}20` : 'var(--g0)',
+                          color: currentScore !== null ? domain?.color || 'var(--pr)' : 'var(--text-sub)',
+                          border: '1px solid var(--border-color)',
+                          minWidth: 32,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {currentScore !== null ? currentScore : '—'}
                       </span>
-                    )}
+                    </div>
                   </div>
 
-                  {/* 4-point Options Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+                  {/* 4-point Frequency Selection Buttons */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                      gap: 8,
+                      marginBottom: 10,
+                    }}
+                  >
                     {GARS3_RESPONSE_OPTIONS.map(opt => {
-                      const active = currentScore === opt.value;
+                      const isSelected = currentScore === opt.score;
                       return (
                         <button
-                          key={opt.value}
+                          key={opt.score}
                           type="button"
-                          onClick={() => handleScoreSelect(item.id, opt.value)}
-                          className={`p-2.5 rounded-xl border text-right transition-all flex flex-col justify-between ${
-                            active
-                              ? 'bg-teal-600 text-white border-teal-600 shadow-md ring-2 ring-teal-300 dark:ring-teal-900'
-                              : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-teal-50/50 dark:hover:bg-slate-800'
-                          }`}
+                          onClick={() => handleScoreSelect(it.id, opt.score)}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-start',
+                            padding: '8px 12px',
+                            borderRadius: 8,
+                            textAlign: 'right',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            border: isSelected ? `2px solid ${domain?.color || '#0d9488'}` : '1px solid var(--border-color)',
+                            background: isSelected ? `${domain?.color || '#0d9488'}15` : 'var(--bg-card)',
+                          }}
                         >
-                          <span className="text-xs font-bold block mb-1">
-                            {opt.label}
-                          </span>
-                          <span className={`text-[10px] line-clamp-2 leading-tight ${
-                            active ? 'text-teal-100' : 'text-slate-500 dark:text-slate-400'
-                          }`}>
-                            {opt.hint}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            <span style={{ fontWeight: 800, fontSize: '.84rem', color: isSelected ? domain?.color || '#0d9488' : 'var(--text-main)' }}>
+                              {opt.label} ({opt.score})
+                            </span>
+                            {isSelected && <span style={{ color: domain?.color || '#0d9488', fontSize: '.85rem' }}>✓</span>}
+                          </div>
+                          <span style={{ fontSize: '.72rem', color: 'var(--text-sub)', marginTop: 2 }}>
+                            {opt.description}
                           </span>
                         </button>
                       );
                     })}
                   </div>
 
-                  {/* Item Specific Clinical Notes */}
-                  <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
-                    <span className="text-xs text-slate-400">📝 ملاحظة الفاحص:</span>
-                    <input
-                      type="text"
-                      value={form.itemNotes[item.id] || ''}
-                      onChange={e => handleItemNoteChange(item.id, e.target.value)}
-                      placeholder="سجل أمثلة سلوكية محددة أو ظروف الملاحظة لهذا البند..."
-                      className="flex-1 text-xs px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-900"
-                    />
-                  </div>
+                  {/* Item Specific Note Input */}
+                  <input
+                    type="text"
+                    value={form.itemNotes[it.id] || ''}
+                    onChange={e => handleItemNoteChange(it.id, e.target.value)}
+                    placeholder="ملاحظات وسياق الملاحظة السلوكية لهذا البند (اختياري)..."
+                    style={{
+                      width: '100%',
+                      padding: '6px 10px',
+                      borderRadius: 6,
+                      fontSize: '.78rem',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--g0)',
+                      color: 'var(--text-main)',
+                    }}
+                  />
                 </div>
               );
             })}
           </div>
 
-          {/* 6. Clinical Impression & Recommendations */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <span>📑</span> الخلاصة التشخيصية والتوصيات الإكلينيكية
-              </h3>
+          {/* Clinical Diagnostic Impression & Recommendations */}
+          <div
+            style={{
+              marginTop: 22,
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 12,
+              padding: 18,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 10 }}>
+              <div style={{ fontWeight: 900, fontSize: '.95rem', color: 'var(--text-main)' }}>
+                📝 الخلاصة التشخيصية والتوصيات الإكلينيكية (DSM-5)
+              </div>
               <button
                 type="button"
+                className="btn btn-xs"
                 onClick={applyAutoClinicalSummary}
-                className="px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs shrink-0"
+                style={{
+                  background: 'linear-gradient(135deg, #0d9488, #0f766e)',
+                  color: '#fff',
+                  fontWeight: 800,
+                  borderRadius: 8,
+                  padding: '6px 12px',
+                }}
               >
-                <span>✨</span>
-                <span>توليد الخلاصة والتوصيات آلياً</span>
+                ✨ توليد تلقائي ذكي بناءً على درجات GARS-3
               </button>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                التقرير والملخص النفسي والإكلينيكي
-              </label>
+            <div className="fl" style={{ marginBottom: 12 }}>
+              <label style={{ fontWeight: 800, fontSize: '.84rem' }}>الخلاصة الإكلينيكية والانطباع التشخيصي:</label>
               <textarea
                 rows={5}
-                value={form.clinicalSummary || ''}
+                value={form.clinicalSummary}
                 onChange={e => setForm(f => ({ ...f, clinicalSummary: e.target.value }))}
-                placeholder="اكتب التقرير الإكلينيكي أو اضغط على زر التوليد الآلي..."
-                className="w-full text-xs p-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 leading-relaxed font-sans"
+                placeholder="اكتب التقرير والملخص التشخيصي أو اضغط على التوليد التلقائي أعلاه..."
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                التوصيات التربوية والتأهيلية (Rehabilitation Recommendations)
-              </label>
+            <div className="fl">
+              <label style={{ fontWeight: 800, fontSize: '.84rem' }}>التوصيات العلاجية والتربوية والتحويلات المقترحة:</label>
               <textarea
                 rows={4}
-                value={form.recommendations || ''}
+                value={form.recommendations}
                 onChange={e => setForm(f => ({ ...f, recommendations: e.target.value }))}
-                placeholder="التوصيات والبرامج العلاجية المقترحة..."
-                className="w-full text-xs p-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 leading-relaxed font-sans"
+                placeholder="التوصيات والبرامج المقترحة (ABA, تخاطب, تكامل حسي, IEP)..."
               />
             </div>
           </div>
-
         </div>
 
-        {/* Modal Bottom Footer Actions */}
-        <div className="px-6 py-3.5 bg-slate-100 dark:bg-slate-850 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-600 dark:text-slate-400">
-              معامل التوحد: <b className="text-teal-600 dark:text-teal-400 text-sm">{psychometrics.autismQuotient}</b>
-            </span>
-            <span className="text-slate-300 dark:text-slate-600">|</span>
-            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              {psychometrics.dsm5Level}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
+        {/* Modal Footer Actions */}
+        <div
+          className="fa"
+          style={{
+            padding: '12px 20px',
+            borderTop: '1px solid var(--border-color)',
+            background: 'var(--g0)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <div style={{ display: 'flex', gap: 6 }}>
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 transition"
+              className="btn btn-xs btn-g"
+              onClick={() => autoFillSample('mild')}
+              title="تعبئة درجات تجريبية (توحد بسيط/متوسط)"
             >
+              ⚡ تجربة نموذج بسيط
+            </button>
+            <button
+              type="button"
+              className="btn btn-xs btn-g"
+              onClick={() => autoFillSample('severe')}
+              title="تعبئة درجات تجريبية (توحد شديد)"
+            >
+              ⚡ تجربة نموذج شديد
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" className="btn btn-g" onClick={onClose}>
               إلغاء
             </button>
-
             <button
               type="button"
+              className="btn btn-p"
               onClick={handleSave}
-              className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 shadow-md transition flex items-center gap-1.5"
+              style={{ fontWeight: 800, padding: '8px 22px', background: '#0d9488', color: '#fff' }}
             >
-              <span>💾</span>
-              <span>حفظ نتيجة مقياس جيليام 3</span>
+              💾 حفظ واعتماد تقييم GARS-3
             </button>
           </div>
         </div>
-
       </div>
     </div>
   );
