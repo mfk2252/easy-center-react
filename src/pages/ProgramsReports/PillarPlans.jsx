@@ -19,16 +19,55 @@ const EMPTY_BIP = {
   ...EMPTY_STU_PICK,
   date: todayStr(),
   title: '',
-  targetBehaviors: '',
-  antecedents: '',
-  consequences: '',
-  replacementBehaviors: '',
-  reinforcementStrategies: '',
+  proceduralBehavior: '', // السلوك الإجرائي المستهدف
+  targetBehaviors: '', // للاستمرار في دعم البيانات القديمة
+  antecedents: '', // المثيرات القبلية
+  consequences: '', // العواقب واللواحق
+  behaviorFunction: 'attention', // الوظيفة المفترضة السلوكية
+  observationMethod: 'frequency', // طريقة القياس
+  baselineLevel: '', // الخط القاعدي القبلي
+  replacementBehaviors: '', // السلوك البديل
+  reinforcementStrategies: '', // استراتيجيات التدخل والتعزيز
+  interventionTechniques: [], // فنيات تعديل السلوك
+  timelinePhase: 'observation', // الطور الحالي للخطة
+  trackingPoints: [
+    { date: 'أسبوع 1', value: 10 },
+    { date: 'أسبوع 2', value: 8 },
+    { date: 'أسبوع 3', value: 5 },
+    { date: 'أسبوع 4', value: 3 },
+  ],
   reviewDate: '',
   specialistName: '',
   notes: '',
   status: 'active',
 };
+
+export const BEHAVIOR_TECHNIQUES = [
+  { id: 'reinforcement', label: 'التعزيز (Reinforcement)', desc: 'تقديم معززات فورية عند صدور السلوك الإيجابي المقبول.' },
+  { id: 'extinction', label: 'الإطفاء / التجاهل المنهجي (Systematic Extinction)', desc: 'إيقاف التعزيز الذي كان يحافظ على استمرار السلوك غير المرغوب.' },
+  { id: 'shaping', label: 'التشكيل السلوكي التدريجي (Shaping)', desc: 'تعزيز الاستجابات البسيطة المتتالية للوصول للسلوك النهائي.' },
+  { id: 'chaining', label: 'التسلسل السلوكي (Chaining)', desc: 'ربط الحلقات السلوكية البسيطة لبناء مهارة مركبة.' },
+  { id: 'differential_reinforcement', label: 'التعزيز التفاضلي (Differential Reinforcement)', desc: 'تعزيز سلوك بديل أو نقيض أو غياب السلوك المستهدف.' },
+  { id: 'prompting_fading', label: 'التلقين وسحب المساعدات (Prompting & Fading)', desc: 'تزويد الطفل بمساعدة مساندة ثم سحبها تدريجياً لتعويده الاستقلال.' },
+  { id: 'token_economy', label: 'الاقتصاد الرمزي (Token Economy)', desc: 'مكافأة الطفل بنقاط أو رموز تُستبدل لاحقاً بمعززات مادية عينية.' },
+  { id: 'modeling', label: 'النمذجة والتقليد (Modeling)', desc: 'عرض نموذج حي أو مرئي للسلوك المرغوب ليقوم الطفل بمحاكاته.' },
+  { id: 'overcorrection', label: 'التصحيح الزائد (Overcorrection)', desc: 'توجيه الطفل لإصلاح البيئة مع تكرار الاستجابة الصحيحة بشكل مفرط.' },
+  { id: 'timeout', label: 'الاستبعاد المؤقت (Time-out)', desc: 'إبعاد الطفل مؤقتاً عن بيئة التعزيز عند اقتراف السلوك غير المرغوب.' }
+];
+
+export const BEHAVIOR_FUNCTIONS = [
+  { id: 'attention', label: 'لفت الانتباه والاهتمام (Attention)', desc: 'رغبة في لفت انتباه المعلم أو الأخصائي أو الأقران.' },
+  { id: 'escape', label: 'الهروب والتجنب (Escape / Avoidance)', desc: 'رغبة الطفل في التملص من مهمة دراسية، أو تمرين، أو بيئة مزعجة.' },
+  { id: 'tangible', label: 'الحصول على شيء مادي (Tangible/Access)', desc: 'الحصول على لعبة مفضلة، طعام، حلوى، أو أجهزة إلكترونية.' },
+  { id: 'sensory', label: 'التحفيز أو التنظيم الحسي (Sensory/Automatic)', desc: 'سلوك تكراري يمنح الطفل شعوراً مريحاً داخلياً أو يخفف الضغط.' }
+];
+
+export const OBSERVATION_METHODS = [
+  { id: 'frequency', label: 'تسجيل التكرار (Frequency)', desc: 'حساب عدد مرات اقتراف السلوك خلال فترة محددة.' },
+  { id: 'duration', label: 'تسجيل مدة البقاء (Duration)', desc: 'قياس المدة الزمنية المستغرقة من بدء السلوك وحتى انتهائه.' },
+  { id: 'intensity', label: 'مقياس الشدة والحدة (Intensity)', desc: 'رصد قوة ودرجة تدميرية/تأثير السلوك رقمياً من 1 إلى 5.' },
+  { id: 'intervals', label: 'تسجيل الفترات الزمنية (Intervals)', desc: 'تقسيم فترة الملاحظة لفترات متساوية وتدوين حدوث السلوك.' }
+];
 
 export default function PillarPlans({ onDataChange }) {
   const { toast, center } = useApp();
@@ -131,6 +170,71 @@ export default function PillarPlans({ onDataChange }) {
   // ----------------------------------------------------
   // Behavior Plans (BIP) Actions
   // ----------------------------------------------------
+  // Dynamic Progress Chart Renderer for BIP
+  function renderBipChart(points) {
+    if (!points || points.length === 0) return null;
+    
+    const width = 500;
+    const height = 150;
+    const padding = 35;
+    
+    const chartWidth = width - padding * 2;
+    const chartHeight = height - padding * 2;
+    
+    const maxVal = Math.max(...points.map(p => Number(p.value) || 0), 5);
+    
+    const coords = points.map((p, index) => {
+      const x = padding + (index / Math.max(points.length - 1, 1)) * chartWidth;
+      const y = height - padding - ((Number(p.value) || 0) / maxVal) * chartHeight;
+      return { x, y, label: p.date, value: p.value };
+    });
+    
+    const linePath = coords.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x} ${c.y}`).join(' ');
+    
+    return (
+      <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 12, padding: 12, marginTop: 10 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <strong style={{ fontSize: '.82rem', color: 'var(--text-main)' }}>📈 الخط البياني لتتبع السلوك (رصد التقدم وتناقص معدل حدوث السلوك المستهدف)</strong>
+          <span style={{ fontSize: '.72rem', color: 'var(--g5)' }}>المعدل الحالي: <strong style={{ color: 'var(--err)' }}>{points[points.length - 1]?.value || 0}</strong></span>
+        </div>
+        <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible' }}>
+          {/* Grid Lines */}
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => {
+            const y = padding + ratio * chartHeight;
+            const val = Math.round(maxVal * (1 - ratio));
+            return (
+              <g key={i}>
+                <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="#e2e8f0" strokeDasharray="3 3" />
+                <text x={padding - 8} y={y + 4} textAnchor="end" fontSize="9" fill="#94a3b8">{val}</text>
+              </g>
+            );
+          })}
+          
+          {/* Area under the line */}
+          {coords.length > 1 && (
+            <path
+              d={`${linePath} L ${coords[coords.length - 1].x} ${height - padding} L ${coords[0].x} ${height - padding} Z`}
+              fill="rgba(239, 68, 68, 0.08)"
+            />
+          )}
+          
+          {/* Main Line */}
+          <path d={linePath} fill="none" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          
+          {/* Data Points */}
+          {coords.map((c, i) => (
+            <g key={i}>
+              <circle cx={c.x} cy={c.y} r="5" fill="#fff" stroke="#ef4444" strokeWidth="3" />
+              <circle cx={c.x} cy={c.y} r="2" fill="#ef4444" />
+              <text x={c.x} y={c.y - 10} textAnchor="middle" fontSize="10" fontWeight="bold" fill="#dc2626">{c.value}</text>
+              <text x={c.x} y={height - padding + 15} textAnchor="middle" fontSize="9" fill="#64748b">{c.label}</text>
+            </g>
+          ))}
+        </svg>
+      </div>
+    );
+  }
+
   function openNewBip() {
     setBipForm({ ...EMPTY_BIP, date: todayStr() });
     setBipEditId(null);
@@ -138,7 +242,11 @@ export default function PillarPlans({ onDataChange }) {
   }
 
   function openEditBip(item) {
-    setBipForm({ ...EMPTY_BIP, ...item });
+    setBipForm({
+      ...EMPTY_BIP,
+      ...item,
+      proceduralBehavior: item.proceduralBehavior || item.targetBehaviors || '',
+    });
     setBipEditId(item.id);
     setBipModal(true);
   }
@@ -149,6 +257,7 @@ export default function PillarPlans({ onDataChange }) {
 
     const payload = {
       ...bipForm,
+      targetBehaviors: bipForm.proceduralBehavior || bipForm.targetBehaviors,
       isUnregistered: bipForm.mode === 'other',
       updatedAt: new Date().toISOString(),
     };
@@ -247,6 +356,189 @@ export default function PillarPlans({ onDataChange }) {
         <body>
           <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #334155;padding-bottom:10px;margin-bottom:16px;">
             <div style="font-size:1.4rem;font-weight:bold;color:#1e40af;">${center?.name || 'مركز الأمل للتربية الخاصة'}</div>
+            ${center?.logo ? `<img src="${center.logo}" style="height:60px;" />` : ''}
+          </div>
+          ${html}
+        </body>
+      </html>
+    `);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 350);
+  }
+
+  // Print BIP Behavior Intervention Plan
+  function printBip(b) {
+    const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    
+    const funcLabel = BEHAVIOR_FUNCTIONS.find(f => f.id === b.behaviorFunction)?.label || b.behaviorFunction || 'غير محدد';
+    const obsLabel = OBSERVATION_METHODS.find(o => o.id === b.observationMethod)?.label || b.observationMethod || 'غير محدد';
+    const phaseLabel = {
+      observation: 'الملاحظة والتقييم القبلي',
+      intervention: 'التطبيق الفعلي لفنيات التدخل',
+      generalization: 'مرحلة التعميم والثبات',
+      followup: 'المتابعة الدورية وصيانة السلوك'
+    }[b.timelinePhase || 'observation'] || 'غير محدد';
+
+    const statusLabel = {
+      active: 'نشطة ⏳',
+      maintenance: 'مرحلة التعميم والثبات 🤝',
+      achieved: 'تم تعديل السلوك بنجاح ✅',
+      needs_revision: 'بحاجة لمراجعة وتعديل الخطة ⚠️'
+    }[b.status] || 'نشطة ⏳';
+
+    const techsList = (b.interventionTechniques || []).map(id => {
+      const found = BEHAVIOR_TECHNIQUES.find(t => t.id === id);
+      return found ? `<li style="margin-bottom: 6px;"><b>${esc(found.label)}:</b> ${esc(found.desc)}</li>` : '';
+    }).filter(Boolean).join('');
+
+    const trackingRows = (b.trackingPoints || []).map((pt, i) => `
+      <tr>
+        <td style="text-align:center;padding:6px;border:1px solid #cbd5e1;">${i + 1}</td>
+        <td style="padding:6px;border:1px solid #cbd5e1;text-align:center;"><b>${esc(pt.date)}</b></td>
+        <td style="padding:6px;border:1px solid #cbd5e1;text-align:center;color:#ef4444;font-weight:bold;">${esc(pt.value)}</td>
+      </tr>
+    `).join('');
+
+    const html = `
+      <div style="direction:rtl;text-align:right;font-family:'Segoe UI', Tahoma, Arial, sans-serif;color:#1e293b;line-height:1.6;">
+        <h2 style="color:#ef4444;border-bottom:3px solid #ef4444;padding-bottom:8px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
+          <span>📐 خطة تعديل السلوك والتدخل السلوكي الفردية (BIP)</span>
+          <span style="font-size:1rem;background:#fef2f2;color:#ef4444;padding:4px 10px;border-radius:6px;border:1px solid #fee2e2;">نموذج معتمد</span>
+        </h2>
+        
+        <table style="width:100%;margin-bottom:20px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:12px;border-collapse:separate;border-spacing:0 8px;">
+          <tr>
+            <td style="width:33%;"><b>اسم الطالب:</b> ${esc(b.studentName)}</td>
+            <td style="width:33%;"><b>العمر النمائي:</b> ${esc(b.age || '—')}</td>
+            <td style="width:33%;"><b>التشخيص:</b> ${esc(b.diagnosis || '—')}</td>
+          </tr>
+          <tr>
+            <td><b>عنوان الخطة:</b> ${esc(b.title)}</td>
+            <td><b>تاريخ البدء:</b> ${esc(b.date || '—')}</td>
+            <td><b>أخصائي تعديل السلوك:</b> ${esc(b.specialistName || '—')}</td>
+          </tr>
+          <tr>
+            <td><b>تاريخ المراجعة:</b> ${esc(b.reviewDate || '—')}</td>
+            <td><b>حالة الخطة الحالية:</b> <strong style="color:#dc2626;">${statusLabel}</strong></td>
+            <td><b>الصف/المجموعة:</b> ${esc(b.className || '—')}</td>
+          </tr>
+        </table>
+
+        <!-- ABC ANALYSIS -->
+        <div style="background:#fff4f4;border:1px solid #fecaca;border-radius:10px;padding:14px;margin-bottom:18px;">
+          <h3 style="color:#991b1b;margin-top:0;margin-bottom:10px;border-bottom:1px solid #fca5a5;padding-bottom:6px;">🧬 التحليل الوظيفي العلمي للسلوك (ABC Analysis)</h3>
+          <p style="margin:6px 0;"><b>1. السلوك المستهدف إجرائياً (Behavior):</b></p>
+          <div style="background:#fff;padding:8px 12px;border-radius:6px;border:1px solid #fca5a5;margin-bottom:10px;white-space:pre-wrap;">${esc(b.proceduralBehavior || b.targetBehaviors || 'لا يوجد وصف إجرائي')}</div>
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;">
+            <div>
+              <b>2. المثيرات والظروف القبلية (Antecedents):</b>
+              <div style="background:#fff;padding:8px 12px;border-radius:6px;border:1px solid #fca5a5;margin-top:4px;min-height:60px;white-space:pre-wrap;">${esc(b.antecedents || '—')}</div>
+            </div>
+            <div>
+              <b>3. عواقب السلوك واللواحق الحالية (Consequences):</b>
+              <div style="background:#fff;padding:8px 12px;border-radius:6px;border:1px solid #fca5a5;margin-top:4px;min-height:60px;white-space:pre-wrap;">${esc(b.consequences || '—')}</div>
+            </div>
+          </div>
+          <p style="margin:6px 0;"><b>4. الوظيفة المفترضة السلوكية (Hypothesized Function):</b> <strong style="color:#b91c1c;">${funcLabel}</strong></p>
+        </div>
+
+        <!-- MEASUREMENT & TIMELINE -->
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:18px;">
+          <h3 style="color:#166534;margin-top:0;margin-bottom:10px;border-bottom:1px solid #86efac;padding-bottom:6px;">🔎 تشخيص وقياس السلوك والخط القاعدي</h3>
+          <table style="width:100%;border-collapse:collapse;">
+            <tr>
+              <td style="padding:6px 0;width:33%;"><b>طريقة الملاحظة المعتمدة:</b> <span style="background:#fff;padding:2px 8px;border-radius:4px;border:1px solid #86efac;">${obsLabel}</span></td>
+              <td style="padding:6px 0;width:33%;"><b>مستوى الخط القاعدي القبلي:</b> <span style="background:#fff;padding:2px 8px;border-radius:4px;border:1px solid #86efac;font-weight:bold;color:#15803d;">${esc(b.baselineLevel || '—')}</span></td>
+              <td style="padding:6px 0;width:33%;"><b>الطور الحالي للخطة:</b> <span style="background:#fff;padding:2px 8px;border-radius:4px;border:1px solid #86efac;">${phaseLabel}</span></td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- INTERVENTIONS & REPLACEMENT -->
+        <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:14px;margin-bottom:18px;">
+          <h3 style="color:#075985;margin-top:0;margin-bottom:10px;border-bottom:1px solid #7dd3fc;padding-bottom:6px;">🎯 فنيات التدخل المطبقة والسلوك البديل</h3>
+          <p style="margin:6px 0;"><b>السلوك البديل الإيجابي المقبول وظيفياً (Alternative Behavior):</b></p>
+          <div style="background:#fff;padding:8px 12px;border-radius:6px;border:1px solid #7dd3fc;margin-bottom:10px;white-space:pre-wrap;font-weight:bold;color:#0369a1;">${esc(b.replacementBehaviors || '—')}</div>
+          
+          ${techsList ? `
+            <p style="margin:8px 0 4px 0;"><b>فنيات تعديل السلوك المعتمدة بالخطة:</b></p>
+            <ul style="margin:0;padding-right:20px;font-size:0.85rem;color:#0f172a;">
+              ${techsList}
+            </ul>
+          ` : ''}
+
+          ${b.reinforcementStrategies ? `
+            <p style="margin:10px 0 4px 0;"><b>تفاصيل إجراءات التدخل واستراتيجيات التعزيز:</b></p>
+            <div style="background:#fff;padding:8px 12px;border-radius:6px;border:1px solid #7dd3fc;white-space:pre-wrap;font-size:0.85rem;">${esc(b.reinforcementStrategies)}</div>
+          ` : ''}
+        </div>
+
+        <!-- PROGRESS GRAPH / DATA -->
+        ${b.trackingPoints && b.trackingPoints.length > 0 ? `
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:18px;">
+            <h3 style="color:#475569;margin-top:0;margin-bottom:10px;border-bottom:1px solid #cbd5e1;padding-bottom:6px;">📈 الخط البياني لرصد التقدم (معدل حدوث السلوك المستهدف)</h3>
+            <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
+              <table style="width:230px;border-collapse:collapse;font-size:12px;background:#fff;">
+                <thead>
+                  <tr style="background:#f1f5f9;">
+                    <th style="padding:5px;border:1px solid #cbd5e1;">#</th>
+                    <th style="padding:5px;border:1px solid #cbd5e1;">أسبوع / جلسة القياس</th>
+                    <th style="padding:5px;border:1px solid #cbd5e1;">المعدل / القيمة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${trackingRows}
+                </tbody>
+              </table>
+              <div style="flex:1;min-width:280px;text-align:center;padding:10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;">
+                <div style="font-size:11px;color:#64748b;margin-bottom:6px;">منحنى تنازلي مرغوب (رصد الانخفاض التدريجي للسلوك غير المرغوب)</div>
+                <!-- Mini text chart indicator -->
+                <div style="display:flex;justify-content:space-around;align-items:flex-end;height:70px;padding-top:10px;border-bottom:2px solid #94a3b8;position:relative;">
+                  ${(b.trackingPoints || []).map((pt) => {
+                    const maxVal = Math.max(...b.trackingPoints.map(p => Number(p.value) || 0), 1);
+                    const pct = ((Number(pt.value) || 0) / maxVal) * 100;
+                    return `
+                      <div style="display:flex;flex-direction:column;align-items:center;width:40px;">
+                        <span style="font-size:10px;font-weight:bold;color:#ef4444;margin-bottom:2px;">${pt.value}</span>
+                        <div style="width:16px;height:${Math.max(pct * 0.5, 4)}px;background:#fca5a5;border:1px solid #ef4444;border-bottom:none;border-radius:3px 3px 0 0;"></div>
+                        <span style="font-size:9px;color:#64748b;margin-top:4px;white-space:nowrap;">${pt.date}</span>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
+        ${b.notes ? `
+          <div style="margin-top:14px;background:#f8fafc;padding:10px;border-radius:8px;border:1px solid #cbd5e1;">
+            <b>📝 ملاحظات وتوجيهات إضافية:</b>
+            <p style="margin:4px 0 0 0;font-size:.85rem;white-space:pre-wrap;">${esc(b.notes)}</p>
+          </div>
+        ` : ''}
+
+        <div style="margin-top:40px;display:flex;justify-content:space-between;border-top:1px dashed #94a3b8;padding-top:20px;font-size:12px;">
+          <div><b>أخصائي تعديل السلوك المعالج:</b> _______________</div>
+          <div><b>توقيع ولي الأمر المطلع:</b> _______________</div>
+          <div><b>اعتماد المشرف الفني للمركز:</b> _______________</div>
+        </div>
+      </div>
+    `;
+
+    const win = window.open('', '_blank');
+    if (!win) { toast('⚠️ يرجى السماح بالنوافذ المنبثقة للطباعة', 'er'); return; }
+    win.document.write(`
+      <html dir="rtl" lang="ar">
+        <head>
+          <title>خطة تعديل السلوك BIP - ${b.studentName}</title>
+          <style>body { font-family: 'Segoe UI', Tahoma, Arial; padding: 20px; font-size: 13px; }</style>
+        </head>
+        <body>
+          <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #334155;padding-bottom:10px;margin-bottom:16px;">
+            <div style="font-size:1.4rem;font-weight:bold;color:#dc2626;">${center?.name || 'مركز الأمل للتربية الخاصة'}</div>
             ${center?.logo ? `<img src="${center.logo}" style="height:60px;" />` : ''}
           </div>
           ${html}
@@ -929,77 +1221,356 @@ export default function PillarPlans({ onDataChange }) {
       {bipModal && (
         <div className="mbg">
           <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '95vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="fhd" style={{ padding: '14px 20px' }}>
-              <h2>📐 {bipEditId ? 'تعديل خطة السلوك' : 'إنشاء خطة تعديل سلوك (BIP)'}</h2>
+            <div className="fhd" style={{ padding: '14px 20px', background: 'var(--err)', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: '1.4rem' }}>📐</span>
+                <h2 style={{ margin: 0, color: '#fff', fontSize: '1.15rem', fontWeight: 800 }}>
+                  {bipEditId ? 'تعديل خطة التدخل السلوكي (BIP)' : 'إنشاء خطة تدخل وتعديل سلوك فردية (BIP)'}
+                </h2>
+              </div>
+              <button 
+                type="button" 
+                style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.4rem', cursor: 'pointer', fontWeight: 'bold' }}
+                onClick={() => setBipModal(false)}
+              >
+                ✕
+              </button>
             </div>
-            <div className="modal-body-scroll" style={{ padding: '18px 20px' }}>
+            <div className="modal-body-scroll" style={{ padding: '20px' }}>
               <div className="fg c2">
-                <StudentPicker form={bipForm} setForm={setBipForm} students={students} emps={emps} showExtra />
+                
+                {/* 1. Student Info Section */}
+                <div className="fl full" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: 16, marginBottom: 12 }}>
+                  <StudentPicker form={bipForm} setForm={setBipForm} students={students} emps={emps} showExtra />
+                </div>
+
+                {/* 2. Basic Fields Section */}
                 <div className="fl full">
-                  <label>عنوان الخطة <span className="req">*</span></label>
+                  <label style={{ fontWeight: 800 }}>عنوان الخطة السلوكية <span className="req">*</span></label>
                   <input
                     value={bipForm.title}
                     onChange={e => setBipForm(f => ({ ...f, title: e.target.value }))}
-                    placeholder="مثال: خطة تقليل نوبات الغضب وتنمية التواصل..."
+                    placeholder="مثال: خطة خفض تكرار سلوك نوبات الغضب وتنمية التواصل اللفظي البديل"
                   />
                 </div>
                 <div className="fl">
-                  <label>تاريخ الخطة</label>
+                  <label style={{ fontWeight: 800 }}>تاريخ بدء الخطة</label>
                   <input type="date" value={bipForm.date} onChange={e => setBipForm(f => ({ ...f, date: e.target.value }))}/>
                 </div>
                 <div className="fl">
-                  <label>تاريخ المراجعة</label>
+                  <label style={{ fontWeight: 800 }}>تاريخ المراجعة والتقييم</label>
                   <input type="date" value={bipForm.reviewDate} onChange={e => setBipForm(f => ({ ...f, reviewDate: e.target.value }))}/>
                 </div>
-                <div className="fl full">
-                  <label>السلوك المستهدف (وصف إجرائي دقيق)</label>
-                  <textarea
-                    value={bipForm.targetBehaviors}
-                    onChange={e => setBipForm(f => ({ ...f, targetBehaviors: e.target.value }))}
-                    rows={2}
-                    placeholder="وصف السلوك غير المرغوب، معدل تكراره وشدته..."
-                  />
-                </div>
+                
                 <div className="fl">
-                  <label>المثيرات القبلية (السوابق - Antecedents)</label>
-                  <textarea
-                    value={bipForm.antecedents}
-                    onChange={e => setBipForm(f => ({ ...f, antecedents: e.target.value }))}
-                    rows={2}
-                    placeholder="ما يحدث قبل ظهور السلوك مباشرة..."
-                  />
+                  <label style={{ fontWeight: 800 }}>حالة الخطة الحالية</label>
+                  <select
+                    value={bipForm.status || 'active'}
+                    onChange={e => setBipForm(f => ({ ...f, status: e.target.value }))}
+                    style={{ fontWeight: 'bold' }}
+                  >
+                    <option value="active">⏳ نشطة وتحت التطبيق</option>
+                    <option value="maintenance">🤝 مرحلة التعميم وصيانة السلوك</option>
+                    <option value="achieved">✅ تم تعديل السلوك بنجاح</option>
+                    <option value="needs_revision">⚠️ بحاجة لتعديل ومراجعة الفنيات</option>
+                  </select>
                 </div>
+
                 <div className="fl">
-                  <label>اللواحق والوظيفة السلوكية (Consequences)</label>
+                  <label style={{ fontWeight: 800 }}>الطور الحالي للخطة</label>
+                  <select
+                    value={bipForm.timelinePhase || 'observation'}
+                    onChange={e => setBipForm(f => ({ ...f, timelinePhase: e.target.value }))}
+                    style={{ fontWeight: 'bold', color: 'var(--pr)' }}
+                  >
+                    <option value="observation">🔎 الملاحظة والتقييم القبلي</option>
+                    <option value="intervention">⚡ التطبيق الفعلي لفنيات التدخل</option>
+                    <option value="generalization">🤝 مرحلة التعميم والثبات</option>
+                    <option value="followup">📅 المتابعة الدورية وصيانة السلوك</option>
+                  </select>
+                </div>
+
+                {/* 3. ABC Behavioural Analysis Panel */}
+                <div className="fl full" style={{ border: '1px solid #fca5a5', background: '#fffcfc', borderRadius: 12, padding: 16, marginTop: 12 }}>
+                  <h3 style={{ margin: '0 0 14px 0', fontSize: '.95rem', fontWeight: 800, color: '#991b1b', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>🧬</span> <span>التحليل العلمي والوظيفي للسلوك (ABC Behavioral Analysis)</span>
+                  </h3>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14 }}>
+                    <div>
+                      <label style={{ fontWeight: 800, fontSize: '.84rem', color: '#7f1d1d', marginBottom: 4, display: 'block' }}>
+                        1. السلوك المستهدف إجرائياً (Behavior) <span className="req">*</span>
+                      </label>
+                      <textarea
+                        value={bipForm.proceduralBehavior}
+                        onChange={e => setBipForm(f => ({ ...f, proceduralBehavior: e.target.value }))}
+                        rows={3}
+                        placeholder="صف السلوك بشكل دقيق وقابل للقياس (مثال: يقوم الطالب بالصراخ ورمي الأدوات الدراسية على الأرض عندما يطلب منه الكتابة)"
+                        style={{ border: '1px solid #fca5a5' }}
+                      />
+                    </div>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+                      <div>
+                        <label style={{ fontWeight: 800, fontSize: '.84rem', color: '#7f1d1d', marginBottom: 4, display: 'block' }}>
+                          2. السوابق والمثيرات القبلية (Antecedents)
+                        </label>
+                        <textarea
+                          value={bipForm.antecedents}
+                          onChange={e => setBipForm(f => ({ ...f, antecedents: e.target.value }))}
+                          rows={3}
+                          placeholder="ما يحدث قبل ظهور السلوك مباشرة (مثال: طلب أداء مهمة صعبة، رفض تقديم معزز، ضوضاء عالية)"
+                          style={{ border: '1px solid #fca5a5' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontWeight: 800, fontSize: '.84rem', color: '#7f1d1d', marginBottom: 4, display: 'block' }}>
+                          3. العواقب واللواحق والتدابير الحالية (Consequences)
+                        </label>
+                        <textarea
+                          value={bipForm.consequences}
+                          onChange={e => setBipForm(f => ({ ...f, consequences: e.target.value }))}
+                          rows={3}
+                          placeholder="ما يحدث فوراً بعد السلوك (مثال: يتم استبعاد الطالب من الحصة، أو منحه اللعبة لإسكاته)"
+                          style={{ border: '1px solid #fca5a5' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Behavior Function radio selector */}
+                  <div style={{ marginTop: 16 }}>
+                    <label style={{ fontWeight: 800, fontSize: '.84rem', color: '#7f1d1d', marginBottom: 8, display: 'block' }}>
+                      4. الوظيفة الافتراضية للسلوك (الدافع المحرك للسلوك)
+                    </label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
+                      {BEHAVIOR_FUNCTIONS.map(fn => (
+                        <label key={fn.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '.78rem', cursor: 'pointer', padding: '10px 12px', borderRadius: 8, border: bipForm.behaviorFunction === fn.id ? '2px solid #b91c1c' : '1px solid #fca5a5', background: bipForm.behaviorFunction === fn.id ? '#fef2f2' : '#fff', margin: 0, transition: 'all 0.2s' }}>
+                          <input
+                            type="radio"
+                            name="behaviorFunction"
+                            checked={bipForm.behaviorFunction === fn.id}
+                            style={{ marginTop: 2, accentColor: '#b91c1c' }}
+                            onChange={() => setBipForm(f => ({ ...f, behaviorFunction: fn.id }))}
+                          />
+                          <div>
+                            <strong style={{ color: '#7f1d1d', fontSize: '.78rem' }}>{fn.label}</strong>
+                            <div style={{ fontSize: '.68rem', color: '#991b1b', marginTop: 2 }}>{fn.desc}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Measurement & Diagnostics Panel */}
+                <div className="fl full" style={{ border: '1px solid #bbf7d0', background: '#fcfdfc', borderRadius: 12, padding: 16, marginTop: 12 }}>
+                  <h3 style={{ margin: '0 0 14px 0', fontSize: '.95rem', fontWeight: 800, color: '#166534', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>🔎</span> <span>تشخيص وقياس السلوك والخط القاعدي القبلي</span>
+                  </h3>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+                    <div className="fl full" style={{ margin: 0 }}>
+                      <label style={{ fontWeight: 800, fontSize: '.84rem', color: '#166534' }}>مستوى الخط القاعدي القبلي (القياس قبل التدخل)</label>
+                      <input
+                        value={bipForm.baselineLevel}
+                        onChange={e => setBipForm(f => ({ ...f, baselineLevel: e.target.value }))}
+                        placeholder="مثال: يكرر السلوك ١٥ مرة يومياً / مدة السلوك تستمر لـ ١٠ دقائق"
+                        style={{ border: '1px solid #86efac' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontWeight: 800, fontSize: '.84rem', color: '#166534', marginBottom: 8, display: 'block' }}>
+                      طريقة القياس والملاحظة المعتمدة بالخطة
+                    </label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
+                      {OBSERVATION_METHODS.map(obs => (
+                        <label key={obs.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '.78rem', cursor: 'pointer', padding: '10px 12px', borderRadius: 8, border: bipForm.observationMethod === obs.id ? '2px solid #15803d' : '1px solid #86efac', background: bipForm.observationMethod === obs.id ? '#f0fdf4' : '#fff', margin: 0, transition: 'all 0.2s' }}>
+                          <input
+                            type="radio"
+                            name="observationMethod"
+                            checked={bipForm.observationMethod === obs.id}
+                            style={{ marginTop: 2, accentColor: '#15803d' }}
+                            onChange={() => setBipForm(f => ({ ...f, observationMethod: obs.id }))}
+                          />
+                          <div>
+                            <strong style={{ color: '#166534', fontSize: '.78rem' }}>{obs.label}</strong>
+                            <div style={{ fontSize: '.68rem', color: '#15803d', marginTop: 2 }}>{obs.desc}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5. Graphing & Tracking Points Section */}
+                <div className="fl full" style={{ border: '1px solid var(--border-color)', borderRadius: 12, padding: 16, background: 'var(--g0)', marginTop: 12 }}>
+                  <h3 style={{ margin: '0 0 14px 0', fontSize: '.95rem', fontWeight: 800, color: 'var(--pr)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>📈</span> <span>رصد نقاط القياس والتتبع (الرسم البياني لتطور السلوك)</span>
+                  </h3>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                      {(bipForm.trackingPoints || []).map((pt, idx) => (
+                        <div key={idx} style={{ background: '#fff', border: '1px solid var(--border-color)', borderRadius: 10, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6, position: 'relative', minWidth: 100, flex: '1 1 100px' }}>
+                          <label style={{ fontSize: '.7rem', color: 'var(--g5)', margin: 0 }}>الأسبوع / جلسة القياس</label>
+                          <input
+                            style={{ fontSize: '.78rem', padding: '4px 6px', width: '100%' }}
+                            value={pt.date}
+                            placeholder="مثال: أسبوع 1"
+                            onChange={e => {
+                              const copy = [...(bipForm.trackingPoints || [])];
+                              copy[idx].date = e.target.value;
+                              setBipForm(f => ({ ...f, trackingPoints: copy }));
+                            }}
+                          />
+                          <label style={{ fontSize: '.7rem', color: 'var(--g5)', margin: 0 }}>معدل التكرار/المدة</label>
+                          <input
+                            type="number"
+                            style={{ fontSize: '.78rem', padding: '4px 6px', width: '100%', fontWeight: 'bold', color: 'var(--err)' }}
+                            value={pt.value}
+                            placeholder="تكرار"
+                            onChange={e => {
+                              const copy = [...(bipForm.trackingPoints || [])];
+                              copy[idx].value = Number(e.target.value);
+                              setBipForm(f => ({ ...f, trackingPoints: copy }));
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const copy = (bipForm.trackingPoints || []).filter((_, i) => i !== idx);
+                              setBipForm(f => ({ ...f, trackingPoints: copy }));
+                            }}
+                            style={{
+                              position: 'absolute',
+                              top: -6,
+                              left: -6,
+                              background: 'var(--err)',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '50%',
+                              width: 18,
+                              height: 18,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '.65rem',
+                              cursor: 'pointer',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        className="btn btn-g btn-xs"
+                        onClick={() => {
+                          const copy = [...(bipForm.trackingPoints || [])];
+                          const nextNum = copy.length + 1;
+                          copy.push({ date: `أسبوع ${nextNum}`, value: 5 });
+                          setBipForm(f => ({ ...f, trackingPoints: copy }));
+                        }}
+                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, minWidth: 100, flex: '1 1 100px', border: '1px dashed var(--pr)', background: '#fff' }}
+                      >
+                        <span style={{ fontSize: '1.2rem' }}>➕</span>
+                        <span style={{ fontSize: '.75rem', fontWeight: 'bold' }}>أضف نقطة تتبع</span>
+                      </button>
+                    </div>
+
+                    {/* Chart preview */}
+                    {bipForm.trackingPoints && bipForm.trackingPoints.length > 0 && renderBipChart(bipForm.trackingPoints)}
+                  </div>
+                </div>
+
+                {/* 6. Interventions & Replacement Behaviour Panel */}
+                <div className="fl full" style={{ border: '1px solid #bae6fd', background: '#fbfeff', borderRadius: 12, padding: 16, marginTop: 12 }}>
+                  <h3 style={{ margin: '0 0 14px 0', fontSize: '.95rem', fontWeight: 800, color: '#075985', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>🎯</span> <span>فنيات التدخل المطبقة وتدريب السلوك البديل</span>
+                  </h3>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14, marginBottom: 14 }}>
+                    <div>
+                      <label style={{ fontWeight: 800, fontSize: '.84rem', color: '#075985', marginBottom: 4, display: 'block' }}>
+                        السلوك البديل الإيجابي المقترح والمقبول وظيفياً (Alternative Replacement Behavior)
+                      </label>
+                      <textarea
+                        value={bipForm.replacementBehaviors}
+                        onChange={e => setBipForm(f => ({ ...f, replacementBehaviors: e.target.value }))}
+                        rows={2}
+                        placeholder="مثال: تدريب الطالب على رفع البطاقة الحمراء أو استخدام نظام بيكس (PECS) لطلب الراحة بدلاً من الصراخ والرمي"
+                        style={{ border: '1px solid #bae6fd' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Checkbox checklist of techniques */}
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ fontWeight: 800, fontSize: '.84rem', color: '#075985', marginBottom: 8, display: 'block' }}>
+                      فنيات وإجراءات تعديل السلوك المطبقة بالخطة (حدد كل ما يطبق)
+                    </label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10, background: '#fff', border: '1px solid #bae6fd', padding: 14, borderRadius: 10 }}>
+                      {BEHAVIOR_TECHNIQUES.map(tech => {
+                        const isChecked = (bipForm.interventionTechniques || []).includes(tech.id);
+                        return (
+                          <label key={tech.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '.78rem', cursor: 'pointer', margin: 0 }}>
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              style={{ marginTop: 2, width: 15, height: 15, accentColor: '#0284c7' }}
+                              onChange={e => {
+                                let copy = [...(bipForm.interventionTechniques || [])];
+                                if (e.target.checked) {
+                                  if (!copy.includes(tech.id)) copy.push(tech.id);
+                                } else {
+                                  copy = copy.filter(id => id !== tech.id);
+                                }
+                                setBipForm(f => ({ ...f, interventionTechniques: copy }));
+                              }}
+                            />
+                            <div>
+                              <strong style={{ color: '#0369a1', display: 'block' }}>{tech.label}</strong>
+                              <span style={{ fontSize: '.7rem', color: '#64748b' }}>{tech.desc}</span>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontWeight: 800, fontSize: '.84rem', color: '#075985', marginBottom: 4, display: 'block' }}>
+                      تفاصيل إجراءات التدخل واستراتيجيات تعزيز السلوك البديل
+                    </label>
+                    <textarea
+                      value={bipForm.reinforcementStrategies}
+                      onChange={e => setBipForm(f => ({ ...f, reinforcementStrategies: e.target.value }))}
+                      rows={3}
+                      placeholder="صف بالتفصيل كيف سيتم تعزيز الطالب، نوع المعززات، جدول التعزيز (مستمر/متقطع)، وكيفية إدارة نوبة السلوك في حال حدوثها..."
+                      style={{ border: '1px solid #bae6fd' }}
+                    />
+                  </div>
+                </div>
+
+                {/* 7. Additional Notes */}
+                <div className="fl full" style={{ marginTop: 12 }}>
+                  <label style={{ fontWeight: 800 }}>ملاحظات وتوجيهات أخصائي تعديل السلوك</label>
                   <textarea
-                    value={bipForm.consequences}
-                    onChange={e => setBipForm(f => ({ ...f, consequences: e.target.value }))}
+                    value={bipForm.notes}
+                    onChange={e => setBipForm(f => ({ ...f, notes: e.target.value }))}
                     rows={2}
-                    placeholder="الهروب، لفت الانتباه، الحصول على شيء..."
+                    placeholder="ملاحظات حول تعميم الخطة مع الأسرة، توصيات التثبيت، إلخ..."
                   />
                 </div>
-                <div className="fl full">
-                  <label>السلوك البديل المرغوب تدريبه</label>
-                  <textarea
-                    value={bipForm.replacementBehaviors}
-                    onChange={e => setBipForm(f => ({ ...f, replacementBehaviors: e.target.value }))}
-                    rows={2}
-                    placeholder="السلوك الإيجابي المقبول وظيفياً..."
-                  />
-                </div>
-                <div className="fl full">
-                  <label>استراتيجيات التعزيز والتدخل</label>
-                  <textarea
-                    value={bipForm.reinforcementStrategies}
-                    onChange={e => setBipForm(f => ({ ...f, reinforcementStrategies: e.target.value }))}
-                    rows={2}
-                    placeholder="جدول التعزيز، المحفزات، أسلوب التعامل مع الانتكاس..."
-                  />
-                </div>
+
               </div>
             </div>
-            <div className="fa">
-              <button type="button" className="btn btn-p" onClick={saveBip}>💾 حفظ خطة السلوك</button>
+            <div className="fa" style={{ padding: '14px 20px', borderTop: '1px solid var(--border-color)', background: 'var(--g0)' }}>
+              <button type="button" className="btn btn-p" onClick={saveBip} style={{ background: 'var(--err)', border: 'none' }}>💾 حفظ خطة السلوك المعتمدة</button>
               <button type="button" className="btn btn-g" onClick={() => setBipModal(false)}>إلغاء</button>
             </div>
           </div>
