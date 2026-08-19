@@ -433,7 +433,7 @@ export default function CARS2AssessmentModal({
                         >
                           {it.code}
                         </span>
-                        <h3 style={{ margin: 0, fontSize: '.95rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                        <h3 style={{ margin: 0, fontSize: '.95rem', fontWeight: 600, color: 'var(--text-main)' }}>
                           {it.id}. {it.title}
                         </h3>
                       </div>
@@ -445,7 +445,7 @@ export default function CARS2AssessmentModal({
                     {currentScore !== null && (
                       <span
                         className="bdg b-bl"
-                        style={{ fontSize: '.84rem', fontWeight: 900, padding: '4px 10px' }}
+                        style={{ fontSize: '.84rem', fontWeight: 700, padding: '4px 10px' }}
                       >
                         الدرجة المرصودة: {currentScore.toFixed(1)}
                       </span>
@@ -474,7 +474,7 @@ export default function CARS2AssessmentModal({
                             border: isSelected ? `2px solid ${colorClass}` : '1px solid var(--border-color)',
                             background: isSelected ? `${colorClass}18` : 'var(--bg-input, var(--bg-card))',
                             color: isSelected ? colorClass : 'var(--text-main)',
-                            fontWeight: isSelected ? 900 : isInteger ? 700 : 500,
+                            fontWeight: isSelected ? 700 : isInteger ? 600 : 500,
                             fontSize: '.85rem',
                             cursor: 'pointer',
                             display: 'flex',

@@ -1,8 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap');
-:root{--fs:15px;--fw:600;--pr:#1a56db;--pr-d:#1e40af;--pr-l:rgba(26,86,219,.1);--ok:#059669;--ok-l:#ecfdf5;--ok-d:#047857;--warn:#d97706;--warn-l:#fffbeb;--err:#dc2626;--err-l:#fef2f2;--pur:#7c3aed;--pur-l:#f5f3ff;--cyan:#0891b2;--cyan-l:#ecfeff;--pink:#db2777;--pink-l:#fdf2f8;--g0:#f8fafc;--g1:#f1f5f9;--g2:#e2e8f0;--g3:#cbd5e1;--g4:#94a3b8;--g5:#64748b;--g6:#475569;--g7:#334155;--g8:#1e293b;--g9:#0f172a;--r:12px;--r2:8px;--r3:6px;--sh:0 1px 3px rgba(0,0,0,.07);--sh2:0 4px 20px rgba(0,0,0,.10);--sh3:0 12px 40px rgba(0,0,0,.16);--bg-page:var(--g1);--bg-card:white;--bg-input:white;--border-color:var(--g2);--text-main:var(--g8);--text-sub:var(--g6);}
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700;800;900&display=swap');
+:root{--fs:15px;--fw:400;--fw-normal:400;--fw-medium:500;--fw-semibold:600;--fw-bold:700;--fw-black:900;--pr:#1a56db;--pr-d:#1e40af;--pr-l:rgba(26,86,219,.1);--ok:#059669;--ok-l:#ecfdf5;--ok-d:#047857;--warn:#d97706;--warn-l:#fffbeb;--err:#dc2626;--err-l:#fef2f2;--pur:#7c3aed;--pur-l:#f5f3ff;--cyan:#0891b2;--cyan-l:#ecfeff;--pink:#db2777;--pink-l:#fdf2f8;--g0:#f8fafc;--g1:#f1f5f9;--g2:#e2e8f0;--g3:#cbd5e1;--g4:#94a3b8;--g5:#64748b;--g6:#475569;--g7:#334155;--g8:#1e293b;--g9:#0f172a;--r:12px;--r2:8px;--r3:6px;--sh:0 1px 3px rgba(0,0,0,.07);--sh2:0 4px 20px rgba(0,0,0,.10);--sh3:0 12px 40px rgba(0,0,0,.16);--bg-page:var(--g1);--bg-card:white;--bg-input:white;--border-color:var(--g2);--text-main:var(--g8);--text-sub:var(--g6);}
 body.dark{--g0:#1e2736;--g1:#151d2b;--g2:#253347;--g3:#334560;--g4:#5a7a9a;--g5:#7a9ab8;--g6:#9ab8d0;--g7:#b8cfe0;--g8:#ddeeff;--g9:#eef6ff;--bg-page:#151d2b;--bg-card:#1e2736;--bg-input:#253347;--border-color:#2d4060;--text-main:#ddeeff;--text-sub:#7a9ab8;--ok-l:#052e1c;--warn-l:#2d1b00;--err-l:#2d0a0a;--pur-l:#1a0d3a;--cyan-l:#041f2d;--sh:0 1px 3px rgba(0,0,0,.3);--sh2:0 4px 20px rgba(0,0,0,.4);--sh3:0 12px 40px rgba(0,0,0,.5);}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Tajawal',sans-serif;background:var(--bg-page);color:var(--text-main);min-height:100vh;font-size:var(--fs);font-weight:var(--fw);transition:background .25s,color .25s;direction:rtl;}
+body{font-family:'Tajawal',sans-serif;background:var(--bg-page);color:var(--text-main);min-height:100vh;font-size:var(--fs);font-weight:var(--fw, 400);line-height:1.6;transition:background .25s,color .25s;direction:rtl;}
+
+/* ===== Typographic Hierarchy Rules (Tajawal) ===== */
+h1, h2, h3, h4, h5, h6 { font-family: 'Tajawal', sans-serif; font-weight: 700; color: var(--text-main); line-height: 1.35; }
+h1 { font-size: 1.4rem; font-weight: 800; }
+h2 { font-size: 1.15rem; font-weight: 700; }
+h3 { font-size: 0.98rem; font-weight: 700; }
+h4 { font-size: 0.88rem; font-weight: 600; }
+p, li, dd, dt, span:not(.bdg):not(.badge):not(.vl), td, input, select, textarea { font-family: 'Tajawal', sans-serif; font-weight: 400; line-height: 1.6; }
+strong, b { font-weight: 700; }
+small, .text-sm, .text-xs, .sub-text, .desc { font-weight: 400; }
 body.dark .card{background:var(--bg-card);border-color:var(--border-color);}
 body.dark .wg{background:var(--bg-card);border-color:var(--border-color);}
 body.dark .sc{background:var(--bg-card);border-color:var(--border-color);}

@@ -606,7 +606,7 @@ export default function GARS3AssessmentModal({
                         <div style={{ fontSize: '.76rem', color: 'var(--text-sub)', marginBottom: 3 }}>
                           المقياس الفرعي: <strong style={{ color: domain?.color }}>{domain?.name}</strong>
                         </div>
-                        <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-main)', lineHeight: 1.6 }}>
+                        <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-main)', lineHeight: 1.6 }}>
                           {it.text || it.title}
                         </div>
                       </div>
@@ -617,7 +617,7 @@ export default function GARS3AssessmentModal({
                       <span
                         style={{
                           fontSize: '1rem',
-                          fontWeight: 900,
+                          fontWeight: 700,
                           padding: '3px 10px',
                           borderRadius: 6,
                           background: currentScore !== null ? `${domain?.color || 'var(--pr)'}20` : 'var(--g0)',
@@ -663,10 +663,10 @@ export default function GARS3AssessmentModal({
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                            <span style={{ fontWeight: 800, fontSize: '.88rem', color: isSelected ? domain?.color || '#0d9488' : 'var(--text-main)' }}>
+                            <span style={{ fontWeight: 600, fontSize: '.88rem', color: isSelected ? domain?.color || '#0d9488' : 'var(--text-main)' }}>
                               {opt.label} ({optScore})
                             </span>
-                            {isSelected && <span style={{ color: domain?.color || '#0d9488', fontSize: '.9rem', fontWeight: 900 }}>✓</span>}
+                            {isSelected && <span style={{ color: domain?.color || '#0d9488', fontSize: '.9rem', fontWeight: 700 }}>✓</span>}
                           </div>
                           <span style={{ fontSize: '.74rem', color: 'var(--text-sub)', marginTop: 4, lineHeight: 1.4 }}>
                             {opt.description || opt.hint}

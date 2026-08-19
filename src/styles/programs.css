@@ -64,7 +64,7 @@
 .prog-card-title {
   margin: 0 0 6px 0;
   font-size: 1.05rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text-main);
   line-height: 1.35;
 }
@@ -72,6 +72,7 @@
 .prog-card-subtitle {
   margin: 0;
   font-size: 0.84rem;
+  font-weight: 400;
   color: var(--text-sub);
   line-height: 1.55;
   display: -webkit-box;
@@ -89,7 +90,7 @@
 
 .prog-feature-chip {
   font-size: 0.74rem;
-  font-weight: 600;
+  font-weight: 500;
   background: var(--g0);
   color: var(--text-sub);
   padding: 3px 8px;
@@ -109,7 +110,7 @@
 
 .prog-card-action-text {
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -144,13 +145,14 @@
 .prog-page-title {
   margin: 0;
   font-size: 1.1rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text-main);
 }
 
 .prog-page-subtitle {
   margin: 3px 0 0;
   font-size: 0.82rem;
+  font-weight: 400;
   color: var(--text-sub);
 }
 
@@ -235,7 +237,7 @@
   align-items: center;
   justify-content: center;
   font-size: 1.25rem;
-  font-weight: 800;
+  font-weight: 700;
   flex-shrink: 0;
   overflow: hidden;
   background: var(--pr-l);
@@ -250,7 +252,7 @@
 
 .prog-student-name {
   font-size: var(--fs);
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text-main);
   line-height: 1.3;
 }
