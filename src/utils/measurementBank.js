@@ -1,11 +1,108 @@
 export const MEASUREMENT_CATEGORIES = [
-  { id: 'autism', name: 'مقاييس التوحد', icon: '🧩' },
-  { id: 'speech', name: 'مقاييس النطق', icon: '🗣️' },
-  { id: 'learning', name: 'مقاييس صعوبات التعلم', icon: '📘' },
-  { id: 'development', name: 'مقاييس القدرات النمائية', icon: '🌱' },
-  { id: 'sensory', name: 'مقاييس التكامل الحسي', icon: '🎯' },
-  { id: 'psychology', name: 'مقاييس نفسية', icon: '🧠' },
-  { id: 'other', name: 'أخرى', icon: '📌' },
+  {
+    id: 'autism',
+    name: 'مقاييس اضطرابات طيف التوحد',
+    nameEn: 'Autism Spectrum Scales',
+    icon: '🧩',
+    color: '#2563eb',
+    description: 'مقاييس تقدير وتشخيص أعراض وطيف التوحد والسلوك النمطي والتواصل الاجتماعي',
+  },
+  {
+    id: 'speech_language',
+    name: 'مقاييس النطق واللغة والتواصل',
+    nameEn: 'Speech, Language & Communication Scales',
+    icon: '🗣️',
+    color: '#0284c7',
+    description: 'تقييم اللغة التعبيرية والاستقبالية ومخارج الحروف والتواصل الوظيفي واللفظي',
+  },
+  {
+    id: 'learning_academic',
+    name: 'مقاييس صعوبات التعلم والتحصيل الأكاديمي',
+    nameEn: 'Learning Disabilities & Academic Scales',
+    icon: '📘',
+    color: '#d97706',
+    description: 'تشخيص صعوبات القراءة (الدسلكسيا) والكتابة والرياضيات والعمليات النمائية الأكاديمية',
+  },
+  {
+    id: 'intelligence_cognitive',
+    name: 'مقاييس القدرات العقلية والذكاء',
+    nameEn: 'Intelligence & Cognitive Ability Scales',
+    icon: '🧠',
+    color: '#7c3aed',
+    description: 'بطاريات قياس نسبة الذكاء (IQ) والاستدلال المعرفي والقدرات العقلية العامة والخاصة',
+  },
+  {
+    id: 'adaptive_behavior',
+    name: 'مقاييس السلوك التكيفي ومهارات الحياة اليومية',
+    nameEn: 'Adaptive Behavior & Self-Help Scales',
+    icon: '🏠',
+    color: '#059669',
+    description: 'قياس استقلالية العناية بالذات، المهارات الحياتية، والمشاركة المجتمعية والتكيفية',
+  },
+  {
+    id: 'developmental_early',
+    name: 'مقاييس النمو الشامل والتدخل المبكر',
+    nameEn: 'Developmental & Early Intervention Scales',
+    icon: '🌱',
+    color: '#16a34a',
+    description: 'تقييم مراحل التطور النمائي المبكر من عمر الرضاعة وحتى الطفولة المبكرة',
+  },
+  {
+    id: 'behavioral_emotional',
+    name: 'مقاييس الاضطرابات السلوكية والانفعالية',
+    nameEn: 'Behavioral & Emotional Scales',
+    icon: '❤️',
+    color: '#dc2626',
+    description: 'تقييم المشكلات السلوكية، نوبات الغضب، القلق، الانسحاب، والتوافق الانفعالي',
+  },
+  {
+    id: 'adhd',
+    name: 'مقاييس فرط الحركة وتشتت الانتباه',
+    nameEn: 'ADHD Scales',
+    icon: '⚡',
+    color: '#ea580c',
+    description: 'تقييم أعراض قصور الانتباه والنشاط الحركي الزائد والاندفاعية في البيئات المختلفة',
+  },
+  {
+    id: 'executive_functioning',
+    name: 'مقاييس الوظائف التنفيذية والعمليات المعرفية',
+    nameEn: 'Executive Functioning Scales',
+    icon: '⚙️',
+    color: '#4f46e5',
+    description: 'تقييم الذاكرة العاملة، التخطيط والتنظيم، المرونة المعرفية، وكبح الاستجابة (Inhibition)',
+  },
+  {
+    id: 'sensory_motor',
+    name: 'مقاييس المعالجة الحسية والتآزر الحركي',
+    nameEn: 'Sensory Processing & Motor Scales',
+    icon: '🎯',
+    color: '#0891b2',
+    description: 'تقييم التكامل الحسي، الحساسية المفرطة أو المنخفضة، والمهارات الحركية الكبرى والدقيقة',
+  },
+  {
+    id: 'sensory_impairments',
+    name: 'مقاييس الإعاقات الحسية (البصرية والسمعية والمزدوجة)',
+    nameEn: 'Sensory Impairments Scales',
+    icon: '👁️',
+    color: '#9333ea',
+    description: 'تقييم الوظائف البصرية والسمعية والتواصل البديل وتأهيل الإعاقات الحسية المزدوجة',
+  },
+  {
+    id: 'vocational_transition',
+    name: 'مقاييس التأهيل المهني والتخطيط الانتقالي',
+    nameEn: 'Vocational & Transition Scales',
+    icon: '💼',
+    color: '#475569',
+    description: 'تقييم الجاهزية المهنية، الميول والاستعداد للعمل، والتخطيط للدمج واستقلالية البلوغ',
+  },
+  {
+    id: 'play_environmental',
+    name: 'مقاييس اللعب والتقييم البيئي والأسري',
+    nameEn: 'Play & Environmental Scales',
+    icon: '🎲',
+    color: '#db2777',
+    description: 'تقييم مهارات اللعب التواصلي، جودة البيئة المنزلية، والتفاعل الأسري والتمكين',
+  },
 ];
 
 export const CARS_QUESTIONS = [
@@ -334,12 +431,13 @@ const GARS_ITEMS = generateItems('g', 58);
 const SRS_ITEMS = generateItems('s', 65);
 
 const DEFAULT_SCALE_LIBRARY = [
+  // 1. Autism Spectrum Scales (اضطرابات طيف التوحد)
   {
     id: 'cars',
     name: 'كارز (CARS-2)',
-    nameEn: 'CARS-2',
+    nameEn: 'CARS-2 (Childhood Autism Rating Scale, 2nd Ed.)',
     category: 'autism',
-    description: 'مقياس تقدير الذاتوية في الطفولة — 15 بنداً، درجات من 1.0 إلى 4.0 بنصف درجة',
+    description: 'المعيار الذهبي لتقدير وتشخيص طيف التوحد — 15 بنداً تشخيصياً مع الدرجات المعيارية T والرتب المئينية',
     icon: '🧩',
     color: '#1a56db',
     scoreMode: 'sum',
@@ -349,15 +447,15 @@ const DEFAULT_SCALE_LIBRARY = [
     step: 0.5,
     maxScore: 60,
     items: CARS_ITEMS,
-    thresholdText: 'أقل من 30 = غير توحدي، من 30 إلى 36.5 = بسيط إلى متوسط التوحد، من 37 إلى 60 = شديد / حاد التوحد',
+    thresholdText: 'أقل من 30: غير توحدي / الحد الأدنى من الأعراض | 30 إلى 36.5: توحد خفيف إلى متوسط | 37 إلى 60: توحد شديد',
     isDefault: true,
   },
   {
     id: 'gars',
     name: 'جيليام (GARS-3)',
-    nameEn: 'GARS-3',
+    nameEn: 'GARS-3 (Gilliam Autism Rating Scale)',
     category: 'autism',
-    description: 'مقياس جيليام لتقدير التوحد — 58 بنداً / 6 مقاييس فرعية',
+    description: 'مقياس جيليام لتقدير التوحد وفق DSM-5 — 58 بنداً تغطي السلوك النمطي، التواصل، التفاعل، والاستجابة الانفعالية',
     icon: '📊',
     color: '#7c3aed',
     scoreMode: 'subscale',
@@ -366,15 +464,15 @@ const DEFAULT_SCALE_LIBRARY = [
     maxValue: 3,
     maxScore: 174,
     items: GARS_ITEMS,
-    thresholdText: 'يتم حساب النتيجة الفرعية والنسبة الإجمالية ثم مقارنة بالمعايير المناسبة',
+    thresholdText: 'معامل التوحد 85 فما فوق يشير لاحتمالية عالية للإصابة بطيف التوحد',
     isDefault: true,
   },
   {
     id: 'srs',
-    name: 'مقياس الاستجابة الاجتماعية (SRS)',
-    nameEn: 'SRS',
+    name: 'مقياس الاستجابة الاجتماعية (SRS-2)',
+    nameEn: 'SRS-2 (Social Responsiveness Scale)',
     category: 'autism',
-    description: 'مقياس الاستجابة الاجتماعية — 65 بنداً',
+    description: 'مقياس الاستجابة والوعي الاجتماعي والتواصل المتبادل والتحفيز — 65 بنداً',
     icon: '👥',
     color: '#059669',
     scoreMode: 'subscale',
@@ -383,61 +481,390 @@ const DEFAULT_SCALE_LIBRARY = [
     maxValue: 3,
     maxScore: 195,
     items: SRS_ITEMS,
-    thresholdText: 'يعتمد على المجموع الكلي ومقارنته بالمعايير المعيارية',
+    thresholdText: 'الدرجة التائية أعلى من 60 تدل على وجود قصور إكلينيكي في التفاعل الاجتماعي',
     isDefault: true,
   },
   {
+    id: 'pep3',
+    name: 'الملف النفسي التربوي للتوحد (PEP-3)',
+    nameEn: 'PEP-3 (Psychoeducational Profile)',
+    category: 'autism',
+    description: 'تقييم مستويات النمو والسلوكيات غير السوية لتصميم البرامج التربوية الفردية للأطفال ذوي التوحد',
+    icon: '📋',
+    color: '#2563eb',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 2,
+    maxScore: 60,
+    items: [
+      { id: 'pep_1', text: 'الإدراك والتفكير اللفظي وغير اللفظي', domain: 'cognitive' },
+      { id: 'pep_2', text: 'اللغة التعبيرية ونطق الكلمات واستخدام الجمل', domain: 'expressive' },
+      { id: 'pep_3', text: 'اللغة الاستقبالية وفهم الإشارات والأوامر', domain: 'receptive' },
+      { id: 'pep_4', text: 'المهارات الحركية الدقيقة واستخدام اليدين والأصابع', domain: 'fine_motor' },
+      { id: 'pep_5', text: 'المهارات الحركية الكبيرة والتوازن والقفز', domain: 'gross_motor' },
+      { id: 'pep_6', text: 'التقليد البصري والحركي للأفعال', domain: 'motor_imitation' },
+      { id: 'pep_7', text: 'الاستجابة الانفعالية ومشاركة المشاعر', domain: 'emotional' },
+      { id: 'pep_8', text: 'التفاعل والتبادل الاجتماعي مع الأقران والفاحص', domain: 'social' },
+      { id: 'pep_9', text: 'السلوكيات الحركية والنمطية والتكرارية', domain: 'stereotyped' },
+      { id: 'pep_10', text: 'السلوكيات اللفظية غير المناسبة والتكرار اللفظي', domain: 'verbal_behaviors' },
+    ],
+    thresholdText: 'درجات النجاح والانتقال تترجم إلى عمر نمائي ونقاط قوة واحتياج للخطة الفردية',
+    isDefault: true,
+  },
+
+  // 2. Speech, Language & Communication Scales (النطق واللغة والتواصل)
+  {
     id: 'speech_screening',
-    name: 'سجل ملاحظات النطق',
-    category: 'speech',
-    description: 'مقياس ملاحظات أولية للنطق والتواصل اللفظي',
+    name: 'سجل فحص وتقييم النطق ومخارج الحروف',
+    nameEn: 'Articulation & Speech Screening Scale',
+    category: 'speech_language',
+    description: 'مقياس إكلينيكي لتقييم سلامة مخارج الأصوات، الحذف، الإبدال، التشويه، والطلاقة اللفظية',
     icon: '🗣️',
-    color: '#0ea5e9',
+    color: '#0284c7',
     scoreMode: 'sum',
     responseType: 'scale',
     minValue: 1,
     maxValue: 5,
     maxScore: 50,
     items: [
-      { id: 'sp1', text: 'التعبير اللفظي', domain: 'speech' },
-      { id: 'sp2', text: 'الفهم اللغوي', domain: 'speech' },
-      { id: 'sp3', text: 'تكوين الجمل', domain: 'speech' },
-      { id: 'sp4', text: 'المفردات', domain: 'speech' },
-      { id: 'sp5', text: 'نطق الحروف', domain: 'speech' },
-      { id: 'sp6', text: 'التواصل الاجتماعي', domain: 'speech' },
-      { id: 'sp7', text: 'الاستجابة للأوامر', domain: 'speech' },
-      { id: 'sp8', text: 'الاستمرار في المحادثة', domain: 'speech' },
-      { id: 'sp9', text: 'المهارات التكرارية', domain: 'speech' },
-      { id: 'sp10', text: 'الانتباه إلى الكلام', domain: 'speech' },
+      { id: 'sp1', text: 'سلامة ونطق الأصوات اللسانية والشفهية (المخارج)', domain: 'articulation' },
+      { id: 'sp2', text: 'ظاهرة الحذف أو الإبدال أو التشويه في الكلمات', domain: 'phonology' },
+      { id: 'sp3', text: 'الطلاقة الكلامية وسرعة الكلام وغياب التلعثم (التأتأة)', domain: 'fluency' },
+      { id: 'sp4', text: 'جودة الصوت ورنين الصوت (الخنف أو البحة الصوتية)', domain: 'voice' },
+      { id: 'sp5', text: 'وضوح الكلام ومفهوميته للمستمع الغريب', domain: 'intelligibility' },
+      { id: 'sp6', text: 'التعبير اللفظي وتركيب الجمل المناسبة للعمر', domain: 'expressive' },
+      { id: 'sp7', text: 'الفهم اللغوي والاستجابة للتعليمات المركبة', domain: 'receptive' },
+      { id: 'sp8', text: 'استخدام التراكيب النحوية وقواعد الجمع والتأنيث', domain: 'syntax' },
+      { id: 'sp9', text: 'القدرة على بدء المحادثة والاستمرار في تبادل الأدوار', domain: 'pragmatic' },
+      { id: 'sp10', text: 'التواصل الوظيفي عند الرغبة والطلب أو الرفض', domain: 'functional' },
     ],
-    thresholdText: 'كلما ارتفع المجموع، كلما كانت المهارات اللغوية أقوى',
+    thresholdText: 'الدرجة الكلية تعكس مستوى الكفاءة النطقية والتواصلية واحتياج التدخل التخاطبي',
     isDefault: true,
   },
   {
+    id: 'peabody_ppvt',
+    name: 'مقياس بيبودي للمفردات اللغوية المصورة (PPVT-5)',
+    nameEn: 'Peabody Picture Vocabulary Test',
+    category: 'speech_language',
+    description: 'تقييم الحصيلة اللغوية الاستقبالية وفهم المفردات الشفهية المصورة',
+    icon: '📖',
+    color: '#0ea5e9',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 36,
+    items: [
+      { id: 'ppvt_1', text: 'تحديد الأسماء والأشياء المألوفة في البيئة', domain: 'nouns' },
+      { id: 'ppvt_2', text: 'تحديد الأفعال والأنشطة اليومية المصورة', domain: 'verbs' },
+      { id: 'ppvt_3', text: 'تحديد الصفات والألوان والأحجام (كبير/صغير)', domain: 'adjectives' },
+      { id: 'ppvt_4', text: 'تحديد العلاقات المكانية والظروف (فوق/تحت/داخل)', domain: 'spatial' },
+      { id: 'ppvt_5', text: 'فهم التصنيفات والفئات الدلالية (حيوانات/فواكه)', domain: 'categories' },
+      { id: 'ppvt_6', text: 'فهم المفردات المعقدة والمجردة والمشاعر', domain: 'abstract' },
+    ],
+    thresholdText: 'تحديد العمر اللغوي الاستقبالي ونسبة المئينات للحصيلة اللفظية',
+    isDefault: true,
+  },
+
+  // 3. Learning Disabilities & Academic Scales (صعوبات التعلم والتحصيل الأكاديمي)
+  {
     id: 'learning_difficulties',
-    name: 'مقياس صعوبات التعلم',
-    category: 'learning',
-    description: 'تقييم أولي لصعوبات القراءة والكتابة والفهم',
+    name: 'مقياس التقدير التشخيصي لصعوبات التعلم (LDES)',
+    nameEn: 'Learning Disabilities Diagnostic Scale',
+    category: 'learning_academic',
+    description: 'تقييم مؤشرات صعوبات القراءة، الكتابة، الحساب، الانتباه، والذاكرة الأكاديمية',
     icon: '📘',
-    color: '#f59e0b',
+    color: '#d97706',
     scoreMode: 'sum',
     responseType: 'scale',
     minValue: 1,
     maxValue: 4,
     maxScore: 40,
     items: [
-      { id: 'ld1', text: 'القراءة', domain: 'learning' },
-      { id: 'ld2', text: 'الكتابة', domain: 'learning' },
-      { id: 'ld3', text: 'الاستيعاب', domain: 'learning' },
-      { id: 'ld4', text: 'التركيز', domain: 'learning' },
-      { id: 'ld5', text: 'الذاكرة', domain: 'learning' },
-      { id: 'ld6', text: 'التنظيم', domain: 'learning' },
-      { id: 'ld7', text: 'التمييز البصري', domain: 'learning' },
-      { id: 'ld8', text: 'التمييز السمعي', domain: 'learning' },
-      { id: 'ld9', text: 'الاستجابة للمهام', domain: 'learning' },
-      { id: 'ld10', text: 'الاستمرار', domain: 'learning' },
+      { id: 'ld1', text: 'صعوبة التعرف على الحروف والكلمات وتهجئتها (القراءة)', domain: 'reading' },
+      { id: 'ld2', text: 'عكس الحروف والأرقام ورداءة الخط والنسخ (الكتابة)', domain: 'writing' },
+      { id: 'ld3', text: 'صعوبة فهم النصوص المقروءة واستخلاص الفكرة الأساسية', domain: 'comprehension' },
+      { id: 'ld4', text: 'صعوبة حفظ العمليات الحسابية والعد والمفاهيم الرياضية (الديسكالكوليا)', domain: 'math' },
+      { id: 'ld5', text: 'ضعف الذاكرة السمعية والبصرية قصيرة المدى للأرقام والكلمات', domain: 'memory' },
+      { id: 'ld6', text: 'صعوبة تنظيم الوقت والواجبات المدرسية والأدوات', domain: 'organization' },
+      { id: 'ld7', text: 'ضعف التمييز البصري والخلط بين الحروف المتشابهة (ب/ت/ث)', domain: 'visual_perception' },
+      { id: 'ld8', text: 'ضعف التمييز السمعي للأصوات اللغوية المتقاربة', domain: 'auditory_perception' },
+      { id: 'ld9', text: 'بطء معالجة المعلومات الأكاديمية وإنجاز المهام الصفية', domain: 'processing_speed' },
+      { id: 'ld10', text: 'صعوبة اتباع التعليمات المتسلسلة متعددة الخطوات', domain: 'following_directions' },
     ],
-    thresholdText: 'ارتفاع الدرجات يشير إلى صعوبات أكبر في التعلم',
+    thresholdText: 'ارتفاع الدرجة الإجمالية يشير إلى وجود صعوبات نمائية وأكاديمية تستوجب خطة تربوية فردية',
+    isDefault: true,
+  },
+
+  // 4. Intelligence & Cognitive Ability Scales (القدرات العقلية والذكاء)
+  {
+    id: 'stanford_binet_5',
+    name: 'مقياس ستانفورد بينيه للذكاء - الصورة الخامسة (SB-5)',
+    nameEn: 'Stanford-Binet Intelligence Scales (5th Ed.)',
+    category: 'intelligence_cognitive',
+    description: 'بطارية قياس نسبة الذكاء (IQ) والاستدلال التحليلي اللفظي وغير اللفظي والذاكرة العاملة',
+    icon: '🧠',
+    color: '#7c3aed',
+    scoreMode: 'subscale',
+    responseType: 'scale',
+    minValue: 1,
+    maxValue: 5,
+    maxScore: 50,
+    items: [
+      { id: 'sb_1', text: 'الاستدلال السائل غير اللفظي (حل المشكلات والمصفوفات)', domain: 'fluid_reasoning' },
+      { id: 'sb_2', text: 'المعرفة والمعلومات العامة والمفاهيم اللفظية', domain: 'knowledge' },
+      { id: 'sb_3', text: 'الاستدلال الكمي والحسابي والمسائل الرياضية', domain: 'quantitative' },
+      { id: 'sb_4', text: 'المعالجة البصرية المكانية وتركيب الأنماط', domain: 'visual_spatial' },
+      { id: 'sb_5', text: 'الذاكرة العاملة وحفظ السلاسل الرقمية والبصرية', domain: 'working_memory' },
+    ],
+    thresholdText: 'نسبة الذكاء العام (FSIQ): 90-109 متوسط | 70-79 حدّي | أقل من 70 يشير إلى قصور عقلي',
+    isDefault: true,
+  },
+
+  // 5. Adaptive Behavior & Self-Help Scales (السلوك التكيفي ومهارات الحياة اليومية)
+  {
+    id: 'vineland_3',
+    name: 'مقياس فينلاند للسلوك التكيفي (Vineland-3)',
+    nameEn: 'Vineland Adaptive Behavior Scales (3rd Ed.)',
+    category: 'adaptive_behavior',
+    description: 'تقييم مهارات التواصل، الحياة اليومية، التنشئة الاجتماعية، والمهارات الحركية التكيفية',
+    icon: '🏠',
+    color: '#059669',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 2,
+    maxScore: 40,
+    items: [
+      { id: 'vin_1', text: 'استقلالية تناول الطعام والشراب باستخدام الأدوات', domain: 'daily_living' },
+      { id: 'vin_2', text: 'استقلالية النظافة الشخصية واستخدام دورة المياه', domain: 'daily_living' },
+      { id: 'vin_3', text: 'ارتداء الملابس وخلعها وربط الأحذية والأزرار', domain: 'daily_living' },
+      { id: 'vin_4', text: 'التعبير عن الاحتياجات الأساسية باللغة أو الإشارة', domain: 'communication' },
+      { id: 'vin_5', text: 'فهم وتطبيق التعليمات المنزلية والصفية', domain: 'communication' },
+      { id: 'vin_6', text: 'المشاركة في الأنشطة الاجتماعية واللعب التعاوني', domain: 'socialization' },
+      { id: 'vin_7', text: 'التحكم بالانفعالات وتجنب إيذاء الذات أو الآخرين', domain: 'socialization' },
+      { id: 'vin_8', text: 'اتباع قواعد السلامة وتجنب المخاطر والأشياء الحارة', domain: 'community' },
+      { id: 'vin_9', text: 'التنقل المستقل داخل المنزل والمركز والشارع', domain: 'community' },
+      { id: 'vin_10', text: 'التعامل مع النقود والأجهزة البسيطة واستخدام الوقت', domain: 'daily_living' },
+    ],
+    thresholdText: 'درجة معيارية تكيفية أقل من 70 تدل على احتياج دعم تكيفي وتأهيلي مكثف',
+    isDefault: true,
+  },
+
+  // 6. Developmental & Early Intervention Scales (النمو الشامل والتدخل المبكر)
+  {
+    id: 'portage_early',
+    name: 'مقياس دليل بورتيدج للتدخل المبكر (Portage)',
+    nameEn: 'Portage Guide to Early Intervention',
+    category: 'developmental_early',
+    description: 'تقييم شامل للنمو من الولادة حتى 6 سنوات في 5 مجالات نمائية رئيسية بالإضافة للرعاية الوالدية',
+    icon: '🌱',
+    color: '#16a34a',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 2,
+    maxScore: 30,
+    items: [
+      { id: 'port_1', text: 'المجال المعرفي والإدراكي (حل المشكلات والتصنيف)', domain: 'cognitive' },
+      { id: 'port_2', text: 'المجال الحركي الكلي (الجلوس، الوقوف، المشي، الجري)', domain: 'gross_motor' },
+      { id: 'port_3', text: 'المجال الحركي الدقيق (مسك الأشياء، التآزر البصري)', domain: 'fine_motor' },
+      { id: 'port_4', text: 'مجال اللغة والتخاطب (المناغاة، الكلمات، الجمل)', domain: 'language' },
+      { id: 'port_5', text: 'مجال الرعاية الذاتية واستقلالية المأكل والملبس', domain: 'self_help' },
+      { id: 'port_6', text: 'المجال الاجتماعي والانفعالي والتفاعل مع الأسرة', domain: 'social' },
+    ],
+    thresholdText: 'حساب العمر النمائي ومقارنته بالعمر الزمني لتحديد نسبة التأخر النمائي',
+    isDefault: true,
+  },
+
+  // 7. Behavioral & Emotional Scales (الاضطرابات السلوكية والانفعالية)
+  {
+    id: 'behavior_adjustment',
+    name: 'مقياس المشكلات السلوكية والانفعالية',
+    nameEn: 'Behavioral & Emotional Rating Scale',
+    category: 'behavioral_emotional',
+    description: 'تشخيص وتحديد شدة المشكلات السلوكية (العدوانية، العناد، الانسحاب، ونوبات الغضب)',
+    icon: '❤️',
+    color: '#dc2626',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 30,
+    items: [
+      { id: 'beh_1', text: 'ظهور نوبات غضب وصراخ شديدة عند الرفض أو الإحباط', domain: 'tantrums' },
+      { id: 'beh_2', text: 'سلوكيات عدوانية لفظية أو بدنية تجاه الآخرين', domain: 'aggression' },
+      { id: 'beh_3', text: 'سلوكيات إيذاء الذات (ضرب الرأس، العض، الخدش)', domain: 'self_injury' },
+      { id: 'beh_4', text: 'تدمير الممتلكات وتكسير الألعاب والأدوات', domain: 'destruction' },
+      { id: 'beh_5', text: 'العناد ورفض اتباع الأوامر وقواعد الفصل والمنزل', domain: 'defiance' },
+      { id: 'beh_6', text: 'الانسحاب الاجتماعي الشديد وتجنب التفاعل مع الأقران', domain: 'withdrawal' },
+      { id: 'beh_7', text: 'القلق المفرط والمخاوف غير المبررة والتوتر الدائم', domain: 'anxiety' },
+      { id: 'beh_8', text: 'تقلب المزاج المفاجئ بدون أسباب بيئية واضحة', domain: 'mood' },
+    ],
+    thresholdText: 'ارتفاع الدرجات يتطلب إعداد خطة تدخل سلوكي إيجابي (BIP) فورية',
+    isDefault: true,
+  },
+
+  // 8. ADHD Scales (فرط الحركة وتشتت الانتباه)
+  {
+    id: 'conners_3',
+    name: 'مقياس كونرز لفرط الحركة وتشتت الانتباه (Conners-3)',
+    nameEn: 'Conners-3 ADHD Rating Scale',
+    category: 'adhd',
+    description: 'تقييم أعراض نقص الانتباه، فرط النشاط الحركي، الاندفاعية، والمشكلات التنفيذية',
+    icon: '⚡',
+    color: '#ea580c',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 36,
+    items: [
+      { id: 'adhd_1', text: 'صعوبة الحفاظ على الانتباه في المهام أو أنشطة اللعب', domain: 'inattention' },
+      { id: 'adhd_2', text: 'تشتت الانتباه بسهولة بالمثيرات الخارجية العارضة', domain: 'inattention' },
+      { id: 'adhd_3', text: 'صعوبة تنظيم المهام والأنشطة ونسيان الأدوات', domain: 'inattention' },
+      { id: 'adhd_4', text: 'كثرة التململ والاهتزاز في المقعد وتحريك اليدين والقدمين', domain: 'hyperactivity' },
+      { id: 'adhd_5', text: 'مغادرة المقعد في مواقف يتوقع فيها الجلوس والاستقرار', domain: 'hyperactivity' },
+      { id: 'adhd_6', text: 'الجري والتسلق المفرط في مواقف غير مناسبة', domain: 'hyperactivity' },
+      { id: 'adhd_7', text: 'التحدث المفرط والمستمر بدون توقف', domain: 'hyperactivity' },
+      { id: 'adhd_8', text: 'الإجابة المندفعة والتسرع قبل اكتمال طرح الأسئلة', domain: 'impulsivity' },
+      { id: 'adhd_9', text: 'صعوبة بالغة في انتظار الدور ومقاطعة حديث الآخرين', domain: 'impulsivity' },
+    ],
+    thresholdText: 'درجة خام مرتفعة (> 65 تائية) تؤكد اشتباه اضطراب ADHD بنمطيه الحركي والذهني',
+    isDefault: true,
+  },
+
+  // 9. Executive Functioning Scales (الوظائف التنفيذية والعمليات المعرفية)
+  {
+    id: 'brief_2',
+    name: 'مقياس تقييم السلوك التنفيذي (BRIEF-2)',
+    nameEn: 'Behavior Rating Inventory of Executive Function',
+    category: 'executive_functioning',
+    description: 'تقييم كبح الاستجابة، المرونة المعرفية، الذاكرة العاملة، المراقبة الذاتية، والتخطيط',
+    icon: '⚙️',
+    color: '#4f46e5',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 1,
+    maxValue: 3,
+    maxScore: 24,
+    items: [
+      { id: 'ef_1', text: 'كبح الاندفاع والتوقف قبل التصرف غير المناسب', domain: 'inhibit' },
+      { id: 'ef_2', text: 'المرونة في الانتقال بين المهام والتكيف مع التغيير', domain: 'shift' },
+      { id: 'ef_3', text: 'الضبط الانفعالي والتحكم في ردود الأفعال العاطفية', domain: 'emotional_control' },
+      { id: 'ef_4', text: 'بدء المهام والواجبات بشكل مستقل دون حث متكرر', domain: 'initiate' },
+      { id: 'ef_5', text: 'الاحتفاظ بالمعلومات في الذاكرة العاملة أثناء التنفيذ', domain: 'working_memory' },
+      { id: 'ef_6', text: 'التخطيط المسبق وترتيب خطوات العمل', domain: 'plan_organize' },
+      { id: 'ef_7', text: 'المراقبة الذاتية وملاحظة الأخطاء وتصحيحها', domain: 'self_monitor' },
+    ],
+    thresholdText: 'مؤشر التنظيم السلوكي والمعرفي يعكس كفاءة الفص الجبهي للتعلم المستقل',
+    isDefault: true,
+  },
+
+  // 10. Sensory Processing & Motor Scales (المعالجة الحسية والتآزر الحركي)
+  {
+    id: 'sensory_profile_2',
+    name: 'الملف الحسي الثاني (Sensory Profile-2)',
+    nameEn: 'Sensory Profile 2 (Winnie Dunn)',
+    category: 'sensory_motor',
+    description: 'تقييم أنماط المعالجة الحسية (البصرية، السمعية، اللمسية، الدهليزية، والحس العميق)',
+    icon: '🎯',
+    color: '#0891b2',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 1,
+    maxValue: 5,
+    maxScore: 40,
+    items: [
+      { id: 'sp_prof_1', text: 'الحساسية اللمسية والانزعاج من ملامس الملابس أو الأيدي', domain: 'tactile' },
+      { id: 'sp_prof_2', text: 'الحساسية البصرية والانبهار بالأضواء أو تغطية العينين', domain: 'visual' },
+      { id: 'sp_prof_3', text: 'الحساسية السمعية وتغطية الأذنين من الأصوات اليومية', domain: 'auditory' },
+      { id: 'sp_prof_4', text: 'المعالجة الدهليزية وتجنب المراجيح والحركات المرتفعة', domain: 'vestibular' },
+      { id: 'sp_prof_5', text: 'البحث الحسي والتأرجح المستمر والقفز والاصطدام', domain: 'proprioception' },
+      { id: 'sp_prof_6', text: 'التآزر الحركي البصري والمهارات الحركية الدقيقة (المقص، القلم)', domain: 'fine_motor' },
+      { id: 'sp_prof_7', text: 'التوازن الحركي العام والمشي وتفادي العوائق', domain: 'gross_motor' },
+      { id: 'sp_prof_8', text: 'تخطيط الحركة (Dyspraxia) وتقليد السلاسل الحركية', domain: 'praxis' },
+    ],
+    thresholdText: 'تحديد ما إذا كانت الاستجابة الحسية تمثل تفاعلاً زائداً، منخفضاً، أو بحثاً حسياً',
+    isDefault: true,
+  },
+
+  // 11. Sensory Impairments Scales (الإعاقات الحسية البصرية والسمعية والمزدوجة)
+  {
+    id: 'functional_vision_eval',
+    name: 'مقياس التقييم الوظيفي للبصر وضعف الرؤية (FVA)',
+    nameEn: 'Functional Vision Assessment Scale',
+    category: 'sensory_impairments',
+    description: 'تقييم كفاءة استخدام الرؤية المتبقية، التتبع البصري، إدراك الألوان، والتوجه والحركة',
+    icon: '👁️',
+    color: '#9333ea',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 1,
+    maxValue: 4,
+    maxScore: 24,
+    items: [
+      { id: 'fva_1', text: 'التثبيت البصري والتواصل البصري مع الوجوه والأشياء', domain: 'fixation' },
+      { id: 'fva_2', text: 'التتبع البصري للأجسام المتحركة أفقياً وعمودياً', domain: 'tracking' },
+      { id: 'fva_3', text: 'التمييز بين الألوان والتباين اللوني للأدوات', domain: 'contrast_color' },
+      { id: 'fva_4', text: 'التوجه والحركة الآمنة وتجنب العوائق البصرية', domain: 'mobility' },
+      { id: 'fva_5', text: 'استخدام الرؤية القريبة في القراءة والأنشطة الدقيقة أو برايل', domain: 'near_vision' },
+      { id: 'fva_6', text: 'الاستجابة للضوء والتكيف مع تغير الإضاءة المحيطة', domain: 'light_adaptation' },
+    ],
+    thresholdText: 'تحديد الوسائل المعينة البصرية وبرنامج التوجه والحركة المناسب',
+    isDefault: true,
+  },
+
+  // 12. Vocational & Transition Scales (التأهيل المهني والتخطيط الانتقالي)
+  {
+    id: 'transition_vocational',
+    name: 'مقياس الجاهزية المهنية والتخطيط الانتقالي',
+    nameEn: 'Vocational Readiness & Transition Scale',
+    category: 'vocational_transition',
+    description: 'تقييم الاستعداد لبيئة العمل، المهارات المهنية، الالتزام بالتعليمات، واستقلالية المجتمع',
+    icon: '💼',
+    color: '#475569',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 1,
+    maxValue: 4,
+    maxScore: 24,
+    items: [
+      { id: 'voc_1', text: 'الالتزام بمواعيد الحضور وساعات التدريب والعمل', domain: 'punctuality' },
+      { id: 'voc_2', text: 'اتباع توجيهات المشرف والتعليمات المهنية بدقة', domain: 'compliance' },
+      { id: 'voc_3', text: 'الاستمرار في أداء المهمة المهنية دون تشتت أو انقطاع', domain: 'task_persistence' },
+      { id: 'voc_4', text: 'التعامل الإيجابي مع زملاء العمل والعملاء', domain: 'workplace_social' },
+      { id: 'voc_5', text: 'استخدام أدوات السلامة المهنية وتجنب مخاطر العمل', domain: 'safety' },
+      { id: 'voc_6', text: 'إتقان المهارات اليدوية والإنتاجية المطلوبة للمهنة', domain: 'productivity' },
+    ],
+    thresholdText: 'تحديد مؤشر الجاهزية للتوظيف المدعوم أو التوظيف المستقل في سوق العمل',
+    isDefault: true,
+  },
+
+  // 13. Play & Environmental Scales (اللعب والتقييم البيئي والأسري)
+  {
+    id: 'play_environmental',
+    name: 'مقياس تقييم مهارات اللعب والبيئة الأسرية',
+    nameEn: 'Play Skills & Home Environment Assessment',
+    category: 'play_environmental',
+    description: 'تقييم مراحل اللعب (الحسي، الوظيفي، الرمزي، التخيلي، التبادلي) وجودة البيئة المنزلية',
+    icon: '🎲',
+    color: '#db2777',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 1,
+    maxValue: 4,
+    maxScore: 24,
+    items: [
+      { id: 'play_1', text: 'اللعب الاستكشافي والحسي للأشياء وملمسها', domain: 'exploratory' },
+      { id: 'play_2', text: 'اللعب الوظيفي بالألعابตาม غرضها المصنوعة له (السيارة تسير، الهاتف للمكالمة)', domain: 'functional' },
+      { id: 'play_3', text: 'اللعب الرمزي والتخيلي (إطعام الدمية، تمثيل الأدوار)', domain: 'symbolic' },
+      { id: 'play_4', text: 'اللعب التبادلي ومشاركة الألعاب مع الأقران والانتظار', domain: 'social_play' },
+      { id: 'play_5', text: 'توفر بيئة منزلية محفزة للتعلم والألعاب المناسبة للعمر', domain: 'home_stimulation' },
+      { id: 'play_6', text: 'مستوى التفاعل الإيجابي اليومي والدعم بين الأسرة والطفل', domain: 'family_interaction' },
+    ],
+    thresholdText: 'تحديد مرحلة اللعب الحالية وتوجيه أولياء الأمور لتطوير استراتيجيات اللعب النمائي',
     isDefault: true,
   },
 ];
@@ -464,9 +891,26 @@ export function getScaleOptions(scale) {
   return options;
 }
 
+// Category ID Normalization & Aliasing for Backward Compatibility
+export function normalizeCategoryId(catId) {
+  if (!catId) return 'autism';
+  const legacyMap = {
+    speech: 'speech_language',
+    learning: 'learning_academic',
+    sensory: 'sensory_motor',
+    psychology: 'behavioral_emotional',
+    development: 'developmental_early',
+    other: 'autism',
+  };
+  return legacyMap[catId] || catId;
+}
+
 export function groupScalesByCategory(scales = []) {
   return MEASUREMENT_CATEGORIES.reduce((acc, category) => {
-    acc[category.id] = scales.filter(scale => scale.category === category.id);
+    acc[category.id] = scales.filter(scale => {
+      const normalizedCat = normalizeCategoryId(scale.category);
+      return normalizedCat === category.id;
+    });
     return acc;
   }, {});
 }
@@ -483,7 +927,7 @@ export function buildAssessmentResult(scale, answers = {}) {
   }, 0);
 
   const maxScore = getScaleMax(scale);
-  const percentage = maxScore > 0 ? Number(((total / maxScore) * 100).toFixed(1)) : 0;
+  const percentageNum = maxScore > 0 ? Number(((total / maxScore) * 100).toFixed(1)) : 0;
 
   let level = 'غير محدد';
   let color = '#64748b';
@@ -499,10 +943,10 @@ export function buildAssessmentResult(scale, answers = {}) {
       level = 'شديد / حاد التوحد';
       color = '#ef4444';
     }
-  } else if (percentage >= 70) {
+  } else if (percentageNum >= 70) {
     level = 'مرتفع';
     color = '#ef4444';
-  } else if (percentage >= 40) {
+  } else if (percentageNum >= 40) {
     level = 'متوسط';
     color = '#f59e0b';
   } else {
@@ -512,9 +956,13 @@ export function buildAssessmentResult(scale, answers = {}) {
 
   return {
     total,
-    percentage,
+    score: total,
+    maxScore,
+    percentage: `${percentageNum}%`,
+    percentageNum,
     level,
     color,
+    severityColor: color,
     note: scale?.thresholdText || 'تم حساب النتيجة بناءً على المقياس المختار',
   };
 }

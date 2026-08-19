@@ -10,6 +10,8 @@ import {
   getScaleOptions,
 } from '../../utils/measurementBank';
 import { StudentPicker, validateStudentPick, EMPTY_STU_PICK } from './StudentPicker';
+import CARS2AssessmentModal from '../../components/assessments/CARS2AssessmentModal';
+import CARS2ReportModal from '../../components/assessments/CARS2ReportModal';
 
 const EMPTY_MEASURE = {
   id: '',
@@ -55,6 +57,11 @@ export default function MeasurementCenter({ onBack }) {
   const [selectedCategoryId, setSelectedCategoryId] = useState('autism');
   const [assessments, setAssessments] = useState([]);
 
+  // CARS-2 Specific Modals
+  const [carsModalOpen, setCarsModalOpen] = useState(false);
+  const [carsReportOpen, setCarsReportOpen] = useState(false);
+  const [selectedCarsAssessment, setSelectedCarsAssessment] = useState(null);
+
   function reload() {
     setStudents(lsGet('students'));
     setScales(getAvailableScales());
@@ -67,8 +74,7 @@ export default function MeasurementCenter({ onBack }) {
   const groupedScales = useMemo(() => groupScalesByCategory(scales), [scales]);
 
   const selectedScale = useMemo(() => {
-    const list = getAvailableScales();
-    return list.find(scale => scale.id === selectedScaleId) || list[0] || null;
+    return scales.find(scale => scale.id === selectedScaleId) || scales[0] || null;
   }, [selectedScaleId, scales]);
 
   const visibleCategoryScales = useMemo(() => {
@@ -127,6 +133,10 @@ export default function MeasurementCenter({ onBack }) {
   }
 
   function openAssessmentModal(scaleId) {
+    if (scaleId === 'cars') {
+      setCarsModalOpen(true);
+      return;
+    }
     const scale = getAvailableScales().find(item => item.id === scaleId);
     if (!scale) return;
     const answerDefaults = {};
@@ -276,21 +286,60 @@ export default function MeasurementCenter({ onBack }) {
           {(assessments.length === 0) ? (
             <div style={{ padding: 24, textAlign: 'center', color: 'var(--g5)' }}>لا توجد تقييمات مسجلة بعد.</div>
           ) : (
-            assessments.map(item => (
-              <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: 12, borderBottom: '1px solid var(--border-color)' }}>
-                <div>
-                  <div style={{ fontWeight: 800 }}>{item.measureName || 'مقياس'}</div>
-                  <div style={{ fontSize: '.76rem', color: 'var(--g5)' }}>{item.studentName || 'طالب'} • {item.date} • {item.level || 'نتيجة'} </div>
+            assessments.map(item => {
+              const isCars = item.measureId === 'cars' || item.scaleType === 'cars2';
+              return (
+                <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: 12, borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap' }}>
+                  <div>
+                    <div style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span>{item.measureName || 'مقياس'}</span>
+                      {isCars && <span className="bdg b-bl" style={{ fontSize: '.68rem' }}>CARS-2</span>}
+                    </div>
+                    <div style={{ fontSize: '.76rem', color: 'var(--g5)' }}>
+                      {item.studentName || 'طالب'} • {item.date} • {item.level || 'نتيجة'} {item.tScore ? `(T: ${item.tScore} | ${item.percentile}%)` : ''}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span className="bdg b-cy">الدرجة: {item.score ?? 0}</span>
+                    {isCars && (
+                      <button
+                        type="button"
+                        className="btn btn-xs btn-p"
+                        onClick={() => {
+                          setSelectedCarsAssessment(item);
+                          setCarsReportOpen(true);
+                        }}
+                      >
+                        📄 تقرير CARS-2
+                      </button>
+                    )}
+                    <button type="button" className="btn btn-xs btn-d" onClick={() => deleteAssessment(item.id)}>🗑️</button>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="bdg b-cy">{item.score ?? 0}</span>
-                  <button type="button" className="btn btn-xs btn-d" onClick={() => deleteAssessment(item.id)}>🗑️</button>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
+
+      {/* CARS-2 MODALS */}
+      {carsModalOpen && (
+        <CARS2AssessmentModal
+          isOpen={carsModalOpen}
+          onClose={() => setCarsModalOpen(false)}
+          onSaved={() => reload()}
+          students={students}
+          emps={[]}
+        />
+      )}
+
+      {carsReportOpen && selectedCarsAssessment && (
+        <CARS2ReportModal
+          isOpen={carsReportOpen}
+          onClose={() => setCarsReportOpen(false)}
+          assessment={selectedCarsAssessment}
+        />
+      )}
 
       {measureModal && (
         <div className="mbg" onClick={e => e.target === e.currentTarget && setMeasureModal(false)}>

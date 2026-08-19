@@ -7,11 +7,15 @@ import { handleFileInputChange, FILE_ACCEPT_IMAGE } from '../../utils/fileUpload
 import EmptyState from '../../components/ui/EmptyState';
 import { StudentPicker, validateStudentPick, EMPTY_STU_PICK } from './StudentPicker';
 import { sendReportToWhatsApp } from './programsWhatsApp';
+import CARS2AssessmentModal from '../../components/assessments/CARS2AssessmentModal';
+import CARS2ReportModal from '../../components/assessments/CARS2ReportModal';
 import {
   DEFAULT_SCALE_LIBRARY,
   MEASUREMENT_CATEGORIES,
   groupScalesByCategory,
   buildAssessmentResult,
+  getScaleOptions,
+  normalizeCategoryId,
 } from '../../utils/measurementBank';
 
 const PROGRAM_DOMAINS = [
@@ -46,6 +50,7 @@ export default function PillarAssessment({ onDataChange }) {
   const [emps, setEmps] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudentFilter, setSelectedStudentFilter] = useState('');
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
 
   // Initial Assessment States
   const [evaluations, setEvaluations] = useState([]);
@@ -59,6 +64,12 @@ export default function PillarAssessment({ onDataChange }) {
   const [scaleForm, setScaleForm] = useState(EMPTY_ASSESSMENT);
   const [selectedScaleId, setSelectedScaleId] = useState('cars');
   const [scaleResponses, setScaleResponses] = useState({});
+
+  // CARS-2 Specific Specialized Modals States
+  const [carsModalOpen, setCarsModalOpen] = useState(false);
+  const [carsEditData, setCarsEditData] = useState(null);
+  const [carsReportOpen, setCarsReportOpen] = useState(false);
+  const [selectedCarsAssessment, setSelectedCarsAssessment] = useState(null);
 
   function reload() {
     setStudents(lsGet('students'));
@@ -74,6 +85,14 @@ export default function PillarAssessment({ onDataChange }) {
     const custom = lsGet('measurements') || [];
     return [...DEFAULT_SCALE_LIBRARY, ...custom];
   }, []);
+
+  const categoryMap = useMemo(() => {
+    return Object.fromEntries(MEASUREMENT_CATEGORIES.map(c => [c.id, c]));
+  }, []);
+
+  const scalesGrouped = useMemo(() => {
+    return groupScalesByCategory(allScales);
+  }, [allScales]);
 
   const activeScale = useMemo(() => {
     return allScales.find(s => s.id === selectedScaleId) || allScales[0] || null;
@@ -131,6 +150,11 @@ export default function PillarAssessment({ onDataChange }) {
 
   // Scales Form Handlers
   function openNewScaleAssessment(scaleId) {
+    if (scaleId === 'cars') {
+      setCarsEditData(null);
+      setCarsModalOpen(true);
+      return;
+    }
     const scale = allScales.find(s => s.id === scaleId) || activeScale;
     setSelectedScaleId(scale?.id || 'cars');
     setScaleResponses({});
@@ -140,6 +164,16 @@ export default function PillarAssessment({ onDataChange }) {
       date: todayStr(),
     });
     setScaleModal(true);
+  }
+
+  function openEditCarsAssessment(item) {
+    setCarsEditData(item);
+    setCarsModalOpen(true);
+  }
+
+  function openViewCarsReport(item) {
+    setSelectedCarsAssessment(item);
+    setCarsReportOpen(true);
   }
 
   function handleScaleOptionChange(itemId, value) {
@@ -160,10 +194,12 @@ export default function PillarAssessment({ onDataChange }) {
       ...scaleForm,
       measureId: activeScale.id,
       measureName: activeScale.name,
+      category: activeScale.category,
       score: resultObj.score,
       maxScore: resultObj.maxScore,
       percentage: resultObj.percentage,
       level: resultObj.level,
+      severityColor: resultObj.severityColor,
       results: scaleResponses,
       updatedAt: new Date().toISOString(),
     };
@@ -226,8 +262,19 @@ export default function PillarAssessment({ onDataChange }) {
   const filteredAssessments = assessments.filter(a => {
     const matchSearch = !searchTerm || (a.studentName && a.studentName.includes(searchTerm)) || (a.measureName && a.measureName.includes(searchTerm));
     const matchStu = !selectedStudentFilter || a.stuId === selectedStudentFilter;
-    return matchSearch && matchStu;
+    const normCat = normalizeCategoryId(a.category);
+    const matchCat = selectedCategoryFilter === 'all' || normCat === selectedCategoryFilter;
+    return matchSearch && matchStu && matchCat;
   });
+
+  const filteredScales = allScales.filter(s => {
+    const normCat = normalizeCategoryId(s.category);
+    const matchCat = selectedCategoryFilter === 'all' || normCat === selectedCategoryFilter;
+    const matchSearch = !searchTerm || (s.name && s.name.includes(searchTerm)) || (s.nameEn && s.nameEn.toLowerCase().includes(searchTerm.toLowerCase())) || (s.description && s.description.includes(searchTerm));
+    return matchCat && matchSearch;
+  });
+
+  const currentCategoryMeta = categoryMap[selectedCategoryFilter] || null;
 
   return (
     <div>
@@ -272,24 +319,48 @@ export default function PillarAssessment({ onDataChange }) {
       </div>
 
       {/* Filter Bar */}
-      <div className="prog-filter-bar">
+      <div className="prog-filter-bar" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 }}>
         <input
           type="text"
           className="prog-search-input"
-          placeholder="🔍 بحث باسم الطالب أو المجال أو المقياس..."
+          style={{ flex: '1 1 220px' }}
+          placeholder="🔍 بحث باسم الطالب، المقياس، أو الفئة التشخيصية..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
         />
         <select
           className="prog-select-filter"
+          style={{ flex: '0 1 200px' }}
           value={selectedStudentFilter}
           onChange={e => setSelectedStudentFilter(e.target.value)}
         >
           <option value="">— تصفية بكل الطلاب —</option>
           {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
-        {(searchTerm || selectedStudentFilter) && (
-          <button type="button" className="btn btn-sm btn-g" onClick={() => { setSearchTerm(''); setSelectedStudentFilter(''); }}>
+
+        <select
+          className="prog-select-filter"
+          style={{ flex: '0 1 220px' }}
+          value={selectedCategoryFilter}
+          onChange={e => setSelectedCategoryFilter(e.target.value)}
+        >
+          <option value="all">🌟 جميع الفئات التشخيصية (13 فئة)</option>
+          {MEASUREMENT_CATEGORIES.map(cat => {
+            const count = (scalesGrouped[cat.id] || []).length;
+            return (
+              <option key={cat.id} value={cat.id}>
+                {cat.icon} {cat.name} ({count})
+              </option>
+            );
+          })}
+        </select>
+
+        {(searchTerm || selectedStudentFilter || selectedCategoryFilter !== 'all') && (
+          <button
+            type="button"
+            className="btn btn-sm btn-g"
+            onClick={() => { setSearchTerm(''); setSelectedStudentFilter(''); setSelectedCategoryFilter('all'); }}
+          >
             إلغاء التصفية ✖
           </button>
         )}
@@ -361,39 +432,220 @@ export default function PillarAssessment({ onDataChange }) {
         </div>
       )}
 
-      {/* SUBTAB 2: SCALES LIBRARY */}
+      {/* SUBTAB 2: SCALES LIBRARY WITH 13 DIAGNOSTIC CATEGORIES */}
       {subTab === 'scales' && (
         <div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
-            {allScales.map(scale => (
-              <div
-                key={scale.id}
-                className="prog-scale-card"
+          {/* CATEGORIES BROWSER STRIP */}
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
+              <div style={{ fontWeight: 800, fontSize: '.92rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>📑 الفئات التشخيصية المعتمدة للتربية الخاصة</span>
+                <span className="bdg b-bl" style={{ fontSize: '.72rem' }}>13 فئة مقننة</span>
+              </div>
+              <span style={{ fontSize: '.78rem', color: 'var(--text-sub)' }}>
+                انقر على أي فئة لاستعراض مقاييسها
+              </span>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                gap: 8,
+                overflowX: 'auto',
+                paddingBottom: 8,
+                WebkitOverflowScrolling: 'touch',
+                scrollbarWidth: 'thin',
+              }}
+            >
+              <button
+                type="button"
+                className={`btn btn-sm ${selectedCategoryFilter === 'all' ? 'btn-p' : 'btn-g'}`}
+                onClick={() => setSelectedCategoryFilter('all')}
                 style={{
-                  border: selectedScaleId === scale.id ? '2px solid var(--pr)' : '1px solid var(--border-color)',
-                  background: selectedScaleId === scale.id ? 'var(--pr-l)' : 'var(--bg-card)',
+                  borderRadius: 20,
+                  padding: '6px 14px',
+                  fontWeight: selectedCategoryFilter === 'all' ? 800 : 600,
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <span className="bdg b-or">{scale.categoryLabel || 'مقياس مقنن'}</span>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)', fontWeight: 600 }}>{scale.items?.length || 15} بنداً</span>
-                </div>
-                <h4 style={{ margin: '0 0 16px 0', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.4 }}>
-                  {scale.name}
-                </h4>
-                <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
+                🌟 جميع المقاييس ({allScales.length})
+              </button>
+
+              {MEASUREMENT_CATEGORIES.map(cat => {
+                const count = (scalesGrouped[cat.id] || []).length;
+                const isSelected = selectedCategoryFilter === cat.id;
+                return (
                   <button
+                    key={cat.id}
                     type="button"
-                    className="btn btn-p btn-sm"
-                    style={{ flex: 1 }}
-                    onClick={() => openNewScaleAssessment(scale.id)}
+                    className={`btn btn-sm ${isSelected ? 'btn-p' : 'btn-g'}`}
+                    onClick={() => setSelectedCategoryFilter(cat.id)}
+                    style={{
+                      borderRadius: 20,
+                      padding: '6px 14px',
+                      fontWeight: isSelected ? 800 : 600,
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                    title={cat.nameEn}
                   >
-                    📝 تطبيق المقياس الآن
+                    <span>{cat.icon}</span>
+                    <span>{cat.name}</span>
+                    <span
+                      style={{
+                        background: isSelected ? 'rgba(255,255,255,0.25)' : 'var(--g1)',
+                        padding: '1px 6px',
+                        borderRadius: 10,
+                        fontSize: '.72rem',
+                      }}
+                    >
+                      {count}
+                    </span>
                   </button>
-                </div>
-              </div>
-            ))}
+                );
+              })}
+            </div>
           </div>
+
+          {/* Active Category Description Banner if specific category selected */}
+          {currentCategoryMeta && (
+            <div
+              style={{
+                background: 'var(--pr-l)',
+                border: '1px solid var(--pr)',
+                borderRadius: 12,
+                padding: '12px 16px',
+                marginBottom: 16,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 10,
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '1.2rem' }}>{currentCategoryMeta.icon}</span>
+                  <strong style={{ fontSize: '1rem', color: 'var(--text-main)' }}>{currentCategoryMeta.name}</strong>
+                  <span style={{ fontSize: '.78rem', color: 'var(--text-sub)' }}>({currentCategoryMeta.nameEn})</span>
+                </div>
+                <p style={{ margin: '4px 0 0 0', fontSize: '.82rem', color: 'var(--text-sub)' }}>
+                  {currentCategoryMeta.description}
+                </p>
+              </div>
+              <span className="bdg b-bl" style={{ fontWeight: 800 }}>
+                {(scalesGrouped[currentCategoryMeta.id] || []).length} مقاييس متوفرة
+              </span>
+            </div>
+          )}
+
+          {/* Featured Highlight Card for CARS-2 if Autism or All is active */}
+          {(selectedCategoryFilter === 'all' || selectedCategoryFilter === 'autism') && (
+            <div
+              style={{
+                background: 'linear-gradient(135deg, rgba(30, 64, 175, 0.08), rgba(59, 130, 246, 0.05))',
+                border: '1.5px solid var(--pr)',
+                borderRadius: 14,
+                padding: '16px 20px',
+                marginBottom: 18,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 14,
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span className="bdg b-bl" style={{ fontWeight: 900 }}>المعيار الذهبي لتشخيص التوحد</span>
+                  <span className="bdg b-gr" style={{ fontWeight: 800 }}>مُحدّث بالإصدار الثاني CARS2-ST</span>
+                </div>
+                <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                  🧩 مقياس تقدير التوحد في الطفولة — الإصدار الثاني (CARS-2)
+                </h3>
+                <p style={{ margin: 0, fontSize: '.84rem', color: 'var(--text-sub)' }}>
+                  15 مجالاً تشخيصياً معتمداً · سلم تقدير متدرج (1.0 إلى 4.0 بنصف درجة) · درجات تائية معيارية (T-Scores) ورتب مئينية وتقرير رسمي متكامل
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-p"
+                onClick={() => { setCarsEditData(null); setCarsModalOpen(true); }}
+                style={{ fontWeight: 800, padding: '10px 20px', borderRadius: 10, fontSize: '.9rem' }}
+              >
+                🚀 فتح أداة فحص وتطبيق CARS-2
+              </button>
+            </div>
+          )}
+
+          {/* SCALES GRID */}
+          {filteredScales.length === 0 ? (
+            <EmptyState
+              icon="🔍"
+              title="لم يتم العثور على مقاييس تطابق البحث أو الفئة المختارة"
+              sub="جرب تغيير الفئة التشخيصية أو تفريغ خانة البحث"
+            />
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 14 }}>
+              {filteredScales.map(scale => {
+                const isCars = scale.id === 'cars';
+                const normCat = normalizeCategoryId(scale.category);
+                const catMeta = categoryMap[normCat] || { name: 'مقياس مقنن', icon: '📝', color: '#1a56db' };
+
+                return (
+                  <div
+                    key={scale.id}
+                    className="prog-scale-card"
+                    style={{
+                      border: isCars ? '2px solid var(--pr)' : selectedScaleId === scale.id ? '2px solid var(--pr)' : '1px solid var(--border-color)',
+                      background: isCars ? 'var(--pr-l)' : selectedScaleId === scale.id ? 'var(--pr-l)' : 'var(--bg-card)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, gap: 6 }}>
+                      <span className="bdg b-bl" style={{ fontSize: '.72rem', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span>{catMeta.icon}</span>
+                        <span>{catMeta.name}</span>
+                      </span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)', fontWeight: 600 }}>
+                        {scale.items?.length || 15} بنداً
+                      </span>
+                    </div>
+
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.4 }}>
+                      {scale.name}
+                    </h4>
+                    {scale.nameEn && (
+                      <div style={{ fontSize: '.74rem', color: 'var(--text-sub)', marginBottom: 8, direction: 'ltr', textAlign: 'right' }}>
+                        {scale.nameEn}
+                      </div>
+                    )}
+
+                    <p style={{ fontSize: '.78rem', color: 'var(--text-sub)', margin: '0 0 14px 0', minHeight: 40, lineHeight: 1.5 }}>
+                      {scale.description || scale.thresholdText || 'مقياس تشخيصي مقنن لتحديد مستوى الأداء وخطط التدخل'}
+                    </p>
+
+                    <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
+                      <button
+                        type="button"
+                        className="btn btn-p btn-sm"
+                        style={{ flex: 1, fontWeight: 700 }}
+                        onClick={() => openNewScaleAssessment(scale.id)}
+                      >
+                        {isCars ? '🧩 تطبيق CARS-2 الآن' : '📝 تطبيق المقياس الآن'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -404,62 +656,132 @@ export default function PillarAssessment({ onDataChange }) {
             <EmptyState icon="📊" title="لا توجد نتائج مقاييس مسجلة" sub="اختر أحد المقاييس وطبقه على طالب لحفظ نتائجه ومستواه" />
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14 }}>
-              {filteredAssessments.map(item => (
-                <div key={item.id} className="prog-item-card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
-                    <div>
-                      <div className="prog-student-name" style={{ fontSize: '1.02rem' }}>{item.studentName}</div>
-                      <div className="prog-student-meta">{item.measureName} · {item.date}</div>
+              {filteredAssessments.map(item => {
+                const isCars = item.measureId === 'cars' || item.scaleType === 'cars2';
+                return (
+                  <div
+                    key={item.id}
+                    className="prog-item-card"
+                    style={{
+                      border: isCars ? '1.5px solid var(--pr)' : '1px solid var(--border-color)',
+                      boxShadow: isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : 'var(--sh)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
+                      <div>
+                        <div className="prog-student-name" style={{ fontSize: '1.02rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span>{item.studentName}</span>
+                          {isCars && <span className="bdg b-bl" style={{ fontSize: '.68rem', padding: '1px 6px' }}>CARS-2</span>}
+                        </div>
+                        <div className="prog-student-meta">{item.measureName} · {item.date}</div>
+                      </div>
+                      <span className="bdg b-gr" style={{ fontSize: '0.82rem', fontWeight: 800, flexShrink: 0 }}>
+                        الدرجة: {item.score} / {item.maxScore}
+                      </span>
                     </div>
-                    <span className="bdg b-gr" style={{ fontSize: '0.82rem', fontWeight: 800, flexShrink: 0 }}>
-                      الدرجة: {item.score} / {item.maxScore}
-                    </span>
-                  </div>
 
-                  <div style={{ display: 'flex', gap: 8, margin: '8px 0', alignItems: 'center' }}>
-                    <div style={{ flex: 1, background: 'var(--g1)', height: 8, borderRadius: 4, overflow: 'hidden' }}>
-                      <div style={{ width: item.percentage || '50%', background: 'var(--pr)', height: '100%' }} />
-                    </div>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>{item.percentage}</span>
-                  </div>
-
-                  <div style={{ fontSize: '0.84rem', margin: '6px 0' }}>
-                    <span style={{ color: 'var(--text-sub)' }}>المستوى التقديري: </span>
-                    <strong style={{ color: 'var(--pr)' }}>{item.level}</strong>
-                  </div>
-
-                  {item.notes && <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)', marginTop: 4 }}>{item.notes}</div>}
-
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginTop: 12, borderTop: '1px solid var(--border-color)', paddingTop: 8 }}>
-                    {item.parentPhone && (
-                      <button
-                        type="button"
-                        className="btn btn-xs btn-s"
-                        onClick={() => {
-                          sendReportToWhatsApp({
-                            parentPhone: item.parentPhone,
-                            parentName: item.parentName,
-                            studentName: item.studentName,
-                            reportTitle: `نتيجة مقياس ${item.measureName}`,
-                            reportType: 'نتائج الاختبارات والتشخيص',
-                            date: item.date,
-                            summary: `الدرجة المحققة: ${item.score}/${item.maxScore} (${item.percentage}) — المستوى التقديري: ${item.level}`,
-                            recommendations: item.recommendations || item.notes,
-                            specialistName: item.specialistName,
-                            centerName: center?.name,
-                          });
-                        }}
-                      >
-                        💬 واتساب
-                      </button>
+                    {isCars && (item.tScore || item.percentile) && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)' }}>
+                        <span>درجة معيارية T: <strong style={{ color: 'var(--text-main)' }}>{item.tScore}</strong></span>
+                        <span>رتبة مئينية: <strong style={{ color: 'var(--text-main)' }}>{item.percentile}%</strong></span>
+                      </div>
                     )}
-                    <button type="button" className="btn btn-xs btn-d" onClick={() => delScaleAssessment(item.id)}>🗑️ حذف</button>
+
+                    <div style={{ display: 'flex', gap: 8, margin: '8px 0', alignItems: 'center' }}>
+                      <div style={{ flex: 1, background: 'var(--g1)', height: 8, borderRadius: 4, overflow: 'hidden' }}>
+                        <div style={{ width: item.percentage || '50%', background: 'var(--pr)', height: '100%' }} />
+                      </div>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>{item.percentage}</span>
+                    </div>
+
+                    <div style={{ fontSize: '0.84rem', margin: '6px 0' }}>
+                      <span style={{ color: 'var(--text-sub)' }}>المستوى التقديري: </span>
+                      <strong style={{ color: item.severityColor || 'var(--pr)' }}>{item.level}</strong>
+                    </div>
+
+                    {item.notes && <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)', marginTop: 4 }}>{item.notes}</div>}
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, marginTop: 12, borderTop: '1px solid var(--border-color)', paddingTop: 8, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {isCars && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-p"
+                            onClick={() => openViewCarsReport(item)}
+                            style={{ fontWeight: 800 }}
+                          >
+                            📄 عرض التقرير التشخيصي
+                          </button>
+                        )}
+                        {isCars && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditCarsAssessment(item)}
+                            title="تعديل درجات البنود"
+                          >
+                            ✏️
+                          </button>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {item.parentPhone && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-s"
+                            onClick={() => {
+                              sendReportToWhatsApp({
+                                parentPhone: item.parentPhone,
+                                parentName: item.parentName,
+                                studentName: item.studentName,
+                                reportTitle: `نتيجة مقياس ${item.measureName}`,
+                                reportType: 'نتائج الاختبارات والتشخيص',
+                                date: item.date,
+                                summary: `الدرجة المحققة: ${item.score}/${item.maxScore} (${item.percentage}) — المستوى التقديري: ${item.level}`,
+                                recommendations: item.recommendations || item.notes,
+                                specialistName: item.specialistName,
+                                centerName: center?.name,
+                              });
+                            }}
+                          >
+                            💬 واتساب
+                          </button>
+                        )}
+                        <button type="button" className="btn btn-xs btn-d" onClick={() => delScaleAssessment(item.id)}>🗑️ حذف</button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
+      )}
+
+      {/* MODAL: CARS-2 SPECIALIZED ASSESSMENT WORKSTATION */}
+      {carsModalOpen && (
+        <CARS2AssessmentModal
+          isOpen={carsModalOpen}
+          onClose={() => setCarsModalOpen(false)}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={carsEditData}
+        />
+      )}
+
+      {/* MODAL: CARS-2 OFFICIAL DIAGNOSTIC REPORT */}
+      {carsReportOpen && selectedCarsAssessment && (
+        <CARS2ReportModal
+          isOpen={carsReportOpen}
+          onClose={() => setCarsReportOpen(false)}
+          assessment={selectedCarsAssessment}
+          onEdit={(item) => openEditCarsAssessment(item)}
+        />
       )}
 
       {/* MODAL: INITIAL ASSESSMENT FORM */}
@@ -534,26 +856,29 @@ export default function PillarAssessment({ onDataChange }) {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {(activeScale.items || []).map((it, idx) => (
-                  <div key={it.id} style={{ padding: '10px 14px', border: '1px solid var(--border-color)', borderRadius: 8, background: 'var(--bg-card)' }}>
-                    <div style={{ fontWeight: 700, fontSize: '.88rem', marginBottom: 8 }}>
-                      {idx + 1}. {it.text}
+                {(activeScale.items || []).map((it, idx) => {
+                  const options = getScaleOptions(activeScale);
+                  return (
+                    <div key={it.id} style={{ padding: '10px 14px', border: '1px solid var(--border-color)', borderRadius: 8, background: 'var(--bg-card)' }}>
+                      <div style={{ fontWeight: 700, fontSize: '.88rem', marginBottom: 8 }}>
+                        {idx + 1}. {it.text}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {options.map(val => (
+                          <label key={val} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', border: '1px solid var(--border-color)', borderRadius: 6, cursor: 'pointer', background: scaleResponses[it.id] === val ? 'var(--pr-l)' : 'transparent' }}>
+                            <input
+                              type="radio"
+                              name={`scale_item_${it.id}`}
+                              checked={scaleResponses[it.id] === val}
+                              onChange={() => handleScaleOptionChange(it.id, val)}
+                            />
+                            <span style={{ fontSize: '.8rem' }}>درجة {val}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      {[1, 2, 3, 4].map(val => (
-                        <label key={val} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', border: '1px solid var(--border-color)', borderRadius: 6, cursor: 'pointer', background: scaleResponses[it.id] === val ? 'var(--pr-l)' : 'transparent' }}>
-                          <input
-                            type="radio"
-                            name={`scale_item_${it.id}`}
-                            checked={scaleResponses[it.id] === val}
-                            onChange={() => handleScaleOptionChange(it.id, val)}
-                          />
-                          <span style={{ fontSize: '.8rem' }}>درجة {val}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="fl full" style={{ marginTop: 14 }}>
