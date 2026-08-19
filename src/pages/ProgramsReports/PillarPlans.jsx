@@ -1369,7 +1369,7 @@ export default function PillarPlans({ onDataChange }) {
                     <span>🔎</span> <span>تشخيص وقياس السلوك والخط القاعدي القبلي</span>
                   </h3>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14, marginBottom: 14 }}>
                     <div className="fl full" style={{ margin: 0 }}>
                       <label style={{ fontWeight: 800, fontSize: '.84rem', color: 'var(--text-main)' }}>مستوى الخط القاعدي القبلي (القياس قبل التدخل)</label>
                       <input
