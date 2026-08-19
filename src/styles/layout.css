@@ -25,7 +25,8 @@
 .mb{background:var(--bg-card);border-radius:var(--r);width:100%;max-width:min(540px,calc(100vw - 24px));max-height:min(94vh,calc(100dvh - 20px));margin-top:auto;margin-bottom:auto;overflow:hidden;box-shadow:var(--sh3);position:relative;display:flex;flex-direction:column}
 .mb-large{max-width:min(700px,calc(100vw - 24px))}.mb-xl{max-width:min(860px,calc(100vw - 20px))}.mb-sm{max-width:min(420px,calc(100vw - 24px))}
 .modal-body-scroll{overflow-y:auto;max-height:min(74vh,calc(100dvh - 150px));flex:1;min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding-bottom:4px}
-.mb > div:not(.fhd):not(.fa):not(.modal-body-scroll){overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
+.mb > div:not(.fhd):not(.fa):not(.modal-body-scroll):not(.modal-banner):not(.modal-header-custom){overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
+.mb .modal-banner, .mb .modal-header-custom, .mb .fhd {flex-shrink:0;flex-grow:0;overflow:visible}
 .mb .fa{flex-shrink:0;padding:12px 16px;border-top:1px solid var(--border-color);display:flex;gap:8px;flex-wrap:wrap;background:var(--bg-card)}
 .mb .fhd{flex-shrink:0}
 @media(max-width:600px){

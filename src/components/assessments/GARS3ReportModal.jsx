@@ -217,15 +217,19 @@ export default function GARS3ReportModal({
       >
         {/* Modal Header */}
         <div
+          className="modal-header-custom fhd"
           style={{
             background: 'linear-gradient(135deg, #0d9488, #0f766e)',
             color: '#fff',
-            padding: '16px 22px',
+            padding: '14px 20px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
             gap: 12,
+            flexShrink: 0,
+            flexGrow: 0,
+            width: '100%',
           }}
         >
           <div>

@@ -198,25 +198,29 @@ export default function CARS2AssessmentModal({
       >
         {/* Modal Header */}
         <div
+          className="modal-header-custom fhd"
           style={{
             background: 'linear-gradient(135deg, #1e40af, #3b82f6)',
             color: '#ffffff',
-            padding: '16px 22px',
+            padding: '14px 20px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            borderTopLeftRadius: 'var(--r-lg)',
-            borderTopRightRadius: 'var(--r-lg)',
+            flexShrink: 0,
+            flexGrow: 0,
+            width: '100%',
+            borderTopLeftRadius: 'var(--r)',
+            borderTopRightRadius: 'var(--r)',
           }}
         >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: '1.4rem' }}>🧩</span>
-              <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#fff' }}>
+              <span style={{ fontSize: '1.3rem' }}>🧩</span>
+              <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#fff' }}>
                 مقياس تقدير التوحد في الطفولة — الإصدار الثاني (CARS-2)
               </h2>
             </div>
-            <p style={{ margin: '3px 0 0 0', fontSize: '.8rem', opacity: 0.9 }}>
+            <p style={{ margin: '3px 0 0 0', fontSize: '.78rem', opacity: 0.9 }}>
               Childhood Autism Rating Scale, Second Edition (CARS2-ST) · 15 بنداً تشخيصياً معتمداً
             </p>
           </div>
@@ -233,82 +237,89 @@ export default function CARS2AssessmentModal({
               cursor: 'pointer',
               fontWeight: 700,
               fontSize: '.85rem',
+              flexShrink: 0,
             }}
           >
             ✖ إغلاق
           </button>
         </div>
 
-        {/* Floating Dynamic Psychometrics Status Banner */}
+        {/* Dynamic Psychometrics Status Banner */}
         <div
+          className="modal-banner"
           style={{
             background: 'var(--g0)',
             borderBottom: '1px solid var(--border-color)',
-            padding: '10px 22px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: 12,
+            padding: '10px 20px',
+            flexShrink: 0,
+            flexGrow: 0,
+            overflow: 'visible',
+            width: '100%',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
             <div>
-              <span style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>الدرجة الخام (Raw Score):</span>
-              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--pr)' }}>
-                {psychometrics.rawScore} <span style={{ fontSize: '.8rem', color: 'var(--text-sub)' }}>/ 60.0</span>
+              <span style={{ fontSize: '.72rem', color: 'var(--text-sub)', display: 'block' }}>الدرجة الخام (Raw Score):</span>
+              <div style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--pr)', lineHeight: 1.2 }}>
+                {psychometrics.rawScore} <span style={{ fontSize: '.75rem', color: 'var(--text-sub)', fontWeight: 600 }}>/ 60.0</span>
               </div>
             </div>
 
             <div>
-              <span style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>الدرجة المعيارية (T-Score):</span>
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
+              <span style={{ fontSize: '.72rem', color: 'var(--text-sub)', display: 'block' }}>الدرجة المعيارية (T-Score):</span>
+              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
                 {psychometrics.tScore}
               </div>
             </div>
 
             <div>
-              <span style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>الرتبة المئينية (% Rank):</span>
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
+              <span style={{ fontSize: '.72rem', color: 'var(--text-sub)', display: 'block' }}>الرتبة المئينية (% Rank):</span>
+              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
                 {psychometrics.percentile}%
               </div>
             </div>
 
-            <div style={{ height: 28, width: 1, background: 'var(--border-color)' }} />
+            <div style={{ minWidth: 160 }}>
+              <span style={{ fontSize: '.72rem', color: 'var(--text-sub)', display: 'block' }}>التشخيص الإكلينيكي:</span>
+              <span
+                style={{
+                  fontSize: '.76rem',
+                  fontWeight: 800,
+                  padding: '3px 8px',
+                  borderRadius: 6,
+                  background: `${psychometrics.severityColor}20`,
+                  color: psychometrics.severityColor,
+                  border: `1px solid ${psychometrics.severityColor}50`,
+                  display: 'inline-block',
+                  marginTop: 2,
+                }}
+              >
+                {psychometrics.severityLabel}
+              </span>
+            </div>
 
             <div>
-              <span style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>التشخيص الإكلينيكي:</span>
-              <div>
-                <span
-                  style={{
-                    fontSize: '.8rem',
-                    fontWeight: 800,
-                    padding: '3px 8px',
-                    borderRadius: 6,
-                    background: `${psychometrics.severityColor}20`,
-                    color: psychometrics.severityColor,
-                    border: `1px solid ${psychometrics.severityColor}50`,
-                  }}
-                >
-                  {psychometrics.severityLabel}
-                </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.74rem', color: 'var(--text-sub)', marginBottom: 3 }}>
+                <span>الإنجاز:</span>
+                <strong>{psychometrics.answeredCount} / 15 بنداً</strong>
               </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: '.78rem', color: 'var(--text-sub)' }}>
-              الإنجاز: <strong>{psychometrics.answeredCount}</strong> / 15 بنداً
-            </span>
-            <div style={{ width: 80, height: 8, background: 'var(--border-color)', borderRadius: 4, overflow: 'hidden' }}>
-              <div
-                style={{
-                  width: `${(psychometrics.answeredCount / 15) * 100}%`,
-                  height: '100%',
-                  background: psychometrics.isComplete ? 'var(--ok)' : 'var(--pr)',
-                  transition: 'width 0.2s',
-                }}
-              />
+              <div style={{ width: '100%', height: 7, background: 'var(--border-color)', borderRadius: 4, overflow: 'hidden' }}>
+                <div
+                  style={{
+                    width: `${(psychometrics.answeredCount / 15) * 100}%`,
+                    height: '100%',
+                    background: psychometrics.isComplete ? 'var(--ok)' : 'var(--pr)',
+                    transition: 'width 0.2s',
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>

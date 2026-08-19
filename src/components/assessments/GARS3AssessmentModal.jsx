@@ -238,27 +238,31 @@ export default function GARS3AssessmentModal({
       >
         {/* Modal Header */}
         <div
+          className="modal-header-custom fhd"
           style={{
             background: 'linear-gradient(135deg, #0d9488, #0f766e)',
             color: '#ffffff',
-            padding: '16px 22px',
+            padding: '14px 20px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 12,
+            flexShrink: 0,
+            flexGrow: 0,
+            width: '100%',
+            borderTopLeftRadius: 'var(--r)',
+            borderTopRightRadius: 'var(--r)',
           }}
         >
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: '1.4rem' }}>📊</span>
-              <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#fff' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '1.3rem' }}>📊</span>
+              <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#fff' }}>
                 مقياس جيليام لتقدير اضطراب طيف التوحد — الإصدار الثالث (GARS-3)
               </h2>
               <span
                 style={{
                   fontSize: '.72rem',
-                  padding: '3px 9px',
+                  padding: '2px 8px',
                   borderRadius: 20,
                   background: 'rgba(255, 255, 255, 0.25)',
                   fontWeight: 800,
@@ -268,7 +272,7 @@ export default function GARS3AssessmentModal({
                 {form.isVerbal ? '6 مقاييس (ناطق)' : '4 مقاييس (غير ناطق)'}
               </span>
             </div>
-            <p style={{ margin: '3px 0 0 0', fontSize: '.8rem', opacity: 0.9 }}>
+            <p style={{ margin: '3px 0 0 0', fontSize: '.78rem', opacity: 0.9 }}>
               Gilliam Autism Rating Scale, 3rd Edition · مقنن وفق معايير DSM-5 للأعمار من 3 إلى 22 عاماً
             </p>
           </div>
@@ -286,6 +290,7 @@ export default function GARS3AssessmentModal({
                 cursor: 'pointer',
                 fontWeight: 700,
                 fontSize: '.85rem',
+                flexShrink: 0,
               }}
             >
               ✖ إغلاق
@@ -293,67 +298,69 @@ export default function GARS3AssessmentModal({
           </div>
         </div>
 
-        {/* Floating Psychometrics Status Banner */}
+        {/* Dynamic Psychometrics Status Banner */}
         <div
+          className="modal-banner"
           style={{
             background: 'var(--g0)',
             borderBottom: '1px solid var(--border-color)',
-            padding: '12px 20px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 12,
+            padding: '10px 20px',
+            flexShrink: 0,
+            flexGrow: 0,
+            overflow: 'visible',
+            width: '100%',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
             <div>
-              <span style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>معامل التوحد (AQ):</span>
-              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0d9488' }}>
+              <span style={{ fontSize: '.72rem', color: 'var(--text-sub)', display: 'block' }}>معامل التوحد (AQ):</span>
+              <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0d9488', lineHeight: 1.2 }}>
                 {psychometrics.autismQuotient}{' '}
-                <span style={{ fontSize: '.8rem', color: 'var(--text-sub)' }}>
-                  (مجموع المعيارية: {psychometrics.sumScaledScores})
+                <span style={{ fontSize: '.74rem', color: 'var(--text-sub)', fontWeight: 600 }}>
+                  (مجموع: {psychometrics.sumScaledScores})
                 </span>
               </div>
             </div>
 
-            <div style={{ height: 28, width: 1, background: 'var(--border-color)' }} />
-
             <div>
-              <span style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>الرتبة المئينية (%):</span>
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
+              <span style={{ fontSize: '.72rem', color: 'var(--text-sub)', display: 'block' }}>الرتبة المئينية (%):</span>
+              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
                 {psychometrics.overallPercentile}%
               </div>
             </div>
 
-            <div style={{ height: 28, width: 1, background: 'var(--border-color)' }} />
+            <div style={{ minWidth: 160 }}>
+              <span style={{ fontSize: '.72rem', color: 'var(--text-sub)', display: 'block' }}>التصنيف والشدة (DSM-5):</span>
+              <span
+                style={{
+                  fontSize: '.76rem',
+                  fontWeight: 800,
+                  padding: '3px 8px',
+                  borderRadius: 6,
+                  background: `${psychometrics.severityColor}20`,
+                  color: psychometrics.severityColor,
+                  border: `1px solid ${psychometrics.severityColor}50`,
+                  display: 'inline-block',
+                  marginTop: 2,
+                }}
+              >
+                {psychometrics.dsm5Level}
+              </span>
+            </div>
 
             <div>
-              <span style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>التصنيف والشدة (DSM-5):</span>
-              <div>
-                <span
-                  style={{
-                    fontSize: '.8rem',
-                    fontWeight: 800,
-                    padding: '3px 8px',
-                    borderRadius: 6,
-                    background: `${psychometrics.severityColor}20`,
-                    color: psychometrics.severityColor,
-                    border: `1px solid ${psychometrics.severityColor}50`,
-                  }}
-                >
-                  {psychometrics.dsm5Level}
-                </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.74rem', color: 'var(--text-sub)', marginBottom: 3 }}>
+                <span>المقيمة:</span>
+                <strong>{psychometrics.answeredCount} / {totalRequiredItems} عبارة</strong>
               </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ textAlign: 'left' }}>
-              <span style={{ fontSize: '.78rem', color: 'var(--text-sub)' }}>
-                المقيمة: <strong>{psychometrics.answeredCount}</strong> / {totalRequiredItems} عبارة
-              </span>
-              <div style={{ width: 100, height: 8, background: 'var(--border-color)', borderRadius: 4, overflow: 'hidden', marginTop: 3 }}>
+              <div style={{ width: '100%', height: 7, background: 'var(--border-color)', borderRadius: 4, overflow: 'hidden' }}>
                 <div
                   style={{
                     width: `${(psychometrics.answeredCount / totalRequiredItems) * 100}%`,
