@@ -37,6 +37,7 @@ ${recommendations ? `\n💡 *التوصيات والإرشادات المنزل�
 ${cleanCenter}`;
 
   const encoded = encodeURIComponent(text);
+  // Support international codes or default +966 / local
   const finalPhone = normPhone.startsWith('966') || normPhone.startsWith('20') || normPhone.startsWith('971') || normPhone.startsWith('965') || normPhone.startsWith('974') || normPhone.startsWith('973') || normPhone.startsWith('968')
     ? normPhone
     : `966${normPhone}`;

@@ -89,7 +89,7 @@ export default function BulkImporter({ onClose, onDone }) {
     // تجزئة حسب السطر أو النقطة أو الأرقام في بداية السطر (1. 2. -  •)
     const lines = pasteText
       .split(/\n|(?<=\.)(?=\s*\d+\.)|(?<=;)/)
-      .map(l => l.replace(/^[\s\d\.\-•\*]+/, '').trim())
+      .map(l => l.replace(/^[\s\d.\-•*]+/, '').trim())
       .filter(l => l.length > 5);
 
     const rows = lines.map(text => ({

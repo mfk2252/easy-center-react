@@ -34,6 +34,8 @@ function applyTheme(color) {
   document.documentElement.style.setProperty('--pr-l',`rgba(${r},${g},${b},0.1)`);
 }
 
+/** كائن currentUser الموحّد لمالك المنصة — نفس الشكل سواء جاء من login() المباشر
+ *  أو من onAuthStateChanged (بعد تحديث الصفحة مثلاً)، لتفادي أي تعارض بينهما. */
 function buildPlatformAdminUser(fbUser) {
   return {
     uid: fbUser.uid,
@@ -67,6 +69,7 @@ export function AppProvider({ children }) {
     if (fw) document.documentElement.style.setProperty('--fw', fw);
   }, []);
 
+  // أيقونة تبويب المتصفح (Favicon) تتحدّث تلقائياً حسب شعار المركز الحالي.
   useEffect(() => {
     updateFavicon(center.logo);
     updateManifestIcon(center.logo, { appName: center.name });

@@ -13,6 +13,16 @@ import Settings from '../pages/Settings';
 import AdminSubscriptions from '../pages/AdminSubscriptions';
 import { isPlatformAdminEmail } from '../firebase/auth';
 
+function BlockedPage({ t }) {
+  return (
+    <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--err)' }}>
+      <div style={{ fontSize: '4rem', marginBottom: 20 }}>🔒</div>
+      <h2 style={{ margin: '0 0 10px 0' }}>{t('blocked')}</h2>
+      <p style={{ color: 'var(--g5)', fontSize: '.9rem' }}>{t('blockedSub')}</p>
+    </div>
+  );
+}
+
 export default function AppRouter() {
   const { activeView, currentUser } = useApp();
   const { t } = useLang();
@@ -27,23 +37,15 @@ export default function AppRouter() {
 
   const can = (key) => isManager || userPerms[key] === true;
 
-  const BlockedPage = () => (
-    <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--err)' }}>
-      <div style={{ fontSize: '4rem', marginBottom: 20 }}>🔒</div>
-      <h2 style={{ margin: '0 0 10px 0' }}>{t('blocked')}</h2>
-      <p style={{ color: 'var(--g5)', fontSize: '.9rem' }}>{t('blockedSub')}</p>
-    </div>
-  );
-
   if (activeView === 'admin' && isAdmin) return <AdminSubscriptions currentUserEmail={currentUser?.email}/>;
   if (activeView === 'dash') return <Dashboard/>;
-  if (activeView === 'calendar') return can('calendar') ? <Calendar/> : <BlockedPage/>;
+  if (activeView === 'calendar') return can('calendar') ? <Calendar/> : <BlockedPage t={t}/>;
   if (activeView === 'attendance') return <AttendancePage/>;
-  if (activeView === 'hr' || activeView.startsWith('hr-')) return can('hr') ? <HRPage/> : <BlockedPage/>;
-  if (activeView === 'students' || activeView === 'sessions') return can('students') ? <StudentsPage/> : <BlockedPage/>;
-  if (activeView === 'programs') return can('students') ? <Programs/> : <BlockedPage/>;
-  if (activeView === 'prog-reports') return can('students') ? <ProgramsReports/> : <BlockedPage/>;
-  if (activeView === 'statistics' || activeView === 'reports') return can('reports') ? <Reports/> : <BlockedPage/>;
+  if (activeView === 'hr' || activeView.startsWith('hr-')) return can('hr') ? <HRPage/> : <BlockedPage t={t}/>;
+  if (activeView === 'students' || activeView === 'sessions') return can('students') ? <StudentsPage/> : <BlockedPage t={t}/>;
+  if (activeView === 'programs') return can('students') ? <Programs/> : <BlockedPage t={t}/>;
+  if (activeView === 'prog-reports') return can('students') ? <ProgramsReports/> : <BlockedPage t={t}/>;
+  if (activeView === 'statistics' || activeView === 'reports') return can('reports') ? <Reports/> : <BlockedPage t={t}/>;
   if (activeView === 'center') return <CenterPage/>;
   if (activeView === 'settings') return <Settings/>;
   return <Dashboard/>;

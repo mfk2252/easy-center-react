@@ -8,12 +8,12 @@ import {
 } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBOKnMTpaIlksl3WMqM_d9K_yvSWoWWWVU",
-  authDomain: "specialed-pro.firebaseapp.com",
-  projectId: "specialed-pro",
-  storageBucket: "specialed-pro.firebasestorage.app",
-  messagingSenderId: "540094152944",
-  appId: "1:540094152944:web:31eab78e77d950e6fe4235"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBOKnMTpaIlksl3WMqM_d9K_yvSWoWWWVU",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "specialed-pro.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "specialed-pro",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "specialed-pro.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "540094152944",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:540094152944:web:31eab78e77d950e6fe4235"
 };
 
 const app = initializeApp(firebaseConfig);

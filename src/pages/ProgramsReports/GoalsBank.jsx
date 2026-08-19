@@ -9,6 +9,7 @@ import { ALL_LOVAAS_GOALS } from '../../data/lovaasGoals';
 import { ALL_VBMAPP_GOALS } from '../../data/vbmappGoals';
 import { ALL_HELP_GOALS, HELP_DOMAINS, HELP_AGE_MATRIX, HELP_SCORING_KEYS } from '../../data/helpGoals';
 import { ALL_TEACCH_GOALS, TEACCH_AGE_MATRIX, TEACCH_SCORING_KEYS, TEACCH_STRUCTURE_PILLARS } from '../../data/teacchGoals';
+import { ALL_PEP3_GOALS, PEP3_AGE_MATRIX, PEP3_SCORING_KEYS, PEP3_DEVELOPMENTAL_COMPOSITES } from '../../data/pep3Goals';
 
 // Pre-compute static goals ONCE at module load to avoid 1500+ object re-allocations on every render
 const PORTAGE_MASTER_GOALS = (ALL_PORTAGE_GOALS || []).map((g) => {
@@ -106,7 +107,21 @@ const TEACCH_MASTER_GOALS = (ALL_TEACCH_GOALS || []).map((g) => ({
   isSeed: true,
 }));
 
-const SEEDS_MASTER_GOALS = SEED_GOALS.map((g, i) => ({ ...g, id: `seed-${i}`, isSeed: true }));
+const PEP3_MASTER_GOALS = (ALL_PEP3_GOALS || []).map((g) => ({
+  id: g.id,
+  program: 'pep3',
+  domain: g.domain,
+  text: g.text,
+  goalCode: g.goalCode || `PEP3:${g.id}`,
+  ageGroup: g.ageGroup,
+  ageRange: g.ageRange,
+  scoreScale: g.scoreScale || 'P: منجز | E: بزوغ | F: إخفاق',
+  mastery: g.mastery,
+  tools: g.tools,
+  isSeed: true,
+}));
+
+const SEEDS_MASTER_GOALS = SEED_GOALS.filter(g => g.program !== 'pep3').map((g, i) => ({ ...g, id: `seed-${i}`, isSeed: true }));
 
 const STATIC_MASTER_GOALS = [
   ...PORTAGE_MASTER_GOALS,
@@ -115,6 +130,7 @@ const STATIC_MASTER_GOALS = [
   ...VBMAPP_MASTER_GOALS,
   ...HELP_MASTER_GOALS,
   ...TEACCH_MASTER_GOALS,
+  ...PEP3_MASTER_GOALS,
   ...SEEDS_MASTER_GOALS,
 ];
 
@@ -449,6 +465,73 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
                   <div key={i} style={{ background: '#fff', padding: 8, borderRadius: 8, border: '1px solid #f0f9ff' }}>
                     <div style={{ fontSize: '.75rem', fontWeight: 800, color: '#0369a1', display: 'flex', alignItems: 'center', gap: 4 }}>
                       <span>{p.icon}</span> <span>{p.title}</span>
+                    </div>
+                    <div style={{ fontSize: '.68rem', color: 'var(--text-sub)', marginTop: 2, lineHeight: 1.3 }}>{p.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* PEP-3 Program Developmental Matrix and Scoring Guide Banner */}
+          {programFilter === 'pep3' && (
+            <div style={{ background: '#ecfeff', border: '1px solid #cffafe', borderRadius: 12, padding: '12px 16px', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '1.2rem' }}>📊</span>
+                  <div>
+                    <strong style={{ color: '#0891b2', fontSize: '.92rem' }}>ملف التقييم النفسي التربوي - الإصدار الثالث (PEP-3)</strong>
+                    <div style={{ fontSize: '.75rem', color: '#0e7490' }}>أداة التقييم والتعليم الفردي المقننة للأطفال ذوي التوحد واضطرابات التواصل النمائية (6 أشهر - 7.5 سنوات)</div>
+                  </div>
+                </div>
+                <span style={{ fontSize: '.75rem', background: '#0891b2', color: '#fff', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>
+                  دليل تقييم PEP-3 المعتمد
+                </span>
+              </div>
+
+              {/* Age Bands Matrix */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                {PEP3_AGE_MATRIX.map(mat => (
+                  <button
+                    key={mat.key}
+                    type="button"
+                    onClick={() => {
+                      if (mat.range) setAgeFilter(mat.range);
+                      setDisplayLimit(INITIAL_RENDER_LIMIT);
+                    }}
+                    style={{
+                      fontSize: '.74rem',
+                      padding: '4px 8px',
+                      borderRadius: 6,
+                      border: '1px solid #0891b2',
+                      background: '#fff',
+                      color: '#0e7490',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                    }}
+                    title={mat.desc}
+                  >
+                    👶 {mat.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* PEP-3 Scoring Legend */}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', background: '#fff', padding: '6px 10px', borderRadius: 8, border: '1px solid #ecfeff' }}>
+                <span style={{ fontSize: '.72rem', fontWeight: 800, color: '#0891b2' }}>مفاتيح تقييم بيب-3 الأساسية:</span>
+                {PEP3_SCORING_KEYS.map(sk => (
+                  <span key={sk.symbol} style={{ fontSize: '.7rem', color: 'var(--text-sub)' }}>
+                    <strong style={{ color: sk.color || '#0891b2', fontWeight: 900 }}>{sk.symbol}</strong> {sk.label}
+                  </span>
+                ))}
+              </div>
+
+              {/* Developmental Composites */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8, marginTop: 10 }}>
+                {PEP3_DEVELOPMENTAL_COMPOSITES.map((p, i) => (
+                  <div key={i} style={{ background: '#fff', padding: 8, borderRadius: 8, border: '1px solid #ecfeff' }}>
+                    <div style={{ fontSize: '.75rem', fontWeight: 800, color: '#0891b2', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span>🎯</span> <span>{p.title}</span>
                     </div>
                     <div style={{ fontSize: '.68rem', color: 'var(--text-sub)', marginTop: 2, lineHeight: 1.3 }}>{p.desc}</div>
                   </div>
@@ -980,6 +1063,73 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
                   <div key={i} style={{ background: '#fff', padding: 8, borderRadius: 8, border: '1px solid #f0f9ff' }}>
                     <div style={{ fontSize: '.75rem', fontWeight: 800, color: '#0369a1', display: 'flex', alignItems: 'center', gap: 4 }}>
                       <span>{p.icon}</span> <span>{p.title}</span>
+                    </div>
+                    <div style={{ fontSize: '.68rem', color: 'var(--text-sub)', marginTop: 2, lineHeight: 1.3 }}>{p.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* PEP-3 Program Developmental Matrix and Scoring Guide Banner in Manager */}
+          {filterProgram === 'pep3' && (
+            <div style={{ background: '#ecfeff', border: '1px solid #cffafe', borderRadius: 12, padding: '12px 16px', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '1.2rem' }}>📊</span>
+                  <div>
+                    <strong style={{ color: '#0891b2', fontSize: '.92rem' }}>ملف التقييم النفسي التربوي - الإصدار الثالث (PEP-3)</strong>
+                    <div style={{ fontSize: '.75rem', color: '#0e7490' }}>أداة التقييم والتعليم الفردي المقننة للأطفال ذوي التوحد واضطرابات التواصل النمائية (6 أشهر - 7.5 سنوات)</div>
+                  </div>
+                </div>
+                <span style={{ fontSize: '.75rem', background: '#0891b2', color: '#fff', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>
+                  دليل تقييم PEP-3 المعتمد
+                </span>
+              </div>
+
+              {/* Age Bands Matrix */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                {PEP3_AGE_MATRIX.map(mat => (
+                  <button
+                    key={mat.key}
+                    type="button"
+                    onClick={() => {
+                      if (mat.range) setFilterAge(mat.range);
+                      setDisplayLimit(INITIAL_RENDER_LIMIT);
+                    }}
+                    style={{
+                      fontSize: '.74rem',
+                      padding: '4px 8px',
+                      borderRadius: 6,
+                      border: '1px solid #0891b2',
+                      background: '#fff',
+                      color: '#0e7490',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                    }}
+                    title={mat.desc}
+                  >
+                    👶 {mat.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* PEP-3 Scoring Legend */}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', background: '#fff', padding: '6px 10px', borderRadius: 8, border: '1px solid #ecfeff' }}>
+                <span style={{ fontSize: '.72rem', fontWeight: 800, color: '#0891b2' }}>مفاتيح تقييم بيب-3 الأساسية:</span>
+                {PEP3_SCORING_KEYS.map(sk => (
+                  <span key={sk.symbol} style={{ fontSize: '.7rem', color: 'var(--text-sub)' }}>
+                    <strong style={{ color: sk.color || '#0891b2', fontWeight: 900 }}>{sk.symbol}</strong> {sk.label}
+                  </span>
+                ))}
+              </div>
+
+              {/* Developmental Composites */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8, marginTop: 10 }}>
+                {PEP3_DEVELOPMENTAL_COMPOSITES.map((p, i) => (
+                  <div key={i} style={{ background: '#fff', padding: 8, borderRadius: 8, border: '1px solid #ecfeff' }}>
+                    <div style={{ fontSize: '.75rem', fontWeight: 800, color: '#0891b2', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span>🎯</span> <span>{p.title}</span>
                     </div>
                     <div style={{ fontSize: '.68rem', color: 'var(--text-sub)', marginTop: 2, lineHeight: 1.3 }}>{p.desc}</div>
                   </div>

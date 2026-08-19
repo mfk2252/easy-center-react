@@ -228,7 +228,9 @@ export async function signInWithGoogle() {
 }
 
 // ============================================================
-// دخول مالك المنصة أو مدير مركز عبر Email/Password
+// دخول مالك المنصة أو مدير مركز (عائد بالفعل) عبر Email/Password
+// ⚠️ هذا المسار للدخول فقط، وليس لإنشاء مركز جديد. إنشاء مركز جديد عبر
+// Email/Password غير مبني بعد — راجع الملاحظة في نهاية الملف.
 // ============================================================
 export async function signInWithEmailPassword(email, password) {
   let result;
@@ -277,7 +279,8 @@ export async function signInWithEmailPassword(email, password) {
 }
 
 // ============================================================
-// تسجيل ذاتي لمدير مركز جديد عبر Email/Password
+// تسجيل ذاتي لمدير مركز جديد عبر Email/Password (بديل لتسجيل Google الأول).
+// نفس منطق إنشاء المركز في signInWithGoogle بالضبط، لكن بدون Google.
 // ============================================================
 export async function signUpManagerWithEmailPassword(email, password) {
   const trimmedEmail = email.trim();
@@ -326,11 +329,19 @@ export async function signUpManagerWithEmailPassword(email, password) {
   };
 }
 
+// ============================================================
+// بناء البريد الداخلي الحقيقي لحساب موظف/ولي أمر (غير مرئي له إطلاقاً)
+// ============================================================
 function buildStaffAuthEmail(centerId, username) {
   const clean = username.trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
   return `${clean}@${centerId}.staff.easycenter.local`;
 }
 
+// ============================================================
+// إنشاء حساب موظف/ولي أمر تابع لمركز المدير الحالي.
+// يُستدعى من واجهة المدير وهو لا يزال مسجّلاً دخوله (جلسته لا تتأثر إطلاقاً)
+// لأن إنشاء حساب Firebase Auth الجديد يتم عبر نسخة Firebase ثانوية مؤقتة.
+// ============================================================
 export async function createStaffAccount(managerCenterId, {
   username, password, name, role, permissions, title, studentId, phone, contactEmail,
 }) {
@@ -341,6 +352,8 @@ export async function createStaffAccount(managerCenterId, {
   const authEmail = buildStaffAuthEmail(managerCenterId, cleanUsername);
   const indexRef = doc(db, 'staffLoginIndex', cleanUsername);
 
+  // 1) حجز اسم المستخدم أولاً (يفشل تلقائياً لو كان مُستخدَماً من مركز آخر —
+  //    بفضل قاعدة create/update في firestore.rules)
   try {
     await setDoc(indexRef, {
       centerId: managerCenterId,
@@ -351,6 +364,7 @@ export async function createStaffAccount(managerCenterId, {
     throw new Error('اسم المستخدم هذا مستخدم بالفعل على المنصة، اختر اسماً آخر');
   }
 
+  // 2) إنشاء حساب Firebase Auth عبر نسخة ثانوية مؤقتة (لا تؤثر على جلسة المدير)
   const secondaryApp = initializeApp(firebaseConfig, `staff-create-${Date.now()}`);
   const secondaryAuth = getAuth(secondaryApp);
   let newUid;
@@ -359,12 +373,14 @@ export async function createStaffAccount(managerCenterId, {
     newUid = cred.user.uid;
     await signOut(secondaryAuth);
   } catch (e) {
+    // تراجع: احذف الحجز حتى لا يبقى اسم المستخدم محجوزاً بلا حساب فعلي
     try { await deleteDoc(indexRef); } catch (_) {}
     await deleteApp(secondaryApp);
     throw new Error(mapAuthError(e?.code));
   }
   await deleteApp(secondaryApp);
 
+  // 3) كتابة ملف التعريف — عبر db الأساسي (جلسة المدير الحالية النشطة)
   try {
     await setDoc(doc(db, 'users', newUid), {
       centerId: managerCenterId,
@@ -381,6 +397,8 @@ export async function createStaffAccount(managerCenterId, {
       createdAt: serverTimestamp(),
     });
   } catch (e) {
+    // تراجع كامل: احذف الحجز (حساب Auth اليتيم يبقى معطّلاً فعلياً لأن لا ملف
+    // تعريف له، ولن يستطيع الدخول لأي بيانات بسبب قواعد Firestore)
     try { await deleteDoc(indexRef); } catch (_) {}
     throw new Error('تعذّر حفظ بيانات الحساب: ' + (e.message || ''));
   }
@@ -388,6 +406,10 @@ export async function createStaffAccount(managerCenterId, {
   return newUid;
 }
 
+// ============================================================
+// دخول موظف/ولي أمر عبر اسم المستخدم البسيط (بدون @) — لا يعرف مركزه إطلاقاً،
+// النظام يكتشفه تلقائياً عبر فهرس staffLoginIndex العام (قراءة فقط، لا كلمات مرور فيه).
+// ============================================================
 export async function signInStaffOrParent(username, password) {
   const cleanUsername = (username || '').trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
   if (!cleanUsername) throw new Error('يرجى إدخال اسم المستخدم');
@@ -414,6 +436,7 @@ export async function signInStaffOrParent(username, password) {
     throw new Error('هذا الحساب معطّل. تواصل مع المدير.');
   }
 
+  // نتحقق أيضاً من حالة اشتراك المركز نفسه (نفس المنطق المستخدم مع المدير)
   const centerDoc = await getDoc(doc(db, 'centers', profile.centerId));
   const subStatus = checkSubscriptionStatus(centerDoc.data());
   if (!subStatus.allowed) {

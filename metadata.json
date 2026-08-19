@@ -1,0 +1,8 @@
+{
+  "name": "Easy Center",
+  "description": "نظام إدارة مركز التأهيل والتربية الخاصة المتكامل لإدارة الطلاب، الحضور، الخطط، الموظفين، والتقارير.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
