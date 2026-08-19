@@ -8,6 +8,7 @@ import { GoalPickerModal, GoalsBankManagerModal, getAllGoals } from './GoalsBank
 import { DOMAINS, PROGRAMS, domainLabel, programLabel, programColor } from '../../utils/goalsBank';
 import BulkImporter from './BulkImporter';
 import { sendReportToWhatsApp } from './programsWhatsApp';
+import ProgramDetailModal from './ProgramDetailModal';
 
 const EMPTY_PROG = {
   ...EMPTY_STU_PICK,
@@ -1577,208 +1578,21 @@ export default function PillarPlans({ onDataChange }) {
         </div>
       )}
 
-      {/* MODAL: VIEW IEP PROGRAM DETAIL */}
+      {/* MODAL: VIEW IEP PROGRAM DETAIL (Comprehensive Program Card View) */}
       {viewProg && (
-        <div className="mbg">
-          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '95vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="fhd" style={{ padding: '16px 20px', background: 'var(--pr)', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: '1.5rem' }}>📋</span>
-                <div>
-                  <h2 style={{ margin: 0, color: '#fff', fontSize: '1.15rem', fontWeight: 800 }}>تفاصيل الخطة التربوية الفردية (IEP)</h2>
-                  <div style={{ fontSize: '.78rem', opacity: 0.9 }}>{viewProg.title}</div>
-                </div>
-              </div>
-              <button 
-                type="button" 
-                style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.4rem', cursor: 'pointer', fontWeight: 'bold' }}
-                onClick={() => setViewProg(null)}
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="modal-body-scroll" style={{ padding: '20px' }}>
-              {/* Student Metadata Card */}
-              <div style={{ background: 'var(--g0)', padding: 16, borderRadius: 12, border: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 20 }}>
-                <div>
-                  <div style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>اسم الطالب</div>
-                  <strong style={{ fontSize: '.95rem', color: 'var(--text-main)' }}>{viewProg.studentName}</strong>
-                </div>
-                <div>
-                  <div style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>التشخيص</div>
-                  <strong style={{ fontSize: '.95rem', color: 'var(--text-main)' }}>{viewProg.diagnosis || '—'}</strong>
-                </div>
-                <div>
-                  <div style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>الصف / الفصل</div>
-                  <strong style={{ fontSize: '.95rem', color: 'var(--text-main)' }}>{viewProg.className || '—'}</strong>
-                </div>
-                <div>
-                  <div style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>تاريخ البدء</div>
-                  <strong style={{ fontSize: '.95rem', color: 'var(--text-main)' }}>{viewProg.startDate || '—'}</strong>
-                </div>
-                <div>
-                  <div style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>تاريخ التقييم / المراجعة</div>
-                  <strong style={{ fontSize: '.95rem', color: 'var(--text-main)' }}>{viewProg.reviewDate || '—'}</strong>
-                </div>
-                <div>
-                  <div style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>المدة المقررة</div>
-                  <strong style={{ fontSize: '.95rem', color: 'var(--text-main)' }}>{viewProg.duration || '—'}</strong>
-                </div>
-                <div>
-                  <div style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>الأخصائي المسؤول</div>
-                  <strong style={{ fontSize: '.95rem', color: 'var(--text-main)' }}>{viewProg.specialistName || '—'}</strong>
-                </div>
-                <div>
-                  <div style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>حالة الخطة</div>
-                  <span className={`bdg ${viewProg.status === 'completed' ? 'b-gr' : 'b-or'}`} style={{ marginTop: 4, display: 'inline-block' }}>
-                    {viewProg.status === 'completed' ? 'مكتملة ومحققة ✅' : 'نشطة وتحت التطبيق ⏳'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Goals list */}
-              <div style={{ marginBottom: 20 }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)', borderRight: '4px solid var(--pr)', paddingRight: 8, marginBottom: 12 }}>
-                  🎯 الأهداف المحددة والمستهدفة ({viewProg.goals?.length || 0} أهداف)
-                </h3>
-
-                {(!viewProg.goals || viewProg.goals.length === 0) ? (
-                  <div style={{ textAlign: 'center', padding: '20px', background: 'var(--g0)', borderRadius: 8, color: 'var(--text-sub)', fontSize: '.84rem' }}>
-                    لا توجد أهداف مدرجة في هذه الخطة بعد.
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {(() => {
-                      // Group goals by domain in view
-                      const grouped = {};
-                      viewProg.goals.forEach((g, index) => {
-                        const dom = g.domain || 'general';
-                        if (!grouped[dom]) grouped[dom] = [];
-                        grouped[dom].push({ ...g, originalIndex: index });
-                      });
-
-                      return Object.entries(grouped).map(([domainKey, list]) => (
-                        <div key={domainKey} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 12, padding: 14 }}>
-                          <h4 style={{ margin: '0 0 10px 0', fontSize: '.88rem', fontWeight: 800, color: 'var(--pr)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span>📁</span>
-                            <span>{domainLabel(domainKey) || domainKey || 'عام'}</span>
-                            <span style={{ fontSize: '.72rem', background: 'var(--pr-l)', color: 'var(--pr)', padding: '1px 6px', borderRadius: 6, fontWeight: 'normal' }}>
-                              {list.length} هدف
-                            </span>
-                          </h4>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            {list.map((goal) => (
-                              <div key={goal.originalIndex} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: '.86rem', padding: '8px 10px', background: 'var(--g0)', borderRadius: 8 }}>
-                                <span style={{ fontWeight: 800, color: 'var(--text-sub)', flexShrink: 0, minWidth: 20 }}>{goal.originalIndex + 1}.</span>
-                                <div style={{ flex: 1, color: 'var(--text-main)' }}>
-                                  <div>{goal.text}</div>
-                                  <div style={{ display: 'flex', gap: 8, fontSize: '.72rem', color: 'var(--text-sub)', marginTop: 4, flexWrap: 'wrap' }}>
-                                    {goal.code && <span style={{ color: 'var(--pr)', fontWeight: 700 }}>{goal.code}</span>}
-                                    {goal.mastery && <span>معيار الإتقان: <strong>{goal.mastery}</strong></span>}
-                                    {goal.status && <span className="bdg b-bl" style={{ fontSize: '.64rem' }}>{goal.status}</span>}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ));
-                    })()}
-                  </div>
-                )}
-              </div>
-
-              {/* Proposed activities */}
-              {viewProg.activities && (
-                <div style={{ background: 'var(--pr-l)', border: '1px solid var(--pr)', borderRadius: 12, padding: 16, marginBottom: 16 }}>
-                  <h4 style={{ margin: '0 0 6px 0', fontSize: '.92rem', fontWeight: 800, color: 'var(--pr)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>🎨</span> <span>الأنشطة والوسائل التعليمية والتأهيلية:</span>
-                  </h4>
-                  <p style={{ margin: 0, fontSize: '.84rem', color: 'var(--text-main)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
-                    {viewProg.activities}
-                  </p>
-                </div>
-              )}
-
-              {/* Notes */}
-              {viewProg.notes && (
-                <div style={{ background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: 12, padding: 16 }}>
-                  <h4 style={{ margin: '0 0 6px 0', fontSize: '.92rem', fontWeight: 800, color: '#b45309', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>📝</span> <span>توجيهات وملاحظات الخطة:</span>
-                  </h4>
-                  <p style={{ margin: 0, fontSize: '.84rem', color: 'var(--text-main)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
-                    {viewProg.notes}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="fa" style={{ padding: '14px 20px', borderTop: '1px solid var(--border-color)', background: 'var(--g0)' }}>
-              <div style={{ display: 'flex', gap: 8, width: '100%', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button 
-                    type="button" 
-                    className="btn btn-p" 
-                    onClick={() => {
-                      printIEP(viewProg);
-                    }}
-                  >
-                    🖨️ طباعة الخطة (A4)
-                  </button>
-                  {viewProg.parentPhone && (
-                    <button 
-                      type="button" 
-                      className="btn btn-s"
-                      onClick={() => {
-                        const goalsSummary = (viewProg.goals || []).map((g, i) => `${i + 1}. ${g.text}`).join('\n');
-                        sendReportToWhatsApp({
-                          parentPhone: viewProg.parentPhone,
-                          parentName: viewProg.parentName,
-                          studentName: viewProg.studentName,
-                          reportTitle: viewProg.title,
-                          reportType: 'الخطة الفردية (IEP)',
-                          date: viewProg.startDate,
-                          summary: `مدة الخطة: ${viewProg.duration}\nعدد الأهداف: ${viewProg.goals?.length || 0}\n${goalsSummary}`,
-                          recommendations: viewProg.activities || viewProg.notes,
-                          specialistName: viewProg.specialistName,
-                          centerName: center?.name,
-                        });
-                      }}
-                    >
-                      💬 إرسال واتساب
-                    </button>
-                  )}
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button 
-                    type="button" 
-                    className="btn btn-g" 
-                    onClick={() => {
-                      openEditProg(viewProg);
-                      setViewProg(null); // Close view modal
-                    }}
-                  >
-                    ✏️ تعديل الخطة
-                  </button>
-                  <button 
-                    type="button" 
-                    className="btn btn-d" 
-                    onClick={() => {
-                      if (window.confirm('حذف هذه الخطة الفردية نهائياً؟')) {
-                        delProg(viewProg.id);
-                        setViewProg(null);
-                      }
-                    }}
-                  >
-                    🗑️ حذف
-                  </button>
-                  <button type="button" className="btn btn-g" style={{ background: '#e2e8f0', color: '#475569' }} onClick={() => setViewProg(null)}>إغلاق</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ProgramDetailModal
+          program={viewProg}
+          onClose={() => setViewProg(null)}
+          onUpdate={(updatedProg) => {
+            setPrograms(lsGet('progPrograms') || []);
+            setViewProg(updatedProg);
+          }}
+          onPrint={(prog) => printIEP(prog)}
+          onEdit={(prog) => {
+            openEditProg(prog);
+            setViewProg(null);
+          }}
+        />
       )}
 
       {/* MODAL: GOAL PICKER */}

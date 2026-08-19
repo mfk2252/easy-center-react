@@ -9,6 +9,10 @@ import { StudentPicker, validateStudentPick, EMPTY_STU_PICK } from './StudentPic
 import { sendReportToWhatsApp } from './programsWhatsApp';
 import CARS2AssessmentModal from '../../components/assessments/CARS2AssessmentModal';
 import CARS2ReportModal from '../../components/assessments/CARS2ReportModal';
+import GARS3AssessmentModal from '../../components/assessments/GARS3AssessmentModal';
+import GARS3ReportModal from '../../components/assessments/GARS3ReportModal';
+import IepBridgeModal from './IepBridgeModal';
+import { extractRecommendedGoals } from '../../utils/iepBridge';
 import {
   DEFAULT_SCALE_LIBRARY,
   MEASUREMENT_CATEGORIES,
@@ -70,6 +74,17 @@ export default function PillarAssessment({ onDataChange }) {
   const [carsEditData, setCarsEditData] = useState(null);
   const [carsReportOpen, setCarsReportOpen] = useState(false);
   const [selectedCarsAssessment, setSelectedCarsAssessment] = useState(null);
+
+  // GARS-3 Specific Specialized Modals States
+  const [garsModalOpen, setGarsModalOpen] = useState(false);
+  const [garsEditData, setGarsEditData] = useState(null);
+  const [garsReportOpen, setGarsReportOpen] = useState(false);
+  const [selectedGarsAssessment, setSelectedGarsAssessment] = useState(null);
+
+  // IEP Bridge State
+  const [bridgeOpen, setBridgeOpen] = useState(false);
+  const [bridgeAssessment, setBridgeAssessment] = useState(null);
+  const [bridgeScaleItems, setBridgeScaleItems] = useState([]);
 
   function reload() {
     setStudents(lsGet('students'));
@@ -155,6 +170,11 @@ export default function PillarAssessment({ onDataChange }) {
       setCarsModalOpen(true);
       return;
     }
+    if (scaleId === 'gars' || scaleId === 'gars3') {
+      setGarsEditData(null);
+      setGarsModalOpen(true);
+      return;
+    }
     const scale = allScales.find(s => s.id === scaleId) || activeScale;
     setSelectedScaleId(scale?.id || 'cars');
     setScaleResponses({});
@@ -174,6 +194,16 @@ export default function PillarAssessment({ onDataChange }) {
   function openViewCarsReport(item) {
     setSelectedCarsAssessment(item);
     setCarsReportOpen(true);
+  }
+
+  function openEditGarsAssessment(item) {
+    setGarsEditData(item);
+    setGarsModalOpen(true);
+  }
+
+  function openViewGarsReport(item) {
+    setSelectedGarsAssessment(item);
+    setGarsReportOpen(true);
   }
 
   function handleScaleOptionChange(itemId, value) {
@@ -216,6 +246,13 @@ export default function PillarAssessment({ onDataChange }) {
     lsDel('studentAssessments', id);
     toast('🗑️ تم حذف النتيجة', 'ok');
     reload();
+  }
+
+  function handleOpenBridge(item) {
+    const scale = allScales.find(s => s.id === item.measureId) || null;
+    setBridgeScaleItems(scale?.items || []);
+    setBridgeAssessment(item);
+    setBridgeOpen(true);
   }
 
   // Printing
@@ -543,43 +580,87 @@ export default function PillarAssessment({ onDataChange }) {
             </div>
           )}
 
-          {/* Featured Highlight Card for CARS-2 if Autism or All is active */}
+          {/* Featured Highlight Card for CARS-2 and GARS-3 if Autism or All is active */}
           {(selectedCategoryFilter === 'all' || selectedCategoryFilter === 'autism') && (
             <div
               style={{
-                background: 'linear-gradient(135deg, rgba(30, 64, 175, 0.08), rgba(59, 130, 246, 0.05))',
-                border: '1.5px solid var(--pr)',
-                borderRadius: 14,
-                padding: '16px 20px',
-                marginBottom: 18,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
                 gap: 14,
+                marginBottom: 20,
               }}
             >
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="bdg b-bl" style={{ fontWeight: 900 }}>المعيار الذهبي لتشخيص التوحد</span>
-                  <span className="bdg b-gr" style={{ fontWeight: 800 }}>مُحدّث بالإصدار الثاني CARS2-ST</span>
+              {/* CARS-2 Highlight */}
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, rgba(30, 64, 175, 0.08), rgba(59, 130, 246, 0.04))',
+                  border: '1.5px solid var(--pr)',
+                  borderRadius: 14,
+                  padding: '16px 18px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span className="bdg b-bl" style={{ fontWeight: 900, fontSize: '.72rem' }}>المعيار الذهبي للتشخيص</span>
+                    <span className="bdg b-gr" style={{ fontWeight: 800, fontSize: '.72rem' }}>CARS-2 ST</span>
+                  </div>
+                  <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                    🧩 مقياس تقدير التوحد في الطفولة (CARS-2)
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45 }}>
+                    15 مجالاً تشخيصياً معتمداً · سلم تقدير متدرج (1.0 إلى 4.0) · درجات معيارية T ورتب مئينية واشتقاق IEP
+                  </p>
                 </div>
-                <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)' }}>
-                  🧩 مقياس تقدير التوحد في الطفولة — الإصدار الثاني (CARS-2)
-                </h3>
-                <p style={{ margin: 0, fontSize: '.84rem', color: 'var(--text-sub)' }}>
-                  15 مجالاً تشخيصياً معتمداً · سلم تقدير متدرج (1.0 إلى 4.0 بنصف درجة) · درجات تائية معيارية (T-Scores) ورتب مئينية وتقرير رسمي متكامل
-                </p>
+
+                <button
+                  type="button"
+                  className="btn btn-p"
+                  onClick={() => { setCarsEditData(null); setCarsModalOpen(true); }}
+                  style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', width: '100%' }}
+                >
+                  🚀 فتح أداة فحص وتطبيق CARS-2
+                </button>
               </div>
 
-              <button
-                type="button"
-                className="btn btn-p"
-                onClick={() => { setCarsEditData(null); setCarsModalOpen(true); }}
-                style={{ fontWeight: 800, padding: '10px 20px', borderRadius: 10, fontSize: '.9rem' }}
+              {/* GARS-3 Highlight */}
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.08), rgba(20, 184, 166, 0.04))',
+                  border: '1.5px solid #0d9488',
+                  borderRadius: 14,
+                  padding: '16px 18px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                }}
               >
-                🚀 فتح أداة فحص وتطبيق CARS-2
-              </button>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontWeight: 900, fontSize: '.72rem' }}>وفق معايير DSM-5</span>
+                    <span className="bdg b-gr" style={{ fontWeight: 800, fontSize: '.72rem' }}>GARS-3 المقنن</span>
+                  </div>
+                  <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                    📊 مقياس جيليام لتقدير التوحد — الإصدار الثالث (GARS-3)
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45 }}>
+                    58 بنداً مقنناً · 6 مقاييس فرعية (لفظي / غير لفظي) · معامل التوحد AQ ومستويات الدعم الثلاثة DSM-5
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => { setGarsEditData(null); setGarsModalOpen(true); }}
+                  style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#0d9488', color: '#fff', width: '100%' }}
+                >
+                  🚀 فتح أداة فحص وتطبيق GARS-3
+                </button>
+              </div>
             </div>
           )}
 
@@ -594,6 +675,7 @@ export default function PillarAssessment({ onDataChange }) {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 14 }}>
               {filteredScales.map(scale => {
                 const isCars = scale.id === 'cars';
+                const isGars = scale.id === 'gars' || scale.id === 'gars3';
                 const normCat = normalizeCategoryId(scale.category);
                 const catMeta = categoryMap[normCat] || { name: 'مقياس مقنن', icon: '📝', color: '#1a56db' };
 
@@ -602,8 +684,8 @@ export default function PillarAssessment({ onDataChange }) {
                     key={scale.id}
                     className="prog-scale-card"
                     style={{
-                      border: isCars ? '2px solid var(--pr)' : selectedScaleId === scale.id ? '2px solid var(--pr)' : '1px solid var(--border-color)',
-                      background: isCars ? 'var(--pr-l)' : selectedScaleId === scale.id ? 'var(--pr-l)' : 'var(--bg-card)',
+                      border: isCars ? '2px solid var(--pr)' : isGars ? '2px solid #0d9488' : selectedScaleId === scale.id ? '2px solid var(--pr)' : '1px solid var(--border-color)',
+                      background: isCars ? 'var(--pr-l)' : isGars ? 'rgba(13, 148, 136, 0.05)' : selectedScaleId === scale.id ? 'var(--pr-l)' : 'var(--bg-card)',
                       display: 'flex',
                       flexDirection: 'column',
                     }}
@@ -635,10 +717,15 @@ export default function PillarAssessment({ onDataChange }) {
                       <button
                         type="button"
                         className="btn btn-p btn-sm"
-                        style={{ flex: 1, fontWeight: 700 }}
+                        style={{
+                          flex: 1,
+                          fontWeight: 700,
+                          background: isGars ? '#0d9488' : undefined,
+                          borderColor: isGars ? '#0d9488' : undefined,
+                        }}
                         onClick={() => openNewScaleAssessment(scale.id)}
                       >
-                        {isCars ? '🧩 تطبيق CARS-2 الآن' : '📝 تطبيق المقياس الآن'}
+                        {isCars ? '🧩 تطبيق CARS-2 الآن' : isGars ? '📊 تطبيق GARS-3 الآن' : '📝 تطبيق المقياس الآن'}
                       </button>
                     </div>
                   </div>
@@ -658,13 +745,14 @@ export default function PillarAssessment({ onDataChange }) {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14 }}>
               {filteredAssessments.map(item => {
                 const isCars = item.measureId === 'cars' || item.scaleType === 'cars2';
+                const isGars = item.measureId === 'gars' || item.measureId === 'gars3' || item.scaleType === 'gars3';
                 return (
                   <div
                     key={item.id}
                     className="prog-item-card"
                     style={{
-                      border: isCars ? '1.5px solid var(--pr)' : '1px solid var(--border-color)',
-                      boxShadow: isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : 'var(--sh)',
+                      border: isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : '1px solid var(--border-color)',
+                      boxShadow: isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : 'var(--sh)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
@@ -672,11 +760,12 @@ export default function PillarAssessment({ onDataChange }) {
                         <div className="prog-student-name" style={{ fontSize: '1.02rem', display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span>{item.studentName}</span>
                           {isCars && <span className="bdg b-bl" style={{ fontSize: '.68rem', padding: '1px 6px' }}>CARS-2</span>}
+                          {isGars && <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>GARS-3</span>}
                         </div>
                         <div className="prog-student-meta">{item.measureName} · {item.date}</div>
                       </div>
                       <span className="bdg b-gr" style={{ fontSize: '0.82rem', fontWeight: 800, flexShrink: 0 }}>
-                        الدرجة: {item.score} / {item.maxScore}
+                        {isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : `الدرجة: ${item.score} / ${item.maxScore}`}
                       </span>
                     </div>
 
@@ -687,22 +776,48 @@ export default function PillarAssessment({ onDataChange }) {
                       </div>
                     )}
 
+                    {isGars && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>معامل التوحد AQ: <strong style={{ color: '#0d9488' }}>{item.autismQuotient || item.score}</strong></span>
+                        <span>الرتبة المئينية: <strong style={{ color: 'var(--text-main)' }}>{item.percentile || 0}%</strong></span>
+                        <span>النمط: <strong style={{ color: 'var(--text-sub)' }}>{item.isVerbal ? 'لفظي (6 مقاييس)' : 'غير لفظي (4 مقاييس)'}</strong></span>
+                      </div>
+                    )}
+
                     <div style={{ display: 'flex', gap: 8, margin: '8px 0', alignItems: 'center' }}>
                       <div style={{ flex: 1, background: 'var(--g1)', height: 8, borderRadius: 4, overflow: 'hidden' }}>
-                        <div style={{ width: item.percentage || '50%', background: 'var(--pr)', height: '100%' }} />
+                        <div style={{ width: item.percentage || '50%', background: isGars ? '#0d9488' : 'var(--pr)', height: '100%' }} />
                       </div>
                       <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>{item.percentage}</span>
                     </div>
 
                     <div style={{ fontSize: '0.84rem', margin: '6px 0' }}>
                       <span style={{ color: 'var(--text-sub)' }}>المستوى التقديري: </span>
-                      <strong style={{ color: item.severityColor || 'var(--pr)' }}>{item.level}</strong>
+                      <strong style={{ color: item.severityColor || (isGars ? '#0d9488' : 'var(--pr)') }}>{item.level}</strong>
                     </div>
 
                     {item.notes && <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)', marginTop: 4 }}>{item.notes}</div>}
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, marginTop: 12, borderTop: '1px solid var(--border-color)', paddingTop: 8, flexWrap: 'wrap' }}>
-                      <div style={{ display: 'flex', gap: 6 }}>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          className="btn btn-xs btn-p"
+                          style={{
+                            fontWeight: 800,
+                            background: 'linear-gradient(135deg, #4338ca, #2563eb)',
+                            color: '#fff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
+                          }}
+                          onClick={() => handleOpenBridge(item)}
+                          title="اشتقاق أهداف سلوكية للخطة التربوية الفردية (IEP) تلقائياً من بنود التقييم"
+                        >
+                          <span>🎓</span>
+                          <span>اشتقاق خطة فردية (IEP)</span>
+                        </button>
+
                         {isCars && (
                           <button
                             type="button"
@@ -710,7 +825,7 @@ export default function PillarAssessment({ onDataChange }) {
                             onClick={() => openViewCarsReport(item)}
                             style={{ fontWeight: 800 }}
                           >
-                            📄 عرض التقرير التشخيصي
+                            📄 التقرير
                           </button>
                         )}
                         {isCars && (
@@ -718,6 +833,27 @@ export default function PillarAssessment({ onDataChange }) {
                             type="button"
                             className="btn btn-xs btn-g"
                             onClick={() => openEditCarsAssessment(item)}
+                            title="تعديل درجات البنود"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isGars && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewGarsReport(item)}
+                            style={{ fontWeight: 800, background: '#0d9488', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isGars && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditGarsAssessment(item)}
                             title="تعديل درجات البنود"
                           >
                             ✏️
@@ -781,6 +917,31 @@ export default function PillarAssessment({ onDataChange }) {
           onClose={() => setCarsReportOpen(false)}
           assessment={selectedCarsAssessment}
           onEdit={(item) => openEditCarsAssessment(item)}
+        />
+      )}
+
+      {/* MODAL: GARS-3 SPECIALIZED ASSESSMENT WORKSTATION */}
+      {garsModalOpen && (
+        <GARS3AssessmentModal
+          isOpen={garsModalOpen}
+          onClose={() => setGarsModalOpen(false)}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={garsEditData}
+        />
+      )}
+
+      {/* MODAL: GARS-3 OFFICIAL DIAGNOSTIC REPORT */}
+      {garsReportOpen && selectedGarsAssessment && (
+        <GARS3ReportModal
+          isOpen={garsReportOpen}
+          onClose={() => setGarsReportOpen(false)}
+          assessment={selectedGarsAssessment}
+          onEdit={(item) => openEditGarsAssessment(item)}
         />
       )}
 
@@ -897,6 +1058,31 @@ export default function PillarAssessment({ onDataChange }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* MODAL: IEP BRIDGE GENERATOR */}
+      {bridgeOpen && bridgeAssessment && (
+        <IepBridgeModal
+          isOpen={bridgeOpen}
+          onClose={() => setBridgeOpen(false)}
+          student={{
+            studentId: bridgeAssessment.stuId || bridgeAssessment.studentId,
+            studentName: bridgeAssessment.studentName,
+            nationalId: bridgeAssessment.nationalId,
+            diagnosis: bridgeAssessment.diagnosis,
+            className: bridgeAssessment.className,
+            parentName: bridgeAssessment.parentName,
+            parentPhone: bridgeAssessment.parentPhone,
+          }}
+          assessmentData={{
+            measureId: bridgeAssessment.measureId || bridgeAssessment.scaleType || 'cars',
+            measureName: bridgeAssessment.measureName || 'المقياس المقنن',
+            date: bridgeAssessment.date,
+            score: bridgeAssessment.score,
+            results: bridgeAssessment.results || bridgeAssessment.scores || bridgeAssessment.responses || {},
+          }}
+          scaleItems={bridgeScaleItems}
+        />
       )}
     </div>
   );

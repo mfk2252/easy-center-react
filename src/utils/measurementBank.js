@@ -1,3 +1,5 @@
+import { GARS3_ITEMS } from '../data/gars3Data';
+
 export const MEASUREMENT_CATEGORIES = [
   {
     id: 'autism',
@@ -453,18 +455,23 @@ const DEFAULT_SCALE_LIBRARY = [
   {
     id: 'gars',
     name: 'جيليام (GARS-3)',
-    nameEn: 'GARS-3 (Gilliam Autism Rating Scale)',
+    nameEn: 'GARS-3 (Gilliam Autism Rating Scale, 3rd Ed.)',
     category: 'autism',
-    description: 'مقياس جيليام لتقدير التوحد وفق DSM-5 — 58 بنداً تغطي السلوك النمطي، التواصل، التفاعل، والاستجابة الانفعالية',
+    description: 'مقياس جيليام لتقدير اضطراب طيف التوحد وفق DSM-5 — 58 بنداً مقننة على 6 مقاييس فرعية مع معامل التوحد AQ والرتب المئينية',
     icon: '📊',
-    color: '#7c3aed',
+    color: '#0d9488',
     scoreMode: 'subscale',
     responseType: 'scale',
     minValue: 0,
     maxValue: 3,
-    maxScore: 174,
-    items: GARS_ITEMS,
-    thresholdText: 'معامل التوحد 85 فما فوق يشير لاحتمالية عالية للإصابة بطيف التوحد',
+    maxScore: 140,
+    items: GARS3_ITEMS.map(it => ({
+      id: it.id,
+      text: it.text,
+      domain: it.domainId,
+      domainCode: it.domainCode,
+    })),
+    thresholdText: 'معامل التوحد (AQ): 54 فأقل: غير محتمل | 55 إلى 70: محتمل (بسيط) | 71 إلى 100: ملائم/مؤكد (متوسط) | 101+: ملائم جداً (شديد)',
     isDefault: true,
   },
   {

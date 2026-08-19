@@ -1,8 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { CARS2_ITEMS, CARS2_DOMAINS, calculateCARS2Psychometrics } from '../../data/cars2Data';
 import { printItem } from '../../utils/printUtils';
 import { sendReportToWhatsApp } from '../../pages/ProgramsReports/programsWhatsApp';
+import IepBridgeModal from '../../pages/ProgramsReports/IepBridgeModal';
+import { extractRecommendedGoals } from '../../utils/iepBridge';
 
 export default function CARS2ReportModal({
   isOpen,
@@ -11,10 +13,16 @@ export default function CARS2ReportModal({
   onEdit,
 }) {
   const { center } = useApp();
+  const [bridgeOpen, setBridgeOpen] = useState(false);
 
   const psychometrics = useMemo(() => {
     if (!assessment) return null;
     return calculateCARS2Psychometrics(assessment.results || assessment.scores || {});
+  }, [assessment]);
+
+  const recommendedGoals = useMemo(() => {
+    if (!assessment) return [];
+    return extractRecommendedGoals('cars', assessment.results || assessment.scores || {}, CARS2_ITEMS);
   }, [assessment]);
 
   if (!isOpen || !assessment || !psychometrics) return null;
@@ -493,14 +501,36 @@ export default function CARS2ReportModal({
             تم التقييم بواسطة: <strong>{assessment.specialistName || 'الأخصائي المعتمد'}</strong> · تاريخ {assessment.date}
           </div>
 
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button
               type="button"
               className="btn btn-p"
+              onClick={() => setBridgeOpen(true)}
+              style={{
+                fontWeight: 800,
+                borderRadius: 8,
+                background: 'linear-gradient(135deg, #4338ca, #2563eb)',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <span>🎓</span>
+              <span>اشتقاق أهداف الخطة (IEP Bridge)</span>
+              {recommendedGoals.length > 0 && (
+                <span style={{ background: '#fff', color: '#1e40af', padding: '1px 6px', borderRadius: 10, fontSize: '.74rem', fontWeight: 900 }}>
+                  {recommendedGoals.length}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              className="btn btn-s"
               onClick={handlePrint}
               style={{ fontWeight: 800, borderRadius: 8 }}
             >
-              🖨️ طباعة التقرير المعتمد
+              🖨️ طباعة التقرير
             </button>
             <button
               type="button"
@@ -513,6 +543,31 @@ export default function CARS2ReportModal({
           </div>
         </div>
       </div>
+
+      {/* IEP BRIDGE MODAL */}
+      {bridgeOpen && (
+        <IepBridgeModal
+          isOpen={bridgeOpen}
+          onClose={() => setBridgeOpen(false)}
+          student={{
+            studentId: assessment.studentId,
+            studentName: assessment.studentName,
+            nationalId: assessment.nationalId,
+            diagnosis: assessment.diagnosis,
+            className: assessment.className,
+            parentName: assessment.parentName,
+            parentPhone: assessment.parentPhone,
+          }}
+          assessmentData={{
+            measureId: 'cars',
+            measureName: 'مقياس تقدير التوحد في الطفولة CARS-2',
+            date: assessment.date,
+            score: assessment.score || psychometrics?.rawScore,
+            results: assessment.results || assessment.scores || {},
+          }}
+          scaleItems={CARS2_ITEMS}
+        />
+      )}
     </div>
   );
 }
