@@ -575,12 +575,12 @@ export default function GARS3AssessmentModal({
                     boxShadow: currentScore !== null ? '0 1px 3px rgba(0,0,0,0.03)' : '0 0 0 1px rgba(239,68,68,0.1)',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1 }}>
                       <span
                         style={{
-                          width: 28,
-                          height: 28,
+                          width: 32,
+                          height: 32,
                           borderRadius: 8,
                           background: domain?.color || 'var(--pr)',
                           color: '#fff',
@@ -588,34 +588,35 @@ export default function GARS3AssessmentModal({
                           alignItems: 'center',
                           justifyContent: 'center',
                           fontWeight: 900,
-                          fontSize: '.8rem',
+                          fontSize: '.85rem',
                           flexShrink: 0,
+                          marginTop: 2,
                         }}
                       >
                         {it.id}
                       </span>
-                      <div>
-                        <div style={{ fontWeight: 800, fontSize: '.95rem', color: 'var(--text-main)' }}>
-                          {it.title}
-                        </div>
-                        <div style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '.76rem', color: 'var(--text-sub)', marginBottom: 3 }}>
                           المقياس الفرعي: <strong style={{ color: domain?.color }}>{domain?.name}</strong>
+                        </div>
+                        <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-main)', lineHeight: 1.6 }}>
+                          {it.text || it.title}
                         </div>
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginTop: 2 }}>
                       <span style={{ fontSize: '.8rem', color: 'var(--text-sub)' }}>الدرجة:</span>
                       <span
                         style={{
                           fontSize: '1rem',
                           fontWeight: 900,
-                          padding: '2px 8px',
+                          padding: '3px 10px',
                           borderRadius: 6,
                           background: currentScore !== null ? `${domain?.color || 'var(--pr)'}20` : 'var(--g0)',
                           color: currentScore !== null ? domain?.color || 'var(--pr)' : 'var(--text-sub)',
                           border: '1px solid var(--border-color)',
-                          minWidth: 32,
+                          minWidth: 36,
                           textAlign: 'center',
                         }}
                       >
@@ -628,23 +629,24 @@ export default function GARS3AssessmentModal({
                   <div
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
                       gap: 8,
                       marginBottom: 10,
                     }}
                   >
                     {GARS3_RESPONSE_OPTIONS.map(opt => {
-                      const isSelected = currentScore === opt.score;
+                      const optScore = opt.value !== undefined ? opt.value : opt.score;
+                      const isSelected = currentScore === optScore;
                       return (
                         <button
-                          key={opt.score}
+                          key={optScore}
                           type="button"
-                          onClick={() => handleScoreSelect(it.id, opt.score)}
+                          onClick={() => handleScoreSelect(it.id, optScore)}
                           style={{
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'flex-start',
-                            padding: '8px 12px',
+                            padding: '10px 12px',
                             borderRadius: 8,
                             textAlign: 'right',
                             cursor: 'pointer',
@@ -654,13 +656,13 @@ export default function GARS3AssessmentModal({
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                            <span style={{ fontWeight: 800, fontSize: '.84rem', color: isSelected ? domain?.color || '#0d9488' : 'var(--text-main)' }}>
-                              {opt.label} ({opt.score})
+                            <span style={{ fontWeight: 800, fontSize: '.88rem', color: isSelected ? domain?.color || '#0d9488' : 'var(--text-main)' }}>
+                              {opt.label} ({optScore})
                             </span>
-                            {isSelected && <span style={{ color: domain?.color || '#0d9488', fontSize: '.85rem' }}>✓</span>}
+                            {isSelected && <span style={{ color: domain?.color || '#0d9488', fontSize: '.9rem', fontWeight: 900 }}>✓</span>}
                           </div>
-                          <span style={{ fontSize: '.72rem', color: 'var(--text-sub)', marginTop: 2 }}>
-                            {opt.description}
+                          <span style={{ fontSize: '.74rem', color: 'var(--text-sub)', marginTop: 4, lineHeight: 1.4 }}>
+                            {opt.description || opt.hint}
                           </span>
                         </button>
                       );

@@ -58,7 +58,7 @@ export default function GARS3ReportModal({
       return `
         <tr style="border-bottom:1px solid #e2e8f0;background:${score && score >= 3 ? '#fff1f2' : score && score >= 2 ? '#fffbeb' : '#ffffff'};">
           <td style="padding:6px 10px;text-align:center;font-weight:bold;">${it.id}</td>
-          <td style="padding:6px 10px;font-weight:bold;">${it.title}</td>
+          <td style="padding:6px 10px;font-weight:bold;">${it.text || it.title}</td>
           <td style="padding:6px 10px;text-align:center;font-weight:bold;color:#0d9488;">${score !== null ? scoreLabels[score] || score : '—'}</td>
           <td style="padding:6px 10px;font-size:0.85em;color:#64748b;">${note || '—'}</td>
         </tr>
