@@ -54,12 +54,13 @@ const EMPTY_ASSESSMENT = {
 
 export default function PillarAssessment({ onDataChange }) {
   const { toast, center, currentUser } = useApp();
-  const [subTab, setSubTab] = useState('initial'); // 'initial' | 'scales' | 'results'
+  const [subTab, setSubTab] = useState('scales'); // 'scales' | 'initial' | 'results'
   const [students, setStudents] = useState([]);
   const [emps, setEmps] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudentFilter, setSelectedStudentFilter] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
+  const [activeCategoryView, setActiveCategoryView] = useState(null); // null = browse categories grid, 'all' = browse all scales, otherwise specific category ID
 
   // Initial Assessment States
   const [evaluations, setEvaluations] = useState([]);
@@ -380,17 +381,17 @@ export default function PillarAssessment({ onDataChange }) {
         <div className="tabs" style={{ margin: 0, flexWrap: 'wrap' }}>
           <button
             type="button"
+            className={`tab ${subTab === 'scales' ? 'on' : ''}`}
+            onClick={() => { setSubTab('scales'); setActiveCategoryView(null); setSelectedCategoryFilter('all'); }}
+          >
+            🧪 مقاييس وتشخيص مقنن ({allScales.length})
+          </button>
+          <button
+            type="button"
             className={`tab ${subTab === 'initial' ? 'on' : ''}`}
             onClick={() => setSubTab('initial')}
           >
             📋 التقييم والتشخيص المبدئي ({evaluations.length})
-          </button>
-          <button
-            type="button"
-            className={`tab ${subTab === 'scales' ? 'on' : ''}`}
-            onClick={() => setSubTab('scales')}
-          >
-            🧪 مقاييس وتشخيص مقنن ({allScales.length})
           </button>
           <button
             type="button"
@@ -407,65 +408,48 @@ export default function PillarAssessment({ onDataChange }) {
               ➕ تقييم مبدئي جديد
             </button>
           )}
-          {subTab === 'scales' && (
-            <button type="button" className="btn btn-p" onClick={() => openNewScaleAssessment(selectedScaleId)}>
-              ➕ تطبيق مقياس لطالب
-            </button>
-          )}
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="prog-filter-bar" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 }}>
-        <input
-          type="text"
-          className="prog-search-input"
-          style={{ flex: '1 1 220px' }}
-          placeholder="🔍 بحث باسم الطالب، المقياس، أو الفئة التشخيصية..."
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-        />
-        <select
-          className="prog-select-filter"
-          style={{ flex: '0 1 200px' }}
-          value={selectedStudentFilter}
-          onChange={e => setSelectedStudentFilter(e.target.value)}
-        >
-          <option value="">— تصفية بكل الطلاب —</option>
-          {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
 
-        <select
-          className="prog-select-filter"
-          style={{ flex: '0 1 220px' }}
-          value={selectedCategoryFilter}
-          onChange={e => setSelectedCategoryFilter(e.target.value)}
-        >
-          <option value="all">🌟 جميع الفئات التشخيصية (13 فئة)</option>
-          {MEASUREMENT_CATEGORIES.map(cat => {
-            const count = (scalesGrouped[cat.id] || []).length;
-            return (
-              <option key={cat.id} value={cat.id}>
-                {cat.icon} {cat.name} ({count})
-              </option>
-            );
-          })}
-        </select>
-
-        {(searchTerm || selectedStudentFilter || selectedCategoryFilter !== 'all') && (
-          <button
-            type="button"
-            className="btn btn-sm btn-g"
-            onClick={() => { setSearchTerm(''); setSelectedStudentFilter(''); setSelectedCategoryFilter('all'); }}
-          >
-            إلغاء التصفية ✖
-          </button>
-        )}
-      </div>
 
       {/* SUBTAB 1: INITIAL COMPREHENSIVE ASSESSMENTS */}
       {subTab === 'initial' && (
         <div>
+          {/* Custom Compact Filter Bar */}
+          <div className="prog-filter-bar" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16, background: 'var(--g0)', padding: '10px 14px', borderRadius: 12, border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.88rem', color: 'var(--text-sub)', fontWeight: 700, flexShrink: 0 }}>
+              <span>🔍 تصفية الفحوصات المبدئية:</span>
+            </div>
+            <input
+              type="text"
+              className="prog-search-input"
+              style={{ flex: '1 1 200px', maxWidth: '300px', padding: '6px 12px', fontSize: '0.85rem' }}
+              placeholder="البحث باسم الطالب أو الأخصائي..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+            <select
+              className="prog-select-filter"
+              style={{ flex: '0 1 180px', padding: '6px 12px', fontSize: '0.85rem' }}
+              value={selectedStudentFilter}
+              onChange={e => setSelectedStudentFilter(e.target.value)}
+            >
+              <option value="">— كل الطلاب —</option>
+              {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+            {(searchTerm || selectedStudentFilter) && (
+              <button
+                type="button"
+                className="btn btn-sm btn-g"
+                style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+                onClick={() => { setSearchTerm(''); setSelectedStudentFilter(''); }}
+              >
+                مسح التصفية ✖
+              </button>
+            )}
+          </div>
+
           {filteredEvals.length === 0 ? (
             <EmptyState icon="🎯" title="لا توجد تقييمات مبدئية مسجلة بعد" sub="اضغط ➕ تقييم مبدئي جديد لبدء توثيق رحلة تشخيص الطالب" />
           ) : (
@@ -532,337 +516,524 @@ export default function PillarAssessment({ onDataChange }) {
       {/* SUBTAB 2: SCALES LIBRARY WITH 13 DIAGNOSTIC CATEGORIES */}
       {subTab === 'scales' && (
         <div>
-          {/* CATEGORIES BROWSER STRIP */}
-          <div style={{ marginBottom: 18 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
-              <div style={{ fontWeight: 800, fontSize: '.92rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span>📑 الفئات التشخيصية المعتمدة للتربية الخاصة</span>
-                <span className="bdg b-bl" style={{ fontSize: '.72rem' }}>13 فئة مقننة</span>
-              </div>
-              <span style={{ fontSize: '.78rem', color: 'var(--text-sub)' }}>
-                انقر على أي فئة لاستعراض مقاييسها
-              </span>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                gap: 8,
-                overflowX: 'auto',
-                paddingBottom: 8,
-                WebkitOverflowScrolling: 'touch',
-                scrollbarWidth: 'thin',
-              }}
-            >
-              <button
-                type="button"
-                className={`btn btn-sm ${selectedCategoryFilter === 'all' ? 'btn-p' : 'btn-g'}`}
-                onClick={() => setSelectedCategoryFilter('all')}
-                style={{
-                  borderRadius: 20,
-                  padding: '6px 14px',
-                  fontWeight: selectedCategoryFilter === 'all' ? 800 : 600,
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                }}
-              >
-                🌟 جميع المقاييس ({allScales.length})
-              </button>
-
-              {MEASUREMENT_CATEGORIES.map(cat => {
-                const count = (scalesGrouped[cat.id] || []).length;
-                const isSelected = selectedCategoryFilter === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    className={`btn btn-sm ${isSelected ? 'btn-p' : 'btn-g'}`}
-                    onClick={() => setSelectedCategoryFilter(cat.id)}
-                    style={{
-                      borderRadius: 20,
-                      padding: '6px 14px',
-                      fontWeight: isSelected ? 800 : 600,
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}
-                    title={cat.nameEn}
-                  >
-                    <span>{cat.icon}</span>
-                    <span>{cat.name}</span>
-                    <span
-                      style={{
-                        background: isSelected ? 'rgba(255,255,255,0.25)' : 'var(--g1)',
-                        padding: '1px 6px',
-                        borderRadius: 10,
-                        fontSize: '.72rem',
-                      }}
-                    >
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Active Category Description Banner if specific category selected */}
-          {currentCategoryMeta && (
-            <div
-              style={{
-                background: 'var(--pr-l)',
-                border: '1px solid var(--pr)',
-                borderRadius: 12,
-                padding: '12px 16px',
-                marginBottom: 16,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: 10,
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: '1.2rem' }}>{currentCategoryMeta.icon}</span>
-                  <strong style={{ fontSize: '1rem', color: 'var(--text-main)' }}>{currentCategoryMeta.name}</strong>
-                  <span style={{ fontSize: '.78rem', color: 'var(--text-sub)' }}>({currentCategoryMeta.nameEn})</span>
-                </div>
-                <p style={{ margin: '4px 0 0 0', fontSize: '.82rem', color: 'var(--text-sub)' }}>
-                  {currentCategoryMeta.description}
+          {activeCategoryView === null ? (
+            <div>
+              {/* Category Search Header / Description */}
+              <div style={{ textAlign: 'center', margin: '24px 0 32px 0' }}>
+                <h2 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--text-main)', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                  <span>📂 مركز الفئات التشخيصية المعتمدة</span>
+                  <span className="bdg b-bl" style={{ fontSize: '0.85rem', padding: '4px 10px', borderRadius: '12px' }}>13 فئة معتمدة</span>
+                </h2>
+                <p style={{ fontSize: '0.95rem', color: 'var(--text-sub)', maxWidth: '650px', margin: '0 auto', lineHeight: 1.6 }}>
+                  مكتبة متكاملة ومصنفة لتطبيق أدوات قياس الاضطرابات النفسية والنمائية وصعوبات التعلم والتربية الخاصة. انقر على أي قسم لبدء الفحص والتقييم.
                 </p>
-              </div>
-              <span className="bdg b-bl" style={{ fontWeight: 800 }}>
-                {(scalesGrouped[currentCategoryMeta.id] || []).length} مقاييس متوفرة
-              </span>
-            </div>
-          )}
 
-          {/* Featured Highlight Card for CARS-2 and GARS-3 if Autism or All is active */}
-          {(selectedCategoryFilter === 'all' || selectedCategoryFilter === 'autism') && (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                gap: 14,
-                marginBottom: 20,
-              }}
-            >
-              {/* CARS-2 Highlight */}
-              <div
-                style={{
-                  background: 'linear-gradient(135deg, rgba(30, 64, 175, 0.08), rgba(59, 130, 246, 0.04))',
-                  border: '1.5px solid var(--pr)',
-                  borderRadius: 14,
-                  padding: '16px 18px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  gap: 12,
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                    <span className="bdg b-bl" style={{ fontWeight: 900, fontSize: '.72rem' }}>المعيار الذهبي للتشخيص</span>
-                    <span className="bdg b-gr" style={{ fontWeight: 800, fontSize: '.72rem' }}>CARS-2 ST</span>
-                  </div>
-                  <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 900, color: 'var(--text-main)' }}>
-                    🧩 مقياس تقدير التوحد في الطفولة (CARS-2)
-                  </h3>
-                  <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45 }}>
-                    15 مجالاً تشخيصياً معتمداً · سلم تقدير متدرج (1.0 إلى 4.0) · درجات معيارية T ورتب مئينية واشتقاق IEP
-                  </p>
+                {/* Optional category-grid text search */}
+                <div style={{ marginTop: 20, display: 'flex', justifyContent: 'center' }}>
+                  <input
+                    type="text"
+                    className="prog-search-input"
+                    style={{ maxWidth: '450px', width: '100%', padding: '10px 16px', borderRadius: '24px', fontSize: '0.9rem', border: '1.5px solid var(--border-color)', boxShadow: 'var(--sh)', textAlign: 'center' }}
+                    placeholder="🔍 ابحث عن مقياس محدد أو فئة تشخيصية مباشرة..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                  />
                 </div>
-
-                <button
-                  type="button"
-                  className="btn btn-p"
-                  onClick={() => { setCarsEditData(null); setCarsModalOpen(true); }}
-                  style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', width: '100%' }}
-                >
-                  🚀 فتح أداة فحص وتطبيق CARS-2
-                </button>
               </div>
 
-              {/* GARS-3 Highlight */}
-              <div
-                style={{
-                  background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.08), rgba(20, 184, 166, 0.04))',
-                  border: '1.5px solid #0d9488',
-                  borderRadius: 14,
-                  padding: '16px 18px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  gap: 12,
-                }}
-              >
+              {searchTerm ? (
+                /* Search active state: Show filtered list of scales immediately */
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                    <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontWeight: 900, fontSize: '.72rem' }}>وفق معايير DSM-5</span>
-                    <span className="bdg b-gr" style={{ fontWeight: 800, fontSize: '.72rem' }}>GARS-3 المقنن</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                      🔍 نتائج البحث عن "{searchTerm}" ({filteredScales.length} مقاييس)
+                    </h3>
+                    <button type="button" className="btn btn-sm btn-g" onClick={() => setSearchTerm('')}>
+                      إلغاء البحث والعودة ✖
+                    </button>
                   </div>
-                  <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 900, color: 'var(--text-main)' }}>
-                    📊 مقياس جيليام لتقدير التوحد — الإصدار الثالث (GARS-3)
-                  </h3>
-                  <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45 }}>
-                    58 بنداً مقنناً · 6 مقاييس فرعية (لفظي / غير لفظي) · معامل التوحد AQ ومستويات الدعم الثلاثة DSM-5
-                  </p>
+                  {/* Standard Scales Grid but filtered */}
+                  {filteredScales.length === 0 ? (
+                    <EmptyState
+                      icon="🔍"
+                      title="لم يتم العثور على أي مقاييس تطابق البحث"
+                      sub="جرب كتابة كلمة أخرى أو تصفح الأقسام مباشرة"
+                    />
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 14 }}>
+                      {filteredScales.map(scale => {
+                        const isCars = scale.id === 'cars';
+                        const isGars = scale.id === 'gars' || scale.id === 'gars3';
+                        const normCat = normalizeCategoryId(scale.category);
+                        const catMeta = categoryMap[normCat] || { name: 'مقياس مقنن', icon: '📝', color: '#1a56db' };
+                        return (
+                          <div
+                            key={scale.id}
+                            className="prog-scale-card"
+                            style={{
+                              border: isCars ? '2px solid var(--pr)' : isGars ? '2px solid #0d9488' : selectedScaleId === scale.id ? '2px solid var(--pr)' : '1px solid var(--border-color)',
+                              background: isCars ? 'var(--pr-l)' : isGars ? 'rgba(13, 148, 136, 0.05)' : selectedScaleId === scale.id ? 'var(--pr-l)' : 'var(--bg-card)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              borderRadius: 14,
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, gap: 6 }}>
+                              <span className="bdg b-bl" style={{ fontSize: '.72rem', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <span>{catMeta.icon}</span>
+                                <span>{catMeta.name}</span>
+                              </span>
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)', fontWeight: 600 }}>
+                                {scale.items?.length || 15} بنداً
+                              </span>
+                            </div>
+                            <h4 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.4 }}>
+                              {scale.name}
+                            </h4>
+                            {scale.nameEn && (
+                              <div style={{ fontSize: '.74rem', color: 'var(--text-sub)', marginBottom: 8, direction: 'ltr', textAlign: 'right' }}>
+                                {scale.nameEn}
+                              </div>
+                            )}
+                            <p style={{ fontSize: '.78rem', color: 'var(--text-sub)', margin: '0 0 14px 0', minHeight: 40, lineHeight: 1.5 }}>
+                              {scale.description || scale.thresholdText || 'مقياس تشخيصي مقنن لتحديد مستوى الأداء وخطط التدخل'}
+                            </p>
+                            <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
+                              <button
+                                type="button"
+                                className="btn btn-p btn-sm"
+                                style={{
+                                  flex: 1,
+                                  fontWeight: 700,
+                                  background: isGars ? '#0d9488' : undefined,
+                                  borderColor: isGars ? '#0d9488' : undefined,
+                                }}
+                                onClick={() => openNewScaleAssessment(scale.id)}
+                              >
+                                {isCars ? '🧩 تطبيق CARS-2 الآن' : isGars ? '📊 تطبيق GARS-3 الآن' : '📝 تطبيق المقياس الآن'}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() => { setGarsEditData(null); setGarsModalOpen(true); }}
-                  style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#0d9488', color: '#fff', width: '100%' }}
-                >
-                  🚀 فتح أداة فحص وتطبيق GARS-3
-                </button>
-              </div>
-
-              {/* SRS-2 Highlight */}
-              <div
-                style={{
-                  background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.08), rgba(16, 185, 129, 0.04))',
-                  border: '1.5px solid #059669',
-                  borderRadius: 14,
-                  padding: '16px 18px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  gap: 12,
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                    <span className="bdg" style={{ background: '#d1fae5', color: '#047857', fontWeight: 900, fontSize: '.72rem' }}>التفاعل والتواصل المتبادل</span>
-                    <span className="bdg b-gr" style={{ fontWeight: 800, fontSize: '.72rem' }}>SRS-2 المقنن</span>
-                  </div>
-                  <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 900, color: 'var(--text-main)' }}>
-                    👥 مقياس الاستجابة الاجتماعية — الإصدار الثاني (SRS-2)
-                  </h3>
-                  <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45 }}>
-                    65 عبارة سيكومترية · 5 مقاييس فرعية دقيقة · درجات معيارية تائية T متوافقة مع معايير DSM-5 واشتقاق IEP تلقائي
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() => { setSrsEditData(null); setSrsModalOpen(true); }}
-                  style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#059669', color: '#fff', width: '100%' }}
-                >
-                  🚀 فتح أداة فحص وتطبيق SRS-2
-                </button>
-              </div>
-
-              {/* PEP-3 Highlight */}
-              <div
-                style={{
-                  background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(29, 78, 216, 0.04))',
-                  border: '1.5px solid #2563eb',
-                  borderRadius: 14,
-                  padding: '16px 18px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  gap: 12,
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                     <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontWeight: 900, fontSize: '.72rem' }}>السن النمائي ونقاط القوة والضعف</span>
-                     <span className="bdg b-gr" style={{ fontWeight: 800, fontSize: '.72rem' }}>PEP-3 المقنن المطور</span>
-                  </div>
-                  <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 900, color: 'var(--text-main)' }}>
-                    📋 ملف التقييم النفسي التربوي للتوحد (PEP-3)
-                  </h3>
-                  <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45 }}>
-                    50 بنداً نمائياً مقنناً · 8 أبعاد نمائية سلوكية · حساب السن النمائي، ونقاط القوة والاحتياج، وتوليد أهداف الخطة الفردية
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() => { setPep3EditData(null); setPep3ModalOpen(true); }}
-                  style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#2563eb', color: '#fff', width: '100%' }}
-                >
-                  🚀 تطبيق مقياس وفحص PEP-3 المطور
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* SCALES GRID */}
-          {filteredScales.length === 0 ? (
-            <EmptyState
-              icon="🔍"
-              title="لم يتم العثور على مقاييس تطابق البحث أو الفئة المختارة"
-              sub="جرب تغيير الفئة التشخيصية أو تفريغ خانة البحث"
-            />
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 14 }}>
-              {filteredScales.map(scale => {
-                const isCars = scale.id === 'cars';
-                const isGars = scale.id === 'gars' || scale.id === 'gars3';
-                const normCat = normalizeCategoryId(scale.category);
-                const catMeta = categoryMap[normCat] || { name: 'مقياس مقنن', icon: '📝', color: '#1a56db' };
-
-                return (
+              ) : (
+                /* The 13 Categories Grid + 1 All scales card */
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                  {/* Card: All Scales */}
                   <div
-                    key={scale.id}
-                    className="prog-scale-card"
+                    onClick={() => { setActiveCategoryView('all'); setSelectedCategoryFilter('all'); }}
+                    className="hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
                     style={{
-                      border: isCars ? '2px solid var(--pr)' : isGars ? '2px solid #0d9488' : selectedScaleId === scale.id ? '2px solid var(--pr)' : '1px solid var(--border-color)',
-                      background: isCars ? 'var(--pr-l)' : isGars ? 'rgba(13, 148, 136, 0.05)' : selectedScaleId === scale.id ? 'var(--pr-l)' : 'var(--bg-card)',
+                      background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--g0) 100%)',
+                      border: '1.5px dashed var(--pr)',
+                      borderRadius: '16px',
+                      padding: '20px',
+                      cursor: 'pointer',
                       display: 'flex',
                       flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      minHeight: '220px',
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, gap: 6 }}>
-                      <span className="bdg b-bl" style={{ fontSize: '.72rem', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <span>{catMeta.icon}</span>
-                        <span>{catMeta.name}</span>
-                      </span>
-                      <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)', fontWeight: 600 }}>
-                        {scale.items?.length || 15} بنداً
-                      </span>
-                    </div>
-
-                    <h4 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.4 }}>
-                      {scale.name}
-                    </h4>
-                    {scale.nameEn && (
-                      <div style={{ fontSize: '.74rem', color: 'var(--text-sub)', marginBottom: 8, direction: 'ltr', textAlign: 'right' }}>
-                        {scale.nameEn}
+                    <div>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--pr-l)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', marginBottom: 12 }}>
+                        🌟
                       </div>
-                    )}
-
-                    <p style={{ fontSize: '.78rem', color: 'var(--text-sub)', margin: '0 0 14px 0', minHeight: 40, lineHeight: 1.5 }}>
-                      {scale.description || scale.thresholdText || 'مقياس تشخيصي مقنن لتحديد مستوى الأداء وخطط التدخل'}
-                    </p>
-
-                    <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
-                      <button
-                        type="button"
-                        className="btn btn-p btn-sm"
-                        style={{
-                          flex: 1,
-                          fontWeight: 700,
-                          background: isGars ? '#0d9488' : undefined,
-                          borderColor: isGars ? '#0d9488' : undefined,
-                        }}
-                        onClick={() => openNewScaleAssessment(scale.id)}
-                      >
-                        {isCars ? '🧩 تطبيق CARS-2 الآن' : isGars ? '📊 تطبيق GARS-3 الآن' : '📝 تطبيق المقياس الآن'}
-                      </button>
+                      <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)', marginBottom: 4 }}>
+                        جميع المقاييس السيكومترية
+                      </h3>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-sub)', letterSpacing: '0.5px', marginBottom: 8, textTransform: 'uppercase' }}>
+                        All Diagnostic Scales
+                      </div>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-sub)', lineHeight: 1.5, margin: 0 }}>
+                        استعراض وتصفح كافة المقاييس والأدوات التشخيصية المتوفرة بالمنظومة دفعة واحدة مع تصفية متقدمة.
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: 10, marginTop: 12 }}>
+                      <span className="bdg b-bl" style={{ fontSize: '0.78rem', fontWeight: 800 }}>{allScales.length} مقياس متاح</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--pr)' }}>دخول ⬅</span>
                     </div>
                   </div>
-                );
-              })}
+
+                  {/* 13 Category Cards */}
+                  {MEASUREMENT_CATEGORIES.map(cat => {
+                    const count = (scalesGrouped[cat.id] || []).length;
+                    return (
+                      <div
+                        key={cat.id}
+                        onClick={() => { setActiveCategoryView(cat.id); setSelectedCategoryFilter(cat.id); }}
+                        className="hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+                        style={{
+                          background: 'var(--bg-card)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '16px',
+                          padding: '20px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          minHeight: '220px',
+                          transition: 'border-color 0.2s, box-shadow 0.2s',
+                        }}
+                      >
+                        <div>
+                          <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: `${cat.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', marginBottom: 12, border: `1px solid ${cat.color}30` }}>
+                            {cat.icon}
+                          </div>
+                          <h3 style={{ fontSize: '1.12rem', fontWeight: 900, color: 'var(--text-main)', marginBottom: 4 }}>
+                            {cat.name}
+                          </h3>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)', letterSpacing: '0.3px', marginBottom: 8 }}>
+                            {cat.nameEn}
+                          </div>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-sub)', lineHeight: 1.5, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
+                            {cat.description}
+                          </p>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: 10, marginTop: 12 }}>
+                          <span className="bdg b-gr" style={{ fontSize: '0.78rem', fontWeight: 800 }}>{count} مقاييس</span>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-main)' }}>استعراض ⬅</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Sub-Page for Specific Category View */
+            <div>
+              {/* Breadcrumbs (مسار الملفات) */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: 'var(--text-sub)', marginBottom: 16, background: 'var(--g0)', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border-color)', width: 'fit-content' }}>
+                <span style={{ cursor: 'pointer', transition: 'color 0.2s' }} className="hover:text-primary" onClick={() => { setActiveCategoryView(null); setSelectedCategoryFilter('all'); }}>🏠 مركز التقييم والتشخيص</span>
+                <span>/</span>
+                <span style={{ cursor: 'pointer', transition: 'color 0.2s' }} className="hover:text-primary" onClick={() => { setActiveCategoryView(null); setSelectedCategoryFilter('all'); }}>الفئات التشخيصية</span>
+                <span>/</span>
+                <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>{currentCategoryMeta?.name || 'جميع المقاييس السيكومترية'}</span>
+              </div>
+
+              {/* Category Header Banner */}
+              <div
+                style={{
+                  background: 'var(--bg-card)',
+                  border: '1.5px solid var(--border-color)',
+                  borderRadius: 16,
+                  padding: '24px',
+                  marginBottom: 20,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 16,
+                  boxShadow: 'var(--sh)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: currentCategoryMeta ? `${currentCategoryMeta.color}15` : 'var(--pr-l)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', border: `1px solid ${currentCategoryMeta ? currentCategoryMeta.color : 'var(--pr)'}30` }}>
+                    {currentCategoryMeta ? currentCategoryMeta.icon : '🌟'}
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                      <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                        {currentCategoryMeta ? currentCategoryMeta.name : 'جميع المقاييس السيكومترية'}
+                      </h2>
+                      <span className="bdg b-bl" style={{ fontWeight: 800 }}>
+                        {currentCategoryMeta ? (scalesGrouped[currentCategoryMeta.id] || []).length : allScales.length} مقياس متاح
+                      </span>
+                    </div>
+                    <p style={{ margin: '6px 0 0 0', fontSize: '0.88rem', color: 'var(--text-sub)', maxWidth: '750px', lineHeight: 1.55 }}>
+                      {currentCategoryMeta ? currentCategoryMeta.description : 'تقارير وفحوصات جميع المقاييس السيكومترية والنمائية المعتمدة للتشخيص والتحليل.'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn btn-g"
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 10, fontWeight: 700 }}
+                  onClick={() => { setActiveCategoryView(null); setSelectedCategoryFilter('all'); }}
+                >
+                  <span>⬅</span>
+                  <span>العودة للفئات</span>
+                </button>
+              </div>
+
+              {/* Subtab Compact Filter Bar inside selected Category */}
+              <div className="prog-filter-bar" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 20, background: 'var(--g0)', padding: '10px 14px', borderRadius: 12, border: '1px solid var(--border-color)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.88rem', color: 'var(--text-sub)', fontWeight: 700, flexShrink: 0 }}>
+                  <span>🔍 تصفية المقاييس الحالية:</span>
+                </div>
+                <input
+                  type="text"
+                  className="prog-search-input"
+                  style={{ flex: '1 1 200px', maxWidth: '300px', padding: '6px 12px', fontSize: '0.85rem' }}
+                  placeholder="البحث باسم المقياس أو الوصف..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                />
+                <select
+                  className="prog-select-filter"
+                  style={{ flex: '0 1 180px', padding: '6px 12px', fontSize: '0.85rem' }}
+                  value={selectedStudentFilter}
+                  onChange={e => setSelectedStudentFilter(e.target.value)}
+                >
+                  <option value="">— كل الطلاب —</option>
+                  {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+                {(searchTerm || selectedStudentFilter) && (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-g"
+                    style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+                    onClick={() => { setSearchTerm(''); setSelectedStudentFilter(''); }}
+                  >
+                    مسح التصفية ✖
+                  </button>
+                )}
+              </div>
+
+              {/* Featured Autism Highlight Cards (CARS-2, GARS-3, SRS-2, PEP-3) inside category detail view only if Autism or All is active */}
+              {(selectedCategoryFilter === 'all' || selectedCategoryFilter === 'autism') && (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                    gap: 14,
+                    marginBottom: 20,
+                  }}
+                >
+                  {/* CARS-2 */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(30, 64, 175, 0.08), rgba(59, 130, 246, 0.04))',
+                      border: '1.5px solid var(--pr)',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg b-bl" style={{ fontWeight: 900, fontSize: '.72rem' }}>المعيار الذهبي للتشخيص</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 800, fontSize: '.72rem' }}>CARS-2 ST</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                        🧩 مقياس تقدير التوحد في الطفولة (CARS-2)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45 }}>
+                        15 مجالاً تشخيصياً معتمداً · سلم تقدير متدرج (1.0 إلى 4.0) · درجات معيارية T ورتب مئينية واشتقاق IEP تلقائي
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn btn-p"
+                      onClick={() => { setCarsEditData(null); setCarsModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', width: '100%' }}
+                    >
+                      🚀 فتح أداة فحص وتطبيق CARS-2
+                    </button>
+                  </div>
+
+                  {/* GARS-3 */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.08), rgba(20, 184, 166, 0.04))',
+                      border: '1.5px solid #0d9488',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontWeight: 900, fontSize: '.72rem' }}>وفق معايير DSM-5</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 800, fontSize: '.72rem' }}>GARS-3 المقنن</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                        📊 مقياس جيليام لتقدير التوحد — الإصدار الثالث (GARS-3)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45 }}>
+                        58 بنداً مقنناً · 6 مقاييس فرعية (لفظي / غير لفظي) · معامل التوحد AQ ومستويات الدعم الثلاثة DSM-5
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setGarsEditData(null); setGarsModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#0d9488', color: '#fff', width: '100%' }}
+                    >
+                      🚀 فتح أداة فحص وتطبيق GARS-3
+                    </button>
+                  </div>
+
+                  {/* SRS-2 */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.08), rgba(16, 185, 129, 0.04))',
+                      border: '1.5px solid #059669',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#d1fae5', color: '#047857', fontWeight: 900, fontSize: '.72rem' }}>التفاعل والتواصل المتبادل</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 800, fontSize: '.72rem' }}>SRS-2 المقنن</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                        👥 مقياس الاستجابة الاجتماعية — الإصدار الثاني (SRS-2)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45 }}>
+                        65 عبارة سيكومترية · 5 مقاييس فرعية دقيقة · درجات معيارية تائية T متوافقة مع معايير DSM-5 واشتقاق IEP تلقائي
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setSrsEditData(null); setSrsModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#059669', color: '#fff', width: '100%' }}
+                    >
+                      🚀 فتح أداة فحص وتطبيق SRS-2
+                    </button>
+                  </div>
+
+                  {/* PEP-3 */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(29, 78, 216, 0.04))',
+                      border: '1.5px solid #2563eb',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                         <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontWeight: 900, fontSize: '.72rem' }}>السن النمائي ونقاط القوة والضعف</span>
+                         <span className="bdg b-gr" style={{ fontWeight: 800, fontSize: '.72rem' }}>PEP-3 المقنن المطور</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                        📋 ملف التقييم النفسي التربوي للتوحد (PEP-3)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45 }}>
+                        50 بنداً نمائياً مقنناً · 8 أبعاد نمائية سلوكية · حساب السن النمائي، ونقاط القوة والاحتياج، وتوليد أهداف الخطة الفردية
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setPep3EditData(null); setPep3ModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#2563eb', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق مقياس وفحص PEP-3 المطور
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* SCALES GRID */}
+              {filteredScales.length === 0 ? (
+                <EmptyState
+                  icon="🔍"
+                  title="لم يتم العثور على مقاييس تطابق البحث أو الفئة المختارة"
+                  sub="جرب تغيير الفئة التشخيصية أو تفريغ خانة البحث"
+                />
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 14 }}>
+                  {filteredScales.map(scale => {
+                    const isCars = scale.id === 'cars';
+                    const isGars = scale.id === 'gars' || scale.id === 'gars3';
+                    const normCat = normalizeCategoryId(scale.category);
+                    const catMeta = categoryMap[normCat] || { name: 'مقياس مقنن', icon: '📝', color: '#1a56db' };
+
+                    return (
+                      <div
+                        key={scale.id}
+                        className="prog-scale-card"
+                        style={{
+                          border: isCars ? '2px solid var(--pr)' : isGars ? '2px solid #0d9488' : selectedScaleId === scale.id ? '2px solid var(--pr)' : '1px solid var(--border-color)',
+                          background: isCars ? 'var(--pr-l)' : isGars ? 'rgba(13, 148, 136, 0.05)' : selectedScaleId === scale.id ? 'var(--pr-l)' : 'var(--bg-card)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          borderRadius: 14,
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, gap: 6 }}>
+                          <span className="bdg b-bl" style={{ fontSize: '.72rem', display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <span>{catMeta.icon}</span>
+                            <span>{catMeta.name}</span>
+                          </span>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)', fontWeight: 600 }}>
+                            {scale.items?.length || 15} بنداً
+                          </span>
+                        </div>
+
+                        <h4 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.4 }}>
+                          {scale.name}
+                        </h4>
+                        {scale.nameEn && (
+                          <div style={{ fontSize: '.74rem', color: 'var(--text-sub)', marginBottom: 8, direction: 'ltr', textAlign: 'right' }}>
+                            {scale.nameEn}
+                          </div>
+                        )}
+
+                        <p style={{ fontSize: '.78rem', color: 'var(--text-sub)', margin: '0 0 14px 0', minHeight: 40, lineHeight: 1.5 }}>
+                          {scale.description || scale.thresholdText || 'مقياس تشخيصي مقنن لتحديد مستوى الأداء وخطط التدخل'}
+                        </p>
+
+                        <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
+                          <button
+                            type="button"
+                            className="btn btn-p btn-sm"
+                            style={{
+                              flex: 1,
+                              fontWeight: 700,
+                              background: isGars ? '#0d9488' : undefined,
+                              borderColor: isGars ? '#0d9488' : undefined,
+                            }}
+                            onClick={() => openNewScaleAssessment(scale.id)}
+                          >
+                            {isCars ? '🧩 تطبيق CARS-2 الآن' : isGars ? '📊 تطبيق GARS-3 الآن' : '📝 تطبيق المقياس الآن'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Back to Categories bottom action */}
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32 }}>
+                <button
+                  type="button"
+                  className="btn btn-g"
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 12, fontWeight: 700 }}
+                  onClick={() => { setActiveCategoryView(null); setSelectedCategoryFilter('all'); }}
+                >
+                  <span>⬅</span>
+                  <span>العودة لقائمة الفئات التشخيصية</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -871,6 +1042,56 @@ export default function PillarAssessment({ onDataChange }) {
       {/* SUBTAB 3: ASSESSMENTS RESULTS */}
       {subTab === 'results' && (
         <div>
+          {/* Custom Filter Bar for Results */}
+          <div className="prog-filter-bar" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16, background: 'var(--g0)', padding: '10px 14px', borderRadius: 12, border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.88rem', color: 'var(--text-sub)', fontWeight: 700, flexShrink: 0 }}>
+              <span>📊 تصفية نتائج المقاييس:</span>
+            </div>
+            <input
+              type="text"
+              className="prog-search-input"
+              style={{ flex: '1 1 200px', maxWidth: '280px', padding: '6px 12px', fontSize: '0.85rem' }}
+              placeholder="البحث باسم الطالب أو المقياس..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+            <select
+              className="prog-select-filter"
+              style={{ flex: '0 1 180px', padding: '6px 12px', fontSize: '0.85rem' }}
+              value={selectedStudentFilter}
+              onChange={e => setSelectedStudentFilter(e.target.value)}
+            >
+              <option value="">— كل الطلاب —</option>
+              {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+            <select
+              className="prog-select-filter"
+              style={{ flex: '0 1 200px', padding: '6px 12px', fontSize: '0.85rem' }}
+              value={selectedCategoryFilter}
+              onChange={e => setSelectedCategoryFilter(e.target.value)}
+            >
+              <option value="all">🌟 كل الفئات التشخيصية ({MEASUREMENT_CATEGORIES.length})</option>
+              {MEASUREMENT_CATEGORIES.map(cat => {
+                const count = (scalesGrouped[cat.id] || []).length;
+                return (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.icon} {cat.name} ({count})
+                  </option>
+                );
+              })}
+            </select>
+            {(searchTerm || selectedStudentFilter || selectedCategoryFilter !== 'all') && (
+              <button
+                type="button"
+                className="btn btn-sm btn-g"
+                style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+                onClick={() => { setSearchTerm(''); setSelectedStudentFilter(''); setSelectedCategoryFilter('all'); }}
+              >
+                مسح التصفية ✖
+              </button>
+            )}
+          </div>
+
           {filteredAssessments.length === 0 ? (
             <EmptyState icon="📊" title="لا توجد نتائج مقاييس مسجلة" sub="اختر أحد المقاييس وطبقه على طالب لحفظ نتائجه ومستواه" />
           ) : (
