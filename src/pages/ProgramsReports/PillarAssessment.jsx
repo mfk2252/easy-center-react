@@ -13,6 +13,9 @@ import GARS3AssessmentModal from '../../components/assessments/GARS3AssessmentMo
 import GARS3ReportModal from '../../components/assessments/GARS3ReportModal';
 import SRS2AssessmentModal from '../../components/assessments/SRS2AssessmentModal';
 import SRS2ReportModal from '../../components/assessments/SRS2ReportModal';
+import PEP3AssessmentModal from '../../components/assessments/PEP3AssessmentModal';
+import PEP3ReportModal from '../../components/assessments/PEP3ReportModal';
+import { PEP3_ITEMS } from '../../data/pep3Data';
 import IepBridgeModal from './IepBridgeModal';
 import { extractRecommendedGoals } from '../../utils/iepBridge';
 import {
@@ -88,6 +91,12 @@ export default function PillarAssessment({ onDataChange }) {
   const [srsEditData, setSrsEditData] = useState(null);
   const [srsReportOpen, setSrsReportOpen] = useState(false);
   const [selectedSrsAssessment, setSelectedSrsAssessment] = useState(null);
+
+  // PEP-3 Specific Specialized Modals States
+  const [pep3ModalOpen, setPep3ModalOpen] = useState(false);
+  const [pep3EditData, setPep3EditData] = useState(null);
+  const [pep3ReportOpen, setPep3ReportOpen] = useState(false);
+  const [selectedPep3Assessment, setSelectedPep3Assessment] = useState(null);
 
   // IEP Bridge State
   const [bridgeOpen, setBridgeOpen] = useState(false);
@@ -188,6 +197,11 @@ export default function PillarAssessment({ onDataChange }) {
       setSrsModalOpen(true);
       return;
     }
+    if (scaleId === 'pep3' || scaleId === 'pep') {
+      setPep3EditData(null);
+      setPep3ModalOpen(true);
+      return;
+    }
     const scale = allScales.find(s => s.id === scaleId) || activeScale;
     setSelectedScaleId(scale?.id || 'cars');
     setScaleResponses({});
@@ -227,6 +241,16 @@ export default function PillarAssessment({ onDataChange }) {
   function openViewSrsReport(item) {
     setSelectedSrsAssessment(item);
     setSrsReportOpen(true);
+  }
+
+  function openEditPep3Assessment(item) {
+    setPep3EditData(item);
+    setPep3ModalOpen(true);
+  }
+
+  function openViewPep3Report(item) {
+    setSelectedPep3Assessment(item);
+    setPep3ReportOpen(true);
   }
 
   function handleScaleOptionChange(itemId, value) {
@@ -272,8 +296,12 @@ export default function PillarAssessment({ onDataChange }) {
   }
 
   function handleOpenBridge(item) {
-    const scale = allScales.find(s => s.id === item.measureId) || null;
-    setBridgeScaleItems(scale?.items || []);
+    if (item.measureId === 'pep3' || item.scaleType === 'pep3') {
+      setBridgeScaleItems(PEP3_ITEMS);
+    } else {
+      const scale = allScales.find(s => s.id === item.measureId) || null;
+      setBridgeScaleItems(scale?.items || []);
+    }
     setBridgeAssessment(item);
     setBridgeOpen(true);
   }
@@ -720,6 +748,42 @@ export default function PillarAssessment({ onDataChange }) {
                   🚀 فتح أداة فحص وتطبيق SRS-2
                 </button>
               </div>
+
+              {/* PEP-3 Highlight */}
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(29, 78, 216, 0.04))',
+                  border: '1.5px solid #2563eb',
+                  borderRadius: 14,
+                  padding: '16px 18px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                     <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontWeight: 900, fontSize: '.72rem' }}>السن النمائي ونقاط القوة والضعف</span>
+                     <span className="bdg b-gr" style={{ fontWeight: 800, fontSize: '.72rem' }}>PEP-3 المقنن المطور</span>
+                  </div>
+                  <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                    📋 ملف التقييم النفسي التربوي للتوحد (PEP-3)
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45 }}>
+                    50 بنداً نمائياً مقنناً · 8 أبعاد نمائية سلوكية · حساب السن النمائي، ونقاط القوة والاحتياج، وتوليد أهداف الخطة الفردية
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => { setPep3EditData(null); setPep3ModalOpen(true); }}
+                  style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#2563eb', color: '#fff', width: '100%' }}
+                >
+                  🚀 تطبيق مقياس وفحص PEP-3 المطور
+                </button>
+              </div>
             </div>
           )}
 
@@ -806,13 +870,14 @@ export default function PillarAssessment({ onDataChange }) {
                 const isCars = item.measureId === 'cars' || item.scaleType === 'cars2';
                 const isGars = item.measureId === 'gars' || item.measureId === 'gars3' || item.scaleType === 'gars3';
                 const isSrs = item.measureId === 'srs' || item.scaleType === 'srs2' || item.measureId === 'srs2';
+                const isPep3 = item.measureId === 'pep3' || item.scaleType === 'pep3';
                 return (
                   <div
                     key={item.id}
                     className="prog-item-card"
                     style={{
-                      border: isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : '1px solid var(--border-color)',
-                      boxShadow: isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : 'var(--sh)',
+                      border: isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : '1px solid var(--border-color)',
+                      boxShadow: isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : 'var(--sh)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
@@ -826,7 +891,7 @@ export default function PillarAssessment({ onDataChange }) {
                         <div className="prog-student-meta">{item.measureName} · {item.date}</div>
                       </div>
                       <span className="bdg b-gr" style={{ fontSize: '0.82rem', fontWeight: 800, flexShrink: 0 }}>
-                        {isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : `الدرجة: ${item.score} / ${item.maxScore}`}
+                        {isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : `الدرجة: ${item.score} / ${item.maxScore}`}
                       </span>
                     </div>
 
@@ -849,6 +914,13 @@ export default function PillarAssessment({ onDataChange }) {
                       <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
                         <span>درجة تائية T: <strong style={{ color: '#059669' }}>{item.tScore || '—'} T</strong></span>
                         <span>الدرجة الخام الإجمالية: <strong style={{ color: 'var(--text-main)' }}>{item.rawScore || item.score} / 260</strong></span>
+                      </div>
+                    )}
+
+                    {isPep3 && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>السن النمائي المقدر: <strong style={{ color: '#2563eb' }}>{item.estimatedAge || '—'}</strong></span>
+                        <span>الرتبة المئينية: <strong style={{ color: 'var(--text-main)' }}>{item.percentile || 1}%</strong></span>
                       </div>
                     )}
 
@@ -943,6 +1015,27 @@ export default function PillarAssessment({ onDataChange }) {
                             type="button"
                             className="btn btn-xs btn-g"
                             onClick={() => openEditSrsAssessment(item)}
+                            title="تعديل درجات البنود"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isPep3 && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewPep3Report(item)}
+                            style={{ fontWeight: 800, background: '#2563eb', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isPep3 && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditPep3Assessment(item)}
                             title="تعديل درجات البنود"
                           >
                             ✏️
@@ -1056,6 +1149,31 @@ export default function PillarAssessment({ onDataChange }) {
           onClose={() => setSrsReportOpen(false)}
           assessment={selectedSrsAssessment}
           onEdit={(item) => openEditSrsAssessment(item)}
+        />
+      )}
+
+      {/* MODAL: PEP-3 SPECIALIZED ASSESSMENT WORKSTATION */}
+      {pep3ModalOpen && (
+        <PEP3AssessmentModal
+          isOpen={pep3ModalOpen}
+          onClose={() => setPep3ModalOpen(false)}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={pep3EditData}
+        />
+      )}
+
+      {/* MODAL: PEP-3 OFFICIAL DIAGNOSTIC REPORT */}
+      {pep3ReportOpen && selectedPep3Assessment && (
+        <PEP3ReportModal
+          isOpen={pep3ReportOpen}
+          onClose={() => setPep3ReportOpen(false)}
+          assessment={selectedPep3Assessment}
+          onEdit={(item) => openEditPep3Assessment(item)}
         />
       )}
 

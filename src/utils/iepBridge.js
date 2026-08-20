@@ -424,6 +424,7 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
   
   let lookupKey = 'cars';
   if (rawId.includes('cars')) lookupKey = 'cars';
+  if (rawId.includes('pep3') || rawId.includes('pep')) lookupKey = 'pep3';
   else if (rawId.includes('gars')) lookupKey = 'gars_3';
   else if (rawId.includes('srs')) lookupKey = 'srs';
   else if (rawId.includes('vineland')) lookupKey = 'vineland_3';
@@ -435,7 +436,32 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
 
   const templates = SCALE_GOAL_TEMPLATES[lookupKey] || {};
 
-  if (lookupKey === 'srs') {
+  if (lookupKey === 'pep3') {
+    Object.entries(responses).forEach(([itemId, score]) => {
+      const numScore = Number(score);
+      const targetItem = items.find(it => String(it.id) === String(itemId));
+      if (targetItem && (numScore === 0 || numScore === 1)) {
+        const cleanText = targetItem.text.replace('يستطيع ', '').replace('القدرة على ', '').replace('تمكن من ', '');
+        let goalText = `أن يظهر الطفل مهارة (${cleanText}) بنسبة إتقان لا تقل عن 80% في جلسات التربية الخاصة والتدريب النمائي.`;
+        if (numScore === 1) {
+          goalText = `أن يتم تعزيز مهارة بزوغ (Emerging) لدى الطفل لكي ينجزها بنجاح تام: (${cleanText}) بشكل مستقل في 4 من أصل 5 محاولات متتالية.`;
+        } else {
+          goalText = `أن يتعلم ويؤدي الطفل بنجاح مهارة: (${cleanText}) بالاعتماد على التلقين الجسدي واللفظي المتناقص بنسبة إتقان 80%.`;
+        }
+        recommended.push({
+          id: uid(),
+          code: `PEP3-${itemId.toUpperCase()}`,
+          domain: targetItem.domainId || 'cognitive',
+          title: `تطوير مهارة PEP-3: ${targetItem.text.slice(0, 30)}...`,
+          text: goalText,
+          mastery: numScore === 1 ? 'إنجاز مستقل تماماً' : 'تلقين جسدي متناقص بنسبة 80%',
+          reason: `مشتق من بند PEP-3 رقم [${itemId}] بمستوى استجابة (${numScore === 1 ? 'بزوغ (Emerging)' : 'إخفاق (Fail)'})`,
+          priority: numScore === 0 ? 'high' : 'medium',
+          status: 'قيد التدريب',
+        });
+      }
+    });
+  } else if (lookupKey === 'srs') {
     Object.entries(responses).forEach(([itemId, score]) => {
       const numScore = Number(score);
       const targetItem = items.find(it => String(it.id) === String(itemId));
