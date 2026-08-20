@@ -15,6 +15,13 @@ import SRS2AssessmentModal from '../../components/assessments/SRS2AssessmentModa
 import SRS2ReportModal from '../../components/assessments/SRS2ReportModal';
 import PEP3AssessmentModal from '../../components/assessments/PEP3AssessmentModal';
 import PEP3ReportModal from '../../components/assessments/PEP3ReportModal';
+import SpeechArticulationAssessmentModal from '../../components/assessments/SpeechArticulationAssessmentModal';
+import SpeechArticulationReportModal from '../../components/assessments/SpeechArticulationReportModal';
+import Ppvt5AssessmentModal from '../../components/assessments/Ppvt5AssessmentModal';
+import Ppvt5ReportModal from '../../components/assessments/Ppvt5ReportModal';
+import AbuHasibaAssessmentModal from '../../components/assessments/AbuHasibaAssessmentModal';
+import AbuHasibaReportModal from '../../components/assessments/AbuHasibaReportModal';
+import PLS5Assessment from '../../components/assessments/PLS5Assessment';
 import { PEP3_ITEMS } from '../../data/pep3Data';
 import IepBridgeModal from './IepBridgeModal';
 import { extractRecommendedGoals } from '../../utils/iepBridge';
@@ -98,6 +105,28 @@ export default function PillarAssessment({ onDataChange }) {
   const [pep3EditData, setPep3EditData] = useState(null);
   const [pep3ReportOpen, setPep3ReportOpen] = useState(false);
   const [selectedPep3Assessment, setSelectedPep3Assessment] = useState(null);
+
+  // Speech & Articulation Specific Specialized Modals States
+  const [speechModalOpen, setSpeechModalOpen] = useState(false);
+  const [speechEditData, setSpeechEditData] = useState(null);
+  const [speechReportOpen, setSpeechReportOpen] = useState(false);
+  const [selectedSpeechAssessment, setSelectedSpeechAssessment] = useState(null);
+
+  // PPVT-5 Specific Specialized Modals States
+  const [ppvt5ModalOpen, setPpvt5ModalOpen] = useState(false);
+  const [ppvt5EditData, setPpvt5EditData] = useState(null);
+  const [ppvt5ReportOpen, setPpvt5ReportOpen] = useState(false);
+  const [selectedPpvt5Assessment, setSelectedPpvt5Assessment] = useState(null);
+
+  // Abu Hasiba Specific Specialized Modals States
+  const [abuhasibaModalOpen, setAbuhasibaModalOpen] = useState(false);
+  const [abuhasibaEditData, setAbuhasibaEditData] = useState(null);
+  const [abuhasibaReportOpen, setAbuhasibaReportOpen] = useState(false);
+  const [selectedAbuhasibaAssessment, setSelectedAbuhasibaAssessment] = useState(null);
+
+  // PLS-5 Specific Specialized Modals States
+  const [pls5ModalOpen, setPls5ModalOpen] = useState(false);
+  const [pls5EditData, setPls5EditData] = useState(null);
 
   // IEP Bridge State
   const [bridgeOpen, setBridgeOpen] = useState(false);
@@ -183,6 +212,21 @@ export default function PillarAssessment({ onDataChange }) {
 
   // Scales Form Handlers
   function openNewScaleAssessment(scaleId) {
+    if (scaleId === 'speech_screening') {
+      setSpeechEditData(null);
+      setSpeechModalOpen(true);
+      return;
+    }
+    if (scaleId === 'ppvt5' || scaleId === 'peabody_ppvt') {
+      setPpvt5EditData(null);
+      setPpvt5ModalOpen(true);
+      return;
+    }
+    if (scaleId === 'abuhasiba_arabic_lang') {
+      setAbuhasibaEditData(null);
+      setAbuhasibaModalOpen(true);
+      return;
+    }
     if (scaleId === 'cars') {
       setCarsEditData(null);
       setCarsModalOpen(true);
@@ -252,6 +296,46 @@ export default function PillarAssessment({ onDataChange }) {
   function openViewPep3Report(item) {
     setSelectedPep3Assessment(item);
     setPep3ReportOpen(true);
+  }
+
+  function openEditSpeechAssessment(item) {
+    setSpeechEditData(item);
+    setSpeechModalOpen(true);
+  }
+
+  function openViewSpeechReport(item) {
+    setSelectedSpeechAssessment(item);
+    setSpeechReportOpen(true);
+  }
+
+  function openEditPpvt5Assessment(item) {
+    setPpvt5EditData(item);
+    setPpvt5ModalOpen(true);
+  }
+
+  function openViewPpvt5Report(item) {
+    setSelectedPpvt5Assessment(item);
+    setPpvt5ReportOpen(true);
+  }
+
+  function openEditAbuhasibaAssessment(item) {
+    setAbuhasibaEditData(item);
+    setAbuhasibaModalOpen(true);
+  }
+
+  function openViewAbuhasibaReport(item) {
+    setSelectedAbuhasibaAssessment(item);
+    setAbuhasibaReportOpen(true);
+  }
+
+  function openEditPls5Assessment(item) {
+    setPls5EditData(item);
+    setPls5ModalOpen(true);
+  }
+
+  function openViewPls5Report(item) {
+    setPls5EditData(item);
+    setPls5ModalOpen(true);
   }
 
   function handleScaleOptionChange(itemId, value) {
@@ -706,13 +790,6 @@ export default function PillarAssessment({ onDataChange }) {
           ) : (
             /* Sub-Page for Specific Category View */
             <div>
-              {/* Breadcrumbs (مسار الملفات) */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: 'var(--text-sub)', marginBottom: 16, background: 'var(--g0)', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border-color)', width: 'fit-content' }}>
-                <span style={{ cursor: 'pointer', transition: 'color 0.2s' }} className="hover:text-primary" onClick={() => { setActiveCategoryView(null); setSelectedCategoryFilter('all'); }}>📁 الفئات التشخيصية</span>
-                <span>/</span>
-                <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{currentCategoryMeta?.name || 'جميع المقاييس السيكومترية'}</span>
-              </div>
-
               {/* Category Header Banner */}
               <div
                 style={{
@@ -729,7 +806,7 @@ export default function PillarAssessment({ onDataChange }) {
                   boxShadow: 'var(--sh)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: '1 1 300px' }}>
                   <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: currentCategoryMeta ? `${currentCategoryMeta.color}15` : 'var(--pr-l)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', border: `1px solid ${currentCategoryMeta ? currentCategoryMeta.color : 'var(--pr)'}30` }}>
                     {currentCategoryMeta ? currentCategoryMeta.icon : '🌟'}
                   </div>
@@ -747,6 +824,24 @@ export default function PillarAssessment({ onDataChange }) {
                     </p>
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  className="btn btn-g"
+                  onClick={() => { setActiveCategoryView(null); setSelectedCategoryFilter('all'); }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontWeight: 800,
+                    fontSize: '0.86rem',
+                    padding: '8px 14px',
+                    borderRadius: 'var(--r2)',
+                  }}
+                >
+                  <span>🔙</span>
+                  <span>العودة للفئات التشخيصية</span>
+                </button>
               </div>
 
               {/* Subtab Compact Filter Bar inside selected Category */}
@@ -939,6 +1034,90 @@ export default function PillarAssessment({ onDataChange }) {
                 </div>
               )}
 
+              {/* Featured Speech and Language Highlight Cards inside category detail view if Speech/Language or All is active */}
+              {(selectedCategoryFilter === 'all' || selectedCategoryFilter === 'speech_language') && !searchTerm && (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                    gap: 14,
+                    marginBottom: 20,
+                  }}
+                >
+                  {/* PLS-5 Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(14, 116, 144, 0.08), rgba(6, 182, 212, 0.04))',
+                      border: '1.5px solid #0e7490',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#ecfeff', color: '#0e7490', fontWeight: 600, fontSize: '.72rem' }}>مقياس لغة الأطفال الشامل</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>PLS-5 العربي</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        🗣️ مقياس لغة الأطفال - الإصدار الخامس (PLS-5)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        80 بنداً استقبالياً وتعبيرياً مقنناً · حساب العمر الزمني ودرجة المعيار والرتب المئينية · ربط ذكي بأهداف الـ IEP وتأخر اللغة
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setPls5EditData(null); setPls5ModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#0e7490', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص مقياس لغة الأطفال PLS-5
+                    </button>
+                  </div>
+
+                  {/* Abu Hasiba Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(3, 105, 161, 0.08), rgba(14, 165, 233, 0.04))',
+                      border: '1.5px solid #0369a1',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#f0f9ff', color: '#0369a1', fontWeight: 600, fontSize: '.72rem' }}>مقياس اللغة المعرب المطور</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>د. أحمد أبو حسيبة</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        🧠 مقياس د. أحمد أبو حسيبة للغة المعرب (PLS)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        133 بنداً تشخيصياً معرباً ومقنناً للبيئة العربية · حساب العمر اللغوي والدرجات وتأخر اللغة واشتقاق خطة فردية تلقائية
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setAbuhasibaEditData(null); setAbuhasibaModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#0369a1', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص مقياس الدكتور أبو حسيبة
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* SCALES GRID */}
               {filteredScales.length === 0 ? (
                 // Only show EmptyState if we are NOT already showing featured cards inside the autism category (to avoid redundant warning)
@@ -1081,13 +1260,17 @@ export default function PillarAssessment({ onDataChange }) {
                 const isGars = item.measureId === 'gars' || item.measureId === 'gars3' || item.scaleType === 'gars3';
                 const isSrs = item.measureId === 'srs' || item.scaleType === 'srs2' || item.measureId === 'srs2';
                 const isPep3 = item.measureId === 'pep3' || item.scaleType === 'pep3';
+                const isSpeech = item.measureId === 'speech_screening' || item.scaleType === 'speech_screening';
+                const isPpvt5 = item.measureId === 'ppvt5' || item.scaleType === 'ppvt5' || item.measureId === 'peabody_ppvt' || item.scaleType === 'peabody_ppvt';
+                const isAbuhasiba = item.measureId === 'abuhasiba_arabic_lang' || item.scaleType === 'abuhasiba_arabic_lang';
+                const isPls5 = item.measureId === 'pls5_arabic' || item.scaleType === 'pls5_arabic';
                 return (
                   <div
                     key={item.id}
                     className="prog-item-card"
                     style={{
-                      border: isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : '1px solid var(--border-color)',
-                      boxShadow: isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : 'var(--sh)',
+                      border: isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
+                      boxShadow: isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
@@ -1097,11 +1280,15 @@ export default function PillarAssessment({ onDataChange }) {
                           {isCars && <span className="bdg b-bl" style={{ fontSize: '.68rem', padding: '1px 6px' }}>CARS-2</span>}
                           {isGars && <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>GARS-3</span>}
                           {isSrs && <span className="bdg" style={{ background: '#d1fae5', color: '#047857', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>SRS-2</span>}
+                          {isSpeech && <span className="bdg" style={{ background: '#e0f2fe', color: '#0369a1', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>فحص النطق</span>}
+                          {isPpvt5 && <span className="bdg" style={{ background: '#ccfbf1', color: '#115e59', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>بيبودي PPVT-5</span>}
+                          {isAbuhasiba && <span className="bdg" style={{ background: '#e0f2fe', color: '#0369a1', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>أبو حسيبة PLS</span>}
+                          {isPls5 && <span className="bdg" style={{ background: '#ecfeff', color: '#0e7490', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>PLS-5 العربي</span>}
                         </div>
                         <div className="prog-student-meta">{item.measureName} · {item.date}</div>
                       </div>
                       <span className="bdg b-gr" style={{ fontSize: '0.82rem', fontWeight: 800, flexShrink: 0 }}>
-                        {isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : `الدرجة: ${item.score} / ${item.maxScore}`}
+                        {isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
                       </span>
                     </div>
 
@@ -1134,16 +1321,49 @@ export default function PillarAssessment({ onDataChange }) {
                       </div>
                     )}
 
+                    {isSpeech && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>دقة النطق الفونيمي: <strong style={{ color: '#0284c7' }}>{item.percentage}</strong></span>
+                        <span>مستوى النطق: <strong style={{ color: item.severityColor || '#0284c7' }}>{item.level}</strong></span>
+                      </div>
+                    )}
+
+                    {isPpvt5 && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>درجة معيارية: <strong style={{ color: '#0f766e' }}>{item.standardScore || '—'}</strong></span>
+                        <span>رتبة مئينية: <strong style={{ color: '#0f766e' }}>{item.percentile || '—'}%</strong></span>
+                        <span>عمر مكافئ: <strong style={{ color: '#0f766e' }}>{item.ageEquivalent || '—'}</strong></span>
+                      </div>
+                    )}
+
+                    {isAbuhasiba && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>درجة معيارية: <strong style={{ color: '#0369a1' }}>{item.standardScore || '—'}</strong></span>
+                        <span>رتبة مئينية: <strong style={{ color: '#0369a1' }}>{item.percentile || '—'}%</strong></span>
+                        <span>عمر مكافئ: <strong style={{ color: '#0369a1' }}>{item.ageEquivalent || '—'}</strong></span>
+                        <span>فجوة التأخر: <strong style={{ color: '#b91c1c' }}>{item.delayGap || '—'}</strong></span>
+                      </div>
+                    )}
+
+                    {isPls5 && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>درجة معيارية: <strong style={{ color: '#0e7490' }}>{item.standardScore || '—'}</strong></span>
+                        <span>رتبة مئينية: <strong style={{ color: '#0e7490' }}>{item.percentile || '—'}%</strong></span>
+                        <span>عمر مكافئ: <strong style={{ color: '#0e7490' }}>{item.ageEquivalent || '—'}</strong></span>
+                        <span>فجوة التأخر: <strong style={{ color: '#b91c1c' }}>{item.delayGap || '—'}</strong></span>
+                      </div>
+                    )}
+
                     <div style={{ display: 'flex', gap: 8, margin: '8px 0', alignItems: 'center' }}>
                       <div style={{ flex: 1, background: 'var(--g1)', height: 8, borderRadius: 4, overflow: 'hidden' }}>
-                        <div style={{ width: item.percentage || '50%', background: isGars ? '#0d9488' : isSrs ? '#059669' : 'var(--pr)', height: '100%' }} />
+                        <div style={{ width: item.percentage || '50%', background: isSpeech ? '#0284c7' : isPpvt5 ? '#0f766e' : isAbuhasiba ? '#0369a1' : isPls5 ? '#0e7490' : isGars ? '#0d9488' : isSrs ? '#059669' : 'var(--pr)', height: '100%' }} />
                       </div>
                       <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>{item.percentage}</span>
                     </div>
 
                     <div style={{ fontSize: '0.84rem', margin: '6px 0' }}>
                       <span style={{ color: 'var(--text-sub)' }}>المستوى التقديري: </span>
-                      <strong style={{ color: item.severityColor || (isGars ? '#0d9488' : isSrs ? '#059669' : 'var(--pr)') }}>{item.level}</strong>
+                      <strong style={{ color: item.severityColor || (isSpeech ? '#0284c7' : isPpvt5 ? '#0f766e' : isAbuhasiba ? '#0369a1' : isPls5 ? '#0e7490' : isGars ? '#0d9488' : isSrs ? '#059669' : 'var(--pr)') }}>{item.level}</strong>
                     </div>
 
                     {item.notes && <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)', marginTop: 4 }}>{item.notes}</div>}
@@ -1246,6 +1466,90 @@ export default function PillarAssessment({ onDataChange }) {
                             type="button"
                             className="btn btn-xs btn-g"
                             onClick={() => openEditPep3Assessment(item)}
+                            title="تعديل درجات البنود"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isSpeech && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewSpeechReport(item)}
+                            style={{ fontWeight: 800, background: '#0284c7', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isSpeech && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditSpeechAssessment(item)}
+                            title="تعديل درجات البنود"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isPpvt5 && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewPpvt5Report(item)}
+                            style={{ fontWeight: 800, background: '#0f766e', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isPpvt5 && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditPpvt5Assessment(item)}
+                            title="تعديل درجات البنود"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isAbuhasiba && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewAbuhasibaReport(item)}
+                            style={{ fontWeight: 800, background: '#0369a1', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isAbuhasiba && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditAbuhasibaAssessment(item)}
+                            title="تعديل درجات البنود"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isPls5 && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewPls5Report(item)}
+                            style={{ fontWeight: 800, background: '#0e7490', color: '#fff' }}
+                          >
+                            📄 التقرير والـ IEP
+                          </button>
+                        )}
+                        {isPls5 && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditPls5Assessment(item)}
                             title="تعديل درجات البنود"
                           >
                             ✏️
@@ -1524,6 +1828,99 @@ export default function PillarAssessment({ onDataChange }) {
             results: bridgeAssessment.results || bridgeAssessment.scores || bridgeAssessment.responses || {},
           }}
           scaleItems={bridgeScaleItems}
+        />
+      )}
+
+      {/* MODAL: SPEECH & ARTICULATION SPECIALIZED ASSESSMENT WORKSTATION */}
+      {speechModalOpen && (
+        <SpeechArticulationAssessmentModal
+          isOpen={speechModalOpen}
+          onClose={() => setSpeechModalOpen(false)}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={speechEditData}
+        />
+      )}
+
+      {/* MODAL: SPEECH & ARTICULATION OFFICIAL DIAGNOSTIC REPORT */}
+      {speechReportOpen && selectedSpeechAssessment && (
+        <SpeechArticulationReportModal
+          isOpen={speechReportOpen}
+          onClose={() => setSpeechReportOpen(false)}
+          assessment={selectedSpeechAssessment}
+          onEdit={(item) => openEditSpeechAssessment(item)}
+        />
+      )}
+
+      {/* MODAL: PPVT-5 SPECIALIZED ASSESSMENT WORKSTATION */}
+      {ppvt5ModalOpen && (
+        <Ppvt5AssessmentModal
+          isOpen={ppvt5ModalOpen}
+          onClose={() => setPpvt5ModalOpen(false)}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={ppvt5EditData}
+        />
+      )}
+
+      {/* MODAL: PPVT-5 OFFICIAL DIAGNOSTIC REPORT */}
+      {ppvt5ReportOpen && selectedPpvt5Assessment && (
+        <Ppvt5ReportModal
+          isOpen={ppvt5ReportOpen}
+          onClose={() => setPpvt5ReportOpen(false)}
+          assessment={selectedPpvt5Assessment}
+          onEdit={(item) => openEditPpvt5Assessment(item)}
+        />
+      )}
+
+      {/* MODAL: ABU HASIBA SPECIALIZED ASSESSMENT WORKSTATION */}
+      {abuhasibaModalOpen && (
+        <AbuHasibaAssessmentModal
+          isOpen={abuhasibaModalOpen}
+          onClose={() => setAbuhasibaModalOpen(false)}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={abuhasibaEditData}
+        />
+      )}
+
+      {/* MODAL: ABU HASIBA OFFICIAL DIAGNOSTIC REPORT */}
+      {abuhasibaReportOpen && selectedAbuhasibaAssessment && (
+        <AbuHasibaReportModal
+          isOpen={abuhasibaReportOpen}
+          onClose={() => setAbuhasibaReportOpen(false)}
+          assessment={selectedAbuhasibaAssessment}
+          onEdit={(item) => openEditAbuhasibaAssessment(item)}
+        />
+      )}
+
+      {/* MODAL: PLS-5 SPECIALIZED ASSESSMENT WORKSTATION & REPORT ENGINE */}
+      {pls5ModalOpen && (
+        <PLS5Assessment
+          isOpen={pls5ModalOpen}
+          onClose={() => {
+            setPls5ModalOpen(false);
+            setPls5EditData(null);
+          }}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={pls5EditData}
         />
       )}
     </div>

@@ -574,6 +574,26 @@ const DEFAULT_SCALE_LIBRARY = [
     thresholdText: 'تحديد العمر اللغوي الاستقبالي ونسبة المئينات للحصيلة اللفظية',
     isDefault: true,
   },
+  {
+    id: 'abuhasiba_arabic_lang',
+    name: 'اختبار الدكتور أحمد أبو حسيبة للغة المعرب (PLS)',
+    nameEn: 'Dr. Ahmad Abu Hasiba Arabic Language Scale (PLS)',
+    category: 'speech_language',
+    description: 'تقييم شامل للغة الاستقبالية والتعبيرية للأطفال من عمر شهرين إلى 7 سنوات و5 أشهر، بحساب دقيق للبسال والسقف والدرجات المعيارية والنمائية.',
+    icon: '🧠',
+    color: '#0369a1',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 1,
+    maxScore: 133,
+    items: [
+      { id: 'abuhasiba_receptive', text: 'اللغة الاستقبالية (62 بنداً تشخيصياً للتحليل السلوكي)', domain: 'receptive' },
+      { id: 'abuhasiba_expressive', text: 'اللغة التعبيرية (71 بنداً تشخيصياً للتحليل اللفظي)', domain: 'expressive' }
+    ],
+    thresholdText: 'حساب العمر اللغوي والدرجة المعيارية وتحديد نسب التأخر مع ترحيل الأهداف للخطة التربوية الفردية',
+    isDefault: true,
+  },
 
   // 3. Learning Disabilities & Academic Scales (صعوبات التعلم والتحصيل الأكاديمي)
   {
