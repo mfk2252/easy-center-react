@@ -150,7 +150,7 @@ export default function PLS5Assessment({
     const prefix = isReceptive ? 'r_' : 'e_';
 
     if (ceilingIndex === -1) {
-      toast('⚠️ لم يتم بلوغ سقف التوقف (Ceiling) بعد. يجب رصد 6 إخفاقات (0) متتالية لتطبيق تصفير السقف', 'warn');
+      toast('⚠️ لم يتم بلوغ حد التوقف (Ceiling) بعد. يجب رصد 6 إخفاقات (0) متتالية لتطبيق تصفير ما بعد حد التوقف', 'warn');
       return;
     }
 
@@ -163,7 +163,7 @@ export default function PLS5Assessment({
       ...prev,
       [resultsKey]: updatedResults
     }));
-    toast('✅ تم اعتماد كافة البنود اللاحقة لمستوى السقف كغير متقنة (0) بنجاح', 'ok');
+    toast('✅ تم اعتماد كافة البنود اللاحقة لحد التوقف (Ceiling) كغير متقنة (0) بنجاح', 'ok');
   };
 
   // Export selected weakness items to the student's active IEP program
@@ -362,8 +362,8 @@ export default function PLS5Assessment({
             <div style={{ marginBottom: 24 }}>
               <h4 style={{ color: '#0f766e', fontSize: '0.96rem', fontWeight: 800, marginBottom: 12 }}>📋 أركان الفحص والتقييم الأساسية:</h4>
               <ul style={{ paddingRight: 20, margin: 0, fontSize: '0.88rem', color: 'var(--text-sub)', lineHeight: 1.8 }}>
-                <li style={{ marginBottom: 6 }}><strong>قاعدة البسال (Basal Rule):</strong> تأسيس القاعدة عند نجاح الطفل في <strong>3 بنود متتالية صحيحة (1)</strong>. كل ما يسبق القاعدة يُمنح له الدرجة الكاملة مجاناً.</li>
-                <li style={{ marginBottom: 6 }}><strong>سقف الاختبار (Ceiling Rule):</strong> التوقف عن الفحص فور إخفاق الطفل في <strong>6 بنود متتالية (0)</strong>، وتُعتبر جميع البنود اللاحقة خاطئة.</li>
+                <li style={{ marginBottom: 6 }}><strong>قاعدة الخط القاعدي (Basal Rule):</strong> تأسيس الخط القاعدي عند نجاح الطفل في <strong>3 بنود متتالية صحيحة (1)</strong>. كل ما يسبق الخط القاعدي يُمنح له الدرجة الكاملة مجاناً.</li>
+                <li style={{ marginBottom: 6 }}><strong>حد التوقف (Ceiling Rule):</strong> التوقف عن الفحص فور إخفاق الطفل في <strong>6 بنود متتالية (0)</strong>، وتُعتبر جميع البنود اللاحقة خاطئة.</li>
                 <li style={{ marginBottom: 6 }}><strong>الربط الإجرائي مع IEP:</strong> كافة البنود المخفقة في سن الطفل الحالي أو أقل تُدرج آلياً كأهداف سلوكية قابلة للمشاركة والترحيل الفوري في خطة الطفل التربوية.</li>
               </ul>
             </div>

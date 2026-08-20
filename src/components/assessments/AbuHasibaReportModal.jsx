@@ -129,7 +129,7 @@ export default function AbuHasibaReportModal({
 
           {/* Clinical Disclaimer Box in print */}
           <div style={{ border: '1px solid #93c5fd', background: '#eff6ff', padding: '10px 14px', borderRadius: 8, fontSize: '0.74rem', color: '#1e3a8a', lineHeight: 1.5, marginBottom: 24 }}>
-            <strong>تنبيه إداري وسيكومتري:</strong> هذا التقرير الإلكتروني يعالج درجات ومخرجات تطبيق اختبار الدكتور أحمد أبو حسيبة للغة المعرب وفق شروط القاعدة والسقف المعتمدة أكاديمياً. يشترط لصحة المعايرة استخدام الأدوات والمواد الحسية الأصلية الخاصة بالحقيبة الرسمية للمقياس.
+            <strong>تنبيه إداري وسيكومتري:</strong> هذا التقرير الإلكتروني يعالج درجات ومخرجات تطبيق اختبار الدكتور أحمد أبو حسيبة للغة المعرب وفق شروط الخط القاعدي (Basal) وحد التوقف (Ceiling) المعتمدة أكاديمياً. يشترط لصحة المعايرة استخدام الأدوات والمواد الحسية الأصلية الخاصة بالحقيبة الرسمية للمقياس.
           </div>
 
           {/* Core Results Matrices Table */}

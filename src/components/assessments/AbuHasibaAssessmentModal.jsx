@@ -6,6 +6,8 @@ import { StudentPicker, validateStudentPick } from '../../pages/ProgramsReports/
 import {
   ABUHASIBA_RECEPTIVE_ITEMS,
   ABUHASIBA_EXPRESSIVE_ITEMS,
+  ABUHASIBA_AGE_STAGES,
+  getAbuHasibaAgeStageByMonths,
   getAbuHasibaStartingPoints,
   calculateAbuHasibaPsychometrics
 } from '../../data/abuhasibaData';
@@ -56,6 +58,7 @@ export default function AbuHasibaAssessmentModal({
 
   const [activeTab, setActiveTab] = useState('receptive'); // 'receptive' | 'expressive' | 'summary'
   const [acknowledged, setAcknowledged] = useState(() => !!initialData);
+  const [selectedAgeFilter, setSelectedAgeFilter] = useState('all');
 
   // Calculate student chronological age in months
   const studentAgeMonths = useMemo(() => {
@@ -226,16 +229,16 @@ export default function AbuHasibaAssessmentModal({
       <div className="mb" style={{ maxWidth: '1000px', width: '100%', padding: 0, overflow: 'hidden', borderRadius: 16 }}>
         
         {/* Modal Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--g0)', padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: '#0369a1' }}>
-              🧠 تقييم مقياس د. أحمد أبو حسيبة للغة المعرب (Preschool Language Scale - PLS)
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--g0)', padding: '14px 20px', borderBottom: '1px solid var(--border-color)', gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#0369a1', lineHeight: 1.3, wordBreak: 'break-word' }}>
+              🧠 تقييم مقياس د. أحمد أبو حسيبة للغة المعرب (PLS)
             </h2>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)' }}>
-              أداة القياس السيكومترية واللغوية التفاعلية الشاملة للأطفال (عمر شهرين وحتى 7 سنوات و5 أشهر)
+            <span style={{ fontSize: '0.76rem', color: 'var(--text-sub)', display: 'block', marginTop: 2, whiteSpace: 'normal' }}>
+              أداة القياس السيكومترية واللغوية التفاعلية للأطفال (شهرين وحتى 7 سنوات و5 أشهر)
             </span>
           </div>
-          <button type="button" className="btn btn-xs btn-p" onClick={onClose} style={{ fontWeight: 800 }}>✖ إغلاق</button>
+          <button type="button" className="btn btn-xs btn-p" onClick={onClose} style={{ fontWeight: 800, flexShrink: 0 }}>✖ إغلاق</button>
         </div>
 
         {/* Clinical Notice Page before assessment */}
@@ -263,10 +266,10 @@ export default function AbuHasibaAssessmentModal({
             </div>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', height: '80vh', background: 'var(--bg)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '80vh', background: 'var(--bg)', overflow: 'hidden' }}>
             
             {/* Top Student Selection Block */}
-            <div style={{ padding: '16px 20px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div style={{ padding: '14px 20px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, flexShrink: 0 }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: 6 }}>اختر الطالب المستهدف:</label>
                 <StudentPicker
@@ -310,23 +313,26 @@ export default function AbuHasibaAssessmentModal({
             </div>
 
             {/* Quick Metrics Bar */}
-            <div style={{ background: '#f0fdf4', borderBottom: '1px solid #bbf7d0', padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', gap: 20 }}>
+            <div style={{ background: '#f0fdf4', borderBottom: '1px solid #bbf7d0', padding: '10px 20px', display: 'flex', flexWrap: 'wrap', gap: '10px 16px', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
                 <div>
                   <span style={{ fontSize: '0.76rem', color: '#166534' }}>الدرجة الكلية الخام: </span>
-                  <strong style={{ fontSize: '0.94rem', color: '#14532d' }}>{scoring.totalRawScore} / 133</strong>
+                  <strong style={{ fontSize: '0.92rem', color: '#14532d' }}>{scoring.totalRawScore} / 133</strong>
                 </div>
+                <div style={{ width: 1, height: 14, background: '#bbf7d0' }} />
                 <div>
                   <span style={{ fontSize: '0.76rem', color: '#166534' }}>العمر اللغوي المكافئ: </span>
-                  <strong style={{ fontSize: '0.94rem', color: '#14532d' }}>{Math.floor(scoring.totalLAEMonths / 12)}س و {scoring.totalLAEMonths % 12}ش</strong>
+                  <strong style={{ fontSize: '0.92rem', color: '#14532d' }}>{Math.floor(scoring.totalLAEMonths / 12)}س و {scoring.totalLAEMonths % 12}ش</strong>
                 </div>
+                <div style={{ width: 1, height: 14, background: '#bbf7d0' }} />
                 <div>
                   <span style={{ fontSize: '0.76rem', color: '#166534' }}>التأخر اللغوي: </span>
-                  <strong style={{ fontSize: '0.94rem', color: '#b91c1c' }}>{Math.floor(scoring.totalDelayGapMonths / 12)}س و {scoring.totalDelayGapMonths % 12}ش</strong>
+                  <strong style={{ fontSize: '0.92rem', color: '#b91c1c' }}>{Math.floor(scoring.totalDelayGapMonths / 12)}س و {scoring.totalDelayGapMonths % 12}ش</strong>
                 </div>
+                <div style={{ width: 1, height: 14, background: '#bbf7d0' }} />
                 <div>
                   <span style={{ fontSize: '0.76rem', color: '#166534' }}>الدرجة المعيارية: </span>
-                  <strong style={{ fontSize: '0.94rem', color: '#14532d' }}>{scoring.totalSS} (مئيني: {scoring.totalPR}%)</strong>
+                  <strong style={{ fontSize: '0.92rem', color: '#14532d' }}>{scoring.totalSS} (مئيني: {scoring.totalPR}%)</strong>
                 </div>
               </div>
               <div>
@@ -337,7 +343,7 @@ export default function AbuHasibaAssessmentModal({
             </div>
 
             {/* Tab Navigation */}
-            <div style={{ display: 'flex', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', flexShrink: 0 }}>
               <button
                 type="button"
                 style={{ flex: 1, padding: '12px 20px', border: 'none', background: activeTab === 'receptive' ? '#0369a1' : 'transparent', color: activeTab === 'receptive' ? '#fff' : 'var(--text)', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }}
@@ -369,19 +375,19 @@ export default function AbuHasibaAssessmentModal({
                 <div>
                   
                   {/* Basal & Ceiling Quick Actions Panel */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 16px', marginBottom: 20 }}>
-                    <div style={{ display: 'flex', gap: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 16px', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+                    <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
                       <div>
-                        <span style={{ fontSize: '0.78rem', color: '#64748b', display: 'block' }}>حالة البسال (Basal) الحالي:</span>
+                        <span style={{ fontSize: '0.78rem', color: '#64748b', display: 'block' }}>حالة الخط القاعدي (Basal) الحالي:</span>
                         <strong style={{ fontSize: '0.86rem', color: (activeTab === 'receptive' ? scoring.receptiveBasalIndex : scoring.expressiveBasalIndex) !== -1 ? '#16a34a' : '#ea580c' }}>
                           {(activeTab === 'receptive' ? scoring.receptiveBasalIndex : scoring.expressiveBasalIndex) !== -1 
                             ? `✓ تم تحقيقه (من البند ${activeTab === 'receptive' ? scoring.receptiveBasalIndex + 1 : scoring.expressiveBasalIndex + 1})`
                             : '⚠️ لم يتحقق بعد (يتطلب 3 متتالية صحيحة)'}
                         </strong>
                       </div>
-                      <div style={{ width: 1, background: '#cbd5e1' }} />
+                      <div style={{ width: 1, height: 24, background: '#cbd5e1' }} />
                       <div>
-                        <span style={{ fontSize: '0.78rem', color: '#64748b', display: 'block' }}>حالة السقف (Ceiling) الحالي:</span>
+                        <span style={{ fontSize: '0.78rem', color: '#64748b', display: 'block' }}>حالة حد التوقف (Ceiling) الحالي:</span>
                         <strong style={{ fontSize: '0.86rem', color: (activeTab === 'receptive' ? scoring.receptiveCeilingIndex : scoring.expressiveCeilingIndex) !== -1 ? '#dc2626' : '#2563eb' }}>
                           {(activeTab === 'receptive' ? scoring.receptiveCeilingIndex : scoring.expressiveCeilingIndex) !== -1 
                             ? `✗ تم رصده (عند البند ${activeTab === 'receptive' ? scoring.receptiveCeilingIndex + 1 : scoring.expressiveCeilingIndex + 1})`
@@ -396,7 +402,7 @@ export default function AbuHasibaAssessmentModal({
                         onClick={() => applyBasalAutofill(activeTab)}
                         style={{ border: '1px solid #16a34a', color: '#16a34a', background: '#f0fdf4', fontWeight: 800 }}
                       >
-                        🎁 منح ما قبل القاعدة مجاناً
+                        🎁 منح ما قبل الخط القاعدي مجاناً
                       </button>
                       <button
                         type="button"
@@ -404,77 +410,154 @@ export default function AbuHasibaAssessmentModal({
                         onClick={() => applyCeilingAutofill(activeTab)}
                         style={{ border: '1px solid #ef4444', color: '#ef4444', background: '#fef2f2', fontWeight: 800 }}
                       >
-                        🛑 تصفير ما بعد سقف التوقف
+                        🛑 تصفير ما بعد حد التوقف
                       </button>
                     </div>
                   </div>
 
-                  {/* Checklist Items */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {(activeTab === 'receptive' ? ABUHASIBA_RECEPTIVE_ITEMS : ABUHASIBA_EXPRESSIVE_ITEMS).map((item, idx) => {
-                      const key = activeTab === 'receptive' ? `r_${item.id}` : `e_${item.id}`;
-                      const currentScore = activeTab === 'receptive' 
-                        ? form.resultsReceptive[key] 
-                        : form.resultsExpressive[key];
-                      
-                      const isRecommendedStart = activeTab === 'receptive' 
-                        ? item.id === startingPoints.receptiveStart
-                        : item.id === startingPoints.expressiveStart;
-
-                      // Check if item is affected by basal or ceiling live override
-                      const basalIndex = activeTab === 'receptive' ? scoring.receptiveBasalIndex : scoring.expressiveBasalIndex;
-                      const ceilingIndex = activeTab === 'receptive' ? scoring.receptiveCeilingIndex : scoring.expressiveCeilingIndex;
-
-                      const isAssumedCorrect = basalIndex !== -1 && idx < basalIndex;
-                      const isAssumedFailed = ceilingIndex !== -1 && idx >= ceilingIndex + 5;
-
-                      return (
-                        <div
-                          key={item.id}
+                  {/* Age Stage Filter Control Bar */}
+                  <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 12, padding: '12px 16px', marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#0369a1' }}>
+                          🔍 تصفية البنود بحسب المستوى والسن بالشهور:
+                        </span>
+                        <select
+                          value={selectedAgeFilter}
+                          onChange={(e) => setSelectedAgeFilter(e.target.value)}
                           style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            padding: '12px 16px',
-                            borderRadius: 12,
-                            border: isRecommendedStart ? '2px solid #0284c7' : '1px solid #e2e8f0',
-                            background: isAssumedCorrect ? '#f0fdf4' : isAssumedFailed ? '#fef2f2' : isRecommendedStart ? '#f0f9ff' : '#fff',
-                            transition: 'all 0.2s'
+                            fontSize: '0.82rem',
+                            fontWeight: 700,
+                            padding: '6px 12px',
+                            borderRadius: 8,
+                            border: '1px solid #0284c7',
+                            background: '#fff',
+                            color: '#0369a1',
+                            cursor: 'pointer'
                           }}
                         >
-                          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flex: 1 }}>
-                            <span style={{ background: '#cbd5e1', color: '#334155', fontWeight: 800, borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.78rem' }}>
-                              {item.id}
-                            </span>
-                            <div style={{ textAlign: 'right' }}>
-                              <strong style={{ display: 'block', fontSize: '0.9rem', color: '#1e293b' }}>{item.text}</strong>
-                              <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
-                                الفئة: {item.ageGroup} · المجال الفرعي: {item.domain}
-                                {isRecommendedStart && <strong style={{ color: '#0284c7', marginRight: 10 }}>[نقطة البداية الموصى بها]</strong>}
-                                {isAssumedCorrect && <strong style={{ color: '#16a34a', marginRight: 10 }}>[ممنوح مجاناً - تحت مستوى القاعدة]</strong>}
-                                {isAssumedFailed && <strong style={{ color: '#ef4444', marginRight: 10 }}>[مُصفر تلقائياً - فوق مستوى سقف التوقف]</strong>}
-                              </span>
-                            </div>
-                          </div>
+                          <option value="all">عرض جميع الفئات العمرية (الكل)</option>
+                          {ABUHASIBA_AGE_STAGES.map(stage => (
+                            <option key={stage.value} value={stage.value}>
+                              {stage.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                          <div style={{ display: 'flex', gap: 6 }}>
-                            <button
-                              type="button"
-                              className={`btn btn-xs ${currentScore === 0 ? 'btn-danger' : ''}`}
-                              onClick={() => handleItemScoreChange(activeTab, item.id, 0)}
-                              style={{ width: 64, fontWeight: 800, background: currentScore === 0 ? '#ef4444' : '#f1f5f9', color: currentScore === 0 ? '#fff' : '#475569', border: '1px solid var(--border-color)' }}
-                            >
-                              خطأ (0)
-                            </button>
-                            <button
-                              type="button"
-                              className={`btn btn-xs ${currentScore === 1 ? 'btn-success' : ''}`}
-                              onClick={() => handleItemScoreChange(activeTab, item.id, 1)}
-                              style={{ width: 64, fontWeight: 800, background: currentScore === 1 ? '#10b981' : '#f1f5f9', color: currentScore === 1 ? '#fff' : '#475569', border: '1px solid var(--border-color)' }}
-                            >
-                              صح (1)
-                            </button>
-                          </div>
+                      {/* Quick jump button based on student's age */}
+                      {studentAgeMonths > 0 && (
+                        <button
+                          type="button"
+                          className="btn btn-xs"
+                          onClick={() => {
+                            const childStage = getAbuHasibaAgeStageByMonths(studentAgeMonths);
+                            if (childStage) setSelectedAgeFilter(childStage.value);
+                          }}
+                          style={{
+                            background: '#0284c7',
+                            color: '#fff',
+                            fontWeight: 800,
+                            border: 'none',
+                            padding: '6px 12px',
+                            borderRadius: 6,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          🎯 تصفية حسب فئة عمر الطفل الحالي ({studentAgeMonths} شهراً)
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Active Filter Indicator */}
+                    {selectedAgeFilter !== 'all' && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#e0f2fe', padding: '6px 12px', borderRadius: 8, fontSize: '0.78rem' }}>
+                        <span style={{ color: '#0369a1', fontWeight: 700 }}>
+                          الفئة العمرية المعروضة حالياً: <strong>{selectedAgeFilter}</strong>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedAgeFilter('all')}
+                          style={{ background: 'none', border: 'none', color: '#0284c7', fontWeight: 800, cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                          إلغاء التصفية (عرض الكل) ✕
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Checklist Items Map with Age Filtering */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {(activeTab === 'receptive' ? ABUHASIBA_RECEPTIVE_ITEMS : ABUHASIBA_EXPRESSIVE_ITEMS)
+                      .map((item, idx) => ({ item, idx }))
+                      .filter(({ item }) => selectedAgeFilter === 'all' || item.ageGroup === selectedAgeFilter)
+                      .map(({ item, idx }) => {
+                        const key = activeTab === 'receptive' ? `r_${item.id}` : `e_${item.id}`;
+                        const currentScore = activeTab === 'receptive' 
+                          ? form.resultsReceptive[key] 
+                          : form.resultsExpressive[key];
+                        
+                        const isRecommendedStart = activeTab === 'receptive' 
+                          ? item.id === startingPoints.receptiveStart
+                          : item.id === startingPoints.expressiveStart;
+
+                        // Check if item is affected by basal or ceiling live override
+                        const basalIndex = activeTab === 'receptive' ? scoring.receptiveBasalIndex : scoring.expressiveBasalIndex;
+                        const ceilingIndex = activeTab === 'receptive' ? scoring.receptiveCeilingIndex : scoring.expressiveCeilingIndex;
+
+                        const isAssumedCorrect = basalIndex !== -1 && idx < basalIndex;
+                        const isAssumedFailed = ceilingIndex !== -1 && idx >= ceilingIndex + 5;
+
+                        return (
+                          <div
+                            key={item.id}
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              padding: '12px 16px',
+                              borderRadius: 12,
+                              border: isRecommendedStart ? '2px solid #0284c7' : '1px solid #e2e8f0',
+                              background: isAssumedCorrect ? '#f0fdf4' : isAssumedFailed ? '#fef2f2' : isRecommendedStart ? '#f0f9ff' : '#fff',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flex: 1 }}>
+                              <span style={{ background: '#cbd5e1', color: '#334155', fontWeight: 800, borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.78rem', flexShrink: 0 }}>
+                                {item.id}
+                              </span>
+                              <div style={{ textAlign: 'right' }}>
+                                <strong style={{ display: 'block', fontSize: '0.9rem', color: '#1e293b' }}>{item.text}</strong>
+                                <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                                  الفئة: <strong style={{ color: '#0369a1' }}>{item.ageGroup}</strong> · المجال الفرعي: {item.domain}
+                                  {isRecommendedStart && <strong style={{ color: '#0284c7', marginRight: 10 }}>[نقطة البداية الموصى بها]</strong>}
+                                  {isAssumedCorrect && <strong style={{ color: '#16a34a', marginRight: 10 }}>[ممنوح مجاناً - تحت الخط القاعدي (Basal)]</strong>}
+                                  {isAssumedFailed && <strong style={{ color: '#ef4444', marginRight: 10 }}>[مُصفر تلقائياً - فوق حد التوقف (Ceiling)]</strong>}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                              <button
+                                type="button"
+                                className={`btn btn-xs ${currentScore === 0 ? 'btn-danger' : ''}`}
+                                onClick={() => handleItemScoreChange(activeTab, item.id, 0)}
+                                style={{ width: 64, fontWeight: 800, background: currentScore === 0 ? '#ef4444' : '#f1f5f9', color: currentScore === 0 ? '#fff' : '#475569', border: '1px solid var(--border-color)' }}
+                              >
+                                خطأ (0)
+                              </button>
+                              <button
+                                type="button"
+                                className={`btn btn-xs ${currentScore === 1 ? 'btn-success' : ''}`}
+                                onClick={() => handleItemScoreChange(activeTab, item.id, 1)}
+                                style={{ width: 64, fontWeight: 800, background: currentScore === 1 ? '#10b981' : '#f1f5f9', color: currentScore === 1 ? '#fff' : '#475569', border: '1px solid var(--border-color)' }}
+                              >
+                                صح (1)
+                              </button>
+                            </div>
                         </div>
                       );
                     })}
