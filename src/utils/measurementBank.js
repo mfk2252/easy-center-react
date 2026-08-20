@@ -1,4 +1,5 @@
 import { GARS3_ITEMS } from '../data/gars3Data';
+import { SRS2_ITEMS, calculateSRS2Score } from '../data/srs2Data';
 
 export const MEASUREMENT_CATEGORIES = [
   {
@@ -479,16 +480,16 @@ const DEFAULT_SCALE_LIBRARY = [
     name: 'مقياس الاستجابة الاجتماعية (SRS-2)',
     nameEn: 'SRS-2 (Social Responsiveness Scale)',
     category: 'autism',
-    description: 'مقياس الاستجابة والوعي الاجتماعي والتواصل المتبادل والتحفيز — 65 بنداً',
+    description: 'مقياس الاستجابة والوعي الاجتماعي والتواصل المتبادل والتحفيز — 65 بنداً مع الدرجات المعيارية T والتقييم الإكلينيكي',
     icon: '👥',
     color: '#059669',
     scoreMode: 'subscale',
     responseType: 'scale',
-    minValue: 0,
-    maxValue: 3,
-    maxScore: 195,
-    items: SRS_ITEMS,
-    thresholdText: 'الدرجة التائية أعلى من 60 تدل على وجود قصور إكلينيكي في التفاعل الاجتماعي',
+    minValue: 1,
+    maxValue: 4,
+    maxScore: 260,
+    items: SRS2_ITEMS,
+    thresholdText: 'الدرجة التائية: 59 فأقل طبيعي | 60-65 قصور بسيط | 66-75 قصور متوسط | 76 فأكثر قصور شديد',
     isDefault: true,
   },
   {
@@ -927,6 +928,51 @@ function getScaleMax(scale) {
 }
 
 export function buildAssessmentResult(scale, answers = {}) {
+  if (scale?.id === 'srs') {
+    const srsResult = calculateSRS2Score(answers);
+    if (srsResult.isComplete) {
+      return {
+        total: srsResult.totalRawScore,
+        score: srsResult.totalRawScore,
+        maxScore: 260,
+        percentage: `${srsResult.totalTScore} T`,
+        percentageNum: srsResult.totalTScore,
+        level: srsResult.category,
+        color: srsResult.severityColor === 'red' ? '#ef4444' : srsResult.severityColor === 'orange' ? '#f59e0b' : srsResult.severityColor === 'yellow' ? '#eab308' : '#10b981',
+        severityColor: srsResult.severityColor,
+        note: srsResult.interpretation,
+        subscales: srsResult.subscales,
+        isSRS2: true,
+        tScore: srsResult.totalTScore,
+        rawScore: srsResult.totalRawScore,
+      };
+    } else {
+      const items = scale?.items || [];
+      const total = items.reduce((sum, item) => {
+        const rawVal = Number(answers[item.id] ?? 0);
+        let score = rawVal;
+        if (rawVal > 0) {
+          const srsItem = SRS2_ITEMS.find(s => s.id === item.id);
+          if (srsItem?.isReverse) {
+            score = 5 - rawVal;
+          }
+        }
+        return sum + score;
+      }, 0);
+      return {
+        total,
+        score: total,
+        maxScore: 260,
+        percentage: 'غير مكتمل',
+        percentageNum: 0,
+        level: 'الرجاء الإجابة على جميع البنود',
+        color: '#64748b',
+        severityColor: 'gray',
+        note: `المقياس غير مكتمل (${srsResult.answeredCount} من 65 بنداً تم الإجابة عليها). يتطلب الإجابة على جميع البنود لحساب الدرجة المعيارية ت والتشخيص الإكلينيكي.`,
+      };
+    }
+  }
+
   const items = scale?.items || [];
   const total = items.reduce((sum, item) => {
     const value = Number(answers[item.id] ?? 0);

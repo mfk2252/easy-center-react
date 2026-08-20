@@ -425,6 +425,7 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
   let lookupKey = 'cars';
   if (rawId.includes('cars')) lookupKey = 'cars';
   else if (rawId.includes('gars')) lookupKey = 'gars_3';
+  else if (rawId.includes('srs')) lookupKey = 'srs';
   else if (rawId.includes('vineland')) lookupKey = 'vineland_3';
   else if (rawId.includes('portage')) lookupKey = 'portage_early';
   else if (rawId.includes('conners')) lookupKey = 'conners_3';
@@ -434,8 +435,36 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
 
   const templates = SCALE_GOAL_TEMPLATES[lookupKey] || {};
 
-  // For CARS: items with score >= 2.5 are significant deficits, >= 2.0 mild deficits
-  if (lookupKey === 'cars') {
+  if (lookupKey === 'srs') {
+    Object.entries(responses).forEach(([itemId, score]) => {
+      const numScore = Number(score);
+      const targetItem = items.find(it => String(it.id) === String(itemId));
+      if (targetItem) {
+        const isDeficit = targetItem.isReverse ? (numScore <= 2) : (numScore >= 3);
+        if (isDeficit) {
+          const itemText = targetItem.text;
+          const cleanText = itemText.replace('قادر على ', '').replace('يستطيع ', '').replace('يعرف كيف ', '');
+          let goalText = `أن يظهر الطفل تحسناً في (${cleanText}) بنسبة لا تقل عن 80% بالاستعانة بالنمذجة السلوكية والتدريب الاجتماعي.`;
+          if (targetItem.isReverse) {
+            goalText = `أن يُظهِر الطفل قدرة مناسبة على (${cleanText}) في فترات التفاعل مع المعلمين والأقران بنسبة إتقان 80%.`;
+          } else {
+            goalText = `أن يتم تقليل سلوك القصور الاجتماعي المتمثل في (${cleanText}) واستبداله بسلوك تفاعلي تواصل لائق في 4 من أصل 5 مناسبات.`;
+          }
+          recommended.push({
+            id: uid(),
+            code: `SRS-${itemId.toUpperCase()}`,
+            domain: targetItem.domainId || 'social',
+            title: `تطوير مهارة: ${targetItem.text.slice(0, 35)}...`,
+            text: goalText,
+            mastery: '80% نجاح في مواقف التقييم اليومية',
+            reason: `مشتق من بند SRS-2 رقم [${itemId}] بدرجة قصور (${numScore === 4 ? 'شدة عالية' : 'شدة متوسطة'})`,
+            priority: numScore === 4 ? 'high' : 'medium',
+            status: 'قيد التدريب',
+          });
+        }
+      }
+    });
+  } else if (lookupKey === 'cars') {
     Object.entries(responses).forEach(([itemId, score]) => {
       const numScore = Number(score);
       if (numScore >= 2.0) {
