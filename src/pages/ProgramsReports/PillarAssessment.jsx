@@ -359,6 +359,15 @@ export default function PillarAssessment({ onDataChange }) {
     const normCat = normalizeCategoryId(s.category);
     const matchCat = selectedCategoryFilter === 'all' || normCat === selectedCategoryFilter;
     const matchSearch = !searchTerm || (s.name && s.name.includes(searchTerm)) || (s.nameEn && s.nameEn.toLowerCase().includes(searchTerm.toLowerCase())) || (s.description && s.description.includes(searchTerm));
+    
+    // Prevent duplication: If the autism featured cards are shown at the top,
+    // we do not display the 4 standard autism scales in the generic bottom list.
+    const isAutismFeatured = selectedCategoryFilter === 'all' || selectedCategoryFilter === 'autism';
+    const isAutismScale = ['cars', 'gars', 'gars3', 'srs', 'pep3', 'pep'].includes(s.id);
+    if (isAutismFeatured && isAutismScale) {
+      return false;
+    }
+
     return matchCat && matchSearch;
   });
 
