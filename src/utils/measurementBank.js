@@ -523,6 +523,26 @@ const DEFAULT_SCALE_LIBRARY = [
 
   // 2. Speech, Language & Communication Scales (النطق واللغة والتواصل)
   {
+    id: 'pls5',
+    name: 'مقياس لغة الأطفال — الإصدار الخامس (PLS-5)',
+    nameEn: 'Preschool Language Scales Fifth Edition',
+    category: 'speech_language',
+    description: 'تقييم شامل للغة الاستقبالية والتعبيرية للأطفال مع حساب العمر الزمني والدرجة المعيارية والرتب المئينية واشتقاق خطة IEP.',
+    icon: '🗣️',
+    color: '#0e7490',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 1,
+    maxScore: 80,
+    items: [
+      { id: 'pls5_rec', text: 'اللغة الاستقبالية (Auditory Comprehension)', domain: 'receptive' },
+      { id: 'pls5_exp', text: 'اللغة التعبيرية (Expressive Communication)', domain: 'expressive' }
+    ],
+    thresholdText: 'تقييم كفاءة النمو اللغوي الشامل واشتقاق الأهداف الفردية',
+    isDefault: true,
+  },
+  {
     id: 'speech_screening',
     name: 'سجل فحص وتقييم النطق ومخارج الحروف',
     nameEn: 'Articulation & Speech Screening Scale',
