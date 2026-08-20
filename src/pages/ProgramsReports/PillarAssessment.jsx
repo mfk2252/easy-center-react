@@ -212,7 +212,7 @@ export default function PillarAssessment({ onDataChange }) {
 
   // Scales Form Handlers
   function openNewScaleAssessment(scaleId) {
-    if (scaleId === 'speech_screening') {
+    if (scaleId === 'speech_screening' || scaleId === 'speech_articulation') {
       setSpeechEditData(null);
       setSpeechModalOpen(true);
       return;
@@ -445,11 +445,17 @@ export default function PillarAssessment({ onDataChange }) {
     const matchCat = selectedCategoryFilter === 'all' || normCat === selectedCategoryFilter;
     const matchSearch = !searchTerm || (s.name && s.name.includes(searchTerm)) || (s.nameEn && s.nameEn.toLowerCase().includes(searchTerm.toLowerCase())) || (s.description && s.description.includes(searchTerm));
     
-    // Prevent duplication: If the autism featured cards are shown at the top,
-    // we do not display the 4 standard autism scales in the generic bottom list.
+    // Prevent duplication: If the autism or speech featured cards are shown at the top,
+    // we do not display those scales in the generic bottom list.
     const isAutismFeatured = selectedCategoryFilter === 'all' || selectedCategoryFilter === 'autism';
     const isAutismScale = ['cars', 'gars', 'gars3', 'srs', 'pep3', 'pep'].includes(s.id);
     if (isAutismFeatured && isAutismScale) {
+      return false;
+    }
+
+    const isSpeechFeatured = selectedCategoryFilter === 'all' || selectedCategoryFilter === 'speech_language';
+    const isSpeechScale = ['pls5', 'abuhasiba_arabic_lang', 'abuhasiba', 'speech_articulation', 'speech_screening', 'peabody_ppvt', 'ppvt5'].includes(s.id);
+    if (isSpeechFeatured && isSpeechScale) {
       return false;
     }
 
@@ -1115,13 +1121,85 @@ export default function PillarAssessment({ onDataChange }) {
                       🚀 تطبيق وفحص مقياس الدكتور أبو حسيبة
                     </button>
                   </div>
+
+                  {/* Speech & Articulation Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(56, 189, 248, 0.04))',
+                      border: '1.5px solid #0284c7',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#e0f2fe', color: '#0369a1', fontWeight: 600, fontSize: '.72rem' }}>تقييم مخارج الأصوات والطلاقة</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>سجل الفحص النطقي</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        💬 سجل فحص وتقييم النطق ومخارج الحروف
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        فحص إكلينيكي دقيق لمخارج الحروف والأصوات، مواضع الإبدال والحذف والتشويه، والطلاقة اللفظية وبناء الأهداف
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setSpeechEditData(null); setSpeechModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#0284c7', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص سجل النطق ومخارج الحروف
+                    </button>
+                  </div>
+
+                  {/* PPVT-5 Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(125, 211, 252, 0.04))',
+                      border: '1.5px solid #0ea5e9',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#e0f2fe', color: '#0284c7', fontWeight: 600, fontSize: '.72rem' }}>الحصيلة اللغوية الاستقبالية</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>PPVT-5 المقنن</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        📖 مقياس بيبودي للمفردات اللغوية المصورة (PPVT-5)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        تقييم الحصيلة اللغوية وفهم المفردات الشفهية المصورة مع حساب الدرجات التائية والمعيارية والعمر الاستقبالي والتقرير
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setPpvt5EditData(null); setPpvt5ModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#0ea5e9', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص مقياس بيبودي PPVT-5
+                    </button>
+                  </div>
                 </div>
               )}
 
               {/* SCALES GRID */}
               {filteredScales.length === 0 ? (
-                // Only show EmptyState if we are NOT already showing featured cards inside the autism category (to avoid redundant warning)
-                !(selectedCategoryFilter === 'autism' && !searchTerm) && (
+                // Only show EmptyState if we are NOT already showing featured cards inside autism or speech categories
+                !((selectedCategoryFilter === 'autism' || selectedCategoryFilter === 'speech_language') && !searchTerm) && (
                   <EmptyState
                     icon="🔍"
                     title="لم يتم العثور على مقاييس تطابق البحث أو الفئة المختارة"
