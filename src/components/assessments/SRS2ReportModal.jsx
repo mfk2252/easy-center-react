@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { SRS2_ITEMS, SRS2_DOMAINS, SRS2_RESPONSE_OPTIONS, calculateSRS2Score } from '../../data/srs2Data';
+import { SRS2_ITEMS, SRS2_DOMAINS, calculateSRS2Score } from '../../data/srs2Data';
 import { sendReportToWhatsApp } from '../../pages/ProgramsReports/programsWhatsApp';
 import IepBridgeModal from '../../pages/ProgramsReports/IepBridgeModal';
 import { extractRecommendedGoals } from '../../utils/iepBridge';
@@ -195,7 +195,7 @@ export default function SRS2ReportModal({
               body { margin: 20px; font-family: 'Tajawal', sans-serif; background: #fff; }
               @media print {
                 body { margin: 0; }
-                .no-print { display: none; }
+                button { display: none !important; }
               }
             </style>
           </head>
@@ -214,73 +214,88 @@ export default function SRS2ReportModal({
   }
 
   function handleWhatsAppShare() {
-    sendReportToWhatsApp({
-      parentPhone: assessment.parentPhone,
-      parentName: assessment.parentName,
-      studentName: assessment.studentName,
-      reportTitle: `نتيجة مقياس الاستجابة الاجتماعية المعتمد (SRS-2)`,
-      reportType: 'نتائج الاختبارات والتشخيص السيكومتري',
-      date: assessment.date,
-      summary: `تم تطبيق المقياس بنجاح. الدرجة الخام: ${results.totalRawScore}/260. الدرجة التائية المعيارية (T-Score) هي: ${results.totalTScore} T. المستوى الإكلينيكي: ${results.category}.`,
-      recommendations: assessment.recommendations || assessment.clinicalSummary || results.interpretation,
-      specialistName: assessment.examinerName,
-      centerName: center?.name,
-    });
+    sendReportToWhatsApp(assessment, 'srs2');
   }
 
   return (
-    <div className="mbg" style={{ display: 'flex', zIndex: 1000 }}>
+    <div className="mbg" style={{ zIndex: 1100 }}>
       <div
-        className="mcont"
+        className="mb mb-xl"
         style={{
-          width: '100%',
-          maxWidth: 900,
-          maxHeight: '90vh',
+          padding: 0,
+          overflow: 'hidden',
+          borderRadius: 16,
+          maxHeight: '96vh',
           display: 'flex',
           flexDirection: 'column',
-          borderRadius: 12,
-          backgroundColor: '#fff',
-          overflow: 'hidden',
-          fontFamily: "'Tajawal', sans-serif"
+          width: 'min(980px, calc(100vw - 20px))',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
         }}
-        id="srs2_report_container"
       >
-        {/* HEADER */}
+        {/* Modal Header */}
         <div
+          className="modal-header-custom fhd"
           style={{
-            padding: '16px 20px',
-            background: 'linear-gradient(135deg, #047857, #065f46)',
+            background: 'linear-gradient(135deg, #059669, #047857)',
             color: '#fff',
+            padding: '14px 20px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 12,
+            flexShrink: 0,
+            flexGrow: 0,
+            width: '100%',
           }}
         >
           <div>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>
-              📄 التقرير السيكومتري الإكلينيكي المعتمد (SRS-2)
+            <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>📄</span> <span>تقرير التشخيص والتقييم النفسي المعتمد — SRS-2</span>
             </h2>
-            <p style={{ fontSize: '0.78rem', opacity: 0.9, margin: '4px 0 0 0', fontWeight: 400 }}>
-              عرض درجات المقاييس الفرعية والدرجة التائية المعيارية المتوافقة مع معايير التشخيص DSM-5
+            <p style={{ margin: '3px 0 0 0', fontSize: '.82rem', opacity: 0.9 }}>
+              Social Responsiveness Scale, 2nd Edition · متوافق مع معايير الدليل DSM-5
             </p>
           </div>
-          <button
-            type="button"
-            className="btn-close"
-            style={{ color: '#fff', fontSize: '1.4rem', cursor: 'pointer', background: 'none', border: 'none' }}
-            onClick={onClose}
-          >
-            &times;
-          </button>
+
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="btn btn-sm btn-p"
+              onClick={handlePrint}
+              style={{ background: '#fff', color: '#059669', fontWeight: 800, borderRadius: 8 }}
+            >
+              🖨️ طباعة التقرير الرسمي
+            </button>
+            {assessment.parentPhone && (
+              <button
+                type="button"
+                className="btn btn-sm btn-s"
+                onClick={handleWhatsAppShare}
+                style={{ borderRadius: 8, fontWeight: 800 }}
+              >
+                💬 واتساب لولي الأمر
+              </button>
+            )}
+          </div>
         </div>
 
         {/* CONTENT */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px', backgroundColor: '#f8fafc' }}>
+        <div className="modal-body-scroll" style={{ padding: '18px 22px' }}>
           
           {/* TOP METADATA TABLE */}
-          <div className="card" style={{ padding: 14, borderRadius: 10, border: '1px solid #e2e8f0', marginBottom: 16 }}>
+          <div
+            style={{
+              padding: 14,
+              borderRadius: 12,
+              border: '1px solid var(--border-color)',
+              background: 'var(--bg-card)',
+              marginBottom: 16,
+            }}
+          >
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, fontSize: '0.86rem' }}>
-              <div><strong>اسم الطالب:</strong> <span style={{ color: '#0f766e', fontWeight: 700 }}>{assessment.studentName}</span></div>
+              <div><strong>اسم الطالب:</strong> <span style={{ color: '#059669', fontWeight: 700 }}>{assessment.studentName}</span></div>
               <div><strong>العمر الزمني:</strong> <span>{assessment.age || '—'}</span></div>
               <div><strong>تاريخ التطبيق:</strong> <span>{assessment.date}</span></div>
               <div><strong>القائم بالفحص:</strong> <span>{assessment.examinerName || '—'} ({assessment.examinerRole || 'أخصائي'})</span></div>
@@ -290,12 +305,20 @@ export default function SRS2ReportModal({
           </div>
 
           {/* MAIN RESULTS SCORE BANNER */}
-          <div className="card" style={{ border: '1px solid #10b981', background: '#f0fdf4', padding: '16px 20px', borderRadius: 12, marginBottom: 18 }}>
+          <div
+            style={{
+              border: '1px solid #10b981',
+              background: 'var(--g0)',
+              padding: '16px 20px',
+              borderRadius: 12,
+              marginBottom: 18,
+            }}
+          >
             <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexWrap: 'wrap', gap: 12, textAlign: 'center' }}>
               
-              <div style={{ background: '#fff', padding: '8px 20px', borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
-                <div style={{ fontSize: '0.78rem', color: '#64748b' }}>الدرجة الخام الكلية</div>
-                <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#1e293b', marginTop: 2 }}>{results.totalRawScore} <span style={{ fontSize: '0.9rem', fontWeight: 500, color: '#64748b' }}>/ 260</span></div>
+              <div style={{ background: 'var(--bg-card)', padding: '8px 20px', borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid var(--border-color)' }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-sub)' }}>الدرجة الخام الكلية</div>
+                <div style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--text-main)', marginTop: 2 }}>{results.totalRawScore} <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-sub)' }}>/ 260</span></div>
               </div>
 
               <div style={{ background: '#059669', color: '#fff', padding: '10px 24px', borderRadius: 8, boxShadow: '0 4px 6px -1px rgba(5, 150, 105, 0.2)' }}>
@@ -311,31 +334,39 @@ export default function SRS2ReportModal({
               </div>
             </div>
 
-            <div style={{ marginTop: 12, borderTop: '1px solid #a7f3d0', paddingTop: 10, fontSize: '0.85rem', color: '#334155', lineHeight: 1.6 }}>
+            <div style={{ marginTop: 12, borderTop: '1px solid var(--border-color)', paddingTop: 10, fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: 1.6 }}>
               <strong>شرح النطاق الإكلينيكي:</strong> {results.interpretation}
             </div>
           </div>
 
           {/* SUBSCALE TABLE GRID */}
-          <div className="card" style={{ padding: 16, borderRadius: 10, border: '1px solid #e2e8f0', marginBottom: 18 }}>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1e293b', marginBottom: 12, borderBottom: '1px solid #f1f5f9', paddingBottom: 8 }}>
+          <div
+            style={{
+              padding: 16,
+              borderRadius: 12,
+              border: '1px solid var(--border-color)',
+              background: 'var(--bg-card)',
+              marginBottom: 18,
+            }}
+          >
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 12, borderBottom: '1px solid var(--border-color)', paddingBottom: 8 }}>
               📊 تحليل أبعاد ومقاييس الاستجابة الاجتماعية الـ 5
             </h3>
             
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.86rem', textAlignt: 'right' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.86rem', textAlign: 'right' }}>
                 <thead>
-                  <tr style={{ background: '#f8fafc', borderBottom: '1.5px solid #cbd5e1' }}>
-                    <th style={{ padding: '8px 12px', textAlign: 'right' }}>البعد / المجال الفرعي للـ SRS-2</th>
-                    <th style={{ padding: '8px 12px', textAlign: 'center' }}>الدرجة الخام</th>
-                    <th style={{ padding: '8px 12px', textAlign: 'center' }}>الدرجة التائية T</th>
-                    <th style={{ padding: '8px 12px', textAlign: 'center' }}>الرتبة التقديرية للقصور</th>
+                  <tr style={{ background: 'var(--g0)', borderBottom: '1.5px solid var(--border-color)' }}>
+                    <th style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--text-main)' }}>البعد / المجال الفرعي للـ SRS-2</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'center', color: 'var(--text-main)' }}>الدرجة الخام</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'center', color: 'var(--text-main)' }}>الدرجة التائية T</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'center', color: 'var(--text-main)' }}>الرتبة التقديرية للقصور</th>
                   </tr>
                 </thead>
                 <tbody>
                   {results.subscales.map(s => (
-                    <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '10px 12px', fontWeight: 700, color: '#0f766e' }}>{s.name}</td>
+                    <tr key={s.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '10px 12px', fontWeight: 700, color: '#059669' }}>{s.name}</td>
                       <td style={{ padding: '10px 12px', textAlign: 'center' }}>{s.raw} / {s.maxRaw}</td>
                       <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: '#047857' }}>{s.tScore} T</td>
                       <td style={{ padding: '10px 12px', textAlign: 'center' }}>
@@ -363,18 +394,32 @@ export default function SRS2ReportModal({
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 14, marginBottom: 18 }}>
             
             {assessment.clinicalSummary && (
-              <div className="card" style={{ padding: 14, borderRadius: 10, border: '1px solid #cbd5e1' }}>
-                <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#334155', borderBottom: '1px solid #e2e8f0', paddingBottom: 6, marginBottom: 8 }}>
+              <div
+                style={{
+                  padding: 14,
+                  borderRadius: 12,
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-card)',
+                }}
+              >
+                <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-main)', borderBottom: '1px solid var(--border-color)', paddingBottom: 6, marginBottom: 8 }}>
                   📝 الملاحظات السريرية للأخصائي:
                 </h4>
-                <p style={{ fontSize: '0.82rem', color: '#475569', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-sub)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
                   {assessment.clinicalSummary}
                 </p>
               </div>
             )}
 
             {assessment.recommendations && (
-              <div className="card" style={{ padding: 14, borderRadius: 10, border: '1px solid #bbf7d0', background: '#f0fdf4' }}>
+              <div
+                style={{
+                  padding: 14,
+                  borderRadius: 12,
+                  border: '1px solid #bbf7d0',
+                  background: '#f0fdf4',
+                }}
+              >
                 <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#166534', borderBottom: '1px solid #bbf7d0', paddingBottom: 6, marginBottom: 8 }}>
                   💡 التوصيات والخطة المقترحة للطفل:
                 </h4>
@@ -386,21 +431,28 @@ export default function SRS2ReportModal({
           </div>
 
           {/* ITEM BREAKDOWN TOGGLE */}
-          <div className="card" style={{ padding: 14, borderRadius: 10, border: '1px solid #e2e8f0' }}>
+          <div
+            style={{
+              padding: 14,
+              borderRadius: 12,
+              border: '1px solid var(--border-color)',
+              background: 'var(--bg-card)',
+            }}
+          >
             <details>
-              <summary style={{ fontSize: '0.88rem', fontWeight: 800, color: '#1e293b', cursor: 'pointer', outline: 'none' }}>
+              <summary style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-main)', cursor: 'pointer', outline: 'none' }}>
                 🔍 عرض وتفصيل إجابات الـ 65 بنداً بالكامل
               </summary>
               <div style={{ overflowX: 'auto', marginTop: 12 }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem', textAlignt: 'right' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem', textAlign: 'right' }}>
                   <thead>
-                    <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
-                      <th style={{ padding: '6px 8px', textAlign: 'center' }}>م</th>
-                      <th style={{ padding: '6px 8px', textAlign: 'right' }}>البند / العبارة</th>
-                      <th style={{ padding: '6px 8px', textAlign: 'right' }}>المجال</th>
-                      <th style={{ padding: '6px 8px', textAlign: 'center' }}>الإجابة</th>
-                      <th style={{ padding: '6px 8px', textAlign: 'center' }}>الدرجة</th>
-                      <th style={{ padding: '6px 8px', textAlign: 'right' }}>ملاحظات الأخصائي</th>
+                    <tr style={{ background: 'var(--g0)', borderBottom: '2px solid var(--border-color)' }}>
+                      <th style={{ padding: '6px 8px', textAlign: 'center', color: 'var(--text-main)' }}>م</th>
+                      <th style={{ padding: '6px 8px', textAlign: 'right', color: 'var(--text-main)' }}>البند / العبارة</th>
+                      <th style={{ padding: '6px 8px', textAlign: 'right', color: 'var(--text-main)' }}>المجال</th>
+                      <th style={{ padding: '6px 8px', textAlign: 'center', color: 'var(--text-main)' }}>الإجابة</th>
+                      <th style={{ padding: '6px 8px', textAlign: 'center', color: 'var(--text-main)' }}>الدرجة</th>
+                      <th style={{ padding: '6px 8px', textAlign: 'right', color: 'var(--text-main)' }}>ملاحظات الأخصائي</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -416,13 +468,13 @@ export default function SRS2ReportModal({
                       const dom = SRS2_DOMAINS.find(d => d.id === it.domainId);
 
                       return (
-                        <tr key={it.id} style={{ borderBottom: '1px solid #f1f5f9', background: score >= 3 ? '#fff5f5' : undefined }}>
+                        <tr key={it.id} style={{ borderBottom: '1px solid var(--border-color)', background: score >= 3 ? 'rgba(239, 68, 68, 0.08)' : undefined }}>
                           <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 700 }}>{idx + 1}</td>
                           <td style={{ padding: '6px 8px' }}>{it.text}</td>
-                          <td style={{ padding: '6px 8px', color: '#64748b' }}>{dom?.name} {it.isReverse && '◀'}</td>
+                          <td style={{ padding: '6px 8px', color: 'var(--text-sub)' }}>{dom?.name} {it.isReverse && '◀'}</td>
                           <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 600 }}>{rawVal ? labels[rawVal] : '—'}</td>
-                          <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 700, color: score >= 3 ? '#dc2626' : '#1e293b' }}>{score || '—'}</td>
-                          <td style={{ padding: '6px 8px', color: '#64748b', fontStyle: 'italic' }}>{note || '—'}</td>
+                          <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 700, color: score >= 3 ? '#dc2626' : 'var(--text-main)' }}>{score || '—'}</td>
+                          <td style={{ padding: '6px 8px', color: 'var(--text-sub)', fontStyle: 'italic' }}>{note || '—'}</td>
                         </tr>
                       );
                     })}
@@ -436,15 +488,14 @@ export default function SRS2ReportModal({
 
         {/* FOOTER ACTIONS */}
         <div
+          className="fa"
           style={{
             padding: '12px 20px',
-            background: '#f1f5f9',
-            borderTop: '1px solid #e2e8f0',
+            borderTop: '1px solid var(--border-color)',
+            background: 'var(--g0)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 10,
           }}
         >
           <div style={{ display: 'flex', gap: 8 }}>
@@ -467,26 +518,19 @@ export default function SRS2ReportModal({
             <button type="button" className="btn btn-s" onClick={handlePrint} style={{ fontWeight: 700 }}>
               🖨️ طباعة التقرير / PDF
             </button>
-            {assessment.parentPhone && (
-              <button type="button" className="btn btn-g" onClick={handleWhatsAppShare} style={{ fontWeight: 700 }}>
-                💬 إرسال واتساب
-              </button>
-            )}
           </div>
 
           <div style={{ display: 'flex', gap: 8 }}>
             <button
               type="button"
-              className="btn"
-              style={{ background: '#e2e8f0', color: '#1e293b', fontWeight: 700 }}
+              className="btn btn-g"
               onClick={() => onEdit(assessment)}
             >
               ✏️ تعديل الدرجات
             </button>
             <button
               type="button"
-              className="btn"
-              style={{ background: '#64748b', color: '#fff', fontWeight: 700 }}
+              className="btn btn-g"
               onClick={onClose}
             >
               إغلاق
