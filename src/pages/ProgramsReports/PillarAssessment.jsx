@@ -708,9 +708,7 @@ export default function PillarAssessment({ onDataChange }) {
             <div>
               {/* Breadcrumbs (مسار الملفات) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: 'var(--text-sub)', marginBottom: 16, background: 'var(--g0)', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border-color)', width: 'fit-content' }}>
-                <span style={{ cursor: 'pointer', transition: 'color 0.2s' }} className="hover:text-primary" onClick={() => { setActiveCategoryView(null); setSelectedCategoryFilter('all'); }}>🏠 مركز التقييم والتشخيص</span>
-                <span>/</span>
-                <span style={{ cursor: 'pointer', transition: 'color 0.2s' }} className="hover:text-primary" onClick={() => { setActiveCategoryView(null); setSelectedCategoryFilter('all'); }}>الفئات التشخيصية</span>
+                <span style={{ cursor: 'pointer', transition: 'color 0.2s' }} className="hover:text-primary" onClick={() => { setActiveCategoryView(null); setSelectedCategoryFilter('all'); }}>📁 الفئات التشخيصية</span>
                 <span>/</span>
                 <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>{currentCategoryMeta?.name || 'جميع المقاييس السيكومترية'}</span>
               </div>
@@ -749,16 +747,6 @@ export default function PillarAssessment({ onDataChange }) {
                     </p>
                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  className="btn btn-g"
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 10, fontWeight: 700 }}
-                  onClick={() => { setActiveCategoryView(null); setSelectedCategoryFilter('all'); }}
-                >
-                  <span>⬅</span>
-                  <span>العودة للفئات</span>
-                </button>
               </div>
 
               {/* Subtab Compact Filter Bar inside selected Category */}
@@ -796,7 +784,7 @@ export default function PillarAssessment({ onDataChange }) {
               </div>
 
               {/* Featured Autism Highlight Cards (CARS-2, GARS-3, SRS-2, PEP-3) inside category detail view only if Autism or All is active */}
-              {(selectedCategoryFilter === 'all' || selectedCategoryFilter === 'autism') && (
+              {(selectedCategoryFilter === 'all' || selectedCategoryFilter === 'autism') && !searchTerm && (
                 <div
                   style={{
                     display: 'grid',
@@ -953,11 +941,14 @@ export default function PillarAssessment({ onDataChange }) {
 
               {/* SCALES GRID */}
               {filteredScales.length === 0 ? (
-                <EmptyState
-                  icon="🔍"
-                  title="لم يتم العثور على مقاييس تطابق البحث أو الفئة المختارة"
-                  sub="جرب تغيير الفئة التشخيصية أو تفريغ خانة البحث"
-                />
+                // Only show EmptyState if we are NOT already showing featured cards inside the autism category (to avoid redundant warning)
+                !(selectedCategoryFilter === 'autism' && !searchTerm) && (
+                  <EmptyState
+                    icon="🔍"
+                    title="لم يتم العثور على مقاييس تطابق البحث أو الفئة المختارة"
+                    sub="جرب تغيير الفئة التشخيصية أو تفريغ خانة البحث"
+                  />
+                )
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 14 }}>
                   {filteredScales.map(scale => {
@@ -1022,18 +1013,7 @@ export default function PillarAssessment({ onDataChange }) {
                 </div>
               )}
 
-              {/* Back to Categories bottom action */}
-              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32 }}>
-                <button
-                  type="button"
-                  className="btn btn-g"
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 12, fontWeight: 700 }}
-                  onClick={() => { setActiveCategoryView(null); setSelectedCategoryFilter('all'); }}
-                >
-                  <span>⬅</span>
-                  <span>العودة لقائمة الفئات التشخيصية</span>
-                </button>
-              </div>
+              {/* Back to Categories bottom action removed to avoid duplication and clutter */}
             </div>
           )}
         </div>
