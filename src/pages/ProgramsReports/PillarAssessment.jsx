@@ -520,11 +520,11 @@ export default function PillarAssessment({ onDataChange }) {
             <div>
               {/* Category Search Header / Description */}
               <div style={{ textAlign: 'center', margin: '24px 0 32px 0' }}>
-                <h2 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--text-main)', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
                   <span>📂 مركز الفئات التشخيصية المعتمدة</span>
-                  <span className="bdg b-bl" style={{ fontSize: '0.85rem', padding: '4px 10px', borderRadius: '12px' }}>13 فئة معتمدة</span>
+                  <span className="bdg b-bl" style={{ fontSize: '0.85rem', padding: '4px 10px', borderRadius: '12px', fontWeight: 500 }}>13 فئة معتمدة</span>
                 </h2>
-                <p style={{ fontSize: '0.95rem', color: 'var(--text-sub)', maxWidth: '650px', margin: '0 auto', lineHeight: 1.6 }}>
+                <p style={{ fontSize: '0.95rem', color: 'var(--text-sub)', maxWidth: '650px', margin: '0 auto', lineHeight: 1.6, fontWeight: 400 }}>
                   مكتبة متكاملة ومصنفة لتطبيق أدوات قياس الاضطرابات النفسية والنمائية وصعوبات التعلم والتربية الخاصة. انقر على أي قسم لبدء الفحص والتقييم.
                 </p>
 
@@ -545,7 +545,7 @@ export default function PillarAssessment({ onDataChange }) {
                 /* Search active state: Show filtered list of scales immediately */
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)' }}>
                       🔍 نتائج البحث عن "{searchTerm}" ({filteredScales.length} مقاييس)
                     </h3>
                     <button type="button" className="btn btn-sm btn-g" onClick={() => setSearchTerm('')}>
@@ -587,15 +587,15 @@ export default function PillarAssessment({ onDataChange }) {
                                 {scale.items?.length || 15} بنداً
                               </span>
                             </div>
-                            <h4 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.4 }}>
+                            <h4 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.4 }}>
                               {scale.name}
                             </h4>
                             {scale.nameEn && (
-                              <div style={{ fontSize: '.74rem', color: 'var(--text-sub)', marginBottom: 8, direction: 'ltr', textAlign: 'right' }}>
+                              <div style={{ fontSize: '.74rem', color: 'var(--text-sub)', marginBottom: 8, direction: 'ltr', textAlign: 'right', fontWeight: 400 }}>
                                 {scale.nameEn}
                               </div>
                             )}
-                            <p style={{ fontSize: '.78rem', color: 'var(--text-sub)', margin: '0 0 14px 0', minHeight: 40, lineHeight: 1.5 }}>
+                            <p style={{ fontSize: '.78rem', color: 'var(--text-sub)', margin: '0 0 14px 0', minHeight: 40, lineHeight: 1.5, fontWeight: 400 }}>
                               {scale.description || scale.thresholdText || 'مقياس تشخيصي مقنن لتحديد مستوى الأداء وخطط التدخل'}
                             </p>
                             <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
@@ -642,19 +642,19 @@ export default function PillarAssessment({ onDataChange }) {
                       <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--pr-l)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', marginBottom: 12 }}>
                         🌟
                       </div>
-                      <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)', marginBottom: 4 }}>
+                      <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: 4 }}>
                         جميع المقاييس السيكومترية
                       </h3>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-sub)', letterSpacing: '0.5px', marginBottom: 8, textTransform: 'uppercase' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-sub)', letterSpacing: '0.5px', marginBottom: 8, textTransform: 'uppercase', fontWeight: 400 }}>
                         All Diagnostic Scales
                       </div>
-                      <p style={{ fontSize: '0.82rem', color: 'var(--text-sub)', lineHeight: 1.5, margin: 0 }}>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-sub)', lineHeight: 1.5, margin: 0, fontWeight: 400 }}>
                         استعراض وتصفح كافة المقاييس والأدوات التشخيصية المتوفرة بالمنظومة دفعة واحدة مع تصفية متقدمة.
                       </p>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: 10, marginTop: 12 }}>
-                      <span className="bdg b-bl" style={{ fontSize: '0.78rem', fontWeight: 800 }}>{allScales.length} مقياس متاح</span>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--pr)' }}>دخول ⬅</span>
+                      <span className="bdg b-bl" style={{ fontSize: '0.78rem', fontWeight: 600 }}>{allScales.length} مقياس متاح</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--pr)' }}>دخول ⬅</span>
                     </div>
                   </div>
 
@@ -683,19 +683,19 @@ export default function PillarAssessment({ onDataChange }) {
                           <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: `${cat.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', marginBottom: 12, border: `1px solid ${cat.color}30` }}>
                             {cat.icon}
                           </div>
-                          <h3 style={{ fontSize: '1.12rem', fontWeight: 900, color: 'var(--text-main)', marginBottom: 4 }}>
+                          <h3 style={{ fontSize: '1.12rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: 4 }}>
                             {cat.name}
                           </h3>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)', letterSpacing: '0.3px', marginBottom: 8 }}>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)', letterSpacing: '0.3px', marginBottom: 8, fontWeight: 400 }}>
                             {cat.nameEn}
                           </div>
-                          <p style={{ fontSize: '0.82rem', color: 'var(--text-sub)', lineHeight: 1.5, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-sub)', lineHeight: 1.5, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', fontWeight: 400 }}>
                             {cat.description}
                           </p>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: 10, marginTop: 12 }}>
-                          <span className="bdg b-gr" style={{ fontSize: '0.78rem', fontWeight: 800 }}>{count} مقاييس</span>
-                          <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-main)' }}>استعراض ⬅</span>
+                          <span className="bdg b-gr" style={{ fontSize: '0.78rem', fontWeight: 600 }}>{count} مقاييس</span>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)' }}>استعراض ⬅</span>
                         </div>
                       </div>
                     );
@@ -710,7 +710,7 @@ export default function PillarAssessment({ onDataChange }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: 'var(--text-sub)', marginBottom: 16, background: 'var(--g0)', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border-color)', width: 'fit-content' }}>
                 <span style={{ cursor: 'pointer', transition: 'color 0.2s' }} className="hover:text-primary" onClick={() => { setActiveCategoryView(null); setSelectedCategoryFilter('all'); }}>📁 الفئات التشخيصية</span>
                 <span>/</span>
-                <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>{currentCategoryMeta?.name || 'جميع المقاييس السيكومترية'}</span>
+                <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{currentCategoryMeta?.name || 'جميع المقاييس السيكومترية'}</span>
               </div>
 
               {/* Category Header Banner */}
@@ -735,14 +735,14 @@ export default function PillarAssessment({ onDataChange }) {
                   </div>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                      <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                      <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-main)' }}>
                         {currentCategoryMeta ? currentCategoryMeta.name : 'جميع المقاييس السيكومترية'}
                       </h2>
-                      <span className="bdg b-bl" style={{ fontWeight: 800 }}>
+                      <span className="bdg b-bl" style={{ fontWeight: 600 }}>
                         {currentCategoryMeta ? (scalesGrouped[currentCategoryMeta.id] || []).length : allScales.length} مقياس متاح
                       </span>
                     </div>
-                    <p style={{ margin: '6px 0 0 0', fontSize: '0.88rem', color: 'var(--text-sub)', maxWidth: '750px', lineHeight: 1.55 }}>
+                    <p style={{ margin: '6px 0 0 0', fontSize: '0.88rem', color: 'var(--text-sub)', maxWidth: '750px', lineHeight: 1.55, fontWeight: 400 }}>
                       {currentCategoryMeta ? currentCategoryMeta.description : 'تقارير وفحوصات جميع المقاييس السيكومترية والنمائية المعتمدة للتشخيص والتحليل.'}
                     </p>
                   </div>
@@ -751,7 +751,7 @@ export default function PillarAssessment({ onDataChange }) {
 
               {/* Subtab Compact Filter Bar inside selected Category */}
               <div className="prog-filter-bar" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 20, background: 'var(--g0)', padding: '10px 14px', borderRadius: 12, border: '1px solid var(--border-color)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.88rem', color: 'var(--text-sub)', fontWeight: 700, flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.88rem', color: 'var(--text-sub)', fontWeight: 600, flexShrink: 0 }}>
                   <span>🔍 تصفية المقاييس الحالية:</span>
                 </div>
                 <input
@@ -808,13 +808,13 @@ export default function PillarAssessment({ onDataChange }) {
                   >
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        <span className="bdg b-bl" style={{ fontWeight: 900, fontSize: '.72rem' }}>المعيار الذهبي للتشخيص</span>
-                        <span className="bdg b-gr" style={{ fontWeight: 800, fontSize: '.72rem' }}>CARS-2 ST</span>
+                        <span className="bdg b-bl" style={{ fontWeight: 600, fontSize: '.72rem' }}>المعيار الذهبي للتشخيص</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>CARS-2 ST</span>
                       </div>
-                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
                         🧩 مقياس تقدير التوحد في الطفولة (CARS-2)
                       </h3>
-                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45 }}>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
                         15 مجالاً تشخيصياً معتمداً · سلم تقدير متدرج (1.0 إلى 4.0) · درجات معيارية T ورتب مئينية واشتقاق IEP تلقائي
                       </p>
                     </div>
@@ -844,13 +844,13 @@ export default function PillarAssessment({ onDataChange }) {
                   >
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontWeight: 900, fontSize: '.72rem' }}>وفق معايير DSM-5</span>
-                        <span className="bdg b-gr" style={{ fontWeight: 800, fontSize: '.72rem' }}>GARS-3 المقنن</span>
+                        <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontWeight: 600, fontSize: '.72rem' }}>وفق معايير DSM-5</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>GARS-3 المقنن</span>
                       </div>
-                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
                         📊 مقياس جيليام لتقدير التوحد — الإصدار الثالث (GARS-3)
                       </h3>
-                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45 }}>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
                         58 بنداً مقنناً · 6 مقاييس فرعية (لفظي / غير لفظي) · معامل التوحد AQ ومستويات الدعم الثلاثة DSM-5
                       </p>
                     </div>
@@ -880,13 +880,13 @@ export default function PillarAssessment({ onDataChange }) {
                   >
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        <span className="bdg" style={{ background: '#d1fae5', color: '#047857', fontWeight: 900, fontSize: '.72rem' }}>التفاعل والتواصل المتبادل</span>
-                        <span className="bdg b-gr" style={{ fontWeight: 800, fontSize: '.72rem' }}>SRS-2 المقنن</span>
+                        <span className="bdg" style={{ background: '#d1fae5', color: '#047857', fontWeight: 600, fontSize: '.72rem' }}>التفاعل والتواصل المتبادل</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>SRS-2 المقنن</span>
                       </div>
-                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
                         👥 مقياس الاستجابة الاجتماعية — الإصدار الثاني (SRS-2)
                       </h3>
-                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45 }}>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
                         65 عبارة سيكومترية · 5 مقاييس فرعية دقيقة · درجات معيارية تائية T متوافقة مع معايير DSM-5 واشتقاق IEP تلقائي
                       </p>
                     </div>
@@ -916,13 +916,13 @@ export default function PillarAssessment({ onDataChange }) {
                   >
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                         <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontWeight: 900, fontSize: '.72rem' }}>السن النمائي ونقاط القوة والضعف</span>
-                         <span className="bdg b-gr" style={{ fontWeight: 800, fontSize: '.72rem' }}>PEP-3 المقنن المطور</span>
+                         <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontWeight: 600, fontSize: '.72rem' }}>السن النمائي ونقاط القوة والضعف</span>
+                         <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>PEP-3 المقنن المطور</span>
                       </div>
-                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
                         📋 ملف التقييم النفسي التربوي للتوحد (PEP-3)
                       </h3>
-                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45 }}>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
                         50 بنداً نمائياً مقنناً · 8 أبعاد نمائية سلوكية · حساب السن النمائي، ونقاط القوة والاحتياج، وتوليد أهداف الخطة الفردية
                       </p>
                     </div>
@@ -979,16 +979,16 @@ export default function PillarAssessment({ onDataChange }) {
                           </span>
                         </div>
 
-                        <h4 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.4 }}>
+                        <h4 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.4 }}>
                           {scale.name}
                         </h4>
                         {scale.nameEn && (
-                          <div style={{ fontSize: '.74rem', color: 'var(--text-sub)', marginBottom: 8, direction: 'ltr', textAlign: 'right' }}>
+                          <div style={{ fontSize: '.74rem', color: 'var(--text-sub)', marginBottom: 8, direction: 'ltr', textAlign: 'right', fontWeight: 400 }}>
                             {scale.nameEn}
                           </div>
                         )}
 
-                        <p style={{ fontSize: '.78rem', color: 'var(--text-sub)', margin: '0 0 14px 0', minHeight: 40, lineHeight: 1.5 }}>
+                        <p style={{ fontSize: '.78rem', color: 'var(--text-sub)', margin: '0 0 14px 0', minHeight: 40, lineHeight: 1.5, fontWeight: 400 }}>
                           {scale.description || scale.thresholdText || 'مقياس تشخيصي مقنن لتحديد مستوى الأداء وخطط التدخل'}
                         </p>
 
