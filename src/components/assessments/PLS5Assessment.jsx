@@ -390,21 +390,30 @@ export default function PLS5Assessment({
               <div>
                 <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>اختر الطالب المراد تقييمه:</label>
                 <StudentPicker
+                  form={form}
+                  setForm={setForm}
                   students={students}
-                  selectedId={form.stuId}
-                  onSelect={(stu) => {
-                    setForm(prev => ({
-                      ...prev,
-                      stuId: stu.id,
-                      studentName: stu.name,
-                      dob: stu.dob,
-                      age: stu.age,
-                      diagnosis: stu.diagnosis || 'غير محدد',
-                    }));
-                  }}
+                  emps={emps}
+                  showExtra={false}
                 />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, alignItems: 'center' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, alignItems: 'center' }}>
+                <div style={{ background: 'var(--g1)', padding: '6px 10px', borderRadius: 8, textAlign: 'center' }}>
+                  <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-sub)' }}>تاريخ الميلاد:</span>
+                  <input
+                    type="date"
+                    value={form.dob || ''}
+                    onChange={(e) => {
+                      const dobVal = e.target.value;
+                      setForm(prev => ({
+                        ...prev,
+                        dob: dobVal,
+                        age: dobVal ? calcAge(dobVal) : '',
+                      }));
+                    }}
+                    style={{ fontSize: '0.72rem', padding: '2px 4px', width: '100%', border: '1px solid var(--border-color)', borderRadius: 4, background: '#fff', textAlign: 'center' }}
+                  />
+                </div>
                 <div style={{ background: 'var(--g1)', padding: '6px 10px', borderRadius: 8, textAlign: 'center' }}>
                   <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-sub)' }}>العمر الزمني:</span>
                   <strong style={{ fontSize: '0.84rem' }}>{form.age || '—'}</strong>

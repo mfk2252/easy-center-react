@@ -455,25 +455,43 @@ ${conceptRecommendations}
                   <span>👤</span> اختيار الطالب المستهدف وتحديد السن الزمني
                 </h3>
                 <StudentPicker
+                  form={form}
+                  setForm={setForm}
                   students={students}
-                  selectedStuId={form.stuId}
-                  onSelect={selectStudent}
-                  disabled={!!initialData}
+                  emps={emps}
+                  showExtra={false}
                 />
 
                 {form.stuId && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginTop: 16, background: 'var(--g0)', padding: 12, borderRadius: 10 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginTop: 16, background: 'var(--g0)', padding: 12, borderRadius: 10 }}>
+                    <div>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)' }}>تاريخ الميلاد:</span>
+                      <input
+                        type="date"
+                        value={form.dob || ''}
+                        disabled={!!initialData}
+                        onChange={(e) => {
+                          const dobVal = e.target.value;
+                          setForm(prev => ({
+                            ...prev,
+                            dob: dobVal,
+                            age: dobVal ? calcAge(dobVal) : '',
+                          }));
+                        }}
+                        style={{ fontSize: '0.8rem', padding: '4px 6px', width: '100%', border: '1px solid var(--border-color)', borderRadius: 6, background: '#fff', marginTop: 4 }}
+                      />
+                    </div>
                     <div>
                       <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)' }}>السن الزمني الفعلي:</span>
-                      <div style={{ fontWeight: 800, fontSize: '0.9rem' }}>{scoring.ageLabel} ({studentAgeMonths} شهراً)</div>
+                      <div style={{ fontWeight: 800, fontSize: '0.9rem', marginTop: 6 }}>{scoring.ageLabel} ({studentAgeMonths} شهراً)</div>
                     </div>
                     <div>
                       <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)' }}>المجموعة الإرشادية للبدء:</span>
-                      <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#0f766e' }}>المجموعة {getPPVT5StartSetByAge(studentAgeMonths)}</div>
+                      <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#0f766e', marginTop: 6 }}>المجموعة {getPPVT5StartSetByAge(studentAgeMonths)}</div>
                     </div>
                     <div>
                       <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)' }}>التشخيص الطبي الأولي:</span>
-                      <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{form.diagnosis}</div>
+                      <div style={{ fontWeight: 700, fontSize: '0.9rem', marginTop: 6 }}>{form.diagnosis || 'غير محدد'}</div>
                     </div>
                   </div>
                 )}

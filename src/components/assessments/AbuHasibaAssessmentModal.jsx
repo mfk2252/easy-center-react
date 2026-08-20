@@ -270,33 +270,41 @@ export default function AbuHasibaAssessmentModal({
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: 6 }}>اختر الطالب المستهدف:</label>
                 <StudentPicker
+                  form={form}
+                  setForm={setForm}
                   students={students}
-                  selectedId={form.stuId}
-                  onSelect={(stu) => {
-                    const validation = validateStudentPick(stu);
-                    setForm(prev => ({
-                      ...prev,
-                      stuId: stu.id,
-                      studentName: stu.name,
-                      dob: stu.dob,
-                      age: stu.age,
-                      diagnosis: stu.diagnosis || 'غير محدد',
-                    }));
-                  }}
+                  emps={emps}
+                  showExtra={false}
                 />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.74rem', color: 'var(--text-sub)' }}>تاريخ الميلاد:</span>
+                  <input
+                    type="date"
+                    value={form.dob || ''}
+                    onChange={(e) => {
+                      const dobVal = e.target.value;
+                      setForm(prev => ({
+                        ...prev,
+                        dob: dobVal,
+                        age: dobVal ? calcAge(dobVal) : '',
+                      }));
+                    }}
+                    style={{ fontSize: '0.74rem', padding: '2px 4px', width: '100%', border: '1px solid var(--border-color)', borderRadius: 4, background: '#fff', textAlign: 'center', marginTop: 4 }}
+                  />
+                </div>
                 <div>
                   <span style={{ display: 'block', fontSize: '0.74rem', color: 'var(--text-sub)' }}>العمر الزمني:</span>
-                  <strong style={{ fontSize: '0.9rem' }}>{form.age || '—'}</strong>
+                  <strong style={{ fontSize: '0.9rem', display: 'block', marginTop: 4 }}>{form.age || '—'}</strong>
                 </div>
                 <div>
                   <span style={{ display: 'block', fontSize: '0.74rem', color: 'var(--text-sub)' }}>نقطة الاستقبالية:</span>
-                  <strong style={{ fontSize: '0.9rem', color: '#0369a1' }}>بند {startingPoints.receptiveStart}</strong>
+                  <strong style={{ fontSize: '0.9rem', color: '#0369a1', display: 'block', marginTop: 4 }}>بند {startingPoints.receptiveStart}</strong>
                 </div>
                 <div>
                   <span style={{ display: 'block', fontSize: '0.74rem', color: 'var(--text-sub)' }}>نقطة التعبيرية:</span>
-                  <strong style={{ fontSize: '0.9rem', color: '#0f766e' }}>بند {startingPoints.expressiveStart}</strong>
+                  <strong style={{ fontSize: '0.9rem', color: '#0f766e', display: 'block', marginTop: 4 }}>بند {startingPoints.expressiveStart}</strong>
                 </div>
               </div>
             </div>
