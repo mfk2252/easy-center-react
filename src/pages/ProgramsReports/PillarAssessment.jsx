@@ -11,6 +11,8 @@ import CARS2AssessmentModal from '../../components/assessments/CARS2AssessmentMo
 import CARS2ReportModal from '../../components/assessments/CARS2ReportModal';
 import GARS3AssessmentModal from '../../components/assessments/GARS3AssessmentModal';
 import GARS3ReportModal from '../../components/assessments/GARS3ReportModal';
+import SRS2AssessmentModal from '../../components/assessments/SRS2AssessmentModal';
+import SRS2ReportModal from '../../components/assessments/SRS2ReportModal';
 import IepBridgeModal from './IepBridgeModal';
 import { extractRecommendedGoals } from '../../utils/iepBridge';
 import {
@@ -80,6 +82,12 @@ export default function PillarAssessment({ onDataChange }) {
   const [garsEditData, setGarsEditData] = useState(null);
   const [garsReportOpen, setGarsReportOpen] = useState(false);
   const [selectedGarsAssessment, setSelectedGarsAssessment] = useState(null);
+
+  // SRS-2 Specific Specialized Modals States
+  const [srsModalOpen, setSrsModalOpen] = useState(false);
+  const [srsEditData, setSrsEditData] = useState(null);
+  const [srsReportOpen, setSrsReportOpen] = useState(false);
+  const [selectedSrsAssessment, setSelectedSrsAssessment] = useState(null);
 
   // IEP Bridge State
   const [bridgeOpen, setBridgeOpen] = useState(false);
@@ -175,6 +183,11 @@ export default function PillarAssessment({ onDataChange }) {
       setGarsModalOpen(true);
       return;
     }
+    if (scaleId === 'srs') {
+      setSrsEditData(null);
+      setSrsModalOpen(true);
+      return;
+    }
     const scale = allScales.find(s => s.id === scaleId) || activeScale;
     setSelectedScaleId(scale?.id || 'cars');
     setScaleResponses({});
@@ -204,6 +217,16 @@ export default function PillarAssessment({ onDataChange }) {
   function openViewGarsReport(item) {
     setSelectedGarsAssessment(item);
     setGarsReportOpen(true);
+  }
+
+  function openEditSrsAssessment(item) {
+    setSrsEditData(item);
+    setSrsModalOpen(true);
+  }
+
+  function openViewSrsReport(item) {
+    setSelectedSrsAssessment(item);
+    setSrsReportOpen(true);
   }
 
   function handleScaleOptionChange(itemId, value) {
@@ -661,6 +684,42 @@ export default function PillarAssessment({ onDataChange }) {
                   🚀 فتح أداة فحص وتطبيق GARS-3
                 </button>
               </div>
+
+              {/* SRS-2 Highlight */}
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.08), rgba(16, 185, 129, 0.04))',
+                  border: '1.5px solid #059669',
+                  borderRadius: 14,
+                  padding: '16px 18px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span className="bdg" style={{ background: '#d1fae5', color: '#047857', fontWeight: 900, fontSize: '.72rem' }}>التفاعل والتواصل المتبادل</span>
+                    <span className="bdg b-gr" style={{ fontWeight: 800, fontSize: '.72rem' }}>SRS-2 المقنن</span>
+                  </div>
+                  <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                    👥 مقياس الاستجابة الاجتماعية — الإصدار الثاني (SRS-2)
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45 }}>
+                    65 عبارة سيكومترية · 5 مقاييس فرعية دقيقة · درجات معيارية تائية T متوافقة مع معايير DSM-5 واشتقاق IEP تلقائي
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => { setSrsEditData(null); setSrsModalOpen(true); }}
+                  style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#059669', color: '#fff', width: '100%' }}
+                >
+                  🚀 فتح أداة فحص وتطبيق SRS-2
+                </button>
+              </div>
             </div>
           )}
 
@@ -746,13 +805,14 @@ export default function PillarAssessment({ onDataChange }) {
               {filteredAssessments.map(item => {
                 const isCars = item.measureId === 'cars' || item.scaleType === 'cars2';
                 const isGars = item.measureId === 'gars' || item.measureId === 'gars3' || item.scaleType === 'gars3';
+                const isSrs = item.measureId === 'srs' || item.scaleType === 'srs2' || item.measureId === 'srs2';
                 return (
                   <div
                     key={item.id}
                     className="prog-item-card"
                     style={{
-                      border: isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : '1px solid var(--border-color)',
-                      boxShadow: isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : 'var(--sh)',
+                      border: isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : '1px solid var(--border-color)',
+                      boxShadow: isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : 'var(--sh)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
@@ -761,11 +821,12 @@ export default function PillarAssessment({ onDataChange }) {
                           <span>{item.studentName}</span>
                           {isCars && <span className="bdg b-bl" style={{ fontSize: '.68rem', padding: '1px 6px' }}>CARS-2</span>}
                           {isGars && <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>GARS-3</span>}
+                          {isSrs && <span className="bdg" style={{ background: '#d1fae5', color: '#047857', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>SRS-2</span>}
                         </div>
                         <div className="prog-student-meta">{item.measureName} · {item.date}</div>
                       </div>
                       <span className="bdg b-gr" style={{ fontSize: '0.82rem', fontWeight: 800, flexShrink: 0 }}>
-                        {isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : `الدرجة: ${item.score} / ${item.maxScore}`}
+                        {isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : `الدرجة: ${item.score} / ${item.maxScore}`}
                       </span>
                     </div>
 
@@ -784,16 +845,23 @@ export default function PillarAssessment({ onDataChange }) {
                       </div>
                     )}
 
+                    {isSrs && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>درجة تائية T: <strong style={{ color: '#059669' }}>{item.tScore || '—'} T</strong></span>
+                        <span>الدرجة الخام الإجمالية: <strong style={{ color: 'var(--text-main)' }}>{item.rawScore || item.score} / 260</strong></span>
+                      </div>
+                    )}
+
                     <div style={{ display: 'flex', gap: 8, margin: '8px 0', alignItems: 'center' }}>
                       <div style={{ flex: 1, background: 'var(--g1)', height: 8, borderRadius: 4, overflow: 'hidden' }}>
-                        <div style={{ width: item.percentage || '50%', background: isGars ? '#0d9488' : 'var(--pr)', height: '100%' }} />
+                        <div style={{ width: item.percentage || '50%', background: isGars ? '#0d9488' : isSrs ? '#059669' : 'var(--pr)', height: '100%' }} />
                       </div>
                       <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>{item.percentage}</span>
                     </div>
 
                     <div style={{ fontSize: '0.84rem', margin: '6px 0' }}>
                       <span style={{ color: 'var(--text-sub)' }}>المستوى التقديري: </span>
-                      <strong style={{ color: item.severityColor || (isGars ? '#0d9488' : 'var(--pr)') }}>{item.level}</strong>
+                      <strong style={{ color: item.severityColor || (isGars ? '#0d9488' : isSrs ? '#059669' : 'var(--pr)') }}>{item.level}</strong>
                     </div>
 
                     {item.notes && <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)', marginTop: 4 }}>{item.notes}</div>}
@@ -854,6 +922,27 @@ export default function PillarAssessment({ onDataChange }) {
                             type="button"
                             className="btn btn-xs btn-g"
                             onClick={() => openEditGarsAssessment(item)}
+                            title="تعديل درجات البنود"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isSrs && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewSrsReport(item)}
+                            style={{ fontWeight: 800, background: '#059669', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isSrs && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditSrsAssessment(item)}
                             title="تعديل درجات البنود"
                           >
                             ✏️
@@ -942,6 +1031,31 @@ export default function PillarAssessment({ onDataChange }) {
           onClose={() => setGarsReportOpen(false)}
           assessment={selectedGarsAssessment}
           onEdit={(item) => openEditGarsAssessment(item)}
+        />
+      )}
+
+      {/* MODAL: SRS-2 SPECIALIZED ASSESSMENT WORKSTATION */}
+      {srsModalOpen && (
+        <SRS2AssessmentModal
+          isOpen={srsModalOpen}
+          onClose={() => setSrsModalOpen(false)}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={srsEditData}
+        />
+      )}
+
+      {/* MODAL: SRS-2 OFFICIAL DIAGNOSTIC REPORT */}
+      {srsReportOpen && selectedSrsAssessment && (
+        <SRS2ReportModal
+          isOpen={srsReportOpen}
+          onClose={() => setSrsReportOpen(false)}
+          assessment={selectedSrsAssessment}
+          onEdit={(item) => openEditSrsAssessment(item)}
         />
       )}
 
