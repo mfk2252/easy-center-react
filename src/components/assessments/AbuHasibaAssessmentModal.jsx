@@ -226,10 +226,10 @@ export default function AbuHasibaAssessmentModal({
 
   return (
     <div className="mbg" style={{ zIndex: 1100 }}>
-      <div className="mb" style={{ maxWidth: '1000px', width: '100%', padding: 0, overflow: 'hidden', borderRadius: 16 }}>
+      <div className="mb" style={{ maxWidth: 'min(1000px, calc(100vw - 20px))', width: '100%', height: '90vh', maxHeight: 'calc(100dvh - 20px)', padding: 0, overflow: 'hidden', borderRadius: 16, display: 'flex', flexDirection: 'column' }}>
         
         {/* Modal Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--g0)', padding: '14px 20px', borderBottom: '1px solid var(--border-color)', gap: 12 }}>
+        <div className="fhd modal-header-custom" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--g0)', padding: '14px 20px', borderBottom: '1px solid var(--border-color)', gap: 12, flexShrink: 0 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#0369a1', lineHeight: 1.3, wordBreak: 'break-word' }}>
               🧠 تقييم مقياس د. أحمد أبو حسيبة للغة المعرب (PLS)
@@ -243,7 +243,7 @@ export default function AbuHasibaAssessmentModal({
 
         {/* Clinical Notice Page before assessment */}
         {!acknowledged ? (
-          <div style={{ padding: '30px 40px', background: '#fff', direction: 'rtl', textAlign: 'right' }}>
+          <div style={{ padding: '30px 40px', background: '#fff', direction: 'rtl', textAlign: 'right', overflowY: 'auto', flex: 1 }}>
             <div style={{ background: '#f0f9ff', borderLeft: '5px solid #0384c7', borderRadius: 12, padding: 24, marginBottom: 28 }}>
               <h3 style={{ margin: '0 0 12px 0', color: '#0369a1', fontSize: '1.15rem', fontWeight: 900 }}>⚠️ تنبيه وإرشاد إكلينيكي مهم للأخصائي (Clinical Disclaimer)</h3>
               <p style={{ margin: 0, fontSize: '0.96rem', lineHeight: 1.7, color: '#1e293b', fontWeight: 700 }}>
@@ -266,7 +266,7 @@ export default function AbuHasibaAssessmentModal({
             </div>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', height: '80vh', background: 'var(--bg)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, background: 'var(--bg)', overflow: 'hidden' }}>
             
             {/* Top Student Selection Block */}
             <div style={{ padding: '14px 20px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, flexShrink: 0 }}>
@@ -280,7 +280,7 @@ export default function AbuHasibaAssessmentModal({
                   showExtra={false}
                 />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: 10 }}>
                 <div>
                   <span style={{ display: 'block', fontSize: '0.74rem', color: 'var(--text-sub)' }}>تاريخ الميلاد:</span>
                   <input

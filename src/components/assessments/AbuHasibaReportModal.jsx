@@ -60,10 +60,10 @@ export default function AbuHasibaReportModal({
 
   return (
     <div className="mbg" style={{ zIndex: 1200 }}>
-      <div className="mb" style={{ maxWidth: '950px', width: '100%', padding: 0, overflow: 'hidden', borderRadius: 16 }}>
+      <div className="mb" style={{ maxWidth: 'min(950px, calc(100vw - 20px))', width: '100%', padding: 0, overflow: 'hidden', borderRadius: 16 }}>
         
         {/* Header Toolbar */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--g0)', padding: '12px 20px', borderBottom: '1px solid var(--border-color)' }}>
+        <div className="fhd modal-header-custom" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--g0)', padding: '12px 20px', borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap', gap: 10 }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0369a1' }}>📄 التقرير السيكومتري الرسمي ومصفوفة قياس أبو حسيبة</h3>
             <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>{assessment.measureName} · {assessment.date}</span>
