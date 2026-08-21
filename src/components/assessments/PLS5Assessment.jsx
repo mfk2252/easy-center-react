@@ -334,45 +334,52 @@ export default function PLS5Assessment({
 
   return (
     <div className="mbg" style={{ zIndex: 1100 }}>
-      <div className="mb" style={{ maxWidth: '1080px', width: '100%', padding: 0, overflow: 'hidden', borderRadius: 16, height: '90vh', display: 'flex', flexDirection: 'column' }}>
+      <div className="mb" style={{ maxWidth: 'min(1100px, calc(100vw - 20px))', width: '100%', height: '92vh', maxHeight: 'calc(100dvh - 20px)', padding: 0, overflow: 'hidden', borderRadius: 16, display: 'flex', flexDirection: 'column' }}>
         
         {/* Modal Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--g0)', padding: '14px 20px', borderBottom: '1px solid var(--border-color)', shrink: 0 }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#0369a1', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="fhd modal-header-custom" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--g0)', padding: '10px 18px', borderBottom: '1px solid var(--border-color)', flexShrink: 0, gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#0369a1', display: 'flex', alignItems: 'center', gap: 8 }}>
               🗣️ مقياس لغة الأطفال - الإصدار الخامس (PLS-5)
             </h2>
-            <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>
-              منصة التطبيق والتحليل السيكومتري لمهارات اللغة الاستقبالية (Auditory Comprehension) والتعبيرية (Expressive Communication)
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>
+              تقييم سيكومتري مقنن للغة الاستقبالية (Auditory Comprehension) والتعبيرية (Expressive Communication)
             </span>
           </div>
-          <button type="button" className="btn btn-xs btn-p" onClick={onClose} style={{ fontWeight: 800 }}>✖ إغلاق</button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+            {acknowledged && form.stuId && (
+              <button type="button" className="btn btn-xs" onClick={handleSave} style={{ background: '#0284c7', color: '#fff', fontWeight: 800, padding: '6px 14px' }}>
+                💾 حفظ التقييم
+              </button>
+            )}
+            <button type="button" className="btn btn-xs btn-p" onClick={onClose} style={{ fontWeight: 800 }}>✖ إغلاق</button>
+          </div>
         </div>
 
         {/* Clinical Notice Gate before starting */}
         {!acknowledged ? (
-          <div style={{ padding: '30px 40px', background: '#fff', direction: 'rtl', textAlign: 'right', overflowY: 'auto', flex: 1 }}>
-            <div style={{ background: '#f0f9ff', borderLeft: '5px solid #0369a1', borderRadius: 12, padding: 24, marginBottom: 28 }}>
-              <h3 style={{ margin: '0 0 12px 0', color: '#0369a1', fontSize: '1.1rem', fontWeight: 900 }}>⚠️ إقرار مهني وتوجيه إكلينيكي إلزامي (Clinical Agreement)</h3>
-              <p style={{ margin: 0, fontSize: '0.94rem', lineHeight: 1.7, color: '#1e293b', fontWeight: 700 }}>
+          <div style={{ padding: '24px 32px', background: '#fff', direction: 'rtl', textAlign: 'right', overflowY: 'auto', flex: 1 }}>
+            <div style={{ background: '#f0f9ff', borderLeft: '5px solid #0369a1', borderRadius: 12, padding: 20, marginBottom: 20 }}>
+              <h3 style={{ margin: '0 0 10px 0', color: '#0369a1', fontSize: '1.08rem', fontWeight: 900 }}>⚠️ إقرار مهني وتوجيه إكلينيكي إلزامي (Clinical Agreement)</h3>
+              <p style={{ margin: 0, fontSize: '0.92rem', lineHeight: 1.6, color: '#1e293b', fontWeight: 700 }}>
                 "يرجى العلم بأن هذه الواجهة الرقمية هي أداة مساعدة واسترشادية لتسجيل الإجابات وحساب الدرجات المعيارية والرتب المئينية بدقة تلقائية. يتطلب تطبيق مقياس PLS-5 المعرب استخدام الحقيبة السيكومترية والكتيب المصور والقطع الحسية المخصصة للاختبار والالتزام التام بتعليمات دليل المطبق لضمان صحة مخرجات التشخيص."
               </p>
             </div>
             
-            <div style={{ marginBottom: 24 }}>
-              <h4 style={{ color: '#0f766e', fontSize: '0.96rem', fontWeight: 800, marginBottom: 12 }}>📋 أركان الفحص والتقييم الأساسية:</h4>
-              <ul style={{ paddingRight: 20, margin: 0, fontSize: '0.88rem', color: 'var(--text-sub)', lineHeight: 1.8 }}>
+            <div style={{ marginBottom: 20 }}>
+              <h4 style={{ color: '#0f766e', fontSize: '0.94rem', fontWeight: 800, marginBottom: 10 }}>📋 أركان الفحص والتقييم الأساسية:</h4>
+              <ul style={{ paddingRight: 20, margin: 0, fontSize: '0.86rem', color: 'var(--text-sub)', lineHeight: 1.7 }}>
                 <li style={{ marginBottom: 6 }}><strong>قاعدة الخط القاعدي (Basal Rule):</strong> تأسيس الخط القاعدي عند نجاح الطفل في <strong>3 بنود متتالية صحيحة (1)</strong>. كل ما يسبق الخط القاعدي يُمنح له الدرجة الكاملة مجاناً.</li>
                 <li style={{ marginBottom: 6 }}><strong>حد التوقف (Ceiling Rule):</strong> التوقف عن الفحص فور إخفاق الطفل في <strong>6 بنود متتالية (0)</strong>، وتُعتبر جميع البنود اللاحقة خاطئة.</li>
                 <li style={{ marginBottom: 6 }}><strong>الربط الإجرائي مع IEP:</strong> كافة البنود المخفقة في سن الطفل الحالي أو أقل تُدرج آلياً كأهداف سلوكية قابلة للمشاركة والترحيل الفوري في خطة الطفل التربوية.</li>
               </ul>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
               <button
                 type="button"
                 className="btn btn-lg"
-                style={{ background: '#0369a1', color: '#fff', padding: '12px 36px', fontSize: '0.94rem', fontWeight: 800, borderRadius: 8 }}
+                style={{ background: '#0369a1', color: '#fff', padding: '10px 32px', fontSize: '0.92rem', fontWeight: 800, borderRadius: 8 }}
                 onClick={() => {
                   setAcknowledged(true);
                   setForm(prev => ({ ...prev, acknowledgedNotice: true }));
@@ -383,12 +390,11 @@ export default function PLS5Assessment({
             </div>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, background: 'var(--bg)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, background: 'var(--bg)', overflow: 'hidden' }}>
             
-            {/* Top Student Selection Block */}
-            <div style={{ padding: '12px 20px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: 16, shrink: 0 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>اختر الطالب المراد تقييمه:</label>
+            {/* Compact Student Selection & Info Strip */}
+            <div style={{ padding: '8px 16px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', flexShrink: 0 }}>
+              <div style={{ flex: '1 1 220px', minWidth: 200 }}>
                 <StudentPicker
                   form={form}
                   setForm={setForm}
@@ -397,9 +403,10 @@ export default function PLS5Assessment({
                   showExtra={false}
                 />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, alignItems: 'center' }}>
-                <div style={{ background: 'var(--g1)', padding: '6px 10px', borderRadius: 8, textAlign: 'center' }}>
-                  <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-sub)' }}>تاريخ الميلاد:</span>
+
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', fontSize: '0.78rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#fff', padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border-color)' }}>
+                  <span style={{ color: 'var(--text-sub)' }}>الميلاد:</span>
                   <input
                     type="date"
                     value={form.dob || ''}
@@ -411,54 +418,47 @@ export default function PLS5Assessment({
                         age: dobVal ? calcAge(dobVal) : '',
                       }));
                     }}
-                    style={{ fontSize: '0.72rem', padding: '2px 4px', width: '100%', border: '1px solid var(--border-color)', borderRadius: 4, background: '#fff', textAlign: 'center' }}
+                    style={{ fontSize: '0.74rem', padding: '2px 4px', border: 'none', background: 'transparent', textAlign: 'center' }}
                   />
                 </div>
-                <div style={{ background: 'var(--g1)', padding: '6px 10px', borderRadius: 8, textAlign: 'center' }}>
-                  <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-sub)' }}>العمر الزمني:</span>
-                  <strong style={{ fontSize: '0.84rem' }}>{form.age || '—'}</strong>
+
+                <div style={{ background: '#fff', padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border-color)' }}>
+                  <span style={{ color: 'var(--text-sub)' }}>العمر: </span>
+                  <strong style={{ color: 'var(--text)' }}>{form.age || '—'}</strong>
                 </div>
-                <div style={{ background: 'var(--g1)', padding: '6px 10px', borderRadius: 8, textAlign: 'center' }}>
-                  <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-sub)' }}>نطاق السن:</span>
-                  <strong style={{ fontSize: '0.84rem', color: '#0284c7' }}>{startingPoints.ageLabel}</strong>
-                </div>
-                <div style={{ background: '#f0f9ff', padding: '6px 10px', borderRadius: 8, textAlign: 'center' }}>
-                  <span style={{ display: 'block', fontSize: '0.7rem', color: '#0369a1' }}>بداية الاستقبالي:</span>
-                  <strong style={{ fontSize: '0.84rem', color: '#0369a1' }}>بند {startingPoints.receptiveStart}</strong>
-                </div>
-                <div style={{ background: '#f0fdfa', padding: '6px 10px', borderRadius: 8, textAlign: 'center' }}>
-                  <span style={{ display: 'block', fontSize: '0.7rem', color: '#0f766e' }}>بداية التعبيري:</span>
-                  <strong style={{ fontSize: '0.84rem', color: '#0f766e' }}>بند {startingPoints.expressiveStart}</strong>
+
+                <div style={{ background: '#e0f2fe', padding: '4px 10px', borderRadius: 6, color: '#0369a1', fontWeight: 700 }}>
+                  بداية الفحص المقترحة: <span style={{ fontWeight: 800 }}>استقبالي ({startingPoints.receptiveStart}) · تعبيري ({startingPoints.expressiveStart})</span>
                 </div>
               </div>
             </div>
 
             {/* Live Metrics Bar */}
             {form.stuId && (
-              <div style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)', padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', shrink: 0, gap: 12, flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+              <div style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)', padding: '6px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, gap: 10, flexWrap: 'wrap', fontSize: '0.78rem' }}>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
                   <div>
-                    <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>الخام الكلي: </span>
-                    <strong style={{ fontSize: '0.88rem', color: '#0f766e' }}>{scoring.totalRawScore} / {scoring.maxTotalScore}</strong>
+                    <span style={{ color: 'var(--text-sub)' }}>الخام: </span>
+                    <strong style={{ color: '#0f766e' }}>{scoring.totalRawScore} / {scoring.maxTotalScore}</strong>
                   </div>
-                  <div style={{ width: 1, background: '#cbd5e1', height: 16 }} />
+                  <span style={{ color: '#cbd5e1' }}>|</span>
                   <div>
-                    <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>العمر اللغوي: </span>
-                    <strong style={{ fontSize: '0.88rem', color: '#0284c7' }}>{Math.floor(scoring.totalLAEMonths / 12)}س و {scoring.totalLAEMonths % 12}ش</strong>
+                    <span style={{ color: 'var(--text-sub)' }}>العمر اللغوي: </span>
+                    <strong style={{ color: '#0284c7' }}>{Math.floor(scoring.totalLAEMonths / 12)}س و {scoring.totalLAEMonths % 12}ش</strong>
                   </div>
-                  <div style={{ width: 1, background: '#cbd5e1', height: 16 }} />
+                  <span style={{ color: '#cbd5e1' }}>|</span>
                   <div>
-                    <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>التأخر اللغوي: </span>
-                    <strong style={{ fontSize: '0.88rem', color: '#b91c1c' }}>{Math.floor(scoring.totalDelayGapMonths / 12)}س و {scoring.totalDelayGapMonths % 12}ش</strong>
+                    <span style={{ color: 'var(--text-sub)' }}>التأخر: </span>
+                    <strong style={{ color: '#b91c1c' }}>{Math.floor(scoring.totalDelayGapMonths / 12)}س و {scoring.totalDelayGapMonths % 12}ش</strong>
                   </div>
-                  <div style={{ width: 1, background: '#cbd5e1', height: 16 }} />
+                  <span style={{ color: '#cbd5e1' }}>|</span>
                   <div>
-                    <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>الدرجة المعيارية: </span>
-                    <strong style={{ fontSize: '0.88rem', color: '#16a34a' }}>{scoring.totalSS} (مئيني: {scoring.totalPR}%)</strong>
+                    <span style={{ color: 'var(--text-sub)' }}>المعيارية: </span>
+                    <strong style={{ color: '#16a34a' }}>{scoring.totalSS} (%{scoring.totalPR})</strong>
                   </div>
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.72rem', padding: '3px 10px', borderRadius: 12, background: scoring.severityColor, color: '#fff', fontWeight: 800 }}>
+                  <span style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: 10, background: scoring.severityColor, color: '#fff', fontWeight: 800 }}>
                     {scoring.clinicalClassification.split('(')[0]}
                   </span>
                 </div>
@@ -466,24 +466,24 @@ export default function PLS5Assessment({
             )}
 
             {/* Tabs Bar */}
-            <div style={{ display: 'flex', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', shrink: 0 }}>
+            <div style={{ display: 'flex', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', flexShrink: 0 }}>
               <button
                 type="button"
-                style={{ flex: 1, padding: '10px 16px', border: 'none', background: activeTab === 'receptive' ? '#0369a1' : 'transparent', color: activeTab === 'receptive' ? '#fff' : 'var(--text)', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.84rem' }}
+                style={{ flex: 1, padding: '9px 12px', border: 'none', background: activeTab === 'receptive' ? '#0369a1' : 'transparent', color: activeTab === 'receptive' ? '#fff' : 'var(--text)', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.85rem' }}
                 onClick={() => setActiveTab('receptive')}
               >
                 📥 اللغة الاستقبالية (AC - 40 بنداً)
               </button>
               <button
                 type="button"
-                style={{ flex: 1, padding: '10px 16px', border: 'none', background: activeTab === 'expressive' ? '#0f766e' : 'transparent', color: activeTab === 'expressive' ? '#fff' : 'var(--text)', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.84rem' }}
+                style={{ flex: 1, padding: '9px 12px', border: 'none', background: activeTab === 'expressive' ? '#0f766e' : 'transparent', color: activeTab === 'expressive' ? '#fff' : 'var(--text)', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.85rem' }}
                 onClick={() => setActiveTab('expressive')}
               >
                 📤 اللغة التعبيرية (EC - 40 بنداً)
               </button>
               <button
                 type="button"
-                style={{ flex: 1, padding: '10px 16px', border: 'none', background: activeTab === 'report' ? '#334155' : 'transparent', color: activeTab === 'report' ? '#fff' : 'var(--text)', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s', borderLeft: '1px solid var(--border-color)', fontSize: '0.84rem' }}
+                style={{ flex: 1, padding: '9px 12px', border: 'none', background: activeTab === 'report' ? '#334155' : 'transparent', color: activeTab === 'report' ? '#fff' : 'var(--text)', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s', borderLeft: '1px solid var(--border-color)', fontSize: '0.85rem' }}
                 onClick={() => {
                   if (!form.stuId) {
                     toast('⚠️ الرجاء اختيار الطالب لعرض التقرير أولاً', 'warn');
@@ -492,12 +492,12 @@ export default function PLS5Assessment({
                   setActiveTab('report');
                 }}
               >
-                📊 التقرير النهائي والخطة العلاجية (IEP)
+                📊 التقرير النهائي والخطة (IEP)
               </button>
             </div>
 
-            {/* Scrollable Content Container */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', background: '#fff' }}>
+            {/* Scrollable Content Container (Dedicated Question Focus) */}
+            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px 20px', background: '#f8fafc' }}>
               
               {!form.stuId ? (
                 <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-sub)' }}>
@@ -506,14 +506,14 @@ export default function PLS5Assessment({
                   <p style={{ fontSize: '0.82rem', marginTop: 6 }}>سيقوم النظام تلقائياً بحساب السن الزمني بالأشهر واقتراح نقطة البداية المناسبة للطفل.</p>
                 </div>
               ) : activeTab === 'receptive' || activeTab === 'expressive' ? (
-                <div>
+                <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
                   
                   {/* Basal & Ceiling Quick Action Panel */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                    <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: 12, borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, marginBottom: 14 }}>
+                    <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '8px 14px', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
-                        <span style={{ fontSize: '0.72rem', color: '#166534', display: 'block' }}>مستوى القاعدة الحالي (Basal):</span>
-                        <strong style={{ fontSize: '0.8rem', color: '#14532d' }}>
+                        <span style={{ fontSize: '0.72rem', color: '#166534', display: 'block' }}>مستوى القاعدة (Basal):</span>
+                        <strong style={{ fontSize: '0.82rem', color: '#14532d' }}>
                           {activeTab === 'receptive'
                             ? (scoring.receptiveBasalIndex !== -1 ? `مؤسس عند البند ${scoring.receptiveBasalIndex + 1}` : 'غير مؤسس بعد ⚠️')
                             : (scoring.expressiveBasalIndex !== -1 ? `مؤسس عند البند ${scoring.expressiveBasalIndex + 1}` : 'غير مؤسس بعد ⚠️')
@@ -530,10 +530,10 @@ export default function PLS5Assessment({
                       </button>
                     </div>
 
-                    <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: 12, borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '8px 14px', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
-                        <span style={{ fontSize: '0.72rem', color: '#991b1b', display: 'block' }}>سقف التوقف الحالي (Ceiling):</span>
-                        <strong style={{ fontSize: '0.8rem', color: '#7f1d1d' }}>
+                        <span style={{ fontSize: '0.72rem', color: '#991b1b', display: 'block' }}>سقف التوقف (Ceiling):</span>
+                        <strong style={{ fontSize: '0.82rem', color: '#7f1d1d' }}>
                           {activeTab === 'receptive'
                             ? (scoring.receptiveCeilingIndex !== -1 ? `متحقق عند البند ${scoring.receptiveCeilingIndex + 6}` : 'غير متحقق بعد')
                             : (scoring.expressiveCeilingIndex !== -1 ? `متحقق عند البند ${scoring.expressiveCeilingIndex + 6}` : 'غير متحقق بعد')
@@ -551,8 +551,8 @@ export default function PLS5Assessment({
                     </div>
                   </div>
 
-                  {/* Checklist Items list */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {/* Checklist Items list - Spacious, Clean & Responsive */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {(activeTab === 'receptive' ? PLS5_RECEPTIVE_ITEMS : PLS5_EXPRESSIVE_ITEMS).map((item, idx) => {
                       const key = activeTab === 'receptive' ? `r_${item.id}` : `e_${item.id}`;
                       const currentScore = activeTab === 'receptive'
@@ -576,44 +576,52 @@ export default function PLS5Assessment({
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            padding: '10px 14px',
-                            borderRadius: 10,
-                            border: isRecommendedStart ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
+                            padding: '12px 18px',
+                            borderRadius: 12,
+                            border: isRecommendedStart ? '2px solid #0284c7' : '1px solid #cbd5e1',
                             background: isAssumedCorrect ? '#f0fdf4' : isAssumedFailed ? '#fef2f2' : isRecommendedStart ? '#f0f9ff' : '#fff',
-                            transition: 'all 0.15s'
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                            transition: 'all 0.15s',
+                            gap: 12,
+                            flexWrap: 'wrap'
                           }}
                         >
-                          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flex: 1, textAlign: 'right' }}>
-                            <span style={{ background: '#475569', color: '#fff', fontWeight: 800, borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', shrink: 0 }}>
-                              {item.id}
+                          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flex: '1 1 300px', textAlign: 'right' }}>
+                            <span style={{ background: activeTab === 'receptive' ? '#0369a1' : '#0f766e', color: '#fff', fontWeight: 900, borderRadius: 8, padding: '4px 10px', fontSize: '0.85rem', flexShrink: 0 }}>
+                              #{item.id}
                             </span>
-                            <div>
-                              <strong style={{ display: 'block', fontSize: '0.86rem', color: '#1e293b' }}>{item.text}</strong>
-                              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>
-                                السن: {item.ageGroup} · المجال: <strong style={{ color: '#475569' }}>{item.domain}</strong>
-                                {isRecommendedStart && <strong style={{ color: '#0284c7', marginRight: 8 }}>[البداية المقترحة لسنّه]</strong>}
-                                {isAssumedCorrect && <strong style={{ color: '#16a34a', marginRight: 8 }}>[تلقائي - تحت القاعدة]</strong>}
-                                {isAssumedFailed && <strong style={{ color: '#ef4444', marginRight: 8 }}>[تلقائي - فوق السقف]</strong>}
-                              </span>
+                            <div style={{ flex: 1 }}>
+                              <strong style={{ display: 'block', fontSize: '0.96rem', color: '#0f172a', lineHeight: 1.45, fontWeight: 800 }}>{item.text}</strong>
+                              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4, flexWrap: 'wrap', fontSize: '0.74rem' }}>
+                                <span style={{ background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>
+                                  السن: {item.ageGroup}
+                                </span>
+                                <span style={{ background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>
+                                  المجال: {item.domain}
+                                </span>
+                                {isRecommendedStart && <span style={{ color: '#0284c7', fontWeight: 800 }}>[البداية المقترحة لسنّه]</span>}
+                                {isAssumedCorrect && <span style={{ color: '#16a34a', fontWeight: 800 }}>[تلقائي - تحت القاعدة]</span>}
+                                {isAssumedFailed && <span style={{ color: '#ef4444', fontWeight: 800 }}>[تلقائي - فوق السقف]</span>}
+                              </div>
                             </div>
                           </div>
 
                           {/* Score Controller Buttons */}
-                          <div style={{ display: 'flex', gap: 4, shrink: 0 }}>
+                          <div style={{ display: 'flex', gap: 6, flexShrink: 0, width: 'auto' }}>
                             <button
                               type="button"
                               onClick={() => handleItemScoreChange(activeTab, item.id, 1)}
                               style={{
-                                width: 56,
-                                padding: '6px 0',
-                                borderRadius: 6,
-                                border: '1px solid #cbd5e1',
-                                fontSize: '0.74rem',
+                                padding: '8px 16px',
+                                borderRadius: 8,
+                                border: '1.5px solid ' + (currentScore === 1 ? '#16a34a' : '#cbd5e1'),
+                                fontSize: '0.82rem',
                                 fontWeight: 800,
                                 cursor: 'pointer',
                                 background: currentScore === 1 ? '#16a34a' : '#fff',
-                                color: currentScore === 1 ? '#fff' : '#475569',
-                                transition: 'all 0.1s'
+                                color: currentScore === 1 ? '#fff' : '#334155',
+                                transition: 'all 0.1s',
+                                boxShadow: currentScore === 1 ? '0 2px 4px rgba(22,163,74,0.2)' : 'none'
                               }}
                             >
                               متقن (1)
@@ -622,16 +630,16 @@ export default function PLS5Assessment({
                               type="button"
                               onClick={() => handleItemScoreChange(activeTab, item.id, 0)}
                               style={{
-                                width: 56,
-                                padding: '6px 0',
-                                borderRadius: 6,
-                                border: '1px solid #cbd5e1',
-                                fontSize: '0.74rem',
+                                padding: '8px 16px',
+                                borderRadius: 8,
+                                border: '1.5px solid ' + (currentScore === 0 ? '#ef4444' : '#cbd5e1'),
+                                fontSize: '0.82rem',
                                 fontWeight: 800,
                                 cursor: 'pointer',
                                 background: currentScore === 0 ? '#ef4444' : '#fff',
-                                color: currentScore === 0 ? '#fff' : '#475569',
-                                transition: 'all 0.1s'
+                                color: currentScore === 0 ? '#fff' : '#334155',
+                                transition: 'all 0.1s',
+                                boxShadow: currentScore === 0 ? '0 2px 4px rgba(239,68,68,0.2)' : 'none'
                               }}
                             >
                               مخفق (0)
@@ -640,15 +648,14 @@ export default function PLS5Assessment({
                               type="button"
                               onClick={() => handleItemScoreChange(activeTab, item.id, undefined)}
                               style={{
-                                width: 34,
-                                padding: '6px 0',
-                                borderRadius: 6,
+                                padding: '8px 10px',
+                                borderRadius: 8,
                                 border: '1px solid #cbd5e1',
-                                fontSize: '0.74rem',
+                                fontSize: '0.82rem',
                                 fontWeight: 800,
                                 cursor: 'pointer',
-                                background: currentScore === undefined ? '#f1f5f9' : '#fff',
-                                color: '#94a3b8',
+                                background: currentScore === undefined ? '#e2e8f0' : '#fff',
+                                color: '#64748b',
                                 transition: 'all 0.1s'
                               }}
                               title="مسح الإجابة"

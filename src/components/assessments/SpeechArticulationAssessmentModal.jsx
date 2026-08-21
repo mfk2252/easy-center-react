@@ -328,24 +328,24 @@ ${psychometrics.clinicalImpression}
   }
 
   return (
-    <div className="mbg">
-      <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '96vh', display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '1200px' }}>
+    <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: 'min(94vh, calc(100dvh - 20px))', display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '1200px' }}>
         
         {/* Modal Main Banner Header */}
-        <div className="fhd" style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #0e7490 0%, #155e75 100%)', color: '#fff' }}>
-          <div>
-            <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="fhd modal-header-custom" style={{ padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #0e7490 0%, #155e75 100%)', color: '#fff', flexShrink: 0, gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 style={{ fontSize: '1.12rem', fontWeight: 800, margin: 0, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
               🗣️ وحدة فحص وتقييم النطق واللغة والبلع وعضلات الفم الشاملة
             </h2>
-            <p style={{ fontSize: '0.8rem', opacity: 0.9, margin: '4px 0 0 0', fontWeight: 400 }}>
-              بروتوكولات سريرية متطابقة للتشخيص المتكامل: حركة الفم، البلع، مخارج الحروف، الطلاقة، الصوت، والرنين والتواصل الاجتماعي للـ IEP
-            </p>
+            <span style={{ fontSize: '0.74rem', opacity: 0.9, display: 'block', marginTop: 2 }}>
+              حركة الفم، البلع، مخارج الحروف، الطلاقة، الصوت، والرنين والتواصل الاجتماعي للـ IEP
+            </span>
           </div>
-          <button type="button" className="btn-close-modal" onClick={onClose} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', padding: '6px 14px', borderRadius: 8, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}>إغلاق ✖</button>
+          <button type="button" className="btn btn-xs" onClick={onClose} style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', fontWeight: 700 }}>✖ إغلاق</button>
         </div>
 
         {/* Real-time Multi-Domain Stat Strip */}
-        <div style={{ background: 'var(--g0)', padding: '12px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+        <div className="modal-subbar" style={{ background: 'var(--g0)', padding: '10px 18px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', flexShrink: 0 }}>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
             <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-color)', textAlign: 'center' }}>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)', display: 'block' }}>المعدل الكلي للمهارات:</span>
