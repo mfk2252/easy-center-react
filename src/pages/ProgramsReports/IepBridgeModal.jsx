@@ -125,28 +125,29 @@ export default function IepBridgeModal({
   };
 
   return (
-    <div className="mbg" style={{ zIndex: 1100 }}>
-      <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="mbg" style={{ zIndex: 1100 }} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: 'min(94vh, calc(100dvh - 20px))', display: 'flex', flexDirection: 'column' }}>
         
         {/* Header */}
-        <div className="modal-header-custom fhd" style={{ padding: '14px 20px', background: 'linear-gradient(135deg, #1e40af, #3b82f6)', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, flexGrow: 0, width: '100%' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: '1.6rem' }}>🎓</span>
-            <div>
-              <h2 style={{ margin: 0, color: '#fff', fontSize: '1.18rem', fontWeight: 800 }}>
+        <div className="modal-header-custom fhd" style={{ padding: '12px 18px', background: 'linear-gradient(135deg, #1e40af, #3b82f6)', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: '1.5rem' }}>🎓</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h2 style={{ margin: 0, color: '#fff', fontSize: '1.12rem', fontWeight: 800 }}>
                 منظومة الربط الأكاديمي والتربوي (Assessment ➔ IEP Bridge)
               </h2>
-              <div style={{ fontSize: '.78rem', opacity: 0.9, marginTop: 2 }}>
-                توليد واشتقاق أهداف الخطة الفردية للطالب: <strong>{assessmentData?.studentName}</strong> بناءً على نقاط الاحتياج في ({assessmentData?.measureName})
+              <div style={{ fontSize: '.74rem', opacity: 0.9, marginTop: 2 }}>
+                اشتقاق أهداف الخطة للطالب: <strong>{assessmentData?.studentName}</strong> من ({assessmentData?.measureName})
               </div>
             </div>
           </div>
           <button
             type="button"
-            style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.4rem', cursor: 'pointer', fontWeight: 'bold' }}
+            className="btn btn-xs"
+            style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', fontWeight: 700 }}
             onClick={onClose}
           >
-            ✕
+            ✕ إغلاق
           </button>
         </div>
 

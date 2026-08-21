@@ -142,13 +142,16 @@ export default function BulkImporter({ onClose, onDone }) {
 
   return (
     <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '95vh', display: 'flex', flexDirection: 'column' }}>
-        <div className="fhd" style={{ padding: '14px 20px' }}>
-          <h2>📥 استيراد أهداف ضخمة لبنك المركز</h2>
-          <p style={{ fontSize: '.8rem', opacity: .85, marginTop: 4 }}>رفع JSON/CSV أو لصق نصوص من Word مباشرة — مع مراجعة قبل الحفظ</p>
+      <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: 'min(94vh, calc(100dvh - 20px))', display: 'flex', flexDirection: 'column' }}>
+        <div className="fhd modal-header-custom" style={{ padding: '12px 18px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 style={{ margin: 0, fontSize: '1.12rem', fontWeight: 800, color: 'var(--text-main)' }}>📥 استيراد أهداف ضخمة لبنك المركز</h2>
+            <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>رفع JSON/CSV أو لصق نصوص من Word مباشرة مع مراجعة قبل الحفظ</span>
+          </div>
+          <button type="button" className="btn btn-xs btn-p" onClick={onClose} style={{ fontWeight: 700 }}>✖ إغلاق</button>
         </div>
 
-        <div className="modal-body-scroll" style={{ padding: '16px 20px' }}>
+        <div className="modal-body-scroll" style={{ padding: '16px 18px', flex: 1, overflowY: 'auto' }}>
           <div className="tabs" style={{ marginBottom: 16 }}>
             <button type="button" className={`tab ${activeTab === 'file' ? 'on' : ''}`} onClick={() => { setActiveTab('file'); setPreview([]); }}>📂 رفع ملف (JSON/CSV)</button>
             <button type="button" className={`tab ${activeTab === 'paste' ? 'on' : ''}`} onClick={() => { setActiveTab('paste'); setPreview([]); }}>📋 لصق من Word/PDF</button>

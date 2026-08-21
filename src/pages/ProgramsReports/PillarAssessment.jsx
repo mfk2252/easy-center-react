@@ -1771,12 +1771,16 @@ export default function PillarAssessment({ onDataChange }) {
 
       {/* MODAL: INITIAL ASSESSMENT FORM */}
       {evalModal && (
-        <div className="mbg">
-          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '95vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="fhd" style={{ padding: '14px 20px' }}>
-              <h2>🎯 {evalEditId ? 'تعديل التقييم المبدئي' : 'إضافة تقييم مبدئي شامل جديد'}</h2>
+        <div className="mbg" onClick={e => e.target === e.currentTarget && setEvalModal(false)}>
+          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: 'min(94vh, calc(100dvh - 20px))', display: 'flex', flexDirection: 'column' }}>
+            <div className="fhd modal-header-custom" style={{ padding: '12px 18px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h2 style={{ margin: 0, fontSize: '1.12rem', fontWeight: 800, color: 'var(--text-main)' }}>🎯 {evalEditId ? 'تعديل التقييم المبدئي' : 'إضافة تقييم مبدئي شامل جديد'}</h2>
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>توثيق التاريخ النمائي، الملاحظة المباشرة، والتوصيات التأهيلية</span>
+              </div>
+              <button type="button" className="btn btn-xs btn-p" onClick={() => setEvalModal(false)} style={{ fontWeight: 700 }}>✖ إغلاق</button>
             </div>
-            <div className="modal-body-scroll" style={{ padding: '18px 20px' }}>
+            <div className="modal-body-scroll" style={{ padding: '16px 18px', flex: 1, overflowY: 'auto' }}>
               <div className="fg c2">
                 <StudentPicker form={evalForm} setForm={setEvalForm} students={students} emps={emps} showExtra />
                 <div className="fl">
@@ -1821,13 +1825,17 @@ export default function PillarAssessment({ onDataChange }) {
 
       {/* MODAL: SCALE APPLICATION FORM */}
       {scaleModal && activeScale && (
-        <div className="mbg">
-          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '95vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="fhd" style={{ padding: '14px 20px' }}>
-              <h2>🧪 تطبيق مقياس: {activeScale.name}</h2>
+        <div className="mbg" onClick={e => e.target === e.currentTarget && setScaleModal(false)}>
+          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: 'min(94vh, calc(100dvh - 20px))', display: 'flex', flexDirection: 'column' }}>
+            <div className="fhd modal-header-custom" style={{ padding: '12px 18px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h2 style={{ margin: 0, fontSize: '1.12rem', fontWeight: 800, color: 'var(--text-main)' }}>🧪 تطبيق مقياس: {activeScale.name}</h2>
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>{activeScale.items?.length || 0} بنداً تشخيصياً معتمداً</span>
+              </div>
+              <button type="button" className="btn btn-xs btn-p" onClick={() => setScaleModal(false)} style={{ fontWeight: 700 }}>✖ إغلاق</button>
             </div>
-            <div className="modal-body-scroll" style={{ padding: '18px 20px' }}>
-              <div className="fg c2" style={{ marginBottom: 16 }}>
+            <div className="modal-body-scroll" style={{ padding: '16px 18px', flex: 1, overflowY: 'auto' }}>
+              <div className="fg c2" style={{ marginBottom: 14 }}>
                 <StudentPicker form={scaleForm} setForm={setScaleForm} students={students} emps={emps} showExtra />
                 <div className="fl">
                   <label>تاريخ التطبيق</label>
@@ -1835,9 +1843,8 @@ export default function PillarAssessment({ onDataChange }) {
                 </div>
               </div>
 
-              <div style={{ background: 'var(--g0)', padding: '12px 16px', borderRadius: 10, marginBottom: 16 }}>
-                <h4 style={{ margin: '0 0 4px 0' }}>بنود المقياس ({activeScale.items?.length || 0} بنداً):</h4>
-                <p style={{ fontSize: '.8rem', color: 'var(--text-sub)', margin: 0 }}>حدد تقدير الدرجة لكل بند بناءً على الملاحظة المباشرة وسلوك الطفل</p>
+              <div style={{ background: 'var(--g0)', padding: '10px 14px', borderRadius: 8, marginBottom: 14 }}>
+                <p style={{ fontSize: '.8rem', color: 'var(--text-sub)', margin: 0 }}>حدد تقدير الدرجة لكل بند بناءً على الملاحظة المباشرة وسلوك الطفل:</p>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

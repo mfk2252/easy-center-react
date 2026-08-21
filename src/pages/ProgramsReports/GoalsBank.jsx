@@ -305,13 +305,18 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
   }
 
   return (
-    <div className="mbg">
-      <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
-        <div className="fhd" style={{ padding: '14px 20px' }}>
-          <h2>🎯 اختيار أهداف — {programFilter !== 'all' ? programLabel(programFilter) : 'جميع البرامج'} {domainFilter !== 'all' ? `(${domainLabel(domainFilter)})` : ''}</h2>
-          <p style={{ fontSize: '.8rem', opacity: .85, marginTop: 4 }}>اختر البرنامج والمجال والعمر لتصفية بنود الأهداف بدقة فائقة واستجابة فورية</p>
+    <div className="mbg" onClick={e => e.target === e.currentTarget && (onClose ? onClose() : null)}>
+      <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: 'min(94vh, calc(100dvh - 20px))', display: 'flex', flexDirection: 'column' }}>
+        <div className="fhd modal-header-custom" style={{ padding: '12px 18px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 style={{ margin: 0, fontSize: '1.12rem', fontWeight: 800, color: 'var(--text-main)' }}>🎯 اختيار أهداف — {programFilter !== 'all' ? programLabel(programFilter) : 'جميع البرامج'} {domainFilter !== 'all' ? `(${domainLabel(domainFilter)})` : ''}</h2>
+            <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>تصفية الأهداف حسب البرنامج والمجال والعمر مع دعم التحديد المتعدد</span>
+          </div>
+          {onClose && (
+            <button type="button" className="btn btn-xs btn-p" onClick={onClose} style={{ fontWeight: 700 }}>✖ إغلاق</button>
+          )}
         </div>
-        <div className="modal-body-scroll" style={{ padding: '16px 20px' }}>
+        <div className="modal-body-scroll" style={{ padding: '16px 18px', flex: 1, overflowY: 'auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, marginBottom: 14, background: 'var(--g0)', padding: 12, borderRadius: 10 }}>
             <div>
               <label style={{ fontSize: '.75rem', fontWeight: 700, display: 'block', marginBottom: 4, color: 'var(--text-sub)' }}>البرنامج</label>
@@ -858,13 +863,18 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
   }, [filtered, displayLimit]);
 
   return (
-    <div className="mbg">
-      <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
-        <div className="fhd" style={{ padding: '14px 20px' }}>
-          <h2>🗂️ إدارة بنك الأهداف الخاص بمركزك</h2>
-          <p style={{ fontSize: '.8rem', opacity: .85, marginTop: 4 }}>أضف بنودك، استورد مجموعات، أو استعرض أهداف البرامج القياسية المقننة بأداء سريع</p>
+    <div className="mbg" onClick={e => e.target === e.currentTarget && (onClose ? onClose() : null)}>
+      <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: 'min(94vh, calc(100dvh - 20px))', display: 'flex', flexDirection: 'column' }}>
+        <div className="fhd modal-header-custom" style={{ padding: '12px 18px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 style={{ margin: 0, fontSize: '1.12rem', fontWeight: 800, color: 'var(--text-main)' }}>🗂️ إدارة بنك الأهداف الخاص بمركزك</h2>
+            <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>إضافة بنود مخصصة، استيراد مجموعات، أو استعراض أهداف البرامج القياسية</span>
+          </div>
+          {onClose && (
+            <button type="button" className="btn btn-xs btn-p" onClick={onClose} style={{ fontWeight: 700 }}>✖ إغلاق</button>
+          )}
         </div>
-        <div className="modal-body-scroll" style={{ padding: '16px 20px' }}>
+        <div className="modal-body-scroll" style={{ padding: '16px 18px', flex: 1, overflowY: 'auto' }}>
           <div style={{ padding: 14, background: 'var(--g0)', borderRadius: 10, marginBottom: 16 }}>
             <div style={{ fontSize: '.8rem', fontWeight: 800, marginBottom: 8 }}>{editingId ? '✏️ تحديث بند من البنك' : '➕ إضافة بند جديد للبنك'}</div>
             <div className="fg c3">

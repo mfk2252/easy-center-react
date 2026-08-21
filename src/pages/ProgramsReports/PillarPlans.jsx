@@ -1105,12 +1105,16 @@ export default function PillarPlans({ onDataChange }) {
 
       {/* MODAL: CREATE / EDIT IEP PROGRAM */}
       {progModal && (
-        <div className="mbg">
-          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '95vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="fhd" style={{ padding: '14px 20px' }}>
-              <h2>📋 {progEditId ? 'تعديل الخطة الفردية (IEP)' : 'إنشاء خطة تربوية / تأهيلية فردية (IEP)'}</h2>
+        <div className="mbg" onClick={e => e.target === e.currentTarget && setProgModal(false)}>
+          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: 'min(94vh, calc(100dvh - 20px))', display: 'flex', flexDirection: 'column' }}>
+            <div className="fhd modal-header-custom" style={{ padding: '12px 18px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h2 style={{ margin: 0, fontSize: '1.12rem', fontWeight: 800, color: 'var(--text-main)' }}>📋 {progEditId ? 'تعديل الخطة الفردية (IEP)' : 'إنشاء خطة تربوية / تأهيلية فردية (IEP)'}</h2>
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>تحديد الأهداف السلوكية والوسائل المعينة ومواعيد التقييم</span>
+              </div>
+              <button type="button" className="btn btn-xs btn-p" onClick={() => setProgModal(false)} style={{ fontWeight: 700 }}>✖ إغلاق</button>
             </div>
-            <div className="modal-body-scroll" style={{ padding: '18px 20px' }}>
+            <div className="modal-body-scroll" style={{ padding: '16px 18px', flex: 1, overflowY: 'auto' }}>
               <div className="fg c2">
                 <StudentPicker form={progForm} setForm={setProgForm} students={students} emps={emps} showExtra />
                 <div className="fl full">
@@ -1145,7 +1149,7 @@ export default function PillarPlans({ onDataChange }) {
 
               {/* GOALS SECTION */}
               <div style={{ marginTop: 20, borderTop: '1px solid var(--border-color)', paddingTop: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
                   <div style={{ fontWeight: 800, fontSize: '.96rem' }}>
                     🎯 الأهداف المحددة للخطة ({progForm.goals?.length || 0})
                   </div>
@@ -1220,24 +1224,28 @@ export default function PillarPlans({ onDataChange }) {
 
       {/* MODAL: CREATE / EDIT BIP */}
       {bipModal && (
-        <div className="mbg">
-          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '95vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="fhd" style={{ padding: '14px 20px', background: 'var(--err)', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div className="mbg" onClick={e => e.target === e.currentTarget && setBipModal(false)}>
+          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: 'min(94vh, calc(100dvh - 20px))', display: 'flex', flexDirection: 'column' }}>
+            <div className="fhd modal-header-custom" style={{ padding: '12px 18px', background: 'var(--err)', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
                 <span style={{ fontSize: '1.4rem' }}>📐</span>
-                <h2 style={{ margin: 0, color: '#fff', fontSize: '1.15rem', fontWeight: 800 }}>
-                  {bipEditId ? 'تعديل خطة التدخل السلوكي (BIP)' : 'إنشاء خطة تدخل وتعديل سلوك فردية (BIP)'}
-                </h2>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h2 style={{ margin: 0, color: '#fff', fontSize: '1.12rem', fontWeight: 800 }}>
+                    {bipEditId ? 'تعديل خطة التدخل السلوكي (BIP)' : 'إنشاء خطة تدخل وتعديل سلوك فردية (BIP)'}
+                  </h2>
+                  <span style={{ fontSize: '0.74rem', opacity: 0.9 }}>تحليل السلوك، السلوك البديل، وفنيات التدخل الإجرائية</span>
+                </div>
               </div>
               <button 
                 type="button" 
-                style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.4rem', cursor: 'pointer', fontWeight: 'bold' }}
+                className="btn btn-xs"
+                style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', fontWeight: 700 }}
                 onClick={() => setBipModal(false)}
               >
-                ✕
+                ✕ إغلاق
               </button>
             </div>
-            <div className="modal-body-scroll" style={{ padding: '20px' }}>
+            <div className="modal-body-scroll" style={{ padding: '18px 20px', flex: 1, overflowY: 'auto' }}>
               <div className="fg c2">
                 
                 {/* 1. Student Info Section */}

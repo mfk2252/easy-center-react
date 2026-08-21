@@ -343,9 +343,15 @@ export default function MeasurementCenter({ onBack }) {
 
       {measureModal && (
         <div className="mbg" onClick={e => e.target === e.currentTarget && setMeasureModal(false)}>
-          <div className="mb" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
-            <div className="fhd" style={{ padding: '14px 20px' }}><h2>➕ إضافة مقياس جديد للمركز</h2></div>
-            <div style={{ padding: '18px 20px' }}>
+          <div className="mb" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: 'min(94vh, calc(100dvh - 20px))', display: 'flex', flexDirection: 'column' }}>
+            <div className="fhd modal-header-custom" style={{ padding: '12px 18px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h2 style={{ margin: 0, fontSize: '1.12rem', fontWeight: 800, color: 'var(--text-main)' }}>➕ إضافة مقياس جديد للمركز</h2>
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>تعريف وتخصيص مقياس جديد بفئاته وقيمه</span>
+              </div>
+              <button type="button" className="btn btn-xs btn-p" onClick={() => setMeasureModal(false)} style={{ fontWeight: 700 }}>✖ إغلاق</button>
+            </div>
+            <div className="modal-body-scroll" style={{ padding: '16px 18px', flex: 1, overflowY: 'auto' }}>
               <div className="fg c2">
                 <div className="fl full"><label>اسم المقياس</label><input value={measureForm.name} onChange={e => setMeasureForm(f => ({ ...f, name: e.target.value }))} /></div>
                 <div className="fl"><label>الفئة</label>
@@ -376,9 +382,15 @@ export default function MeasurementCenter({ onBack }) {
 
       {assessmentModal && selectedScale && (
         <div className="mbg" onClick={e => e.target === e.currentTarget && setAssessmentModal(false)}>
-          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
-            <div className="fhd" style={{ padding: '14px 20px' }}><h2>📝 تطبيق {selectedScale.name}</h2></div>
-            <div className="modal-body-scroll" style={{ padding: '18px 20px' }}>
+          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: 'min(94vh, calc(100dvh - 20px))', display: 'flex', flexDirection: 'column' }}>
+            <div className="fhd modal-header-custom" style={{ padding: '12px 18px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h2 style={{ margin: 0, fontSize: '1.12rem', fontWeight: 800, color: 'var(--text-main)' }}>📝 تطبيق {selectedScale.name}</h2>
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>تسجيل استجابات وبنود التقييم للطالب</span>
+              </div>
+              <button type="button" className="btn btn-xs btn-p" onClick={() => setAssessmentModal(false)} style={{ fontWeight: 700 }}>✖ إغلاق</button>
+            </div>
+            <div className="modal-body-scroll" style={{ padding: '16px 18px', flex: 1, overflowY: 'auto' }}>
               <div className="fg c2">
                 <StudentPicker form={assessmentForm} setForm={setAssessmentForm} students={students} emps={[]} showExtra />
                 <div className="fl full"><label>تاريخ التطبيق</label><input type="date" value={assessmentForm.date} onChange={e => setAssessmentForm(f => ({ ...f, date: e.target.value }))} /></div>

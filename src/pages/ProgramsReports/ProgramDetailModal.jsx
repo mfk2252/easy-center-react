@@ -54,49 +54,50 @@ export default function ProgramDetailModal({
   ];
 
   return (
-    <div className="mbg" style={{ zIndex: 1100 }}>
-      <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="mbg" style={{ zIndex: 1100 }} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: 'min(94vh, calc(100dvh - 20px))', display: 'flex', flexDirection: 'column' }}>
         
         {/* Header */}
-        <div style={{ padding: '16px 20px', background: 'linear-gradient(135deg, #1e40af, #3b82f6)', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: '1.8rem' }}>📋</span>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <h2 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: 800 }}>
+        <div className="modal-header-custom fhd" style={{ padding: '14px 20px', background: 'linear-gradient(135deg, #1e40af, #3b82f6)', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: '1.6rem' }}>📋</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h2 style={{ margin: 0, color: '#fff', fontSize: '1.15rem', fontWeight: 800 }}>
                   {currentProg.title}
                 </h2>
                 <span className={`bdg ${currentProg.status === 'completed' ? 'b-gr' : 'b-or'}`} style={{ fontSize: '.7rem' }}>
                   {currentProg.status === 'completed' ? 'خطة مكتملة ✅' : 'خطة نشطة ⏳'}
                 </span>
               </div>
-              <div style={{ fontSize: '.8rem', opacity: 0.9, marginTop: 3 }}>
+              <div style={{ fontSize: '.78rem', opacity: 0.9, marginTop: 3 }}>
                 الطالب: <strong>{currentProg.studentName}</strong> {currentProg.diagnosis && `· (${currentProg.diagnosis})`} · الصف: {currentProg.className || 'غير محدد'}
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <button
               type="button"
-              className="btn btn-sm"
+              className="btn btn-xs"
               style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', fontWeight: 700 }}
               onClick={() => onPrint(currentProg)}
             >
-              🖨️ طباعة رسمية A4
+              🖨️ طباعة
             </button>
             <button
               type="button"
-              style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.5rem', cursor: 'pointer', fontWeight: 'bold' }}
+              className="btn btn-xs"
+              style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', fontWeight: 700 }}
               onClick={onClose}
             >
-              ✕
+              ✕ إغلاق
             </button>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div style={{ display: 'flex', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', padding: '0 20px', gap: 8, overflowX: 'auto' }}>
+        <div className="modal-subbar" style={{ display: 'flex', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', padding: '0 16px', gap: 8, overflowX: 'auto', flexShrink: 0 }}>
           <button
             type="button"
             className={`tab ${activeTab === 'goals' ? 'on' : ''}`}

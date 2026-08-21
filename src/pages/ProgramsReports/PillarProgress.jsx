@@ -262,12 +262,16 @@ export default function PillarProgress({ onDataChange }) {
 
       {/* MODAL: REPORT FORM */}
       {modalOpen && (
-        <div className="mbg">
-          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '95vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="fhd" style={{ padding: '14px 20px' }}>
-              <h2>{currentTypeConfig.icon} {editId ? `تعديل — ${currentTypeConfig.label}` : `إضافة جديد — ${currentTypeConfig.label}`}</h2>
+        <div className="mbg" onClick={e => e.target === e.currentTarget && setModalOpen(false)}>
+          <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: 'min(94vh, calc(100dvh - 20px))', display: 'flex', flexDirection: 'column' }}>
+            <div className="fhd modal-header-custom" style={{ padding: '12px 18px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h2 style={{ margin: 0, fontSize: '1.12rem', fontWeight: 800, color: 'var(--text-main)' }}>{currentTypeConfig.icon} {editId ? `تعديل — ${currentTypeConfig.label}` : `إضافة جديد — ${currentTypeConfig.label}`}</h2>
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>توثيق نسب الإنجاز والتحديات والتوصيات المنزلية</span>
+              </div>
+              <button type="button" className="btn btn-xs btn-p" onClick={() => setModalOpen(false)} style={{ fontWeight: 700 }}>✖ إغلاق</button>
             </div>
-            <div className="modal-body-scroll" style={{ padding: '18px 20px' }}>
+            <div className="modal-body-scroll" style={{ padding: '16px 18px', flex: 1, overflowY: 'auto' }}>
               <div className="fg c2">
                 <StudentPicker form={form} setForm={setForm} students={students} emps={emps} showExtra />
                 <div className="fl">
