@@ -747,12 +747,19 @@ export function calculateMyklebustPsychometrics(scores = {}) {
 
   const deficitDimensions = dimensionsResults.filter(d => d.isDeficit);
   const criticalItems = MYKLEBUST_ITEMS.filter(it => (scores[it.id] || 3) <= 2);
+  const isLD = totalRawScore < 72 || isVerbalDeficit || isNonVerbalDeficit;
+  const learningQuotient = Math.round((totalRawScore / 72) * 100);
+  const completionPercentage = Math.round((answeredCount / 24) * 100);
 
   return {
     totalRawScore,
     maxRawScore: 120,
     totalPercentage,
     overallPercentage: totalPercentage,
+    completionPercentage,
+    learningQuotient,
+    lq: learningQuotient,
+    isLD,
     verbalScore,
     verbalMaxScore: 45,
     verbalPercentage,
@@ -766,7 +773,9 @@ export function calculateMyklebustPsychometrics(scores = {}) {
     totalItems: 24,
     dimensionsResults,
     dimensionScores: dimensionsResults,
+    dimensions: dimensionsResults,
     deficitDimensions,
+    deficitAreas: deficitDimensions,
     criticalItems,
     overallStatus,
     overallKey,
@@ -775,5 +784,7 @@ export function calculateMyklebustPsychometrics(scores = {}) {
     conclusionText,
     diagnosisDescription: conclusionText,
     recommendationSummary: conclusionText,
+    recommendation: conclusionText,
+    overallDescription: conclusionText,
   };
 }

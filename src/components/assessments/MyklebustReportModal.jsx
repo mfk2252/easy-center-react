@@ -260,7 +260,7 @@ export default function MyklebustReportModal({
             🌐 توزيع درجات الأداء عبر أبعاد المقياس الخمسة:
           </h4>
           <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 18, fontSize: '13px', border: '1px solid #e2e8f0' }}>
-            <thead style="background:#f1f5f9;">
+            <thead style={{ background: '#f1f5f9' }}>
               <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
                 <th style={{ padding: '8px 12px', textAlign: 'right' }}>البعد / المجال</th>
                 <th style={{ padding: '8px 12px', textAlign: 'center' }}>المجال التابع</th>
