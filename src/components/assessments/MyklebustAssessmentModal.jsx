@@ -95,29 +95,30 @@ export default function MyklebustAssessmentModal({
   function handleAutoFill(type = 'normal') {
     const newScores = {};
     MYKLEBUST_ITEMS.forEach(it => {
+      const n = it.num || 1;
       if (type === 'normal') {
         // Average to above average (3, 4, 5)
-        newScores[it.id] = (it.id % 3 === 0) ? 5 : ((it.id % 2 === 0) ? 4 : 3);
+        newScores[it.id] = (n % 3 === 0) ? 5 : ((n % 2 === 0) ? 4 : 3);
       } else if (type === 'borderline') {
         // Borderline / at risk (3 or 2)
-        newScores[it.id] = (it.id % 2 === 0) ? 3 : 2;
+        newScores[it.id] = (n % 2 === 0) ? 3 : 2;
       } else if (type === 'verbal_ld') {
         // Verbal deficit (dimensions 1 & 2 low, others normal)
         if (it.dimensionId === 'auditory_comprehension' || it.dimensionId === 'spoken_language') {
-          newScores[it.id] = (it.id % 2 === 0) ? 1 : 2;
+          newScores[it.id] = (n % 2 === 0) ? 1 : 2;
         } else {
-          newScores[it.id] = (it.id % 2 === 0) ? 4 : 3;
+          newScores[it.id] = (n % 2 === 0) ? 4 : 3;
         }
       } else if (type === 'nonverbal_ld') {
         // Non-verbal deficit (dimensions 3, 4, 5 low, verbal normal)
         if (it.dimensionId === 'orientation' || it.dimensionId === 'motor_coordination' || it.dimensionId === 'personal_social') {
-          newScores[it.id] = (it.id % 2 === 0) ? 1 : 2;
+          newScores[it.id] = (n % 2 === 0) ? 1 : 2;
         } else {
           newScores[it.id] = 4;
         }
       } else if (type === 'severe_ld') {
         // Comprehensive LD (scores 1 and 2)
-        newScores[it.id] = (it.id % 3 === 0) ? 1 : 2;
+        newScores[it.id] = (n % 3 === 0) ? 1 : 2;
       }
     });
 
@@ -609,7 +610,7 @@ export default function MyklebustAssessmentModal({
                           borderRadius: 6,
                         }}
                       >
-                        بند {it.id}
+                        بند {it.num || it.id.replace('myk_', '')}
                       </span>
                       <span className="bdg" style={{ background: '#ecfeff', color: '#0e7490', fontSize: '.72rem', fontWeight: 700 }}>
                         {dim?.name?.split(':')[1] || dim?.name}
@@ -642,7 +643,7 @@ export default function MyklebustAssessmentModal({
                       marginTop: 10,
                     }}
                   >
-                    {it.options.map(opt => {
+                    {(it.options || MYKLEBUST_RATING_OPTIONS).map(opt => {
                       const isSelected = currentScore === opt.score;
                       const optMeta = MYKLEBUST_RATING_OPTIONS.find(r => r.score === opt.score) || {};
 

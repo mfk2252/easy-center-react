@@ -316,14 +316,14 @@ export default function MyklebustReportModal({
               <tbody>
                 {MYKLEBUST_ITEMS.map(it => {
                   const itemScore = scores[it.id];
-                  const opt = it.options.find(o => o.score === itemScore);
+                  const opt = it.options?.find(o => o.score === itemScore);
                   const note = assessment.itemNotes?.[it.id];
                   const dim = MYKLEBUST_DIMENSIONS.find(d => d.id === it.dimensionId);
                   const isDeficit = itemScore <= 2;
 
                   return (
                     <tr key={it.id} style={{ borderBottom: '1px solid #e2e8f0', background: isDeficit ? '#fef2f2' : '#ffffff' }}>
-                      <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 800, color: '#64748b' }}>{it.id}</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 800, color: '#64748b' }}>{it.num || it.id.replace('myk_', '')}</td>
                       <td style={{ padding: '6px 8px', fontWeight: 700, color: '#1e293b' }}>{it.title}</td>
                       <td style={{ padding: '6px 8px', textAlign: 'center', fontSize: '11px', color: '#64748b' }}>
                         {dim?.name?.split(':')[1] || dim?.name}
