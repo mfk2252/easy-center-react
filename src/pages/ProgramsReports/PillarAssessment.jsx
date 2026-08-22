@@ -22,7 +22,22 @@ import Ppvt5ReportModal from '../../components/assessments/Ppvt5ReportModal';
 import AbuHasibaAssessmentModal from '../../components/assessments/AbuHasibaAssessmentModal';
 import AbuHasibaReportModal from '../../components/assessments/AbuHasibaReportModal';
 import PLS5Assessment from '../../components/assessments/PLS5Assessment';
+import LDESAssessmentModal from '../../components/assessments/LDESAssessmentModal';
+import LDESReportModal from '../../components/assessments/LDESReportModal';
+import DevLdAssessmentModal from '../../components/assessments/DevLdAssessmentModal';
+import DevLdReportModal from '../../components/assessments/DevLdReportModal';
+import LDDRSAssessmentModal from '../../components/assessments/LDDRSAssessmentModal';
+import LDDRSReportModal from '../../components/assessments/LDDRSReportModal';
+import SartawiAssessmentModal from '../../components/assessments/SartawiAssessmentModal';
+import SartawiReportModal from '../../components/assessments/SartawiReportModal';
+import MyklebustAssessmentModal from '../../components/assessments/MyklebustAssessmentModal';
+import MyklebustReportModal from '../../components/assessments/MyklebustReportModal';
 import { PEP3_ITEMS } from '../../data/pep3Data';
+import { LDES_ITEMS } from '../../data/ldesData';
+import { DEV_LD_ITEMS } from '../../data/devLdData';
+import { LDDRS_ITEMS } from '../../data/lddrsData';
+import { SARTAWI_ITEMS } from '../../data/sartawiData';
+import { MYKLEBUST_ITEMS } from '../../data/myklebustData';
 import IepBridgeModal from './IepBridgeModal';
 import { extractRecommendedGoals } from '../../utils/iepBridge';
 import {
@@ -127,6 +142,36 @@ export default function PillarAssessment({ onDataChange }) {
   // PLS-5 Specific Specialized Modals States
   const [pls5ModalOpen, setPls5ModalOpen] = useState(false);
   const [pls5EditData, setPls5EditData] = useState(null);
+
+  // LDES Specific Specialized Modals States
+  const [ldesModalOpen, setLdesModalOpen] = useState(false);
+  const [ldesEditData, setLdesEditData] = useState(null);
+  const [ldesReportOpen, setLdesReportOpen] = useState(false);
+  const [selectedLdesAssessment, setSelectedLdesAssessment] = useState(null);
+
+  // Developmental LD Checklist (Pre-school) States
+  const [devLdModalOpen, setDevLdModalOpen] = useState(false);
+  const [devLdEditData, setDevLdEditData] = useState(null);
+  const [devLdReportOpen, setDevLdReportOpen] = useState(false);
+  const [selectedDevLdAssessment, setSelectedDevLdAssessment] = useState(null);
+
+  // LDDRS Battery (El-Zayat) States
+  const [lddrsModalOpen, setLddrsModalOpen] = useState(false);
+  const [lddrsEditData, setLddrsEditData] = useState(null);
+  const [lddrsReportOpen, setLddrsReportOpen] = useState(false);
+  const [selectedLddrsAssessment, setSelectedLddrsAssessment] = useState(null);
+
+  // Sartawi Learning Disabilities Scale States
+  const [sartawiModalOpen, setSartawiModalOpen] = useState(false);
+  const [sartawiEditData, setSartawiEditData] = useState(null);
+  const [sartawiReportOpen, setSartawiReportOpen] = useState(false);
+  const [selectedSartawiAssessment, setSelectedSartawiAssessment] = useState(null);
+
+  // Myklebust PRS States
+  const [myklebustModalOpen, setMyklebustModalOpen] = useState(false);
+  const [myklebustEditData, setMyklebustEditData] = useState(null);
+  const [myklebustReportOpen, setMyklebustReportOpen] = useState(false);
+  const [selectedMyklebustAssessment, setSelectedMyklebustAssessment] = useState(null);
 
   // IEP Bridge State
   const [bridgeOpen, setBridgeOpen] = useState(false);
@@ -247,6 +292,31 @@ export default function PillarAssessment({ onDataChange }) {
       setPep3ModalOpen(true);
       return;
     }
+    if (scaleId === 'learning_difficulties' || scaleId === 'ldes') {
+      setLdesEditData(null);
+      setLdesModalOpen(true);
+      return;
+    }
+    if (scaleId === 'dev_learning_difficulties' || scaleId === 'dev_ld_preschool') {
+      setDevLdEditData(null);
+      setDevLdModalOpen(true);
+      return;
+    }
+    if (scaleId === 'lddrs_battery' || scaleId === 'lddrs' || scaleId.startsWith('lddrs_')) {
+      setLddrsEditData(null);
+      setLddrsModalOpen(true);
+      return;
+    }
+    if (scaleId === 'sartawi_scale' || scaleId === 'sartawi_ld' || scaleId === 'sartawi') {
+      setSartawiEditData(null);
+      setSartawiModalOpen(true);
+      return;
+    }
+    if (scaleId === 'myklebust_scale' || scaleId === 'myklebust') {
+      setMyklebustEditData(null);
+      setMyklebustModalOpen(true);
+      return;
+    }
     const scale = allScales.find(s => s.id === scaleId) || activeScale;
     setSelectedScaleId(scale?.id || 'cars');
     setScaleResponses({});
@@ -338,6 +408,56 @@ export default function PillarAssessment({ onDataChange }) {
     setPls5ModalOpen(true);
   }
 
+  function openEditLdesAssessment(item) {
+    setLdesEditData(item);
+    setLdesModalOpen(true);
+  }
+
+  function openViewLdesReport(item) {
+    setSelectedLdesAssessment(item);
+    setLdesReportOpen(true);
+  }
+
+  function openEditDevLdAssessment(item) {
+    setDevLdEditData(item);
+    setDevLdModalOpen(true);
+  }
+
+  function openViewDevLdReport(item) {
+    setSelectedDevLdAssessment(item);
+    setDevLdReportOpen(true);
+  }
+
+  function openEditLddrsAssessment(item) {
+    setLddrsEditData(item);
+    setLddrsModalOpen(true);
+  }
+
+  function openViewLddrsReport(item) {
+    setSelectedLddrsAssessment(item);
+    setLddrsReportOpen(true);
+  }
+
+  function openEditSartawiAssessment(item) {
+    setSartawiEditData(item);
+    setSartawiModalOpen(true);
+  }
+
+  function openViewSartawiReport(item) {
+    setSelectedSartawiAssessment(item);
+    setSartawiReportOpen(true);
+  }
+
+  function openEditMyklebustAssessment(item) {
+    setMyklebustEditData(item);
+    setMyklebustModalOpen(true);
+  }
+
+  function openViewMyklebustReport(item) {
+    setSelectedMyklebustAssessment(item);
+    setMyklebustReportOpen(true);
+  }
+
   function handleScaleOptionChange(itemId, value) {
     setScaleResponses(prev => ({
       ...prev,
@@ -383,6 +503,16 @@ export default function PillarAssessment({ onDataChange }) {
   function handleOpenBridge(item) {
     if (item.measureId === 'pep3' || item.scaleType === 'pep3') {
       setBridgeScaleItems(PEP3_ITEMS);
+    } else if (item.measureId === 'learning_difficulties' || item.scaleType === 'learning_difficulties' || item.measureId === 'ldes') {
+      setBridgeScaleItems(LDES_ITEMS);
+    } else if (item.measureId === 'dev_learning_difficulties' || item.scaleType === 'dev_learning_difficulties' || item.measureId === 'dev_ld_preschool') {
+      setBridgeScaleItems(DEV_LD_ITEMS);
+    } else if (item.measureId === 'lddrs_battery' || item.scaleType === 'lddrs' || item.measureId?.startsWith('lddrs')) {
+      setBridgeScaleItems(LDDRS_ITEMS);
+    } else if (item.measureId === 'sartawi_scale' || item.scaleType === 'sartawi_ld' || item.scaleType === 'sartawi') {
+      setBridgeScaleItems(SARTAWI_ITEMS);
+    } else if (item.measureId === 'myklebust_scale' || item.scaleType === 'myklebust') {
+      setBridgeScaleItems(MYKLEBUST_ITEMS);
     } else {
       const scale = allScales.find(s => s.id === item.measureId) || null;
       setBridgeScaleItems(scale?.items || []);
@@ -1342,13 +1472,17 @@ export default function PillarAssessment({ onDataChange }) {
                 const isPpvt5 = item.measureId === 'ppvt5' || item.scaleType === 'ppvt5' || item.measureId === 'peabody_ppvt' || item.scaleType === 'peabody_ppvt';
                 const isAbuhasiba = item.measureId === 'abuhasiba_arabic_lang' || item.scaleType === 'abuhasiba_arabic_lang';
                 const isPls5 = item.measureId === 'pls5_arabic' || item.scaleType === 'pls5_arabic';
+                const isLdes = item.measureId === 'learning_difficulties' || item.scaleType === 'learning_difficulties' || item.measureId === 'ldes';
+                const isDevLd = item.measureId === 'dev_learning_difficulties' || item.scaleType === 'dev_learning_difficulties' || item.measureId === 'dev_ld_preschool' || item.scaleType === 'dev_ld_preschool';
+                const isLddrs = item.measureId === 'lddrs_battery' || item.scaleType === 'lddrs' || item.measureId?.startsWith('lddrs');
+                const isSartawi = item.measureId === 'sartawi_scale' || item.scaleType === 'sartawi_ld' || item.scaleType === 'sartawi';
                 return (
                   <div
                     key={item.id}
                     className="prog-item-card"
                     style={{
-                      border: isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
-                      boxShadow: isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
+                      border: isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
+                      boxShadow: isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
@@ -1358,17 +1492,59 @@ export default function PillarAssessment({ onDataChange }) {
                           {isCars && <span className="bdg b-bl" style={{ fontSize: '.68rem', padding: '1px 6px' }}>CARS-2</span>}
                           {isGars && <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>GARS-3</span>}
                           {isSrs && <span className="bdg" style={{ background: '#d1fae5', color: '#047857', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>SRS-2</span>}
+                          {isPep3 && <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>PEP-3</span>}
                           {isSpeech && <span className="bdg" style={{ background: '#e0f2fe', color: '#0369a1', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>فحص النطق</span>}
                           {isPpvt5 && <span className="bdg" style={{ background: '#ccfbf1', color: '#115e59', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>بيبودي PPVT-5</span>}
                           {isAbuhasiba && <span className="bdg" style={{ background: '#e0f2fe', color: '#0369a1', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>أبو حسيبة PLS</span>}
                           {isPls5 && <span className="bdg" style={{ background: '#ecfeff', color: '#0e7490', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>PLS-5 العربي</span>}
+                          {isLdes && <span className="bdg" style={{ background: '#fef3c7', color: '#b45309', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>LDES صعوبات التعلم</span>}
+                          {isDevLd && <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>قائمة صعوبات الروضة</span>}
+                          {isLddrs && <span className="bdg" style={{ background: '#fee2e2', color: '#991b1b', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>بطارية الزيات LDDRS</span>}
+                          {isSartawi && <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>مقياس السرطاوي (50)</span>}
                         </div>
                         <div className="prog-student-meta">{item.measureName} · {item.date}</div>
                       </div>
                       <span className="bdg b-gr" style={{ fontSize: '0.82rem', fontWeight: 800, flexShrink: 0 }}>
-                        {isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
+                        {isSartawi ? `الخام: ${item.score || 0} / 250 (T=${item.tScore || item.psychometrics?.totalTScore || '—'})` : isLddrs ? `الدرجة الكلية: ${item.score || 0}` : isDevLd ? `الخام: ${item.score} / ${item.maxScore || 160}` : isLdes ? `معامل LDEQ: ${item.ldeq || item.score}` : isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
                       </span>
                     </div>
+
+                    {isSartawi && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>التشخيص: <strong style={{ color: item.severityColor || '#1e40af' }}>{item.level || item.psychometrics?.overallStatus || 'السرطاوي'}</strong></span>
+                        <span>الدرجة التائية: <strong style={{ color: '#7c3aed' }}>T = {item.tScore || item.psychometrics?.totalTScore || '—'}</strong></span>
+                        {item.psychometrics?.deficitDimensions && (
+                          <span>الأبعاد المتأثرة: <strong style={{ color: '#dc2626' }}>{item.psychometrics.deficitDimensions.length} من 3</strong></span>
+                        )}
+                      </div>
+                    )}
+
+                    {isLddrs && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>التشخيص: <strong style={{ color: item.severityColor || '#dc2626' }}>{item.level || 'تشخيص الزيات'}</strong></span>
+                        {item.psychometrics?.deficitScales && (
+                          <span>المجالات المتأثرة: <strong style={{ color: '#dc2626' }}>{item.psychometrics.deficitScales.length} من 8</strong></span>
+                        )}
+                      </div>
+                    )}
+
+                    {isDevLd && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>نسبة الصعوبة: <strong style={{ color: '#0f766e' }}>{item.percentage || '0%'}</strong></span>
+                        <span>التصنيف الإكلينيكي: <strong style={{ color: item.severityColor || '#0f766e' }}>{item.level || 'طبيعي'}</strong></span>
+                        {item.affectedDomainsCount !== undefined && (
+                          <span>المجالات المتأثرة: <strong style={{ color: '#b91c1c' }}>{item.affectedDomainsCount} من 6</strong></span>
+                        )}
+                      </div>
+                    )}
+
+                    {isLdes && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>حاصل صعوبات التعلم: <strong style={{ color: '#b45309' }}>{item.ldeq || item.score} LDEQ</strong></span>
+                        <span>رتبة مئينية: <strong style={{ color: '#b45309' }}>{item.overallPercentile || item.percentile || '—'}%</strong></span>
+                        <span>مجموع الدرجات المعيارية: <strong style={{ color: 'var(--text-main)' }}>{item.sumScaledScores || '—'} / 140</strong></span>
+                      </div>
+                    )}
 
                     {isCars && (item.tScore || item.percentile) && (
                       <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)' }}>
@@ -1466,14 +1642,107 @@ export default function PillarAssessment({ onDataChange }) {
                           <span>اشتقاق خطة فردية (IEP)</span>
                         </button>
 
-                        {isCars && (
+                        {isSartawi && (
                           <button
                             type="button"
-                            className="btn btn-xs btn-p"
-                            onClick={() => openViewCarsReport(item)}
-                            style={{ fontWeight: 800 }}
+                            className="btn btn-xs"
+                            onClick={() => openViewSartawiReport(item)}
+                            style={{ fontWeight: 800, background: '#1e40af', color: '#fff' }}
                           >
                             📄 التقرير
+                          </button>
+                        )}
+                        {isSartawi && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditSartawiAssessment(item)}
+                            title="تعديل درجات مقياس السرطاوي"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isMyklebust && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewMyklebustReport(item)}
+                            style={{ fontWeight: 800, background: '#0891b2', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isMyklebust && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditMyklebustAssessment(item)}
+                            title="تعديل درجات مايكل بيست"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isLddrs && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewLddrsReport(item)}
+                            style={{ fontWeight: 800, background: '#dc2626', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isLddrs && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditLddrsAssessment(item)}
+                            title="تعديل درجات بطارية الزيات"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isDevLd && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewDevLdReport(item)}
+                            style={{ fontWeight: 800, background: '#0d9488', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isDevLd && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditDevLdAssessment(item)}
+                            title="تعديل درجات قائمة صعوبات التعلم النمائية"
+                          >
+                            ✏️
+                          </button>
+                        )}
+                        {isLdes && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewLdesReport(item)}
+                            style={{ fontWeight: 800, background: '#d97706', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isLdes && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditLdesAssessment(item)}
+                            title="تعديل درجات مقياس LDES"
+                          >
+                            ✏️
                           </button>
                         )}
                         {isCars && (
@@ -1988,6 +2257,140 @@ export default function PillarAssessment({ onDataChange }) {
           onClose={() => setAbuhasibaReportOpen(false)}
           assessment={selectedAbuhasibaAssessment}
           onEdit={(item) => openEditAbuhasibaAssessment(item)}
+        />
+      )}
+
+      {/* MODAL: LDES SPECIALIZED ASSESSMENT WORKSTATION */}
+      {ldesModalOpen && (
+        <LDESAssessmentModal
+          isOpen={ldesModalOpen}
+          onClose={() => setLdesModalOpen(false)}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={ldesEditData}
+        />
+      )}
+
+      {/* MODAL: LDES OFFICIAL DIAGNOSTIC REPORT */}
+      {ldesReportOpen && selectedLdesAssessment && (
+        <LDESReportModal
+          isOpen={ldesReportOpen}
+          onClose={() => setLdesReportOpen(false)}
+          assessment={selectedLdesAssessment}
+          onEdit={(item) => openEditLdesAssessment(item)}
+        />
+      )}
+
+      {/* MODAL: DEVELOPMENTAL LEARNING DISABILITIES CHECKLIST (PRE-SCHOOL) WORKSTATION */}
+      {devLdModalOpen && (
+        <DevLdAssessmentModal
+          isOpen={devLdModalOpen}
+          onClose={() => setDevLdModalOpen(false)}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={devLdEditData}
+        />
+      )}
+
+      {/* MODAL: DEVELOPMENTAL LEARNING DISABILITIES CHECKLIST (PRE-SCHOOL) REPORT */}
+      {devLdReportOpen && selectedDevLdAssessment && (
+        <DevLdReportModal
+          isOpen={devLdReportOpen}
+          onClose={() => setDevLdReportOpen(false)}
+          assessment={selectedDevLdAssessment}
+          onEdit={(item) => openEditDevLdAssessment(item)}
+        />
+      )}
+
+      {/* MODAL: LDDRS BATTERY (EL-ZAYAT) ASSESSMENT WORKSTATION */}
+      {lddrsModalOpen && (
+        <LDDRSAssessmentModal
+          isOpen={lddrsModalOpen}
+          onClose={() => {
+            setLddrsModalOpen(false);
+            setLddrsEditData(null);
+          }}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={lddrsEditData}
+        />
+      )}
+
+      {/* MODAL: LDDRS BATTERY (EL-ZAYAT) DIAGNOSTIC REPORT */}
+      {lddrsReportOpen && selectedLddrsAssessment && (
+        <LDDRSReportModal
+          isOpen={lddrsReportOpen}
+          onClose={() => setLddrsReportOpen(false)}
+          assessment={selectedLddrsAssessment}
+          onEdit={(item) => openEditLddrsAssessment(item)}
+        />
+      )}
+
+      {/* MODAL: SARTAWI LEARNING DISABILITIES SCALE WORKSTATION */}
+      {sartawiModalOpen && (
+        <SartawiAssessmentModal
+          isOpen={sartawiModalOpen}
+          onClose={() => {
+            setSartawiModalOpen(false);
+            setSartawiEditData(null);
+          }}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={sartawiEditData}
+        />
+      )}
+
+      {/* MODAL: SARTAWI LEARNING DISABILITIES DIAGNOSTIC REPORT */}
+      {sartawiReportOpen && selectedSartawiAssessment && (
+        <SartawiReportModal
+          isOpen={sartawiReportOpen}
+          onClose={() => setSartawiReportOpen(false)}
+          assessment={selectedSartawiAssessment}
+          onEdit={(item) => openEditSartawiAssessment(item)}
+        />
+      )}
+
+      {/* MODAL: MYKLEBUST PRS WORKSTATION */}
+      {myklebustModalOpen && (
+        <MyklebustAssessmentModal
+          isOpen={myklebustModalOpen}
+          onClose={() => {
+            setMyklebustModalOpen(false);
+            setMyklebustEditData(null);
+          }}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={myklebustEditData}
+        />
+      )}
+
+      {/* MODAL: MYKLEBUST PRS DIAGNOSTIC REPORT */}
+      {myklebustReportOpen && selectedMyklebustAssessment && (
+        <MyklebustReportModal
+          isOpen={myklebustReportOpen}
+          onClose={() => setMyklebustReportOpen(false)}
+          assessment={selectedMyklebustAssessment}
+          onEdit={(item) => openEditMyklebustAssessment(item)}
         />
       )}
 

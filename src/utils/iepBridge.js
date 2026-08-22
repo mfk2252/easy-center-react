@@ -424,7 +424,8 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
   
   let lookupKey = 'cars';
   if (rawId.includes('cars')) lookupKey = 'cars';
-  if (rawId.includes('pep3') || rawId.includes('pep')) lookupKey = 'pep3';
+  if (rawId.includes('ldes') || rawId.includes('learningdiff') || rawId.includes('learning')) lookupKey = 'learning_difficulties';
+  else if (rawId.includes('pep3') || rawId.includes('pep')) lookupKey = 'pep3';
   else if (rawId.includes('gars')) lookupKey = 'gars_3';
   else if (rawId.includes('srs')) lookupKey = 'srs';
   else if (rawId.includes('vineland')) lookupKey = 'vineland_3';
@@ -436,7 +437,30 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
 
   const templates = SCALE_GOAL_TEMPLATES[lookupKey] || {};
 
-  if (lookupKey === 'pep3') {
+  if (lookupKey === 'learning_difficulties') {
+    Object.entries(responses).forEach(([itemId, score]) => {
+      const numScore = Number(score);
+      const targetItem = items.find(it => String(it.id) === String(itemId));
+      if (targetItem && (numScore === 2 || numScore === 3)) {
+        const cleanText = targetItem.text.replace('صعوبة ', '').replace('ضعف ', '').replace('الخلط في ', '');
+        let goalText = `أن يظهر الطالب إتقاناً وتحسناً ملموساً في مهارة (${cleanText}) بنسبة دقة لا تقل عن 80% في الأنشطة الصفية وغرفة المصادر.`;
+        if (numScore === 3) {
+          goalText = `أن يتلقى الطالب تدخلاً علاجياً مكثفاً باستخدام أسلوب الحواس المتعددة لمعالجة (${cleanText}) وتحقيق نسبة إتقان 80% في 4 من أصل 5 محاولات.`;
+        }
+        recommended.push({
+          id: uid(),
+          code: `LDES-${targetItem.domainId ? targetItem.domainId.slice(0, 3).toUpperCase() : 'LD'}-${itemId}`,
+          domain: targetItem.domainId || 'academic',
+          title: `علاج صعوبة: ${targetItem.text.slice(0, 35)}...`,
+          text: goalText,
+          mastery: numScore === 3 ? 'تدخل علاجي مكثف 80%' : 'إتقان صفي بنسبة 80%',
+          reason: `مشتق من مقياس LDES بند [${itemId}] بمستوى صعوبة (${numScore === 3 ? 'شديدة دائمة' : 'متوسطة ملحوظة'})`,
+          priority: numScore === 3 ? 'high' : 'medium',
+          status: 'قيد التدريب',
+        });
+      }
+    });
+  } else if (lookupKey === 'pep3') {
     Object.entries(responses).forEach(([itemId, score]) => {
       const numScore = Number(score);
       const targetItem = items.find(it => String(it.id) === String(itemId));

@@ -12,6 +12,12 @@ import {
 import { StudentPicker, validateStudentPick, EMPTY_STU_PICK } from './StudentPicker';
 import CARS2AssessmentModal from '../../components/assessments/CARS2AssessmentModal';
 import CARS2ReportModal from '../../components/assessments/CARS2ReportModal';
+import LDESAssessmentModal from '../../components/assessments/LDESAssessmentModal';
+import LDESReportModal from '../../components/assessments/LDESReportModal';
+import DevLdAssessmentModal from '../../components/assessments/DevLdAssessmentModal';
+import DevLdReportModal from '../../components/assessments/DevLdReportModal';
+import LDDRSAssessmentModal from '../../components/assessments/LDDRSAssessmentModal';
+import LDDRSReportModal from '../../components/assessments/LDDRSReportModal';
 
 const EMPTY_MEASURE = {
   id: '',
@@ -61,6 +67,21 @@ export default function MeasurementCenter({ onBack }) {
   const [carsModalOpen, setCarsModalOpen] = useState(false);
   const [carsReportOpen, setCarsReportOpen] = useState(false);
   const [selectedCarsAssessment, setSelectedCarsAssessment] = useState(null);
+
+  // LDES Specific Modals
+  const [ldesModalOpen, setLdesModalOpen] = useState(false);
+  const [ldesReportOpen, setLdesReportOpen] = useState(false);
+  const [selectedLdesAssessment, setSelectedLdesAssessment] = useState(null);
+
+  // Developmental LD Checklist (Pre-school) Specific Modals
+  const [devLdModalOpen, setDevLdModalOpen] = useState(false);
+  const [devLdReportOpen, setDevLdReportOpen] = useState(false);
+  const [selectedDevLdAssessment, setSelectedDevLdAssessment] = useState(null);
+
+  // LDDRS Battery (El-Zayat) Specific Modals
+  const [lddrsModalOpen, setLddrsModalOpen] = useState(false);
+  const [lddrsReportOpen, setLddrsReportOpen] = useState(false);
+  const [selectedLddrsAssessment, setSelectedLddrsAssessment] = useState(null);
 
   function reload() {
     setStudents(lsGet('students'));
@@ -135,6 +156,18 @@ export default function MeasurementCenter({ onBack }) {
   function openAssessmentModal(scaleId) {
     if (scaleId === 'cars') {
       setCarsModalOpen(true);
+      return;
+    }
+    if (scaleId === 'learning_difficulties' || scaleId === 'ldes') {
+      setLdesModalOpen(true);
+      return;
+    }
+    if (scaleId === 'dev_learning_difficulties' || scaleId === 'dev_ld_preschool') {
+      setDevLdModalOpen(true);
+      return;
+    }
+    if (scaleId === 'lddrs_battery' || scaleId === 'lddrs' || scaleId.startsWith('lddrs_')) {
+      setLddrsModalOpen(true);
       return;
     }
     const scale = getAvailableScales().find(item => item.id === scaleId);
@@ -288,15 +321,21 @@ export default function MeasurementCenter({ onBack }) {
           ) : (
             assessments.map(item => {
               const isCars = item.measureId === 'cars' || item.scaleType === 'cars2';
+              const isLdes = item.measureId === 'learning_difficulties' || item.scaleType === 'learning_difficulties' || item.measureId === 'ldes';
+              const isDevLd = item.measureId === 'dev_learning_difficulties' || item.scaleType === 'dev_learning_difficulties' || item.measureId === 'dev_ld_preschool' || item.scaleType === 'dev_ld_preschool';
+              const isLddrs = item.measureId === 'lddrs_battery' || item.scaleType === 'lddrs' || item.measureId?.startsWith('lddrs');
               return (
                 <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: 12, borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap' }}>
                   <div>
                     <div style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span>{item.measureName || 'مقياس'}</span>
                       {isCars && <span className="bdg b-bl" style={{ fontSize: '.68rem' }}>CARS-2</span>}
+                      {isLdes && <span className="bdg" style={{ background: '#fef3c7', color: '#b45309', fontSize: '.68rem', fontWeight: 800 }}>LDES</span>}
+                      {isDevLd && <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontSize: '.68rem', fontWeight: 800 }}>صعوبات الروضة</span>}
+                      {isLddrs && <span className="bdg" style={{ background: '#fee2e2', color: '#991b1b', fontSize: '.68rem', fontWeight: 800 }}>بطارية الزيات</span>}
                     </div>
                     <div style={{ fontSize: '.76rem', color: 'var(--g5)' }}>
-                      {item.studentName || 'طالب'} • {item.date} • {item.level || 'نتيجة'} {item.tScore ? `(T: ${item.tScore} | ${item.percentile}%)` : ''}
+                      {item.studentName || 'طالب'} • {item.date} • {item.level || 'نتيجة'} {item.tScore ? `(T: ${item.tScore} | ${item.percentile}%)` : ''} {item.percentage ? `(${item.percentage})` : ''}
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -311,6 +350,45 @@ export default function MeasurementCenter({ onBack }) {
                         }}
                       >
                         📄 تقرير CARS-2
+                      </button>
+                    )}
+                    {isLdes && (
+                      <button
+                        type="button"
+                        className="btn btn-xs"
+                        style={{ background: '#d97706', color: '#fff', fontWeight: 800 }}
+                        onClick={() => {
+                          setSelectedLdesAssessment(item);
+                          setLdesReportOpen(true);
+                        }}
+                      >
+                        📄 تقرير LDES
+                      </button>
+                    )}
+                    {isDevLd && (
+                      <button
+                        type="button"
+                        className="btn btn-xs"
+                        style={{ background: '#0d9488', color: '#fff', fontWeight: 800 }}
+                        onClick={() => {
+                          setSelectedDevLdAssessment(item);
+                          setDevLdReportOpen(true);
+                        }}
+                      >
+                        📄 تقرير صعوبات الروضة
+                      </button>
+                    )}
+                    {isLddrs && (
+                      <button
+                        type="button"
+                        className="btn btn-xs"
+                        style={{ background: '#dc2626', color: '#fff', fontWeight: 800 }}
+                        onClick={() => {
+                          setSelectedLddrsAssessment(item);
+                          setLddrsReportOpen(true);
+                        }}
+                      >
+                        📄 تقرير بطارية الزيات
                       </button>
                     )}
                     <button type="button" className="btn btn-xs btn-d" onClick={() => deleteAssessment(item.id)}>🗑️</button>
@@ -338,6 +416,63 @@ export default function MeasurementCenter({ onBack }) {
           isOpen={carsReportOpen}
           onClose={() => setCarsReportOpen(false)}
           assessment={selectedCarsAssessment}
+        />
+      )}
+
+      {/* LDES MODALS */}
+      {ldesModalOpen && (
+        <LDESAssessmentModal
+          isOpen={ldesModalOpen}
+          onClose={() => setLdesModalOpen(false)}
+          onSaved={() => reload()}
+          students={students}
+          emps={[]}
+        />
+      )}
+
+      {ldesReportOpen && selectedLdesAssessment && (
+        <LDESReportModal
+          isOpen={ldesReportOpen}
+          onClose={() => setLdesReportOpen(false)}
+          assessment={selectedLdesAssessment}
+        />
+      )}
+
+      {/* DEV LD (PRESCHOOL) MODALS */}
+      {devLdModalOpen && (
+        <DevLdAssessmentModal
+          isOpen={devLdModalOpen}
+          onClose={() => setDevLdModalOpen(false)}
+          onSaved={() => reload()}
+          students={students}
+          emps={[]}
+        />
+      )}
+
+      {devLdReportOpen && selectedDevLdAssessment && (
+        <DevLdReportModal
+          isOpen={devLdReportOpen}
+          onClose={() => setDevLdReportOpen(false)}
+          assessment={selectedDevLdAssessment}
+        />
+      )}
+
+      {/* LDDRS BATTERY (EL-ZAYAT) MODALS */}
+      {lddrsModalOpen && (
+        <LDDRSAssessmentModal
+          isOpen={lddrsModalOpen}
+          onClose={() => setLddrsModalOpen(false)}
+          onSaved={() => reload()}
+          students={students}
+          emps={[]}
+        />
+      )}
+
+      {lddrsReportOpen && selectedLddrsAssessment && (
+        <LDDRSReportModal
+          isOpen={lddrsReportOpen}
+          onClose={() => setLddrsReportOpen(false)}
+          assessment={selectedLddrsAssessment}
         />
       )}
 
