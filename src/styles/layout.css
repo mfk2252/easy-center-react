@@ -32,12 +32,50 @@
 .mb .fa{flex-shrink:0;padding:12px 18px;border-top:1px solid var(--border-color);display:flex;gap:10px;flex-wrap:wrap;background:var(--bg-card);align-items:center}
 .mb .fhd{flex-shrink:0}
 @media(max-width:600px){
-  .mbg{padding:6px 6px 14px;align-items:flex-end}
-  .mb,.mb-xl,.mb-large,.mb-sm{max-width:calc(100vw - 12px);border-radius:16px 16px 10px 10px;max-height:calc(100dvh - 12px);margin-bottom:0}
-  .mb .fa{gap:8px;padding:10px 14px}
-  .mb .fa .btn{flex:1;min-width:80px;justify-content:center}
+  .mbg{padding:4px 4px 10px;align-items:flex-end}
+  .mb,.mb-xl,.mb-large,.mb-sm{max-width:calc(100vw - 8px);border-radius:14px 14px 10px 10px;max-height:calc(100dvh - 8px);margin-bottom:0}
+  .mb .fa{gap:8px;padding:10px 12px;flex-direction:column-reverse}
+  .mb .fa .btn{width:100%;min-width:100%;justify-content:center;padding:10px 14px;font-size:.88rem}
   .fg.c2,.fg.c3{grid-template-columns:1fr}
   .fg .fl.full{grid-column:1}
+  .modal-header-custom{padding:10px 12px!important;flex-direction:column;align-items:stretch!important;gap:8px!important}
+  .modal-header-custom > div{width:100%}
+  .modal-header-custom h2, .modal-header-custom h3{font-size:1rem!important}
+  .modal-subbar{padding:8px 10px!important;gap:6px!important}
+}
+
+/* ══ RESPONSIVE ASSESSMENT HELPERS ══ */
+.assessment-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+  gap: 10px;
+}
+@media(max-width:480px){
+  .assessment-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+}
+
+.assessment-options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr));
+  gap: 8px;
+}
+@media(max-width:480px){
+  .assessment-options-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 110px), 1fr));
+    gap: 6px;
+  }
+}
+
+.assessment-tabs-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding: 6px 2px;
 }
 .toast-container{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
 .toast-item{display:flex;align-items:center;gap:10px;padding:11px 16px;border-radius:var(--r2);font-size:.85rem;font-weight:600;font-family:'Tajawal',sans-serif;box-shadow:var(--sh2);animation:toastIn .3s ease;pointer-events:auto;max-width:320px}

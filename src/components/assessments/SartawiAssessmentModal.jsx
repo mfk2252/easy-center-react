@@ -226,7 +226,7 @@ export default function SartawiAssessmentModal({
           padding: 0,
           overflow: 'hidden',
           borderRadius: 16,
-          maxHeight: 'min(95vh, calc(100dvh - 20px))',
+          maxHeight: 'min(96vh, calc(100dvh - 12px))',
           display: 'flex',
           flexDirection: 'column',
           width: '100%',
@@ -237,31 +237,31 @@ export default function SartawiAssessmentModal({
         <div
           className="fhd modal-header-custom"
           style={{
-            padding: '14px 20px',
+            padding: '12px 18px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%)',
             color: '#fff',
             flexShrink: 0,
-            gap: 12,
+            gap: 10,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: '1.8rem' }}>📑</span>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h3 style={{ margin: 0, fontSize: '1.12rem', fontWeight: 800, color: '#fff' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: '1.6rem' }}>📑</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#fff' }}>
                   مقياس صعوبات التعلم المقنن (أ.د. زيدان أحمد السرطاوي)
                 </h3>
-                <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontWeight: 800, fontSize: '.74rem' }}>
+                <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontWeight: 800, fontSize: '.72rem' }}>
                   50 عبارة تقييمية
                 </span>
-                <span className="bdg" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, fontSize: '.72rem' }}>
+                <span className="bdg" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, fontSize: '.7rem' }}>
                   الأبعاد الأكاديمية والسلوكية والإدراكية
                 </span>
               </div>
-              <p style={{ margin: '3px 0 0', fontSize: '.78rem', opacity: 0.92, fontWeight: 400 }}>
+              <p style={{ margin: '3px 0 0', fontSize: '.76rem', opacity: 0.92, fontWeight: 400, lineHeight: 1.35 }}>
                 ملحق رقم (3) · جامعة الملك سعود · تشخيص صعوبات القراءة والكتابة والرياضيات والسلوك والإدراك الحركي
               </p>
             </div>
@@ -279,6 +279,7 @@ export default function SartawiAssessmentModal({
               padding: '6px 14px',
               fontWeight: 700,
               cursor: 'pointer',
+              alignSelf: 'flex-start',
             }}
           >
             ✕ إغلاق
@@ -287,13 +288,11 @@ export default function SartawiAssessmentModal({
 
         {/* Live Psychometrics Status Banner */}
         <div
+          className="assessment-stats-grid"
           style={{
             background: '#f8fafc',
             borderBottom: '1.5px solid #e2e8f0',
-            padding: '12px 20px',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: 12,
+            padding: '10px 16px',
             alignItems: 'center',
             flexShrink: 0,
           }}

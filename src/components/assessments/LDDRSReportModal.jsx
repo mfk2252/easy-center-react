@@ -255,42 +255,44 @@ export default function LDDRSReportModal({
           <h4 style={{ color: '#991b1b', fontSize: '14px', margin: '16px 0 8px 0', fontWeight: 800 }}>
             🌐 خلاصة أداء التلميذ على مقاييس التقدير التشخيصية الفرعية:
           </h4>
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 18, fontSize: '13px', border: '1px solid #e2e8f0' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>المقياس الفرعي</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>النوع</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>الدرجة الخام</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>الرتبة المئينية</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>مستوى الشدة والتقدير</th>
-              </tr>
-            </thead>
-            <tbody>
-              {psych.scaleResults.map(s => (
-                <tr key={s.id} style={{ borderBottom: '1px solid #e2e8f0', background: s.isDeficit ? '#fef2f2' : '#ffffff' }}>
-                  <td style={{ padding: '8px 12px', fontWeight: 700, color: '#1e293b' }}>
-                    {s.name}
-                  </td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center', fontSize: '12px' }}>
-                    <span className="bdg" style={{ background: s.type === 'developmental' ? '#e0e7ff' : '#fef3c7', color: s.type === 'developmental' ? '#3730a3' : '#92400e' }}>
-                      {s.typeName}
-                    </span>
-                  </td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 800, color: s.severityColor || '#334155' }}>
-                    {s.rawScore} / {s.maxScore}
-                  </td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center', color: '#64748b' }}>
-                    {s.percentile}%
-                  </td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                    <span style={{ fontWeight: 800, color: s.severityColor || '#64748b', fontSize: '12px' }}>
-                      {s.severity}
-                    </span>
-                  </td>
+          <div className="tbl-wrap">
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 18, fontSize: '13px', border: '1px solid #e2e8f0' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
+                  <th style={{ padding: '8px 12px', textAlign: 'right' }}>المقياس الفرعي</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>النوع</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>الدرجة الخام</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>الرتبة المئينية</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>مستوى الشدة والتقدير</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {psych.scaleResults.map(s => (
+                  <tr key={s.id} style={{ borderBottom: '1px solid #e2e8f0', background: s.isDeficit ? '#fef2f2' : '#ffffff' }}>
+                    <td style={{ padding: '8px 12px', fontWeight: 700, color: '#1e293b' }}>
+                      {s.name}
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center', fontSize: '12px' }}>
+                      <span className="bdg" style={{ background: s.type === 'developmental' ? '#e0e7ff' : '#fef3c7', color: s.type === 'developmental' ? '#3730a3' : '#92400e' }}>
+                        {s.typeName}
+                      </span>
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 800, color: s.severityColor || '#334155' }}>
+                      {s.rawScore} / {s.maxScore}
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center', color: '#64748b' }}>
+                      {s.percentile}%
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                      <span style={{ fontWeight: 800, color: s.severityColor || '#64748b', fontSize: '12px' }}>
+                        {s.severity}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {/* Clinical Impression & Recommendations */}
           <div style={{ marginBottom: 16 }}>

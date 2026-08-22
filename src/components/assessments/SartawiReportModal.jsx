@@ -257,84 +257,88 @@ export default function SartawiReportModal({
           <h4 style={{ color: '#1e40af', fontSize: '14px', margin: '16px 0 8px 0', fontWeight: 800 }}>
             🌐 تحليل أداء التلميذ على أبعاد المقياس الثلاثة (الدرجات الخام والتائية):
           </h4>
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 18, fontSize: '13px', border: '1px solid #e2e8f0' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>البعد التشخيصي</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>الدرجة الخام</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>الدرجة التائية (T-Score)</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>الرتبة المئينية</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>التفسير والنتيجة</th>
-              </tr>
-            </thead>
-            <tbody>
-              {psych.dimensions.map(d => (
-                <tr key={d.id} style={{ borderBottom: '1px solid #e2e8f0', background: d.isDeficit ? '#fef2f2' : '#ffffff' }}>
-                  <td style={{ padding: '8px 12px', fontWeight: 700, color: '#1e293b' }}>
-                    {d.name}
-                    <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 400 }}>{d.itemsCount} عبارة</div>
-                  </td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 700 }}>
-                    {d.rawScore} / {d.maxRaw}
-                  </td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 900, color: d.isDeficit ? '#dc2626' : '#1e40af' }}>
-                    T = {d.tScore}
-                  </td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center', color: '#64748b' }}>
-                    {d.percentile}%
-                  </td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                    <span style={{ fontWeight: 800, color: d.isDeficit ? '#dc2626' : '#16a34a', fontSize: '12px' }}>
-                      {d.levelLabel}
-                    </span>
-                  </td>
+          <div className="tbl-wrap">
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 18, fontSize: '13px', border: '1px solid #e2e8f0' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
+                  <th style={{ padding: '8px 12px', textAlign: 'right' }}>البعد التشخيصي</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>الدرجة الخام</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>الدرجة التائية (T-Score)</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>الرتبة المئينية</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>التفسير والنتيجة</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {psych.dimensions.map(d => (
+                  <tr key={d.id} style={{ borderBottom: '1px solid #e2e8f0', background: d.isDeficit ? '#fef2f2' : '#ffffff' }}>
+                    <td style={{ padding: '8px 12px', fontWeight: 700, color: '#1e293b' }}>
+                      {d.name}
+                      <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 400 }}>{d.itemsCount} عبارة</div>
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 700 }}>
+                      {d.rawScore} / {d.maxRaw}
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 900, color: d.isDeficit ? '#dc2626' : '#1e40af' }}>
+                      T = {d.tScore}
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center', color: '#64748b' }}>
+                      {d.percentile}%
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                      <span style={{ fontWeight: 800, color: d.isDeficit ? '#dc2626' : '#16a34a', fontSize: '12px' }}>
+                        {d.levelLabel}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {/* Detailed Items Table */}
           <h4 style={{ color: '#1e40af', fontSize: '14px', margin: '16px 0 8px 0', fontWeight: 800 }}>
             📝 جدول تقييم بنود مقياس السرطاوي التفصيلية (50 عبارة):
           </h4>
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 20, fontSize: '12px', border: '1px solid #e2e8f0' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
-                <th style={{ padding: '6px 8px', width: '30px', textAlign: 'center' }}>#</th>
-                <th style={{ padding: '6px 8px', textAlign: 'right' }}>نص العبارة</th>
-                <th style={{ padding: '6px 8px', width: '130px', textAlign: 'center' }}>البعد</th>
-                <th style={{ padding: '6px 8px', width: '60px', textAlign: 'center' }}>الدرجة</th>
-                <th style={{ padding: '6px 8px', width: '130px', textAlign: 'center' }}>التقدير</th>
-                <th style={{ padding: '6px 8px', textAlign: 'right' }}>ملاحظات الأخصائي</th>
-              </tr>
-            </thead>
-            <tbody>
-              {SARTAWI_ITEMS.map(it => {
-                const itemScore = scores[it.id];
-                const opt = SARTAWI_RATING_OPTIONS.find(o => o.score === itemScore);
-                const note = assessment.itemNotes?.[it.id];
-                const dim = SARTAWI_DIMENSIONS.find(d => d.id === it.dimensionId);
-                const isDeficit = itemScore >= 4;
+          <div className="tbl-wrap">
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 20, fontSize: '12px', border: '1px solid #e2e8f0' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
+                  <th style={{ padding: '6px 8px', width: '30px', textAlign: 'center' }}>#</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>نص العبارة</th>
+                  <th style={{ padding: '6px 8px', width: '130px', textAlign: 'center' }}>البعد</th>
+                  <th style={{ padding: '6px 8px', width: '60px', textAlign: 'center' }}>الدرجة</th>
+                  <th style={{ padding: '6px 8px', width: '130px', textAlign: 'center' }}>التقدير</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>ملاحظات الأخصائي</th>
+                </tr>
+              </thead>
+              <tbody>
+                {SARTAWI_ITEMS.map(it => {
+                  const itemScore = scores[it.id];
+                  const opt = SARTAWI_RATING_OPTIONS.find(o => o.score === itemScore);
+                  const note = assessment.itemNotes?.[it.id];
+                  const dim = SARTAWI_DIMENSIONS.find(d => d.id === it.dimensionId);
+                  const isDeficit = itemScore >= 4;
 
-                return (
-                  <tr key={it.id} style={{ borderBottom: '1px solid #e2e8f0', background: isDeficit ? '#fef2f2' : '#ffffff' }}>
-                    <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 800, color: '#64748b' }}>{it.id}</td>
-                    <td style={{ padding: '6px 8px', fontWeight: 600, color: '#1e293b' }}>{it.text}</td>
-                    <td style={{ padding: '6px 8px', textAlign: 'center', fontSize: '11px', color: '#64748b' }}>{dim?.name}</td>
-                    <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 900, color: isDeficit ? '#dc2626' : '#1e40af' }}>
-                      {itemScore !== undefined ? itemScore : '—'}
-                    </td>
-                    <td style={{ padding: '6px 8px', textAlign: 'center', fontSize: '11px', fontWeight: 700, color: isDeficit ? '#dc2626' : '#16a34a' }}>
-                      {opt?.label || '—'}
-                    </td>
-                    <td style={{ padding: '6px 8px', color: '#475569', fontSize: '11px' }}>
-                      {note || '—'}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                  return (
+                    <tr key={it.id} style={{ borderBottom: '1px solid #e2e8f0', background: isDeficit ? '#fef2f2' : '#ffffff' }}>
+                      <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 800, color: '#64748b' }}>{it.id}</td>
+                      <td style={{ padding: '6px 8px', fontWeight: 600, color: '#1e293b' }}>{it.text}</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'center', fontSize: '11px', color: '#64748b' }}>{dim?.name}</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 900, color: isDeficit ? '#dc2626' : '#1e40af' }}>
+                        {itemScore !== undefined ? itemScore : '—'}
+                      </td>
+                      <td style={{ padding: '6px 8px', textAlign: 'center', fontSize: '11px', fontWeight: 700, color: isDeficit ? '#dc2626' : '#16a34a' }}>
+                        {opt?.label || '—'}
+                      </td>
+                      <td style={{ padding: '6px 8px', color: '#475569', fontSize: '11px' }}>
+                        {note || '—'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
           {/* Clinical Impression & Recommendations */}
           <div style={{ marginBottom: 16 }}>

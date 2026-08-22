@@ -259,84 +259,88 @@ export default function MyklebustReportModal({
           <h4 style={{ color: '#0e7490', fontSize: '14px', margin: '16px 0 8px 0', fontWeight: 800 }}>
             🌐 توزيع درجات الأداء عبر أبعاد المقياس الخمسة:
           </h4>
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 18, fontSize: '13px', border: '1px solid #e2e8f0' }}>
-            <thead style={{ background: '#f1f5f9' }}>
-              <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>البعد / المجال</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>المجال التابع</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>الدرجة المحققة</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>الحد الفاصل للقصور</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>الحالة والتقدير</th>
-              </tr>
-            </thead>
-            <tbody>
-              {psych.dimensionScores.map(d => (
-                <tr key={d.id} style={{ borderBottom: '1px solid #e2e8f0', background: d.isDeficit ? '#fef2f2' : '#ffffff' }}>
-                  <td style={{ padding: '8px 12px', fontWeight: 700, color: '#1e293b' }}>
-                    {d.name}
-                  </td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center', fontSize: '12px' }}>
-                    <span className="bdg" style={{ background: d.scaleGroup === 'verbal' ? '#e0e7ff' : '#ecfeff', color: d.scaleGroup === 'verbal' ? '#3730a3' : '#0e7490' }}>
-                      {d.scaleGroup === 'verbal' ? 'لفظي' : 'غير لفظي'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 800, color: d.isDeficit ? '#dc2626' : '#0891b2' }}>
-                    {d.score} / {d.maxScore}
-                  </td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center', color: '#64748b' }}>
-                    &lt; {d.cutoffScore}
-                  </td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                    <span style={{ fontWeight: 800, color: d.isDeficit ? '#dc2626' : '#16a34a', fontSize: '12px' }}>
-                      {d.levelLabel}
-                    </span>
-                  </td>
+          <div className="tbl-wrap">
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 18, fontSize: '13px', border: '1px solid #e2e8f0' }}>
+              <thead style={{ background: '#f1f5f9' }}>
+                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
+                  <th style={{ padding: '8px 12px', textAlign: 'right' }}>البعد / المجال</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>المجال التابع</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>الدرجة المحققة</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>الحد الفاصل للقصور</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>الحالة والتقدير</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {psych.dimensionScores.map(d => (
+                  <tr key={d.id} style={{ borderBottom: '1px solid #e2e8f0', background: d.isDeficit ? '#fef2f2' : '#ffffff' }}>
+                    <td style={{ padding: '8px 12px', fontWeight: 700, color: '#1e293b' }}>
+                      {d.name}
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center', fontSize: '12px' }}>
+                      <span className="bdg" style={{ background: d.scaleGroup === 'verbal' ? '#e0e7ff' : '#ecfeff', color: d.scaleGroup === 'verbal' ? '#3730a3' : '#0e7490' }}>
+                        {d.scaleGroup === 'verbal' ? 'لفظي' : 'غير لفظي'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 800, color: d.isDeficit ? '#dc2626' : '#0891b2' }}>
+                      {d.score} / {d.maxScore}
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center', color: '#64748b' }}>
+                      &lt; {d.cutoffScore}
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                      <span style={{ fontWeight: 800, color: d.isDeficit ? '#dc2626' : '#16a34a', fontSize: '12px' }}>
+                        {d.levelLabel}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {/* Detailed Items Table */}
           <h4 style={{ color: '#0e7490', fontSize: '14px', margin: '16px 0 8px 0', fontWeight: 800 }}>
             📝 جدول تقييم بنود مقياس مايكل بيست التفصيلية (24 بنداً):
           </h4>
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 20, fontSize: '12px', border: '1px solid #e2e8f0' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
-                <th style={{ padding: '6px 8px', width: '30px', textAlign: 'center' }}>#</th>
-                <th style={{ padding: '6px 8px', width: '160px', textAlign: 'right' }}>البند المقنن</th>
-                <th style={{ padding: '6px 8px', width: '90px', textAlign: 'center' }}>البعد</th>
-                <th style={{ padding: '6px 8px', width: '50px', textAlign: 'center' }}>الدرجة</th>
-                <th style={{ padding: '6px 8px', textAlign: 'right' }}>السلوك الملاحظ والتقدير الإكلينيكي</th>
-              </tr>
-            </thead>
-            <tbody>
-              {MYKLEBUST_ITEMS.map(it => {
-                const itemScore = scores[it.id];
-                const opt = it.options.find(o => o.score === itemScore);
-                const note = assessment.itemNotes?.[it.id];
-                const dim = MYKLEBUST_DIMENSIONS.find(d => d.id === it.dimensionId);
-                const isDeficit = itemScore <= 2;
+          <div className="tbl-wrap">
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 20, fontSize: '12px', border: '1px solid #e2e8f0' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
+                  <th style={{ padding: '6px 8px', width: '30px', textAlign: 'center' }}>#</th>
+                  <th style={{ padding: '6px 8px', width: '160px', textAlign: 'right' }}>البند المقنن</th>
+                  <th style={{ padding: '6px 8px', width: '90px', textAlign: 'center' }}>البعد</th>
+                  <th style={{ padding: '6px 8px', width: '50px', textAlign: 'center' }}>الدرجة</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'right' }}>السلوك الملاحظ والتقدير الإكلينيكي</th>
+                </tr>
+              </thead>
+              <tbody>
+                {MYKLEBUST_ITEMS.map(it => {
+                  const itemScore = scores[it.id];
+                  const opt = it.options.find(o => o.score === itemScore);
+                  const note = assessment.itemNotes?.[it.id];
+                  const dim = MYKLEBUST_DIMENSIONS.find(d => d.id === it.dimensionId);
+                  const isDeficit = itemScore <= 2;
 
-                return (
-                  <tr key={it.id} style={{ borderBottom: '1px solid #e2e8f0', background: isDeficit ? '#fef2f2' : '#ffffff' }}>
-                    <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 800, color: '#64748b' }}>{it.id}</td>
-                    <td style={{ padding: '6px 8px', fontWeight: 700, color: '#1e293b' }}>{it.title}</td>
-                    <td style={{ padding: '6px 8px', textAlign: 'center', fontSize: '11px', color: '#64748b' }}>
-                      {dim?.name?.split(':')[1] || dim?.name}
-                    </td>
-                    <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 900, color: isDeficit ? '#dc2626' : '#0891b2' }}>
-                      {itemScore !== undefined ? itemScore : '—'}
-                    </td>
-                    <td style={{ padding: '6px 8px', color: '#334155' }}>
-                      {opt ? <span><b>{opt.label}:</b> {opt.description}</span> : '—'}
-                      {note && <div style={{ color: '#b45309', fontSize: '11px', marginTop: 2 }}>ملاحظة: {note}</div>}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                  return (
+                    <tr key={it.id} style={{ borderBottom: '1px solid #e2e8f0', background: isDeficit ? '#fef2f2' : '#ffffff' }}>
+                      <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 800, color: '#64748b' }}>{it.id}</td>
+                      <td style={{ padding: '6px 8px', fontWeight: 700, color: '#1e293b' }}>{it.title}</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'center', fontSize: '11px', color: '#64748b' }}>
+                        {dim?.name?.split(':')[1] || dim?.name}
+                      </td>
+                      <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 900, color: isDeficit ? '#dc2626' : '#0891b2' }}>
+                        {itemScore !== undefined ? itemScore : '—'}
+                      </td>
+                      <td style={{ padding: '6px 8px', color: '#334155' }}>
+                        {opt ? <span><b>{opt.label}:</b> {opt.description}</span> : '—'}
+                        {note && <div style={{ color: '#b45309', fontSize: '11px', marginTop: 2 }}>ملاحظة: {note}</div>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
           {/* Clinical Impression & Recommendations */}
           <div style={{ marginBottom: 16 }}>

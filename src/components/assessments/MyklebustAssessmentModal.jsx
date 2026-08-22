@@ -240,7 +240,7 @@ export default function MyklebustAssessmentModal({
           padding: 0,
           overflow: 'hidden',
           borderRadius: 16,
-          maxHeight: 'min(95vh, calc(100dvh - 20px))',
+          maxHeight: 'min(96vh, calc(100dvh - 12px))',
           display: 'flex',
           flexDirection: 'column',
           width: '100%',
@@ -251,31 +251,31 @@ export default function MyklebustAssessmentModal({
         <div
           className="fhd modal-header-custom"
           style={{
-            padding: '14px 20px',
+            padding: '12px 18px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             background: 'linear-gradient(135deg, #0e7490 0%, #0891b2 50%, #0284c7 100%)',
             color: '#fff',
             flexShrink: 0,
-            gap: 12,
+            gap: 10,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: '1.8rem' }}>📊</span>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h3 style={{ margin: 0, fontSize: '1.12rem', fontWeight: 800, color: '#fff' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: '1.6rem' }}>📊</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#fff' }}>
                   مقياس مايكل بيست للتعرف على صعوبات التعلم (Myklebust PRS)
                 </h3>
-                <span className="bdg" style={{ background: '#ecfeff', color: '#0891b2', fontWeight: 800, fontSize: '.74rem' }}>
+                <span className="bdg" style={{ background: '#ecfeff', color: '#0891b2', fontWeight: 800, fontSize: '.72rem' }}>
                   24 بنداً تقييمياً مقنناً
                 </span>
-                <span className="bdg" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, fontSize: '.72rem' }}>
+                <span className="bdg" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, fontSize: '.7rem' }}>
                   المجال اللفظي وغير اللفظي
                 </span>
               </div>
-              <p style={{ margin: '3px 0 0', fontSize: '.78rem', opacity: 0.92, fontWeight: 400 }}>
+              <p style={{ margin: '3px 0 0', fontSize: '.76rem', opacity: 0.92, fontWeight: 400, lineHeight: 1.35 }}>
                 إعداد: هلمر مايكل بيست · تقنين د. مصطفى كامل ود. تيسير كوافحة · تقدير السمات السلوكية
               </p>
             </div>
@@ -293,6 +293,7 @@ export default function MyklebustAssessmentModal({
               padding: '6px 14px',
               fontWeight: 700,
               cursor: 'pointer',
+              alignSelf: 'flex-start',
             }}
           >
             ✕ إغلاق
@@ -301,13 +302,11 @@ export default function MyklebustAssessmentModal({
 
         {/* Live Psychometrics Status Banner */}
         <div
+          className="assessment-stats-grid"
           style={{
             background: '#f8fafc',
             borderBottom: '1.5px solid #e2e8f0',
-            padding: '12px 20px',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: 12,
+            padding: '10px 16px',
             alignItems: 'center',
             flexShrink: 0,
           }}
@@ -638,10 +637,8 @@ export default function MyklebustAssessmentModal({
 
                   {/* 5 Rating Options with Detailed Behavioral Anchors */}
                   <div
+                    className="assessment-options-grid"
                     style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
-                      gap: 8,
                       marginTop: 10,
                     }}
                   >

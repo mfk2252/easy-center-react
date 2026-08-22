@@ -156,10 +156,12 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
+  margin-bottom: 12px;
 }
-table { width: 100%; min-width: 480px; border-collapse: collapse; background: var(--bg-card); border-radius: var(--r); overflow: hidden; }
-@media (min-width: 640px) {
-  table { min-width: 100%; }
+table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: var(--r); overflow: hidden; }
+@media (max-width: 600px) {
+  table { min-width: 480px; }
+  .tbl-wrap table { min-width: 480px; }
 }
 th { background: var(--g0); padding: 10px 14px; font-size: .78rem; font-weight: 700; color: var(--text-sub); text-align: right; white-space: nowrap; }
 td { padding: 10px 14px; font-size: .84rem; font-weight: 400; border-bottom: 1px solid var(--border-color); vertical-align: middle; }

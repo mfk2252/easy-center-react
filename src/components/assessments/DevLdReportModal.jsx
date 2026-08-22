@@ -255,43 +255,45 @@ export default function DevLdReportModal({
           <h4 style={{ color: '#0f766e', fontSize: '14px', margin: '16px 0 8px 0', fontWeight: 800 }}>
             🌐 توزيع درجات الأداء عبر أبعاد القائمة النمائية الستة:
           </h4>
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 18, fontSize: '13px', border: '1px solid #e2e8f0' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>المجال النمائي</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>المجال الرئيسي</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>الدرجة الخام</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>النسبة المئوية</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>التقدير الإكلينيكي</th>
-              </tr>
-            </thead>
-            <tbody>
-              {psych.domainResults.map(d => (
-                <tr key={d.id} style={{ borderBottom: '1px solid #e2e8f0', background: d.isDeficit ? '#fef2f2' : '#ffffff' }}>
-                  <td style={{ padding: '8px 12px', fontWeight: 700, color: '#1e293b' }}>
-                    {d.name}
-                    <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 400 }}>{d.itemsCount} عبارة</div>
-                  </td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center', fontSize: '12px' }}>
-                    <span className="bdg" style={{ background: '#f0fdfa', color: '#0f766e' }}>
-                      {d.pillarName}
-                    </span>
-                  </td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 800, color: d.isDeficit ? '#dc2626' : '#0f766e' }}>
-                    {d.rawScore} / {d.maxScore}
-                  </td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center', color: '#64748b' }}>
-                    {d.percentage}%
-                  </td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                    <span style={{ fontWeight: 800, color: d.isDeficit ? '#dc2626' : '#16a34a', fontSize: '12px' }}>
-                      {d.domainStatus}
-                    </span>
-                  </td>
+          <div className="tbl-wrap">
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 18, fontSize: '13px', border: '1px solid #e2e8f0' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
+                  <th style={{ padding: '8px 12px', textAlign: 'right' }}>المجال النمائي</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>المجال الرئيسي</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>الدرجة الخام</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>النسبة المئوية</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>التقدير الإكلينيكي</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {psych.domainResults.map(d => (
+                  <tr key={d.id} style={{ borderBottom: '1px solid #e2e8f0', background: d.isDeficit ? '#fef2f2' : '#ffffff' }}>
+                    <td style={{ padding: '8px 12px', fontWeight: 700, color: '#1e293b' }}>
+                      {d.name}
+                      <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 400 }}>{d.itemsCount} عبارة</div>
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center', fontSize: '12px' }}>
+                      <span className="bdg" style={{ background: '#f0fdfa', color: '#0f766e' }}>
+                        {d.pillarName}
+                      </span>
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 800, color: d.isDeficit ? '#dc2626' : '#0f766e' }}>
+                      {d.rawScore} / {d.maxScore}
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center', color: '#64748b' }}>
+                      {d.percentage}%
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                      <span style={{ fontWeight: 800, color: d.isDeficit ? '#dc2626' : '#16a34a', fontSize: '12px' }}>
+                        {d.domainStatus}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {/* Clinical Impression & Recommendations */}
           <div style={{ marginBottom: 16 }}>
