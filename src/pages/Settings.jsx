@@ -326,7 +326,6 @@ export default function Settings() {
 
   async function handleBarcode(e) {
     try {
-      const { handleFileInputChange } = await import('../utils/fileUpload');
       const res = await handleFileInputChange(e, { imagesOnly: true });
       if (res) setCenterForm(f => ({ ...f, barcode: res.data }));
     } catch (ex) {
@@ -358,30 +357,43 @@ export default function Settings() {
     saveCenter();
   }
 
+  const ALL_BACKUP_KEYS = [
+    'students', 'employees', 'sessions', 'leaves', 'salaries', 'attEmp', 'attStu',
+    'appointments', 'iepGoals', 'calEvents', 'income', 'expenses', 'notifs',
+    'studentFees', 'payments', 'warnings', 'progPrograms', 'progReports',
+    'progEvaluations', 'measurements', 'measureItems', 'studentAssessments',
+    'behaviorPlans', 'stuReports', 'progGoalsBank'
+  ];
+
   function exportData() {
-    const keys=['employees','students','sessions','leaves','salaries','attEmp','attStu','appointments','iepGoals','calEvents','income','expenses','notifs','studentFees','payments','warnings'];
-    const data={};
-    keys.forEach(k=>{ data[k]=lsGet(k); });
+    const data = {};
+    ALL_BACKUP_KEYS.forEach(k => { data[k] = lsGet(k); });
     data.centerName = center.name;
     data.exportDate = new Date().toISOString();
-    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download=`backup_${center.name}_${todayStr()}.json`; a.click();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_${center.name || 'center'}_${todayStr()}.json`;
+    a.click();
     URL.revokeObjectURL(url);
-    toast('✅ تم تصدير البيانات','ok');
+    toast('✅ تم تصدير النسخة الاحتياطية الشاملة', 'ok');
   }
 
   function importData(e) {
-    const f=e.target.files[0]; if(!f) return;
-    const r=new FileReader();
-    r.onload=ev=>{
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => {
       try {
-        const data=JSON.parse(ev.target.result);
-        const keys=['employees','students','sessions','leaves','salaries','attEmp','attStu','appointments','iepGoals','calEvents','income','expenses','notifs','studentFees','payments','warnings'];
-        keys.forEach(k=>{ if(data[k]) localStorage.setItem(`${centerId}_${k}`, JSON.stringify(data[k])); });
-        toast('✅ تم استيراد البيانات - أعد تحميل الصفحة','ok');
-      } catch(err) { toast('❌ خطأ في الملف','er'); }
+        const data = JSON.parse(ev.target.result);
+        ALL_BACKUP_KEYS.forEach(k => {
+          if (data[k]) localStorage.setItem(`${centerId}_${k}`, JSON.stringify(data[k]));
+        });
+        toast('✅ تم استيراد البيانات بنجاح - أعد تحميل الصفحة', 'ok');
+      } catch (err) {
+        toast('❌ خطأ في تنسيق ملف النسخة الاحتياطية', 'er');
+      }
     };
     r.readAsText(f);
   }
