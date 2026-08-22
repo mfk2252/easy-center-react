@@ -266,9 +266,15 @@ export function calculateSartawiPsychometrics(scores = {}) {
       isDeficit = true;
     }
 
+    const tScore = lookupSartawiTScore(Math.round((rawScore / dim.maxRawScore) * 250));
+    const percentile = Math.min(99, Math.max(1, Math.round(50 + (tScore - 50) * 1.6)));
+
     return {
       ...dim,
       rawScore,
+      maxRaw: dim.maxRawScore,
+      tScore,
+      percentile,
       answeredCount: dimAnswered,
       totalItems: dimItems.length,
       percentage,
@@ -276,11 +282,14 @@ export function calculateSartawiPsychometrics(scores = {}) {
       severityKey,
       severityColor,
       isDeficit,
+      levelLabel: severity,
     };
   });
 
   const totalTScore = lookupSartawiTScore(totalRawScore);
   const totalPercentage = Math.round((totalRawScore / 250) * 100);
+  const percentile = Math.min(99, Math.max(1, Math.round(50 + (totalTScore - 50) * 1.6)));
+  const completionPercentage = Math.round((answeredCount / 50) * 100);
 
   // التصنيف التشخيصي العام وفق معايير السرطاوي الرسمية (ملحق 3):
   // الدرجة التائية >= 60 أو الدرجة الكلية >= 150 -> صعوبة تعلم محتملة
@@ -308,15 +317,22 @@ export function calculateSartawiPsychometrics(scores = {}) {
   return {
     totalRawScore,
     totalTScore,
+    percentile,
     totalPercentage,
+    completionPercentage,
     maxRawScore: 250,
     answeredCount,
+    totalAnswered: answeredCount,
     totalItems: 50,
     dimensionsResults,
+    dimensions: dimensionsResults,
     deficitDimensions,
     overallStatus,
     overallKey,
     overallColor,
     conclusionText,
+    overallDescription: conclusionText,
+    diagnosisDescription: conclusionText,
+    recommendationSummary: conclusionText,
   };
 }

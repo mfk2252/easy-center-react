@@ -688,6 +688,7 @@ export function calculateMyklebustPsychometrics(scores = {}) {
     return {
       ...dim,
       rawScore,
+      score: rawScore,
       answeredCount: dimAnswered,
       totalItems: dimItems.length,
       percentage,
@@ -695,6 +696,7 @@ export function calculateMyklebustPsychometrics(scores = {}) {
       severityKey,
       severityColor,
       isDeficit,
+      levelLabel: severity,
     };
   });
 
@@ -727,7 +729,7 @@ export function calculateMyklebustPsychometrics(scores = {}) {
       conclusionText = `أظهر التلميذ انخفاضاً دالاً في المجالين اللفظي (${verbalScore}/45) وغير اللفظي (${nonVerbalScore}/75) بمجموع كلي (${totalRawScore}/120) دون محك القطع، مما يؤكد حاجته لبرنامج صعوبات التعلم وخطة فردية شاملة.`;
     } else if (isVerbalDeficit) {
       diagnosisType = 'صعوبات تعلم لفظية نمائية وأكاديمية (Verbal LD)';
-      conclusionText = `يعاني التلميذ من قصور نوعي في المجال اللفظي (${verbalScore}/45 - أقل من المحك 27) خاصة في الاستيعاب واللغة المنطوقة، بينما المجال غير اللفظي طبيعي نسpropياً (${nonVerbalScore}/75).`;
+      conclusionText = `يعاني التلميذ من قصور نوعي في المجال اللفظي (${verbalScore}/45 - أقل من المحك 27) خاصة في الاستيعاب واللغة المنطوقة، بينما المجال غير اللفظي طبيعي نسبياً (${nonVerbalScore}/75).`;
     } else if (isNonVerbalDeficit) {
       diagnosisType = 'صعوبات تعلم غير لفظية (Non-Verbal LD)';
       conclusionText = `يعاني التلميذ من قصور نوعي في المجال غير اللفظي (${nonVerbalScore}/75 - أقل من المحك 45) في التوجه المكاني أو التناسق الحركي أو السلوك الاجتماعي، بينما المجال اللفظي طبيعي (${verbalScore}/45).`;
@@ -750,6 +752,7 @@ export function calculateMyklebustPsychometrics(scores = {}) {
     totalRawScore,
     maxRawScore: 120,
     totalPercentage,
+    overallPercentage: totalPercentage,
     verbalScore,
     verbalMaxScore: 45,
     verbalPercentage,
@@ -759,8 +762,10 @@ export function calculateMyklebustPsychometrics(scores = {}) {
     nonVerbalPercentage,
     isNonVerbalDeficit,
     answeredCount,
+    totalAnswered: answeredCount,
     totalItems: 24,
     dimensionsResults,
+    dimensionScores: dimensionsResults,
     deficitDimensions,
     criticalItems,
     overallStatus,
@@ -768,5 +773,7 @@ export function calculateMyklebustPsychometrics(scores = {}) {
     overallColor,
     diagnosisType,
     conclusionText,
+    diagnosisDescription: conclusionText,
+    recommendationSummary: conclusionText,
   };
 }

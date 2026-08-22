@@ -500,11 +500,17 @@ export function calculateLDDRSPsychometrics(scores = {}, activeScaleId = null) {
 
   return {
     scaleResults,
+    dimensionsResults: scaleResults,
+    dimensions: scaleResults,
     evaluatedScales,
     totalAnswered,
+    answeredCount: totalAnswered,
     totalRawScore,
     totalMaxScore,
+    totalPercentage: totalMaxScore > 0 ? Math.round((totalRawScore / totalMaxScore) * 100) : 0,
+    completionPercentage: totalMaxScore > 0 ? Math.round((totalAnswered / LDDRS_ITEMS.length) * 100) : 0,
     deficitScales,
+    deficitDimensions: deficitScales,
     severeScales,
     moderateScales,
     mildScales,
@@ -512,5 +518,8 @@ export function calculateLDDRSPsychometrics(scores = {}, activeScaleId = null) {
     overallKey,
     overallColor,
     conclusionText,
+    overallDescription: conclusionText,
+    diagnosisDescription: conclusionText,
+    recommendationSummary: conclusionText,
   };
 }
