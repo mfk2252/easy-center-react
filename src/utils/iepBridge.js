@@ -4,8 +4,204 @@
  */
 
 import { uid } from './dateHelpers';
+import { getStrategiesForDomain } from '../data/strategiesData';
 
 export const SCALE_GOAL_TEMPLATES = {
+  // Myklebust Pupil Rating Scale (PRS) - All 24 Items to IEP Goals
+  myklebust: {
+    myk_1: {
+      domain: 'auditory_comprehension',
+      code: 'MYK-AUD-1',
+      title: 'فهم معاني الكلمات واستيعابها',
+      goals: [
+        { text: 'أن يستوعب التلميذ المفردات والكلمات الصفية الموجهة إليه ويستجيب لمعانيها بدقة في 80% من المواقف التعليمية.', mastery: 'إتقان 80% عبر جلستين متتاليتين' }
+      ]
+    },
+    myk_2: {
+      domain: 'auditory_comprehension',
+      code: 'MYK-AUD-2',
+      title: 'اتباع التعليمات والتوجيهات الصفية',
+      goals: [
+        { text: 'أن ينفذ التلميذ تعليمات لفظية مركبة من خطوتين إلى 3 خطوات في البيئة الصفية بشكل مستقل بنسبة دقة 80%.', mastery: 'في 4 من 5 مواقف صفية' }
+      ]
+    },
+    myk_3: {
+      domain: 'auditory_comprehension',
+      code: 'MYK-AUD-3',
+      title: 'المشاركة في المحادثة الصفية وفهم المناقشات',
+      goals: [
+        { text: 'أن يتابع التلميذ سياق المناقشة الصفية ويجيب عن أسئلة الفهم المتعلقة بموضوع الدرس بتركيز في 80% من الحصص.', mastery: 'مشاركة ملائمة بنسبة 80%' }
+      ]
+    },
+    myk_4: {
+      domain: 'auditory_comprehension',
+      code: 'MYK-AUD-4',
+      title: 'التذكر والاسترجاع السمعي للمعلومات',
+      goals: [
+        { text: 'أن يسترجع التلميذ سلسلة من 4 حقائق أو كلمات مسموعة في نهاية النشاط دون الحاجة لتكرار مستمر.', mastery: 'دقة 80% في 3 محاولات' }
+      ]
+    },
+    myk_5: {
+      domain: 'spoken_language',
+      code: 'MYK-LANG-5',
+      title: 'الثروة اللغوية واستخدام المفردات',
+      goals: [
+        { text: 'أن يوظف التلميذ مفردات دقيقة ومناسبة لعمره عند وصف الصور والمواقف التعليمية بنسبة تحسن 80%.', mastery: 'استخدام 10 مفردات جديدة بطلاقة' }
+      ]
+    },
+    myk_6: {
+      domain: 'spoken_language',
+      code: 'MYK-LANG-6',
+      title: 'استخدام القواعد النحوية وبناء الجمل',
+      goals: [
+        { text: 'أن يكوّن التلميذ جملاً تامة مكتملة الأركان خالية من الأخطاء التركيبية أثناء الحوار بنسبة دقة 85%.', mastery: 'في 8 من أصل 10 جمل شفهية' }
+      ]
+    },
+    myk_7: {
+      domain: 'spoken_language',
+      code: 'MYK-LANG-7',
+      title: 'تذكر واستدعاء المفردات المناسبة في السياق',
+      goals: [
+        { text: 'أن يستحضر التلميذ الكلمة المناسبة بسرعة ودون تردد أو توقف طويل عند التعبير عن أفكاره.', mastery: 'طلاقة تعبيرية بنسبة 80%' }
+      ]
+    },
+    myk_8: {
+      domain: 'spoken_language',
+      code: 'MYK-LANG-8',
+      title: 'سرد القصص والتعبير الشفهي المتسلسل',
+      goals: [
+        { text: 'أن يسرد التلميذ قصة قصيرة مرتبة الأحداث ذات بداية ووسط ونهاية مترابطة منطقياً في 4 من 5 محاولات.', mastery: 'سرد متسلسل مستقل 80%' }
+      ]
+    },
+    myk_9: {
+      domain: 'spoken_language',
+      code: 'MYK-LANG-9',
+      title: 'بناء الأفكار وتطوير المفاهيم المجردة',
+      goals: [
+        { text: 'أن يربط التلميذ بين السبب والنتيجة ويقدم تفسيراً منطقياً للمفاهيم التعليمية عند سؤاله.', mastery: 'إجابة منطقية بنسبة 80%' }
+      ]
+    },
+    myk_10: {
+      domain: 'orientation_spatial_temporal',
+      code: 'MYK-ORI-10',
+      title: 'إدراك الوقت والتنظيم الزمني',
+      goals: [
+        { text: 'أن يتعرف التلميذ على مفاهيم الوقت (اليوم، أمس، غداً، فترات الحصص) وينظم وقته لإنجاز المهام في الزمن المحدد.', mastery: 'دقة 85% في الجدول اليومي' }
+      ]
+    },
+    myk_11: {
+      domain: 'orientation_spatial_temporal',
+      code: 'MYK-ORI-11',
+      title: 'إدراك المكان والتنقل في البيئة المدرسية',
+      goals: [
+        { text: 'أن يتنقل التلميذ في أرجاء المدرسة وغرف الأنشطة باستقلالية دون أن يضل طريقه أو يتردد.', mastery: 'استقلالية 100%' }
+      ]
+    },
+    myk_12: {
+      domain: 'orientation_spatial_temporal',
+      code: 'MYK-ORI-12',
+      title: 'إدراك العلاقات والروابط المنطقية',
+      goals: [
+        { text: 'أن يستنتج التلميذ أوجه الشبه والاختلاف والعلاقات السببية بين الأشياء والأفكار المعروضة بدقة 80%.', mastery: '4 من أصل 5 محاولات' }
+      ]
+    },
+    myk_13: {
+      domain: 'orientation_spatial_temporal',
+      code: 'MYK-ORI-13',
+      title: 'معرفة وتطبيق الاتجاهات (يمين/يسار/شمال/جنوب)',
+      goals: [
+        { text: 'أن يميز التلميذ بين الاتجاهات (اليمين واليسار، فوق وتحت، أمام وخلف) على جسده وفي الفراغ بنسبة 90%.', mastery: 'دقة 90% في 5 أنشطة متتالية' }
+      ]
+    },
+    myk_14: {
+      domain: 'motor_coordination',
+      code: 'MYK-MOT-14',
+      title: 'التناسق الحركي العام والرشاقة',
+      goals: [
+        { text: 'أن يؤدي التلميذ الأنشطة الحركية والرياضية (الجري، القفز، تفادي العقبات) بتوافق وتوازن عضلي سليم.', mastery: 'أداء حركي متناسق بنسبة 85%' }
+      ]
+    },
+    myk_15: {
+      domain: 'motor_coordination',
+      code: 'MYK-MOT-15',
+      title: 'التوازن الثابت والمتحرك',
+      goals: [
+        { text: 'أن يحافظ التلميذ على توازن جسمه أثناء الوقوف على قدم واحدة أو المشي على خط مستقيم لمدة 10 ثوانٍ.', mastery: '3 محاولات متتالية ناجحة' }
+      ]
+    },
+    myk_16: {
+      domain: 'motor_coordination',
+      code: 'MYK-MOT-16',
+      title: 'الدقة والمهارة اليدوية واستخدام الأدوات',
+      goals: [
+        { text: 'أن يمسك التلميذ القلم والمقص والأدوات اليدوية بقبضة سليمة ويؤدي مهام الرسم والقص بدقة وتآزر بصري حركي.', mastery: 'دقة 80% في المهام اليدوية' }
+      ]
+    },
+    myk_17: {
+      domain: 'personal_social_behavior',
+      code: 'MYK-SOC-17',
+      title: 'التعاون والمشاركة مع الزملاء والمعلمين',
+      goals: [
+        { text: 'أن يشارك التلميذ في الأنشطة والمجموعات التعاونية ويتفاعل بإيجابية مع أقرانه في 80% من فرص العمل الجماعي.', mastery: 'مشاركة إيجابية في 4 من 5 أنشطة' }
+      ]
+    },
+    myk_18: {
+      domain: 'personal_social_behavior',
+      code: 'MYK-SOC-18',
+      title: 'الانتباه والتركيز واستدامة الانتباه للمهمة',
+      goals: [
+        { text: 'أن يحافظ التلميذ على تركيزه وانتباهه للمهمة التعليمية الفردية لمدة 15 دقيقة متواصلة دون تشتت ملحوظ.', mastery: 'في 4 من أصل 5 جلسات' }
+      ]
+    },
+    myk_19: {
+      domain: 'personal_social_behavior',
+      code: 'MYK-SOC-19',
+      title: 'التنظيم وترتيب الأدوات والواجبات',
+      goals: [
+        { text: 'أن يرتب التلميذ أدواته الدراسية وحقيبته المدرسية ويحافظ على نظافة طاولته بالحد الأدنى من التذكير.', mastery: 'استقلالية 85%' }
+      ]
+    },
+    myk_20: {
+      domain: 'personal_social_behavior',
+      code: 'MYK-SOC-20',
+      title: 'التصرف والتكيف في المواقف الجديدة',
+      goals: [
+        { text: 'أن يتعامل التلميذ بهدوء وثقة مع التغييرات الطارئة في الجدول المدرسي أو المعلمين دون قلق مفرط.', mastery: 'تكيف هادئ في 80% من المواقف' }
+      ]
+    },
+    myk_21: {
+      domain: 'personal_social_behavior',
+      code: 'MYK-SOC-21',
+      title: 'التقبل الاجتماعي وبناء الصداقات',
+      goals: [
+        { text: 'أن يبادر التلميذ بالتواصل المقبول ويكوّن علاقات إيجابية متبادلة مع زملائه في الصف وفترات الاستراحة.', mastery: 'تفاعل اجتماعي يومي إيجابي' }
+      ]
+    },
+    myk_22: {
+      domain: 'personal_social_behavior',
+      code: 'MYK-SOC-22',
+      title: 'المسؤولية الذاتية والاعتماد على النفس',
+      goals: [
+        { text: 'أن يتحمل التلميذ مسؤولية أدواته وواجباته المدرسية وينفذ المهام الموكلة إليه دون حاجة لمراقبة مستمرة.', mastery: 'إنجاز مستقل بنسبة 85%' }
+      ]
+    },
+    myk_23: {
+      domain: 'personal_social_behavior',
+      code: 'MYK-SOC-23',
+      title: 'إنجاز المهام والواجبات حتى النهاية',
+      goals: [
+        { text: 'أن يكمل التلميذ المهام والواجبات الصفية المكلف بها حتى نهايتها في الوقت المحدد قبل الانتقال لنشاط آخر.', mastery: 'في 80% من الحصص اليومية' }
+      ]
+    },
+    myk_24: {
+      domain: 'personal_social_behavior',
+      code: 'MYK-SOC-24',
+      title: 'احترام مشاعر الآخرين والذكاء الانفعالي',
+      goals: [
+        { text: 'أن يراعي التلميذ مشاعر زملائه ويتجنب السلوكيات المزعجة أو المقاطعة في المواقف الصفية والاجتماعية.', mastery: 'في 90% من المواقف الصفية' }
+      ]
+    }
+  },
   // CARS-2 Items to IEP Goals
   cars: {
     1: {
@@ -412,19 +608,22 @@ export const SCALE_GOAL_TEMPLATES = {
 };
 
 /**
- * تحليل درجات استجابة المقياس واستخراج الأهداف السلوكية المقترحة لنقاط الاحتياج
- * @param {string} measureId - معرف المقياس (cars, gars3, vineland_3, portage_early, ...)
+ * تحليل درجات استجابة المقياس واستخراج الأهداف السلوكية والتأهيلية المقترحة
+ * مرتبة حسب شدة القصور والأولوية الإكلينيكية، ومزودة بوصف مستوى الأداء الحالي (PLEP) وبنك الاستراتيجيات
+ * @param {string} measureId - معرف المقياس
  * @param {object} responses - درجات البنود المسجلة
  * @param {Array} items - قائمة بنود المقياس
- * @returns {Array} قائمة الأهداف المقترحة مع الأكواد ومستويات الإتقان
+ * @returns {Array} قائمة الأهداف مرتبة بالأولوية ومكتملة البيانات
  */
 export function extractRecommendedGoals(measureId, responses = {}, items = []) {
   const recommended = [];
   const rawId = (measureId || 'cars').toLowerCase().replace(/[-_]/g, '');
   
   let lookupKey = 'cars';
-  if (rawId.includes('cars')) lookupKey = 'cars';
-  if (rawId.includes('ldes') || rawId.includes('learningdiff') || rawId.includes('learning')) lookupKey = 'learning_difficulties';
+  if (rawId.includes('myklebust') || rawId.includes('prs')) lookupKey = 'myklebust';
+  else if (rawId.includes('sartawi') || rawId.includes('sarta')) lookupKey = 'sartawi';
+  else if (rawId.includes('cars')) lookupKey = 'cars';
+  else if (rawId.includes('ldes') || rawId.includes('learningdiff') || rawId.includes('learning')) lookupKey = 'learning_difficulties';
   else if (rawId.includes('pep3') || rawId.includes('pep')) lookupKey = 'pep3';
   else if (rawId.includes('gars')) lookupKey = 'gars_3';
   else if (rawId.includes('srs')) lookupKey = 'srs';
@@ -437,199 +636,287 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
 
   const templates = SCALE_GOAL_TEMPLATES[lookupKey] || {};
 
-  if (lookupKey === 'learning_difficulties') {
+  // Helper to generate 3-part PLEP Statement
+  const generatePlepBaseline = (itemTitle, score, maxScore, conditionDesc, supportDesc) => {
+    return `مستوى الأداء الحالي (PLEP): يظهر التلميذ (${conditionDesc || `قصوراً ملحوظاً في ${itemTitle}`}) برتبة تقييم (${score}/${maxScore})، مما يمثل فجوة أداء حادة تستدعي (${supportDesc || 'تدخلاً فردياً وتدريباً منظماً عبر معينات بصرية وتلقين متدرج'}).`;
+  };
+
+  // Helper to build enriched goal item
+  const buildGoalItem = ({
+    code,
+    domain,
+    title,
+    text,
+    mastery,
+    reason,
+    priorityRank,
+    priority,
+    baseline,
+    durationWeeks = 8,
+  }) => {
+    const strategyData = getStrategiesForDomain(domain);
+    return {
+      id: uid(),
+      code: code || `IEP-${Math.floor(100 + Math.random() * 900)}`,
+      domain: domain || 'general',
+      title: title || 'هدف تأهيلي فردي',
+      text,
+      mastery: mastery || 'إتقان 80% في جلستين متتاليتين',
+      baseline: baseline || `مستوى الأداء الحالي: فجوة أداء قائمة في مهارة (${title}) تستلزم تدخلاً إجرائياً.`,
+      reason,
+      priorityRank, // 1 = Critical, 2 = High, 3 = Medium, 4 = Low
+      priority, // 'critical' | 'high' | 'medium' | 'low'
+      durationWeeks,
+      strategies: strategyData.strategies ? strategyData.strategies.slice(0, 3).map(s => s.title) : ['النمذجة والتحليل المهاري', 'التعزيز الفوري المستمر'],
+      activities: strategyData.activities ? strategyData.activities.slice(0, 2).map(a => a.title) : ['أنشطة تدريبية وتطبيقية متدرجة'],
+      materials: strategyData.materials ? strategyData.materials.slice(0, 3) : ['بطاقات بصرية', 'أدوات حسية'],
+      status: 'قيد التدريب',
+      sessions: [],
+    };
+  };
+
+  if (lookupKey === 'myklebust') {
+    Object.entries(responses).forEach(([itemId, score]) => {
+      const numScore = Number(score);
+      const targetItem = items.find(it => String(it.id) === String(itemId) || String(it.num) === String(itemId));
+      const itemKey = itemId.startsWith('myk_') ? itemId : `myk_${itemId}`;
+      const itemTemplate = templates[itemKey] || templates[itemId];
+
+      // Myklebust: 1 = Critical Deficit, 2 = High Deficit, 3 = Borderline
+      if (numScore === 1 || numScore === 2 || numScore === 3) {
+        const priorityRank = numScore === 1 ? 1 : (numScore === 2 ? 2 : 3);
+        const priority = numScore === 1 ? 'critical' : (numScore === 2 ? 'high' : 'medium');
+        const itemTitle = targetItem?.title || targetItem?.text || itemTemplate?.title || `بند ${itemId}`;
+        const itemOptDesc = targetItem?.options?.find(o => o.score === numScore)?.text || (numScore === 1 ? 'عجز وإخفاق تام في المهارة' : 'أداء ضعيف دون المستوى');
+        
+        const baseline = generatePlepBaseline(
+          itemTitle,
+          numScore,
+          5,
+          `عجزاً في (${itemTitle}) - السلوك الملاحظ: "${itemOptDesc}"`,
+          numScore === 1 ? 'تدخلاً مكثفاً متعدد الحواس وخطط مساندة فردية' : 'إعادة تعليم وتدريبات نمائية موجهة'
+        );
+
+        if (itemTemplate && itemTemplate.goals) {
+          itemTemplate.goals.forEach(g => {
+            recommended.push(buildGoalItem({
+              code: itemTemplate.code,
+              domain: itemTemplate.domain,
+              title: itemTemplate.title,
+              text: g.text,
+              mastery: g.mastery,
+              reason: `مشتق من مقياس مايكل بيست (بند ${targetItem?.num || itemId}) بدرجة (${numScore}/5) - [${priority === 'critical' ? 'قصور حرج' : (priority === 'high' ? 'قصور مرتفع' : 'منطقة خطورة/حدية')}]`,
+              priorityRank,
+              priority,
+              baseline,
+              durationWeeks: numScore === 1 ? 12 : 8,
+            }));
+          });
+        } else {
+          recommended.push(buildGoalItem({
+            code: `MYK-GOAL-${itemId}`,
+            domain: targetItem?.dimensionId || 'general',
+            title: itemTitle,
+            text: `أن ينمي التلميذ مهارة (${itemTitle}) بنسبة إتقان لا تقل عن 80% في المواقف الصفية المعتادة.`,
+            mastery: 'إتقان 80% عبر جلستين متتاليتين',
+            reason: `مشتق من مقياس مايكل بيست بند [${itemId}] بدرجة تقييم (${numScore}/5)`,
+            priorityRank,
+            priority,
+            baseline,
+            durationWeeks: numScore === 1 ? 12 : 8,
+          }));
+        }
+      }
+    });
+  } else if (lookupKey === 'learning_difficulties' || lookupKey === 'sartawi') {
     Object.entries(responses).forEach(([itemId, score]) => {
       const numScore = Number(score);
       const targetItem = items.find(it => String(it.id) === String(itemId));
-      if (targetItem && (numScore === 2 || numScore === 3)) {
+      if (targetItem && (numScore === 1 || numScore === 2 || numScore === 3)) {
+        const priorityRank = numScore === 1 ? 1 : (numScore === 2 ? 2 : 3);
+        const priority = numScore === 1 ? 'critical' : (numScore === 2 ? 'high' : 'medium');
         const cleanText = targetItem.text.replace('صعوبة ', '').replace('ضعف ', '').replace('الخلط في ', '');
-        let goalText = `أن يظهر الطالب إتقاناً وتحسناً ملموساً في مهارة (${cleanText}) بنسبة دقة لا تقل عن 80% في الأنشطة الصفية وغرفة المصادر.`;
-        if (numScore === 3) {
-          goalText = `أن يتلقى الطالب تدخلاً علاجياً مكثفاً باستخدام أسلوب الحواس المتعددة لمعالجة (${cleanText}) وتحقيق نسبة إتقان 80% في 4 من أصل 5 محاولات.`;
+        
+        let goalText = `أن يظهر التلميذ إتقاناً وتحسناً ملموساً في مهارة (${cleanText}) بنسبة دقة لا تقل عن 80% في الأنشطة الصفية وغرفة المصادر.`;
+        if (numScore === 1 || numScore === 3) {
+          goalText = `أن يتلقى التلميذ تدخلاً علاجياً مكثفاً باستخدام أسلوب الحواس المتعددة لمعالجة صعوبة (${cleanText}) وتحقيق نسبة إتقان 80% في 4 من أصل 5 محاولات.`;
         }
-        recommended.push({
-          id: uid(),
-          code: `LDES-${targetItem.domainId ? targetItem.domainId.slice(0, 3).toUpperCase() : 'LD'}-${itemId}`,
-          domain: targetItem.domainId || 'academic',
+
+        const baseline = generatePlepBaseline(
+          cleanText,
+          numScore,
+          5,
+          `صعوبة واضحة في (${cleanText})`,
+          'استراتيجيات التحليل المهاري والترميز البصري'
+        );
+
+        recommended.push(buildGoalItem({
+          code: `LD-${targetItem.domainId ? targetItem.domainId.slice(0, 3).toUpperCase() : 'GEN'}-${itemId}`,
+          domain: targetItem.domainId || 'academic_reading',
           title: `علاج صعوبة: ${targetItem.text.slice(0, 35)}...`,
           text: goalText,
-          mastery: numScore === 3 ? 'تدخل علاجي مكثف 80%' : 'إتقان صفي بنسبة 80%',
-          reason: `مشتق من مقياس LDES بند [${itemId}] بمستوى صعوبة (${numScore === 3 ? 'شديدة دائمة' : 'متوسطة ملحوظة'})`,
-          priority: numScore === 3 ? 'high' : 'medium',
-          status: 'قيد التدريب',
-        });
-      }
-    });
-  } else if (lookupKey === 'pep3') {
-    Object.entries(responses).forEach(([itemId, score]) => {
-      const numScore = Number(score);
-      const targetItem = items.find(it => String(it.id) === String(itemId));
-      if (targetItem && (numScore === 0 || numScore === 1)) {
-        const cleanText = targetItem.text.replace('يستطيع ', '').replace('القدرة على ', '').replace('تمكن من ', '');
-        let goalText = `أن يظهر الطفل مهارة (${cleanText}) بنسبة إتقان لا تقل عن 80% في جلسات التربية الخاصة والتدريب النمائي.`;
-        if (numScore === 1) {
-          goalText = `أن يتم تعزيز مهارة بزوغ (Emerging) لدى الطفل لكي ينجزها بنجاح تام: (${cleanText}) بشكل مستقل في 4 من أصل 5 محاولات متتالية.`;
-        } else {
-          goalText = `أن يتعلم ويؤدي الطفل بنجاح مهارة: (${cleanText}) بالاعتماد على التلقين الجسدي واللفظي المتناقص بنسبة إتقان 80%.`;
-        }
-        recommended.push({
-          id: uid(),
-          code: `PEP3-${itemId.toUpperCase()}`,
-          domain: targetItem.domainId || 'cognitive',
-          title: `تطوير مهارة PEP-3: ${targetItem.text.slice(0, 30)}...`,
-          text: goalText,
-          mastery: numScore === 1 ? 'إنجاز مستقل تماماً' : 'تلقين جسدي متناقص بنسبة 80%',
-          reason: `مشتق من بند PEP-3 رقم [${itemId}] بمستوى استجابة (${numScore === 1 ? 'بزوغ (Emerging)' : 'إخفاق (Fail)'})`,
-          priority: numScore === 0 ? 'high' : 'medium',
-          status: 'قيد التدريب',
-        });
-      }
-    });
-  } else if (lookupKey === 'srs') {
-    Object.entries(responses).forEach(([itemId, score]) => {
-      const numScore = Number(score);
-      const targetItem = items.find(it => String(it.id) === String(itemId));
-      if (targetItem) {
-        const isDeficit = targetItem.isReverse ? (numScore <= 2) : (numScore >= 3);
-        if (isDeficit) {
-          const itemText = targetItem.text;
-          const cleanText = itemText.replace('قادر على ', '').replace('يستطيع ', '').replace('يعرف كيف ', '');
-          let goalText = `أن يظهر الطفل تحسناً في (${cleanText}) بنسبة لا تقل عن 80% بالاستعانة بالنمذجة السلوكية والتدريب الاجتماعي.`;
-          if (targetItem.isReverse) {
-            goalText = `أن يُظهِر الطفل قدرة مناسبة على (${cleanText}) في فترات التفاعل مع المعلمين والأقران بنسبة إتقان 80%.`;
-          } else {
-            goalText = `أن يتم تقليل سلوك القصور الاجتماعي المتمثل في (${cleanText}) واستبداله بسلوك تفاعلي تواصل لائق في 4 من أصل 5 مناسبات.`;
-          }
-          recommended.push({
-            id: uid(),
-            code: `SRS-${itemId.toUpperCase()}`,
-            domain: targetItem.domainId || 'social',
-            title: `تطوير مهارة: ${targetItem.text.slice(0, 35)}...`,
-            text: goalText,
-            mastery: '80% نجاح في مواقف التقييم اليومية',
-            reason: `مشتق من بند SRS-2 رقم [${itemId}] بدرجة قصور (${numScore === 4 ? 'شدة عالية' : 'شدة متوسطة'})`,
-            priority: numScore === 4 ? 'high' : 'medium',
-            status: 'قيد التدريب',
-          });
-        }
+          mastery: 'إتقان صفي بنسبة 80% عبر جلستين متتاليتين',
+          reason: `مشتق من مقياس صعوبات التعلم بند [${itemId}] بمستوى شدة (${priority === 'critical' ? 'قصور حرج' : 'متوسط'})`,
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: 10,
+        }));
       }
     });
   } else if (lookupKey === 'cars') {
     Object.entries(responses).forEach(([itemId, score]) => {
       const numScore = Number(score);
       if (numScore >= 2.0) {
+        const priorityRank = numScore >= 3.0 ? 1 : 2;
+        const priority = numScore >= 3.0 ? 'critical' : 'high';
         const itemTemplate = templates[itemId] || templates[Number(itemId)];
+        const targetItem = items.find(it => String(it.id) === String(itemId));
+        const itemTitle = itemTemplate?.title || targetItem?.name || `بند CARS ${itemId}`;
+
+        const baseline = generatePlepBaseline(
+          itemTitle,
+          numScore,
+          4,
+          `شذوذاً سلوكياً وصعوبة في (${itemTitle}) بدرجة انحراف (${numScore}/4)`,
+          'جلسات تحليل السلوك التطبيقي (ABA) واستخدام الجداول البصرية'
+        );
+
         if (itemTemplate) {
           itemTemplate.goals.forEach((g) => {
-            recommended.push({
-              id: uid(),
+            recommended.push(buildGoalItem({
               code: itemTemplate.code,
               domain: itemTemplate.domain,
               title: itemTemplate.title,
               text: g.text,
               mastery: g.mastery,
-              reason: `مشتق من بند CARS [${itemId}] بدرجة تقييم (${numScore}) - احتياج نمائي ملح`,
-              priority: numScore >= 3.0 ? 'high' : 'medium',
-              status: 'قيد التدريب',
-            });
+              reason: `مشتق من مقياس كارس-2 بند [${itemId}] بدرجة تقييم (${numScore}) - احتياج ملح`,
+              priorityRank,
+              priority,
+              baseline,
+              durationWeeks: 12,
+            }));
           });
         }
       }
     });
   } else if (lookupKey === 'gars_3') {
-    // For GARS-3: items with score >= 2 (أحياناً / نعم كثيراً) are deficits
     Object.entries(responses).forEach(([itemId, score]) => {
       const numScore = Number(score);
       if (numScore >= 2) {
+        const priorityRank = numScore === 3 ? 1 : 2;
+        const priority = numScore === 3 ? 'critical' : 'high';
         const itemTemplate = templates[itemId] || templates[Number(itemId)];
+        const targetItem = items.find(it => String(it.id) === String(itemId));
+        const itemTitle = targetItem?.text || itemTemplate?.title || `بند جيليام ${itemId}`;
+
+        const baseline = generatePlepBaseline(
+          itemTitle,
+          numScore,
+          3,
+          `تكراراً مرتفعاً لسلوك (${itemTitle}) بمعدل حدوث (${numScore === 3 ? 'نعم كثيراً' : 'أحياناً'})`,
+          'خطة دعم السلوك الإيجابي واستراتيجيات الإطفاء والتعزيز التفاضلي'
+        );
+
         if (itemTemplate) {
           itemTemplate.goals.forEach((g) => {
-            recommended.push({
-              id: uid(),
+            recommended.push(buildGoalItem({
               code: itemTemplate.code,
               domain: itemTemplate.domain,
               title: itemTemplate.title,
               text: g.text,
               mastery: g.mastery,
-              reason: `مشتق من بند جيليام-3 رقم [${itemId}] بدرجة تكرار (${numScore})`,
-              priority: numScore === 3 ? 'high' : 'medium',
-              status: 'قيد التدريب',
-            });
+              reason: `مشتق من مقياس جيليام-3 بند [${itemId}] بدرجة تكرار (${numScore})`,
+              priorityRank,
+              priority,
+              baseline,
+              durationWeeks: 10,
+            }));
           });
-        } else {
-          // Dynamic goal for this GARS-3 item
-          const targetItem = items.find(it => String(it.id) === String(itemId));
-          if (targetItem) {
-            recommended.push({
-              id: uid(),
-              code: `GARS-GOAL-${itemId}`,
-              domain: targetItem.domainId || 'behavior',
-              title: `علاج وتعديل سلوك بند [${itemId}]`,
-              text: `أن يقلل الطفل من تكرار سلوك (${targetItem.text}) بنسبة تحسن 75% مع تعزيز السلوك البديل الإيجابي.`,
-              mastery: 'انخفاض التكرار بنسبة 75%',
-              reason: `مشتق من مقياس جيليام 3 - البند [${itemId}] بدرجة (${numScore})`,
-              priority: numScore === 3 ? 'high' : 'medium',
-              status: 'قيد التدريب',
-            });
-          }
+        } else if (targetItem) {
+          recommended.push(buildGoalItem({
+            code: `GARS-GOAL-${itemId}`,
+            domain: targetItem.domainId || 'autism_communication',
+            title: `تعديل سلوك: ${itemTitle.slice(0, 30)}...`,
+            text: `أن يقلل التلميذ من تكرار سلوك (${targetItem.text}) بنسبة تحسن 75% مع تعزيز السلوك البديل الإيجابي.`,
+            mastery: 'انخفاض التكرار بنسبة 75% في 4 أسابيع متتالية',
+            reason: `مشتق من مقياس جيليام 3 - البند [${itemId}] بدرجة (${numScore})`,
+            priorityRank,
+            priority,
+            baseline,
+            durationWeeks: 8,
+          }));
         }
       }
     });
   } else {
-    // For other scales: check items with scores indicating deficit
-    // Usually lowest score or highest problem score
+    // Other scales (PEP-3, Vineland, Portage, SRS, etc.)
     items.forEach((it) => {
       const respVal = Number(responses[it.id] ?? 0);
       const isDeficit = (it.minValue === 0 && respVal <= 1) || (it.minValue === 1 && respVal <= 2) || (respVal >= 2 && measureId.includes('behavior'));
-      
+      const priorityRank = (respVal === 0 || respVal === 1) ? 1 : 2;
+      const priority = priorityRank === 1 ? 'critical' : 'high';
+
+      const baseline = generatePlepBaseline(
+        it.text || it.title,
+        respVal,
+        it.maxValue || 3,
+        `عجزاً أو صعوبة في مهارة (${it.text || it.title})`,
+        'تدريب فردي واستراتيجيات متخصصة'
+      );
+
       const itemTemplate = templates[it.id];
       if (itemTemplate && (isDeficit || Object.keys(responses).length === 0)) {
         itemTemplate.goals.forEach((g) => {
-          recommended.push({
-            id: uid(),
+          recommended.push(buildGoalItem({
             code: itemTemplate.code,
             domain: itemTemplate.domain || it.domain || 'general',
             title: itemTemplate.title || it.text,
             text: g.text,
             mastery: g.mastery,
             reason: `مشتق من قياس: ${it.text}`,
-            priority: 'medium',
-            status: 'قيد التدريب',
-          });
+            priorityRank,
+            priority,
+            baseline,
+            durationWeeks: 8,
+          }));
         });
       } else if (isDeficit) {
-        // Fallback dynamic goal generator
-        recommended.push({
-          id: uid(),
+        recommended.push(buildGoalItem({
           code: `GOAL-${it.id.toUpperCase()}`,
           domain: it.domain || 'general',
-          title: it.text,
-          text: `أن يظهر الطفل تحسناً ملموساً في مهارة (${it.text}) بنسبة إتقان لا تقل عن 80% في المواقف الصفية واليومية.`,
-          mastery: 'إتقان 80% في 4 من 5 جلسات',
+          title: it.text || it.title,
+          text: `أن يظهر التلميذ تحسناً ملموساً في مهارة (${it.text}) بنسبة إتقان لا تقل عن 80% في المواقف الصفية واليومية.`,
+          mastery: 'إتقان 80% في جلستين متتاليتين',
           reason: `مستخرج من بند المقياس: ${it.text}`,
-          priority: 'medium',
-          status: 'قيد التدريب',
-        });
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: 8,
+        }));
       }
     });
   }
 
-  // If none found because child scored high, provide enrichment goals from top domains
+  // Fallback / Enrichment if child had high scores
   if (recommended.length === 0 && items.length > 0) {
     items.slice(0, 3).forEach((it) => {
-      recommended.push({
-        id: uid(),
+      recommended.push(buildGoalItem({
         code: `ENR-${it.id.toUpperCase()}`,
         domain: it.domain || 'general',
-        title: it.text,
-        text: `أن يحافظ الطفل على إتقان وتعميم مهارة (${it.text}) مع أقران جدد وفي بيئات مختلفة.`,
+        title: it.text || it.title,
+        text: `أن يحافظ التلميذ على إتقان وتعميم مهارة (${it.text}) مع أقران جدد وفي بيئات صفية ومجتمعية مختلفة.`,
         mastery: 'تعميم مستقل 90%',
         reason: `هدف تعزيز وتعميم للمهارة المتقنة`,
+        priorityRank: 4,
         priority: 'low',
-        status: 'قيد التدريب',
-      });
+        baseline: `مستوى الأداء الحالي: التلميذ يتقن المهارة بنجاح، ويستهدف البرنامج تعميمها وتثبيتها.`,
+        durationWeeks: 6,
+      }));
     });
   }
 
-  return recommended;
+  // SORT BY SEVERITY (Priority Rank 1 Critical -> 2 High -> 3 Medium -> 4 Low)
+  return recommended.sort((a, b) => (a.priorityRank || 9) - (b.priorityRank || 9));
 }
+
