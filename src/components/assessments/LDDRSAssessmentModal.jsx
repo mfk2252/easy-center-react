@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { uid, todayStr } from '../../utils/dateHelpers';
 import { lsAdd, lsUpd } from '../../hooks/useStorage';
@@ -9,6 +9,32 @@ import {
   LDDRS_RATING_OPTIONS,
   calculateLDDRSPsychometrics,
 } from '../../data/lddrsData';
+import { StudentPicker, validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
+
+const EMPTY_LDDRS_FORM = {
+  mode: 'registered',
+  stuId: '',
+  studentName: '',
+  dob: '',
+  age: '',
+  diagnosis: '',
+  parentName: '',
+  parentPhone: '',
+  parentPhone2: '',
+  fileNo: '',
+  specialistName: '',
+  schoolName: 'المدرسة الابتدائية',
+  semester: 'الفصل الدراسي الأول',
+  academicYear: '1445 / 1446 هـ',
+  evaluatorRole: 'أخصائي صعوبات التعلم / المرشد الطلابي',
+  relationship: 'معلم الفصل / معلم صعوبات التعلم',
+  date: todayStr(),
+  notes: '',
+  itemNotes: {},
+  scores: {},
+  clinicalSummary: '',
+  recommendations: '',
+};
 
 export default function LDDRSAssessmentModal({
   isOpen,
@@ -20,701 +46,741 @@ export default function LDDRSAssessmentModal({
 }) {
   const { toast } = useApp?.() || { toast: () => {} };
 
-  const [selectedStudentId, setSelectedStudentId] = useState(
-    initialData?.studentId || (students[0]?.id ? String(students[0].id) : '')
-  );
-  const [evaluatorName, setEvaluatorName] = useState(
-    initialData?.evaluator || initialData?.evaluatorName || (emps[0]?.name || 'أخصائي صعوبات التعلم')
-  );
-  const [evaluatorRole, setEvaluatorRole] = useState(initialData?.evaluatorRole || 'معلم صعوبات التعلم / أخصائي نفسي');
-  const [evalDate, setEvalDate] = useState(
-    initialData?.date || todayStr()
-  );
-  const [schoolName, setSchoolName] = useState(initialData?.schoolName || 'مدرسة التميز النموذجية');
-  const [sessionsCount, setSessionsCount] = useState(initialData?.sessionsCount || '5 حصص أسبوعياً');
-  const [notes, setNotes] = useState(initialData?.notes || '');
+  const [form, setForm] = useState(() => {
+    if (initialData) {
+      return {
+        ...EMPTY_LDDRS_FORM,
+        ...initialData,
+        scores: initialData.scores || initialData.results || {},
+        itemNotes: initialData.itemNotes || {},
+      };
+    }
+    return { ...EMPTY_LDDRS_FORM };
+  });
 
-  // Subscale selection
-  const [activeScaleId, setActiveScaleId] = useState('attention');
-  const [scores, setScores] = useState(initialData?.scores || initialData?.results || {});
-  const [viewMode, setViewMode] = useState('items'); // 'items' | 'summary'
-
-  const selectedStudent = useMemo(() => {
-    return students.find(s => String(s.id) === String(selectedStudentId)) || null;
-  }, [students, selectedStudentId]);
-
-  const activeScale = useMemo(() => {
-    return LDDRS_SCALES.find(s => s.id === activeScaleId) || LDDRS_SCALES[0];
-  }, [activeScaleId]);
-
-  const activeItems = useMemo(() => {
-    return LDDRS_ITEMS.filter(it => it.scaleId === activeScaleId);
-  }, [activeScaleId]);
+  const [activeScaleId, setActiveScaleId] = useState(LDDRS_SCALES[0]?.id || 'attention');
+  const [expandedNotes, setExpandedNotes] = useState({});
 
   const psychometrics = useMemo(() => {
-    return calculateLDDRSPsychometrics(scores, activeScaleId);
-  }, [scores, activeScaleId]);
-
-  const activeScalePsych = useMemo(() => {
-    return psychometrics.scaleResults.find(s => s.id === activeScaleId) || null;
-  }, [psychometrics, activeScaleId]);
+    return calculateLDDRSPsychometrics(form.scores || {});
+  }, [form.scores]);
 
   if (!isOpen) return null;
 
-  function handleScoreChange(itemId, value) {
-    setScores(prev => ({
-      ...prev,
-      [itemId]: Number(value),
+  function handleScoreChange(itemId, scoreValue) {
+    setForm(f => ({
+      ...f,
+      scores: {
+        ...f.scores,
+        [itemId]: Number(scoreValue),
+      },
     }));
   }
 
-  function handleAutoFill(targetScaleId = null, fillLevel = 'moderate') {
-    const newScores = { ...scores };
-    const itemsToFill = targetScaleId
-      ? LDDRS_ITEMS.filter(it => it.scaleId === targetScaleId)
-      : LDDRS_ITEMS;
-
-    itemsToFill.forEach(item => {
-      let val = 0;
-      if (fillLevel === 'normal') {
-        val = Math.random() < 0.8 ? 0 : 1; // score <= 20
-      } else if (fillLevel === 'mild') {
-        val = Math.random() < 0.5 ? 1 : 2; // score ~ 21-40
-      } else if (fillLevel === 'moderate') {
-        val = Math.random() < 0.5 ? 2 : 3; // score ~ 41-60
-      } else if (fillLevel === 'severe') {
-        val = Math.random() < 0.4 ? 3 : 4; // score ~ 61-80
-      }
-      newScores[item.id] = val;
-    });
-
-    setScores(newScores);
-    toast(`⚡ تم تعبئة استجابات نموذجية لمقياس الزيات (${fillLevel === 'normal' ? 'أداء طبيعي' : fillLevel === 'moderate' ? 'صعوبات متوسطة' : 'صعوبات شديدة'})`, 'ok');
+  function handleNoteChange(itemId, noteText) {
+    setForm(f => ({
+      ...f,
+      itemNotes: {
+        ...f.itemNotes,
+        [itemId]: noteText,
+      },
+    }));
   }
 
-  function handleSave() {
-    if (!selectedStudentId) {
-      toast('⚠️ يرجى اختيار التلميذ أولاً', 'er');
+  function toggleItemNote(itemId) {
+    setExpandedNotes(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId],
+    }));
+  }
+
+  function handleAutoFill(level = 'normal') {
+    const newScores = {};
+
+    LDDRS_ITEMS.forEach(it => {
+      if (level === 'normal') {
+        // Scores 0 or 1 -> Normal
+        newScores[it.id] = (it.id.charCodeAt(it.id.length - 1) % 4 === 0) ? 1 : 0;
+      } else if (level === 'mild') {
+        // Scores 1 or 2 -> Mild LD
+        newScores[it.id] = (it.id.charCodeAt(it.id.length - 1) % 3 === 0) ? 2 : 1;
+      } else if (level === 'moderate') {
+        // Scores 2 or 3 -> Moderate LD
+        newScores[it.id] = (it.id.charCodeAt(it.id.length - 1) % 2 === 0) ? 3 : 2;
+      } else if (level === 'severe') {
+        // Scores 3 or 4 -> Severe LD
+        newScores[it.id] = (it.id.charCodeAt(it.id.length - 1) % 2 === 0) ? 4 : 3;
+      }
+    });
+
+    setForm(f => ({ ...f, scores: newScores }));
+    toast(`⚡ تم تعبئة استجابات نموذجية لمقاييس الزيات (${level === 'normal' ? 'أداء طبيعي' : level === 'mild' ? 'صعوبات خفيفة' : level === 'moderate' ? 'صعوبات متوسطة' : 'صعوبات شديدة'})`, 'ok');
+  }
+
+  function applyAutoClinicalSummary() {
+    if (psychometrics.totalAnswered < 20) {
+      toast('⚠️ يرجى تقييم مقياس واحد على الأقل (20 بنداً) لتوليد الخلاصة التشخيصية المعتمدة', 'er');
       return;
     }
 
-    const assessmentRecord = {
-      id: initialData?.id || uid(),
+    const scalesReport = psychometrics.evaluatedScales.map(s => {
+      return `• ${s.name}: الدرجة الخام (${s.rawScore}/${s.maxScore}) - [${s.severity}] (الرتبة المئينية: ${s.percentile}%)`;
+    }).join('\n');
+
+    const deficitReport = psychometrics.deficitScales.length > 0
+      ? `المقاييس التي أظهرت قصوراً دالاً يستدعي التدخل:\n` + psychometrics.deficitScales.map(s => `- ${s.name}: ${s.severity}`).join('\n')
+      : 'جميع المقاييس التي تم تطبيقها تقع ضمن الحدود الطبيعية المقبولة.';
+
+    const summary = `تقرير التقييم ببطارية مقاييس التقدير التشخيصية لصعوبات التعلم (LDDRS) - أ.د. فتحي الزيات:\n\n` +
+      `- إجمالي البنود المقيمة: (${psychometrics.totalAnswered}) بنداً موزعة عبر (${psychometrics.evaluatedScales.length}) مقاييس فرعية.\n` +
+      `- مجموع الدرجات الخام الكلية: (${psychometrics.totalRawScore} / ${psychometrics.totalMaxScore}).\n\n` +
+      `القرار والتشخيص الإكلينيكي العام:\n` +
+      `[${psychometrics.overallStatus}]\n\n` +
+      `تحليل درجات المقاييس المطبقة:\n` +
+      `${scalesReport}\n\n` +
+      `${deficitReport}\n\n` +
+      `الخلاصة الإكلينيكية:\n` +
+      `${psychometrics.conclusionText}`;
+
+    const recs = psychometrics.deficitScales.length > 0
+      ? `1. إلحاق الطالب ببرنامج غرف المصادر لصعوبات التعلم وبدء تنفيذ الخطة التربوية الفردية (IEP).\n` +
+        `2. التركيز على التدخل العلاجي المعرفي والنمائي للمجالات المتأثرة (${psychometrics.deficitScales.map(s => s.name).join(' ، ')}).\n` +
+        `3. استخدام استراتيجيات تدريس صريحة ومتعددة الحواس وتقسيم المهام الأكاديمية إلى خطوات متدرجة.\n` +
+        `4. تعديل وتكييف بيئة الصف (تقليل المشتتات، الجلوس في مقدمة الفصل، تزويده بملخصات بصرية).\n` +
+        `5. تقديم تغذية راجعة فورية وإيجابية لتعزيز المفهوم الذاتي الأكاديمي لدى التلميذ.`
+      : `1. استمرار التلميذ في الصف الدراسي العادي مع المتابعة المستمرة.\n` +
+        `2. تعزيز المهارات ونقاط القوة المعرفية والأكاديمية.\n` +
+        `3. تقديم أنشطة إثرائية محفزة لنمو التفكير والذاكرة.`;
+
+    setForm(f => ({
+      ...f,
+      clinicalSummary: summary,
+      recommendations: recs,
+    }));
+
+    toast('✨ تم توليد الخلاصة التشخيصية والتوصيات التربوية بناءً على محكات د. فتحي الزيات', 'ok');
+  }
+
+  function handleSave() {
+    if (!validateStudentPick(form)) {
+      toast('⚠️ يرجى اختيار التلميذ أولاً من القائمة', 'er');
+      return;
+    }
+    if (!form.date) {
+      toast('⚠️ يرجى تحديد تاريخ التقييم', 'er');
+      return;
+    }
+
+    if (psychometrics.totalAnswered < 20) {
+      if (!window.confirm(`⚠️ تم تقييم ${psychometrics.totalAnswered} بنداً فقط. هل تود حفظ التقييم كمسودة؟`)) {
+        return;
+      }
+    }
+
+    const payload = {
+      ...form,
       measureId: 'lddrs_battery',
       scaleId: 'lddrs_battery',
       scaleType: 'lddrs',
-      measureName: 'بطارية مقاييس التقدير التشخيصية لصعوبات التعلم النمائية والأكاديمية (LDDRS)',
-      measureNameEn: 'Learning Disabilities Diagnostic Rating Scales (LDDRS)',
+      measureName: 'بطارية مقاييس التقدير التشخيصية لصعوبات التعلم (أ.د. فتحي الزيات)',
+      scaleName: 'بطارية مقاييس التقدير التشخيصية لصعوبات التعلم (أ.د. فتحي الزيات)',
       category: 'learning_academic',
       categoryName: 'صعوبات التعلم النمائية والأكاديمية',
       author: LDDRS_COPYRIGHT_INFO.authorAr,
-      studentId: selectedStudentId,
-      studentName: selectedStudent?.name || initialData?.studentName || 'تلميذ غير محدد',
-      studentGrade: selectedStudent?.grade || initialData?.studentGrade || 'الصف الابتدائي',
-      evaluator: evaluatorName,
-      evaluatorRole,
-      date: evalDate,
-      schoolName,
-      sessionsCount,
-      notes,
-      scores,
-      results: scores,
-      psychometrics,
       score: psychometrics.totalRawScore,
-      maxScore: psychometrics.totalMaxScore,
+      maxScore: psychometrics.totalMaxScore || 160,
+      percentage: `${Math.round((psychometrics.totalAnswered / LDDRS_ITEMS.length) * 100)}%`,
       level: psychometrics.overallStatus,
       severityKey: psychometrics.overallKey,
       severityColor: psychometrics.overallColor,
+      results: form.scores,
+      scores: form.scores,
+      itemNotes: form.itemNotes,
+      psychometrics,
       updatedAt: new Date().toISOString(),
     };
 
     if (initialData?.id) {
-      lsUpd('studentAssessments', initialData.id, assessmentRecord);
-      toast('✅ تم تحديث تطبيق بطارية الزيات LDDRS بنجاح', 'ok');
+      lsUpd('studentAssessments', initialData.id, payload);
+      toast('✅ تم تحديث بطارية الزيات لصعوبات التعلم (LDDRS) بنجاح', 'ok');
     } else {
       lsAdd('studentAssessments', {
-        ...assessmentRecord,
+        ...payload,
+        id: uid(),
         createdAt: new Date().toISOString(),
       });
-      toast('✅ تم حفظ تطبيق بطارية مقاييس التقدير التشخيصية (الزيات) بنجاح', 'ok');
+      toast('✅ تم حفظ تطبيق بطارية الزيات لصعوبات التعلم (LDDRS) بنجاح', 'ok');
     }
 
-    if (onSaved) onSaved(assessmentRecord);
+    if (onSaved) onSaved();
     onClose();
   }
 
+  const currentScale = LDDRS_SCALES.find(s => s.id === activeScaleId) || LDDRS_SCALES[0];
+  const currentScaleItems = LDDRS_ITEMS.filter(it => it.scaleId === activeScaleId);
+  const currentScalePsych = psychometrics.scaleResults.find(s => s.id === activeScaleId);
+
   return (
-    <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()} style={{ zIndex: 1100 }}>
       <div
-        className="mb"
+        className="mb mb-xl"
         style={{
-          maxWidth: 1040,
-          width: '96vw',
-          maxHeight: 'min(94vh, calc(100dvh - 24px))',
           padding: 0,
+          overflow: 'hidden',
           borderRadius: 16,
+          maxHeight: 'min(95vh, calc(100dvh - 20px))',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden',
-          boxShadow: '0 20px 45px rgba(0,0,0,0.25)',
+          width: '100%',
+          maxWidth: '1200px',
         }}
       >
-        {/* Header with Zayat Battery Identity */}
+        {/* Header */}
+        <div
+          className="fhd modal-header-custom"
+          style={{
+            padding: '14px 20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: 'linear-gradient(135deg, #991b1b 0%, #dc2626 50%, #ea580c 100%)',
+            color: '#fff',
+            flexShrink: 0,
+            gap: 12,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: '1.8rem' }}>🎯</span>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h3 style={{ margin: 0, fontSize: '1.12rem', fontWeight: 800, color: '#fff' }}>
+                  بطارية مقاييس التقدير التشخيصية لصعوبات التعلم (LDDRS)
+                </h3>
+                <span className="bdg" style={{ background: '#fee2e2', color: '#991b1b', fontWeight: 800, fontSize: '.74rem' }}>
+                  أ.د. فتحي مصطفى الزيات
+                </span>
+                <span className="bdg" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, fontSize: '.72rem' }}>
+                  8 مقاييس نمائية وأكاديمية مقننة
+                </span>
+              </div>
+              <p style={{ margin: '3px 0 0', fontSize: '.78rem', opacity: 0.92, fontWeight: 400 }}>
+                جامعة الخليج العربي · مقاييس الانتباه، الإدراك السمعي والبصري والحركي، الذاكرة، القراءة، الكتابة، الرياضيات
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={onClose}
+            style={{
+              background: 'rgba(255,255,255,0.2)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              padding: '6px 14px',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            ✕ إغلاق
+          </button>
+        </div>
+
+        {/* Live Psychometrics Status Banner */}
         <div
           style={{
-            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-            color: '#fff',
-            padding: '16px 22px',
-            borderBottom: '3px solid #dc2626',
+            background: '#f8fafc',
+            borderBottom: '1.5px solid #e2e8f0',
+            padding: '12px 20px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 12,
+            alignItems: 'center',
+            flexShrink: 0,
+          }}
+        >
+          {/* Total Answered & Raw Score */}
+          <div style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: 10, padding: '8px 12px' }}>
+            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>المجموع الكلي للبطارية:</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
+              <span style={{ fontSize: '1.3rem', fontWeight: 900, color: psychometrics.overallColor }}>
+                {psychometrics.totalRawScore}
+              </span>
+              <span style={{ fontSize: '.75rem', color: '#94a3b8' }}>/ {psychometrics.totalMaxScore || 640}</span>
+            </div>
+            <div style={{ fontSize: '.7rem', color: '#64748b', marginTop: 2 }}>
+              تم تقييم: {psychometrics.totalAnswered} من {LDDRS_ITEMS.length} بنداً
+            </div>
+          </div>
+
+          {/* Current Active Scale KPI */}
+          <div style={{ background: '#fff', border: `1.5px solid ${currentScalePsych?.severityColor || '#cbd5e1'}`, borderRadius: 10, padding: '8px 12px' }}>
+            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
+              <span>{currentScale.name}:</span>
+              <span style={{ color: currentScalePsych?.severityColor, fontWeight: 800 }}>
+                {currentScalePsych?.severity || 'غير مقيم'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: currentScalePsych?.severityColor || '#334155' }}>
+                {currentScalePsych?.rawScore || 0}
+              </span>
+              <span style={{ fontSize: '.75rem', color: '#94a3b8' }}>/ 80 (الرتبة: {currentScalePsych?.percentile || 0}%)</span>
+            </div>
+          </div>
+
+          {/* Deficit Scales Count */}
+          <div style={{ background: '#fff', border: `1px solid ${psychometrics.deficitScales.length > 0 ? '#fca5a5' : '#cbd5e1'}`, borderRadius: 10, padding: '8px 12px' }}>
+            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>المقاييس المتأثرة بالصعوبة:</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: psychometrics.deficitScales.length > 0 ? '#dc2626' : '#16a34a' }}>
+                {psychometrics.deficitScales.length} من {psychometrics.evaluatedScales.length || 8}
+              </span>
+              <span style={{ fontSize: '.75rem', color: '#64748b' }}>مقاييس</span>
+            </div>
+            <div style={{ fontSize: '.7rem', color: '#64748b', marginTop: 2 }}>
+              {psychometrics.deficitScales.length > 0 ? 'توجد صعوبات دالة تستدعي الدعم' : 'لا توجد صعوبات دالة'}
+            </div>
+          </div>
+
+          {/* Overall Clinical Decision */}
+          <div style={{ background: '#fff', border: `1.5px solid ${psychometrics.overallColor}`, borderRadius: 10, padding: '8px 12px' }}>
+            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>القرار التشخيصي العام:</div>
+            <div style={{ fontSize: '.88rem', fontWeight: 900, color: psychometrics.overallColor, marginTop: 2 }}>
+              {psychometrics.overallStatus}
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Action & Testing Bar */}
+        <div
+          style={{
+            background: '#fff1f2',
+            borderBottom: '1px solid #ffe4e6',
+            padding: '8px 20px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
-            gap: 12,
+            gap: 8,
+            flexShrink: 0,
           }}
         >
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <span
-                style={{
-                  background: '#dc2626',
-                  color: '#fff',
-                  padding: '2px 8px',
-                  borderRadius: 6,
-                  fontWeight: 800,
-                  fontSize: '.75rem',
-                }}
-              >
-                LDDRS
-              </span>
-              <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#f8fafc' }}>
-                بطارية مقاييس التقدير التشخيصية لصعوبات التعلم (الزيات)
-              </h2>
-            </div>
-            <div style={{ fontSize: '.78rem', color: '#94a3b8', marginTop: 4 }}>
-              إعداد: <strong style={{ color: '#f1f5f9' }}>{LDDRS_COPYRIGHT_INFO.authorAr}</strong> (جامعة الخليج العربي) · تشخيص صعوبات التعلم النمائية والأكاديمية
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ textAlign: 'left', background: 'rgba(255,255,255,0.08)', padding: '4px 10px', borderRadius: 8 }}>
-              <div style={{ fontSize: '.7rem', color: '#94a3b8' }}>المقاييس المكتملة</div>
-              <div style={{ fontSize: '.92rem', fontWeight: 800, color: '#38bdf8' }}>
-                {psychometrics.evaluatedScales.length} من {LDDRS_SCALES.length}
-              </div>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '.75rem', fontWeight: 800, color: '#991b1b' }}>تعبئة سريعة للتجربة:</span>
             <button
               type="button"
-              className="btn btn-sm btn-g"
-              onClick={onClose}
-              style={{ color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}
+              className="btn btn-xs"
+              onClick={() => handleAutoFill('normal')}
+              style={{ background: '#dcfce7', color: '#15803d', fontWeight: 700 }}
             >
-              ✕ إغلاق
+              ⚡ أداء عادي (لا توجد صعوبة)
+            </button>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={() => handleAutoFill('mild')}
+              style={{ background: '#fef3c7', color: '#b45309', fontWeight: 700 }}
+            >
+              ⚡ صعوبات خفيفة
+            </button>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={() => handleAutoFill('moderate')}
+              style={{ background: '#ffedd5', color: '#c2410c', fontWeight: 700 }}
+            >
+              ⚡ صعوبات متوسطة
+            </button>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={() => handleAutoFill('severe')}
+              style={{ background: '#fee2e2', color: '#b91c1c', fontWeight: 700 }}
+            >
+              ⚡ صعوبات شديدة
             </button>
           </div>
+
+          <button
+            type="button"
+            className="btn btn-xs"
+            onClick={applyAutoClinicalSummary}
+            style={{
+              background: 'linear-gradient(135deg, #991b1b, #dc2626)',
+              color: '#fff',
+              fontWeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <span>✨</span>
+            <span>توليد التقرير والخلاصة تلقائياً</span>
+          </button>
         </div>
 
-        {/* Student & Session Info Bar */}
+        {/* Subscales Selection Tabs */}
         <div
           style={{
-            background: '#f8fafc',
-            borderBottom: '1px solid var(--border-color)',
-            padding: '12px 20px',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: 12,
-            alignItems: 'center',
-          }}
-        >
-          <div>
-            <label style={{ display: 'block', fontSize: '.74rem', fontWeight: 700, color: 'var(--text-sub)', marginBottom: 3 }}>
-              التلميذ المفحوص *
-            </label>
-            <select
-              className="form-control"
-              style={{ padding: '6px 10px', fontSize: '.84rem', fontWeight: 600 }}
-              value={selectedStudentId}
-              onChange={e => setSelectedStudentId(e.target.value)}
-            >
-              {students.map(st => (
-                <option key={st.id} value={st.id}>
-                  {st.name} {st.grade ? `(${st.grade})` : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '.74rem', fontWeight: 700, color: 'var(--text-sub)', marginBottom: 3 }}>
-              القائم بالتقدير / الأخصائي
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              style={{ padding: '6px 10px', fontSize: '.84rem' }}
-              value={evaluatorName}
-              onChange={e => setEvaluatorName(e.target.value)}
-              placeholder="اسم المعلم أو الأخصائي"
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '.74rem', fontWeight: 700, color: 'var(--text-sub)', marginBottom: 3 }}>
-              المدرسة / الصف
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              style={{ padding: '6px 10px', fontSize: '.84rem' }}
-              value={schoolName}
-              onChange={e => setSchoolName(e.target.value)}
-              placeholder="اسم المدرسة"
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '.74rem', fontWeight: 700, color: 'var(--text-sub)', marginBottom: 3 }}>
-              تاريخ التقدير
-            </label>
-            <input
-              type="date"
-              className="form-control"
-              style={{ padding: '6px 10px', fontSize: '.84rem' }}
-              value={evalDate}
-              onChange={e => setEvalDate(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Subscales Navigation Ribbon */}
-        <div
-          style={{
-            display: 'flex',
-            overflowX: 'auto',
             background: '#fff',
-            borderBottom: '1px solid var(--border-color)',
-            padding: '8px 16px',
+            borderBottom: '1px solid #e2e8f0',
+            padding: '8px 20px',
+            display: 'flex',
             gap: 6,
+            overflowX: 'auto',
+            flexShrink: 0,
           }}
         >
-          {LDDRS_SCALES.filter(s => s.id !== 'social_emotional').map(sc => {
+          {LDDRS_SCALES.map(sc => {
             const scPsych = psychometrics.scaleResults.find(s => s.id === sc.id);
-            const isSelected = activeScaleId === sc.id;
+            const isDeficit = scPsych?.isDeficit;
+            const isComplete = scPsych?.completionRate === 100;
+            const isCurrent = activeScaleId === sc.id;
+
             return (
               <button
                 key={sc.id}
                 type="button"
-                onClick={() => {
-                  setActiveScaleId(sc.id);
-                  setViewMode('items');
-                }}
+                onClick={() => setActiveScaleId(sc.id)}
+                className={`btn btn-xs ${isCurrent ? 'btn-p' : 'btn-g'}`}
                 style={{
-                  padding: '6px 12px',
                   borderRadius: 8,
-                  border: isSelected ? `2px solid ${sc.color}` : '1px solid var(--border-color)',
-                  background: isSelected ? sc.bgLight : '#fff',
-                  color: isSelected ? sc.color : 'var(--text-main)',
-                  fontWeight: isSelected ? 800 : 600,
-                  fontSize: '.8rem',
+                  fontWeight: isCurrent ? 800 : 600,
+                  padding: '6px 12px',
+                  whiteSpace: 'nowrap',
+                  background: isCurrent ? '#dc2626' : undefined,
+                  color: isCurrent ? '#fff' : undefined,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.15s',
                 }}
               >
                 <span>{sc.icon}</span>
-                <span>{sc.name}</span>
-                {scPsych && scPsych.answeredCount > 0 && (
-                  <span
-                    style={{
-                      background: scPsych.severityColor,
-                      color: '#fff',
-                      borderRadius: 12,
-                      padding: '1px 6px',
-                      fontSize: '.68rem',
-                      fontWeight: 800,
-                    }}
-                  >
-                    {scPsych.rawScore} / 80
-                  </span>
-                )}
+                <span>{sc.name.replace('مقياس صعوبات ', '')}</span>
+                <span
+                  style={{
+                    background: isDeficit ? '#fee2e2' : isComplete ? '#dcfce7' : '#f1f5f9',
+                    color: isDeficit ? '#b91c1c' : isComplete ? '#15803d' : '#64748b',
+                    fontSize: '.68rem',
+                    padding: '1px 5px',
+                    borderRadius: 4,
+                    fontWeight: 700,
+                  }}
+                >
+                  {scPsych?.answeredCount ? `${scPsych.rawScore}/80` : '0/20'}
+                </span>
               </button>
             );
           })}
+        </div>
 
-          <button
-            type="button"
-            onClick={() => setViewMode('summary')}
+        {/* Scrollable Assessment Content */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', background: '#f8fafc' }}>
+          {/* Student Picker Card */}
+          <div
             style={{
-              padding: '6px 14px',
-              borderRadius: 8,
-              border: viewMode === 'summary' ? '2px solid #1e293b' : '1px dashed #64748b',
-              background: viewMode === 'summary' ? '#1e293b' : '#f1f5f9',
-              color: viewMode === 'summary' ? '#fff' : '#475569',
-              fontWeight: 800,
-              fontSize: '.82rem',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              marginRight: 'auto',
+              background: '#fff',
+              border: '1px solid #e2e8f0',
+              borderRadius: 12,
+              padding: '16px',
+              marginBottom: 16,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
             }}
           >
-            📊 التقرير والملف التشخيصي الشامل
-          </button>
-        </div>
+            <StudentPicker
+              form={form}
+              setForm={setForm}
+              students={students}
+              emps={emps}
+              showExtra={true}
+            />
 
-        {/* Modal Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', background: '#f8fafc' }}>
-          {viewMode === 'items' ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginTop: 14, paddingTop: 14, borderTop: '1px dashed #e2e8f0' }}>
+              <div>
+                <label className="lbl" style={{ fontSize: '.78rem' }}>المدرسة / المؤسسة التعليمية:</label>
+                <input
+                  type="text"
+                  className="inp"
+                  value={form.schoolName || ''}
+                  onChange={e => setForm(f => ({ ...f, schoolName: e.target.value }))}
+                  placeholder="المدرسة الابتدائية"
+                />
+              </div>
+
+              <div>
+                <label className="lbl" style={{ fontSize: '.78rem' }}>الفصل الدراسي:</label>
+                <select
+                  className="inp"
+                  value={form.semester || 'الفصل الدراسي الأول'}
+                  onChange={e => setForm(f => ({ ...f, semester: e.target.value }))}
+                >
+                  <option value="الفصل الدراسي الأول">الفصل الدراسي الأول</option>
+                  <option value="الفصل الدراسي الثاني">الفصل الدراسي الثاني</option>
+                  <option value="الفصل الدراسي الثالث">الفصل الدراسي الثالث</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="lbl" style={{ fontSize: '.78rem' }}>العام الدراسي:</label>
+                <input
+                  type="text"
+                  className="inp"
+                  value={form.academicYear || ''}
+                  onChange={e => setForm(f => ({ ...f, academicYear: e.target.value }))}
+                  placeholder="1445 / 1446 هـ"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Current Scale Banner Header */}
+          <div
+            style={{
+              background: currentScale.bgLight || '#fef2f2',
+              border: `1.5px solid ${currentScale.color || '#dc2626'}`,
+              borderRadius: 12,
+              padding: '12px 16px',
+              marginBottom: 14,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 8,
+            }}
+          >
             <div>
-              {/* Active Subscale Description & Status Card */}
-              <div
-                style={{
-                  background: '#fff',
-                  border: `1.5px solid ${activeScale.color}`,
-                  borderRadius: 12,
-                  padding: '12px 18px',
-                  marginBottom: 16,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: 12,
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: '1.4rem' }}>{activeScale.icon}</span>
-                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: activeScale.color }}>
-                      {activeScale.name} ({activeScale.nameEn})
-                    </h3>
-                    <span
-                      style={{
-                        background: activeScale.bgLight,
-                        color: activeScale.color,
-                        padding: '2px 8px',
-                        borderRadius: 6,
-                        fontWeight: 700,
-                        fontSize: '.72rem',
-                        border: `1px solid ${activeScale.color}40`,
-                      }}
-                    >
-                      {activeScale.typeName}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '.78rem', color: 'var(--text-sub)', marginTop: 4, maxWidth: 650 }}>
-                    {activeScale.description}
-                  </div>
-                </div>
-
-                {activeScalePsych && (
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <div style={{ textAlign: 'center', background: '#f8fafc', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-color)' }}>
-                      <div style={{ fontSize: '.68rem', color: 'var(--text-sub)' }}>الدرجة الخام</div>
-                      <div style={{ fontSize: '1.15rem', fontWeight: 900, color: activeScale.color }}>
-                        {activeScalePsych.rawScore} <span style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>/ 80</span>
-                      </div>
-                    </div>
-
-                    <div style={{ textAlign: 'center', background: activeScalePsych.severityColor + '15', padding: '6px 12px', borderRadius: 8, border: `1px solid ${activeScalePsych.severityColor}40` }}>
-                      <div style={{ fontSize: '.68rem', color: activeScalePsych.severityColor, fontWeight: 700 }}>مستوى الصعوبة</div>
-                      <div style={{ fontSize: '.9rem', fontWeight: 800, color: activeScalePsych.severityColor }}>
-                        {activeScalePsych.severity}
-                      </div>
-                    </div>
-
-                    <div style={{ textAlign: 'center', background: '#f8fafc', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-color)' }}>
-                      <div style={{ fontSize: '.68rem', color: 'var(--text-sub)' }}>الرتبة المئينية</div>
-                      <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#b45309' }}>
-                        %{activeScalePsych.percentile}
-                      </div>
-                    </div>
-                  </div>
-                )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: '1.3rem' }}>{currentScale.icon}</span>
+                <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: currentScale.color }}>
+                  {currentScale.name} ({currentScale.typeName})
+                </h4>
               </div>
+              <p style={{ margin: '4px 0 0', fontSize: '.78rem', color: '#475569' }}>
+                {currentScale.description}
+              </p>
+            </div>
 
-              {/* Quick Fill Actions */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: 12,
-                  flexWrap: 'wrap',
-                  gap: 8,
-                }}
-              >
-                <div style={{ fontSize: '.78rem', color: 'var(--text-sub)', fontWeight: 600 }}>
-                  تعليمات التقدير: حدد مدى تكرار وديمومة كل خاصية سلوكية لدى التلميذ خلال الشهرين الأخيرين.
-                </div>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <button
-                    type="button"
-                    className="btn btn-xs"
-                    style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #059669' }}
-                    onClick={() => handleAutoFill(activeScaleId, 'normal')}
-                  >
-                    تعبئة عادي (لا توجد صعوبة)
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-xs"
-                    style={{ background: '#fffbeb', color: '#b45309', border: '1px solid #b45309' }}
-                    onClick={() => handleAutoFill(activeScaleId, 'mild')}
-                  >
-                    تعبئة خفيف
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-xs"
-                    style={{ background: '#fff7ed', color: '#ea580c', border: '1px solid #ea580c' }}
-                    onClick={() => handleAutoFill(activeScaleId, 'moderate')}
-                  >
-                    تعبئة متوسط
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-xs"
-                    style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #dc2626' }}
-                    onClick={() => handleAutoFill(activeScaleId, 'severe')}
-                  >
-                    تعبئة شديد
-                  </button>
-                </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: '.72rem', color: '#64748b' }}>الدرجة الحالية:</div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 900, color: currentScalePsych?.severityColor || '#334155' }}>
+                {currentScalePsych?.rawScore || 0} / 80
               </div>
+              <span className="bdg" style={{ background: currentScalePsych?.severityColor ? `${currentScalePsych.severityColor}20` : '#e2e8f0', color: currentScalePsych?.severityColor || '#64748b', fontSize: '.7rem', fontWeight: 800 }}>
+                {currentScalePsych?.severity || 'غير مكتمل'}
+              </span>
+            </div>
+          </div>
 
-              {/* Items List Table */}
-              <div
-                style={{
-                  background: '#fff',
-                  borderRadius: 12,
-                  border: '1px solid var(--border-color)',
-                  overflow: 'hidden',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                }}
-              >
+          {/* Assessment Items List */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {currentScaleItems.map((it, idx) => {
+              const currentScore = form.scores[it.id];
+              const isAnswered = currentScore !== undefined && currentScore !== null;
+              const hasNote = Boolean(form.itemNotes[it.id]);
+              const isNoteOpen = expandedNotes[it.id] || hasNote;
+
+              return (
                 <div
+                  key={it.id}
                   style={{
-                    display: 'grid',
-                    gridTemplateColumns: '40px 1fr 340px',
-                    padding: '10px 14px',
-                    background: '#f1f5f9',
-                    borderBottom: '1px solid var(--border-color)',
-                    fontSize: '.78rem',
-                    fontWeight: 800,
-                    color: 'var(--text-main)',
+                    background: '#fff',
+                    border: `1.5px solid ${isAnswered ? (currentScore >= 3 ? '#fca5a5' : '#fed7aa') : '#e2e8f0'}`,
+                    borderRadius: 12,
+                    padding: '14px 16px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
                   }}
                 >
-                  <div>#</div>
-                  <div>الخصائص السلوكية المستهدفة بالتقدير</div>
-                  <div style={{ textAlign: 'center' }}>سلم التقدير الخماسي (الزيات)</div>
-                </div>
+                  {/* Item Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span
+                        style={{
+                          background: currentScale.color || '#dc2626',
+                          color: '#fff',
+                          fontWeight: 900,
+                          fontSize: '.76rem',
+                          padding: '2px 8px',
+                          borderRadius: 6,
+                        }}
+                      >
+                        بند {idx + 1}
+                      </span>
+                      <h4 style={{ margin: 0, fontSize: '.92rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                        {it.text}
+                      </h4>
+                    </div>
 
-                {activeItems.map((item, idx) => {
-                  const currentVal = scores[item.id];
-                  return (
-                    <div
-                      key={item.id}
+                    <button
+                      type="button"
+                      onClick={() => toggleItemNote(it.id)}
+                      className="btn btn-xs"
                       style={{
-                        display: 'grid',
-                        gridTemplateColumns: '40px 1fr 340px',
-                        padding: '10px 14px',
-                        borderBottom: '1px solid var(--border-color)',
-                        background: idx % 2 === 0 ? '#fff' : '#fcfcfc',
-                        alignItems: 'center',
-                        gap: 8,
+                        background: hasNote ? '#fef3c7' : '#f1f5f9',
+                        color: hasNote ? '#b45309' : '#64748b',
+                        fontWeight: 600,
+                        padding: '3px 8px',
+                        borderRadius: 6,
                       }}
                     >
-                      <div style={{ fontWeight: 800, color: 'var(--text-sub)', fontSize: '.84rem' }}>
-                        {item.num}
-                      </div>
-                      <div style={{ fontSize: '.86rem', color: 'var(--text-main)', lineHeight: 1.5 }}>
-                        {item.text}
-                      </div>
-                      <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
-                        {LDDRS_RATING_OPTIONS.map(opt => {
-                          const isChecked = currentVal === opt.value;
-                          return (
-                            <button
-                              key={opt.value}
-                              type="button"
-                              onClick={() => handleScoreChange(item.id, opt.value)}
-                              title={opt.desc}
-                              style={{
-                                padding: '5px 8px',
-                                borderRadius: 6,
-                                border: isChecked ? `2px solid ${opt.color}` : '1px solid var(--border-color)',
-                                background: isChecked ? opt.color : '#fff',
-                                color: isChecked ? '#fff' : 'var(--text-main)',
-                                fontWeight: isChecked ? 800 : 500,
-                                fontSize: '.74rem',
-                                cursor: 'pointer',
-                                transition: 'all 0.1s',
-                                flex: 1,
-                                textAlign: 'center',
-                              }}
-                            >
-                              {opt.label.split(' ')[0]} ({opt.value})
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            /* Comprehensive Summary & Psychometric Matrix Tab */
-            <div>
-              <div
-                style={{
-                  background: '#fff',
-                  borderRadius: 12,
-                  border: '1px solid var(--border-color)',
-                  padding: 16,
-                  marginBottom: 16,
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                    الملف النفسي والتربوي لمقاييس التقدير التشخيصية (LDDRS)
-                  </h3>
-                  <button
-                    type="button"
-                    className="btn btn-xs btn-p"
-                    onClick={() => handleAutoFill(null, 'moderate')}
+                      💬 {hasNote ? 'تعديل الملاحظة' : '+ ملاحظة سلوكية'}
+                    </button>
+                  </div>
+
+                  {/* 5 Rating Options */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                      gap: 8,
+                      marginTop: 10,
+                    }}
                   >
-                    ⚡ تعبئة نموذج تجريبي لكافة المقاييس
-                  </button>
-                </div>
+                    {LDDRS_RATING_OPTIONS.map(opt => {
+                      const isSelected = currentScore === opt.score;
+                      const isDeficit = opt.score >= 3;
 
-                {/* Subscales Matrix Table */}
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.82rem' }}>
-                  <thead>
-                    <tr style={{ background: '#f8fafc', borderBottom: '2px solid var(--border-color)', textAlign: 'right' }}>
-                      <th style={{ padding: '8px 10px' }}>المقياس التشخيصي</th>
-                      <th style={{ padding: '8px 10px' }}>النوع</th>
-                      <th style={{ padding: '8px 10px', textAlign: 'center' }}>الدرجة الخام (0-80)</th>
-                      <th style={{ padding: '8px 10px', textAlign: 'center' }}>الرتبة المئينية</th>
-                      <th style={{ padding: '8px 10px' }}>مستوى الشدة والحدة</th>
-                      <th style={{ padding: '8px 10px', textAlign: 'center' }}>إجراء</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {psychometrics.scaleResults.filter(s => s.id !== 'social_emotional').map(sc => (
-                      <tr key={sc.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                        <td style={{ padding: '10px', fontWeight: 700 }}>
-                          <span style={{ marginRight: 6 }}>{sc.icon}</span> {sc.name}
-                        </td>
-                        <td style={{ padding: '10px' }}>
-                          <span style={{ fontSize: '.72rem', background: sc.bgLight, color: sc.color, padding: '2px 6px', borderRadius: 4, fontWeight: 700 }}>
-                            {sc.typeName}
+                      return (
+                        <button
+                          key={opt.score}
+                          type="button"
+                          onClick={() => handleScoreChange(it.id, opt.score)}
+                          style={{
+                            background: isSelected ? (isDeficit ? '#fee2e2' : '#ffedd5') : '#fafafa',
+                            border: `2px solid ${isSelected ? (isDeficit ? '#dc2626' : '#ea580c') : '#e2e8f0'}`,
+                            borderRadius: 8,
+                            padding: '8px 10px',
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 4,
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <span style={{ fontWeight: 800, fontSize: '.84rem', color: isSelected ? (isDeficit ? '#b91c1c' : '#c2410c') : '#334155' }}>
+                            {opt.label}
                           </span>
-                        </td>
-                        <td style={{ padding: '10px', textAlign: 'center', fontWeight: 800, color: sc.color, fontSize: '.95rem' }}>
-                          {sc.rawScore} / 80
-                        </td>
-                        <td style={{ padding: '10px', textAlign: 'center', fontWeight: 800, color: '#b45309' }}>
-                          %{sc.percentile}
-                        </td>
-                        <td style={{ padding: '10px' }}>
-                          <span
-                            style={{
-                              background: sc.severityColor + '15',
-                              color: sc.severityColor,
-                              border: `1px solid ${sc.severityColor}40`,
-                              padding: '3px 8px',
-                              borderRadius: 6,
-                              fontWeight: 800,
-                              fontSize: '.75rem',
-                            }}
-                          >
-                            {sc.severity}
+                          <span style={{ fontSize: '.68rem', color: '#64748b' }}>
+                            {opt.desc}
                           </span>
-                        </td>
-                        <td style={{ padding: '10px', textAlign: 'center' }}>
-                          <button
-                            type="button"
-                            className="btn btn-xs btn-g"
-                            onClick={() => {
-                              setActiveScaleId(sc.id);
-                              setViewMode('items');
-                            }}
-                          >
-                            تعديل الدرجات
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Expandable Note */}
+                  {isNoteOpen && (
+                    <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px dashed #e2e8f0' }}>
+                      <input
+                        type="text"
+                        className="inp"
+                        value={form.itemNotes[it.id] || ''}
+                        onChange={e => handleNoteChange(it.id, e.target.value)}
+                        placeholder={`أدخل ملاحظاتك الإكلينيكية حول استجابة الطالب للبند [${it.id}]...`}
+                        style={{ fontSize: '.8rem', padding: '6px 10px' }}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Clinical Impression & Recommendations */}
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid #e2e8f0',
+              borderRadius: 12,
+              padding: '16px',
+              marginTop: 20,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                📝 الخلاصة التشخيصية والتوصيات التربوية
+              </h3>
+              <button
+                type="button"
+                className="btn btn-xs"
+                onClick={applyAutoClinicalSummary}
+                style={{ background: '#fee2e2', color: '#991b1b', fontWeight: 700 }}
+              >
+                ✨ إعادة توليد النص
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 14 }}>
+              <div>
+                <label className="lbl" style={{ fontSize: '.8rem' }}>التقرير الإكلينيكي وتفسير درجات مقاييس الزيات:</label>
+                <textarea
+                  className="inp"
+                  rows={6}
+                  value={form.clinicalSummary || ''}
+                  onChange={e => setForm(f => ({ ...f, clinicalSummary: e.target.value }))}
+                  placeholder="اضغط على زر (توليد التقرير والخلاصة تلقائياً) أو اكتب التقرير التشخيصي هنا..."
+                  style={{ fontSize: '.82rem', lineHeight: 1.5 }}
+                />
               </div>
 
-              {/* Diagnostic Conclusion & Clinical Summary */}
-              <div
-                style={{
-                  background: '#fff',
-                  borderRadius: 12,
-                  border: `1.5px solid ${psychometrics.overallColor}`,
-                  padding: 16,
-                  marginBottom: 16,
-                }}
-              >
-                <h4 style={{ margin: '0 0 8px 0', fontSize: '.92rem', fontWeight: 800, color: psychometrics.overallColor }}>
-                  📌 الاستنتاج والقرار التشخيصي النهائي وفق معايير الزيات
-                </h4>
-                <div style={{ fontSize: '.86rem', color: 'var(--text-main)', lineHeight: 1.6 }}>
-                  {psychometrics.conclusionText}
-                </div>
-
-                <div style={{ marginTop: 12 }}>
-                  <label style={{ display: 'block', fontSize: '.76rem', fontWeight: 700, color: 'var(--text-sub)', marginBottom: 4 }}>
-                    ملاحظات الأخصائي والتوصيات الإكلينيكية والتدخلية:
-                  </label>
-                  <textarea
-                    className="form-control"
-                    rows={3}
-                    style={{ fontSize: '.84rem' }}
-                    value={notes}
-                    onChange={e => setNotes(e.target.value)}
-                    placeholder="اكتب التوصيات الخاصة بغرفة المصادر، التعديلات الأكاديمية، أو استراتيجيات التعلم..."
-                  />
-                </div>
+              <div>
+                <label className="lbl" style={{ fontSize: '.8rem' }}>توصيات الخطة الفردية (IEP) والتدخل العلاجي:</label>
+                <textarea
+                  className="inp"
+                  rows={6}
+                  value={form.recommendations || ''}
+                  onChange={e => setForm(f => ({ ...f, recommendations: e.target.value }))}
+                  placeholder="أدخل التوصيات الأكاديمية والتربوية والتعديلات الصفية المقترحة..."
+                  style={{ fontSize: '.82rem', lineHeight: 1.5 }}
+                />
               </div>
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Footer & Actions */}
+        {/* Modal Footer */}
         <div
           style={{
-            background: '#fff',
-            borderTop: '1px solid var(--border-color)',
             padding: '12px 20px',
+            background: '#fff',
+            borderTop: '1px solid #e2e8f0',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 10,
+            flexShrink: 0,
           }}
         >
-          <div style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>
-            حقوق النشر والملكية الفكرية: <strong>{LDDRS_COPYRIGHT_INFO.authorAr}</strong> · صعوبات التعلم النمائية والأكاديمية
+          <div style={{ fontSize: '.82rem', color: '#64748b' }}>
+            تم تقييم <strong style={{ color: '#dc2626' }}>{psychometrics.totalAnswered}</strong> بنداً · المجموع الخام: <strong style={{ color: psychometrics.overallColor }}>{psychometrics.totalRawScore}</strong> ({psychometrics.overallStatus})
           </div>
 
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button type="button" className="btn btn-sm btn-g" onClick={onClose}>
-              إلغاء
-            </button>
+          <div style={{ display: 'flex', gap: 10 }}>
             <button
               type="button"
-              className="btn btn-sm btn-p"
-              onClick={handleSave}
-              style={{ background: '#dc2626', borderColor: '#dc2626', color: '#fff', fontWeight: 800 }}
+              className="btn btn-g"
+              onClick={onClose}
+              style={{ padding: '8px 16px', fontWeight: 700 }}
             >
-              💾 حفظ نتائج التقييم واعتماد التقرير
+              إلغاء
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-p"
+              onClick={handleSave}
+              style={{
+                background: 'linear-gradient(135deg, #991b1b, #dc2626)',
+                color: '#fff',
+                padding: '8px 24px',
+                fontWeight: 800,
+                boxShadow: '0 4px 12px rgba(220, 38, 38, 0.25)',
+              }}
+            >
+              💾 حفظ وحساب نتيجة بطارية الزيات
             </button>
           </div>
         </div>

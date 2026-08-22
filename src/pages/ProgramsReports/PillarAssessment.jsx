@@ -589,6 +589,12 @@ export default function PillarAssessment({ onDataChange }) {
       return false;
     }
 
+    const isLdFeatured = selectedCategoryFilter === 'all' || selectedCategoryFilter === 'learning_academic';
+    const isLdScale = ['myklebust_scale', 'sartawi_scale', 'lddrs_battery', 'dev_learning_difficulties', 'dev_ld_preschool', 'learning_difficulties', 'ldes'].includes(s.id);
+    if (isLdFeatured && isLdScale) {
+      return false;
+    }
+
     return matchCat && matchSearch;
   });
 
@@ -1326,10 +1332,202 @@ export default function PillarAssessment({ onDataChange }) {
                 </div>
               )}
 
+              {/* Featured Learning Disabilities Highlight Cards (Myklebust, Sartawi, LDDRS, DevLD, LDES) if Learning Difficulties or All is active */}
+              {(selectedCategoryFilter === 'all' || selectedCategoryFilter === 'learning_academic') && !searchTerm && (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                    gap: 14,
+                    marginBottom: 20,
+                  }}
+                >
+                  {/* Myklebust PRS Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(8, 145, 178, 0.08), rgba(6, 182, 212, 0.04))',
+                      border: '1.5px solid #0891b2',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#cffafe', color: '#0e7490', fontWeight: 600, fontSize: '.72rem' }}>مقياس التقدير السلوكي المقنن</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>Myklebust PRS</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        📖 مقياس مايكل بست لتشخيص صعوبات التعلم (PRS)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        24 بنداً تشخيصياً · 5 مجالات نمائية وسلوكية (الاستيعاب السمعي، اللغة المنطوقة، التوجيه، التناسق الحركي، السلوك الشخصي والاجتماعي) · حاصل التعلم LQ
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setMyklebustEditData(null); setMyklebustModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#0891b2', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص مقياس مايكل بست
+                    </button>
+                  </div>
+
+                  {/* Sartawi Scale Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(30, 64, 175, 0.08), rgba(37, 99, 235, 0.04))',
+                      border: '1.5px solid #1e40af',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontWeight: 600, fontSize: '.72rem' }}>أ.د. زيدان السرطاوي</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>50 بنداً مقنناً</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        📘 مقياس د. زيدان السرطاوي لتشخيص صعوبات التعلم
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        50 بنداً معيارياً مقنناً · 3 أبعاد نمائية وأكاديمية (النمائي المعرفي، الأكاديمي، الانفعالي والسلوكي) · درجات معيارية تائية ورتب مئينية واشتقاق IEP
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setSartawiEditData(null); setSartawiModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#1e40af', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص مقياس السرطاوي
+                    </button>
+                  </div>
+
+                  {/* LDDRS (El-Zayat) Battery Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(220, 38, 38, 0.08), rgba(234, 88, 12, 0.04))',
+                      border: '1.5px solid #dc2626',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#fee2e2', color: '#991b1b', fontWeight: 600, fontSize: '.72rem' }}>أ.د. فتحي الزيات</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>بطارية LDDRS</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        🎯 بطارية مقاييس التقدير التشخيصية (LDDRS)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        8 مقاييس نمائية وأكاديمية مستقلة (الانتباه، الإدراك السمعي والبصري والحركي، الذاكرة، القراءة، الكتابة، الرياضيات) · تقنين خليجي وعربي شامل
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setLddrsEditData(null); setLddrsModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#dc2626', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص بطارية الزيات LDDRS
+                    </button>
+                  </div>
+
+                  {/* DevLD (Preschool) Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.08), rgba(20, 184, 166, 0.04))',
+                      border: '1.5px solid #0d9488',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontWeight: 600, fontSize: '.72rem' }}>أ.د. عادل عبدالله</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>80 عبارة نمائية</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        🧸 قائمة صعوبات التعلم النمائية لأطفال الروضة
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        الكشف والفرز المبكر لمرحلة الروضة وما قبل المدرسة وفق تصنيف Kirk & Chalfant للأبعاد المعرفية واللغوية والبصرية الحركية
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setDevLdEditData(null); setDevLdModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#0d9488', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص قائمة صعوبات الروضة
+                    </button>
+                  </div>
+
+                  {/* LDES Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.08), rgba(245, 158, 11, 0.04))',
+                      border: '1.5px solid #d97706',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#fef3c7', color: '#b45309', fontWeight: 600, fontSize: '.72rem' }}>مقياس تقييم صعوبات التعلم</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>LDES المقنن</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        📝 مقياس تقدير صعوبات التعلم (LDES)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        88 بنداً تشخيصياً مقنناً · 7 مجالات أكاديمية ومعرفية وسلوكية · حساب معامل صعوبات التعلم LDEQ والدرجات المعيارية واشتقاق الخطة الفردية
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setLdesEditData(null); setLdesModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#d97706', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص مقياس LDES
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* SCALES GRID */}
               {filteredScales.length === 0 ? (
-                // Only show EmptyState if we are NOT already showing featured cards inside autism or speech categories
-                !((selectedCategoryFilter === 'autism' || selectedCategoryFilter === 'speech_language') && !searchTerm) && (
+                // Only show EmptyState if we are NOT already showing featured cards inside autism or speech or LD categories
+                !((selectedCategoryFilter === 'autism' || selectedCategoryFilter === 'speech_language' || selectedCategoryFilter === 'learning_academic') && !searchTerm) && (
                   <EmptyState
                     icon="🔍"
                     title="لم يتم العثور على مقاييس تطابق البحث أو الفئة المختارة"
@@ -1476,13 +1674,14 @@ export default function PillarAssessment({ onDataChange }) {
                 const isDevLd = item.measureId === 'dev_learning_difficulties' || item.scaleType === 'dev_learning_difficulties' || item.measureId === 'dev_ld_preschool' || item.scaleType === 'dev_ld_preschool';
                 const isLddrs = item.measureId === 'lddrs_battery' || item.scaleType === 'lddrs' || item.measureId?.startsWith('lddrs');
                 const isSartawi = item.measureId === 'sartawi_scale' || item.scaleType === 'sartawi_ld' || item.scaleType === 'sartawi';
+                const isMyklebust = item.measureId === 'myklebust_scale' || item.scaleType === 'myklebust' || item.measureId === 'myklebust';
                 return (
                   <div
                     key={item.id}
                     className="prog-item-card"
                     style={{
-                      border: isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
-                      boxShadow: isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
+                      border: isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
+                      boxShadow: isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
@@ -1501,20 +1700,21 @@ export default function PillarAssessment({ onDataChange }) {
                           {isDevLd && <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>قائمة صعوبات الروضة</span>}
                           {isLddrs && <span className="bdg" style={{ background: '#fee2e2', color: '#991b1b', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>بطارية الزيات LDDRS</span>}
                           {isSartawi && <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>مقياس السرطاوي (50)</span>}
+                          {isMyklebust && <span className="bdg" style={{ background: '#cffafe', color: '#0e7490', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>مايكل بست PRS</span>}
                         </div>
                         <div className="prog-student-meta">{item.measureName} · {item.date}</div>
                       </div>
                       <span className="bdg b-gr" style={{ fontSize: '0.82rem', fontWeight: 800, flexShrink: 0 }}>
-                        {isSartawi ? `الخام: ${item.score || 0} / 250 (T=${item.tScore || item.psychometrics?.totalTScore || '—'})` : isLddrs ? `الدرجة الكلية: ${item.score || 0}` : isDevLd ? `الخام: ${item.score} / ${item.maxScore || 160}` : isLdes ? `معامل LDEQ: ${item.ldeq || item.score}` : isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
+                        {isMyklebust ? `الخام: ${item.score || 0} / 120 (LQ=${item.lq || item.psychometrics?.learningQuotient || '—'})` : isSartawi ? `الخام: ${item.score || 0} / 250 (T=${item.tScore || item.psychometrics?.totalTScore || '—'})` : isLddrs ? `الدرجة الكلية: ${item.score || 0}` : isDevLd ? `الخام: ${item.score} / ${item.maxScore || 160}` : isLdes ? `معامل LDEQ: ${item.ldeq || item.score}` : isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
                       </span>
                     </div>
 
-                    {isSartawi && (
+                    {isMyklebust && (
                       <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
-                        <span>التشخيص: <strong style={{ color: item.severityColor || '#1e40af' }}>{item.level || item.psychometrics?.overallStatus || 'السرطاوي'}</strong></span>
-                        <span>الدرجة التائية: <strong style={{ color: '#7c3aed' }}>T = {item.tScore || item.psychometrics?.totalTScore || '—'}</strong></span>
-                        {item.psychometrics?.deficitDimensions && (
-                          <span>الأبعاد المتأثرة: <strong style={{ color: '#dc2626' }}>{item.psychometrics.deficitDimensions.length} من 3</strong></span>
+                        <span>التشخيص: <strong style={{ color: item.severityColor || '#0891b2' }}>{item.level || item.psychometrics?.overallStatus || 'مايكل بست'}</strong></span>
+                        <span>حاصل التعلم: <strong style={{ color: '#0891b2' }}>LQ = {item.lq || item.psychometrics?.learningQuotient || '—'}</strong></span>
+                        {item.psychometrics?.deficitAreas && (
+                          <span>المجالات المتأثرة: <strong style={{ color: '#dc2626' }}>{item.psychometrics.deficitAreas.length} من 5</strong></span>
                         )}
                       </div>
                     )}

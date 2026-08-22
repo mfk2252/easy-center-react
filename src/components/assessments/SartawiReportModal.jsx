@@ -1,10 +1,15 @@
-import React, { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { useApp } from '../../context/AppContext';
 import {
   SARTAWI_COPYRIGHT_INFO,
   SARTAWI_DIMENSIONS,
   SARTAWI_ITEMS,
+  SARTAWI_RATING_OPTIONS,
   calculateSartawiPsychometrics,
 } from '../../data/sartawiData';
+import { sendReportToWhatsApp } from '../../pages/ProgramsReports/programsWhatsApp';
+import IepBridgeModal from '../../pages/ProgramsReports/IepBridgeModal';
+import { extractRecommendedGoals } from '../../utils/iepBridge';
 
 export default function SartawiReportModal({
   isOpen,
@@ -12,10 +17,22 @@ export default function SartawiReportModal({
   assessment,
   onEdit,
 }) {
+  const { center } = useApp?.() || {};
+  const [bridgeOpen, setBridgeOpen] = useState(false);
+
   const psych = useMemo(() => {
     if (!assessment) return null;
     if (assessment.psychometrics) return assessment.psychometrics;
     return calculateSartawiPsychometrics(assessment.scores || assessment.results || {});
+  }, [assessment]);
+
+  const recommendedGoals = useMemo(() => {
+    if (!assessment) return [];
+    return extractRecommendedGoals(
+      'sartawi',
+      assessment.scores || assessment.results || {},
+      SARTAWI_ITEMS
+    );
   }, [assessment]);
 
   if (!isOpen || !assessment || !psych) return null;
@@ -24,379 +41,355 @@ export default function SartawiReportModal({
     window.print();
   }
 
+  function handleShareWhatsApp() {
+    const text = `📋 *تقرير مقياس صعوبات التعلم المقنن (د. زيدان السرطاوي)*\n` +
+      `👤 *اسم التلميذ:* ${assessment.studentName || '—'}\n` +
+      `📅 *تاريخ الفحص:* ${assessment.date || '—'}\n` +
+      `--------------------------------\n` +
+      `📊 *الدرجة الخام الكلية:* ${psych.totalRawScore} من 250\n` +
+      `📈 *الدرجة التائية المعيارية:* T = ${psych.totalTScore} (الرتبة المئينية: ${psych.percentile}%)\n` +
+      `🎯 *التصنيف والقرار التشخيصي:* ${psych.overallStatus}\n` +
+      `⚠️ *الأبعاد المتأثرة:* ${psych.deficitDimensions.length} من 3 أبعاد\n` +
+      `--------------------------------\n` +
+      `💡 *الخلاصة:* ${assessment.clinicalSummary ? assessment.clinicalSummary.slice(0, 180) + '...' : psych.overallDescription}\n\n` +
+      `تم استخراج هذا التقرير رسمياً عبر منظومة برامج التربية الخاصة وصعوبات التعلم.`;
+
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  }
+
   const scores = assessment.scores || assessment.results || {};
 
   return (
-    <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()} style={{ zIndex: 1060 }}>
+    <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()} style={{ zIndex: 1100 }}>
       <div
-        className="mb"
+        className="mb mb-xl"
         style={{
-          maxWidth: 960,
-          width: '96%',
-          maxHeight: 'min(94vh, calc(100dvh - 16px))',
-          padding: 0,
+          width: '96vw',
+          maxWidth: 1040,
+          maxHeight: 'min(95vh, calc(100dvh - 20px))',
           display: 'flex',
           flexDirection: 'column',
+          backgroundColor: '#fff',
           borderRadius: 16,
+          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
           overflow: 'hidden',
-          background: '#f8fafc',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          padding: 0,
         }}
       >
-        {/* Modal Top Bar (Hidden in Print) */}
+        {/* Modal Top Bar */}
         <div
           className="no-print"
           style={{
-            background: '#1e3a8a',
-            color: '#fff',
             padding: '12px 20px',
+            background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)',
+            color: '#fff',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 8,
+            flexShrink: 0,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: '1.2rem' }}>📑</span>
-            <div style={{ fontWeight: 800, fontSize: '.95rem' }}>
-              التقرير التشخيصي الشامل لمقياس صعوبات التعلم (د. زيدان السرطاوي)
+            <span style={{ fontSize: '1.4rem' }}>📑</span>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#fff' }}>
+                تقرير مقياس صعوبات التعلم المقنن (د. زيدان السرطاوي)
+              </h3>
+              <span style={{ fontSize: '.74rem', opacity: 0.9 }}>
+                استمارة تفريغ ونتائج مقياس صعوبات التعلم · 50 عبارة مقننة
+              </span>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="btn btn-xs btn-p"
+              onClick={() => setBridgeOpen(true)}
+              style={{
+                fontWeight: 800,
+                background: 'linear-gradient(135deg, #4338ca, #3b82f6)',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
+              <span>🎓</span>
+              <span>اشتقاق خطة فردية (IEP)</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={handleShareWhatsApp}
+              style={{ background: '#22c55e', color: '#fff', fontWeight: 800 }}
+            >
+              📱 واتساب
+            </button>
+
             {onEdit && (
               <button
                 type="button"
-                className="btn btn-xs btn-g"
-                onClick={() => {
-                  onClose();
-                  onEdit(assessment);
-                }}
-                style={{ fontWeight: 700 }}
+                onClick={() => { onClose(); onEdit(assessment); }}
+                className="btn btn-xs"
+                style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', fontWeight: 700 }}
               >
                 ✏️ تعديل الدرجات
               </button>
             )}
+
             <button
               type="button"
-              className="btn btn-xs"
               onClick={handlePrint}
+              className="btn btn-xs"
               style={{ background: '#f59e0b', color: '#78350f', fontWeight: 800 }}
             >
               🖨️ طباعة التقرير
             </button>
+
             <button
               type="button"
-              className="btn btn-xs"
               onClick={onClose}
-              style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}
+              style={{
+                background: 'rgba(255,255,255,0.15)',
+                border: 'none',
+                color: '#fff',
+                width: 30,
+                height: 30,
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontSize: '1rem',
+              }}
             >
               ✕
             </button>
           </div>
         </div>
 
-        {/* Printable Report Document Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px', background: '#fff' }}>
-          {/* Official Ministry / Diagnostic Header */}
-          <div
-            style={{
-              borderBottom: '2px solid #1e3a8a',
-              paddingBottom: 16,
-              marginBottom: 20,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <div>
-              <div style={{ fontSize: '.84rem', fontWeight: 800, color: '#1e3a8a' }}>المملكة العربية السعودية</div>
+        {/* Printable Area */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '28px 32px', background: '#fff' }} className="print-area">
+          {/* Official Header */}
+          <div style={{ borderBottom: '2px solid #1e3a8a', paddingBottom: 16, marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontWeight: 800, fontSize: '.9rem', color: '#1e3a8a' }}>المملكة العربية السعودية</div>
               <div style={{ fontSize: '.8rem', color: '#475569' }}>وزارة التعليم · الإدارة العامة للتربية الخاصة</div>
-              <div style={{ fontSize: '.76rem', color: '#64748b' }}>برامج صعوبات التعلم والتشخيص النمائي والأكاديمي</div>
+              <div style={{ fontSize: '.75rem', color: '#64748b' }}>برامج صعوبات التعلم والتشخيص النمائي والأكاديمي</div>
             </div>
+            
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#1e3a8a', letterSpacing: '-0.5px' }}>
+              <div style={{ fontSize: '1.28rem', fontWeight: 900, color: '#1e3a8a' }}>
                 استمارة خلاصة نتائج مقياس صعوبات التعلم
               </div>
-              <div style={{ fontSize: '.84rem', fontWeight: 700, color: '#d97706', marginTop: 2 }}>
+              <div style={{ fontSize: '.84rem', fontWeight: 700, color: '#d97706', marginTop: 3 }}>
                 ملحق رقم (3) · إعداد وتقنين أ.د. زيدان أحمد السرطاوي
               </div>
             </div>
-            <div style={{ textAlign: 'left', fontSize: '.78rem', color: '#64748b' }}>
-              <div>تاريخ التقييم: <strong>{assessment.date}</strong></div>
-              <div>رقم السجل: <strong>{assessment.id?.slice(0, 8)}</strong></div>
+
+            <div style={{ textAlign: 'left', fontSize: '.8rem', color: '#64748b' }}>
+              <div>تاريخ التطبيق: <strong style={{ color: '#1e293b' }}>{assessment.date || '—'}</strong></div>
+              <div>الرقم المرجعي: <strong style={{ color: '#1e293b' }}>{assessment.id ? assessment.id.slice(0, 8) : 'SAR-LD'}</strong></div>
             </div>
           </div>
 
           {/* Student Info Card */}
-          <div
-            style={{
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: 10,
-              padding: '14px 18px',
-              marginBottom: 20,
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: 12,
-              fontSize: '.84rem',
-            }}
-          >
-            <div>
-              <span style={{ color: 'var(--text-sub)' }}>اسم التلميذ / التلميذة: </span>
-              <strong>{assessment.studentName || 'غير محدد'}</strong>
-            </div>
-            <div>
-              <span style={{ color: 'var(--text-sub)' }}>المدرسة: </span>
-              <strong>{assessment.schoolName || 'مدرسة الابتدائية النموذجية'}</strong>
-            </div>
-            <div>
-              <span style={{ color: 'var(--text-sub)' }}>الفصل الدراسي: </span>
-              <strong>{assessment.semester || 'الفصل الأول'}</strong>
-            </div>
-            <div>
-              <span style={{ color: 'var(--text-sub)' }}>القائم بالتقدير: </span>
-              <strong>{assessment.evaluator || 'أخصائي التربية الخاصة'}</strong>
-            </div>
-            <div>
-              <span style={{ color: 'var(--text-sub)' }}>علاقته بالطالب: </span>
-              <strong>{assessment.relationship || 'معلم الفصل / معلم الصعوبات'}</strong>
-            </div>
-            <div>
-              <span style={{ color: 'var(--text-sub)' }}>الصف الدراسي: </span>
-              <strong>{assessment.studentGrade || 'المرحلة الابتدائية'}</strong>
-            </div>
-          </div>
+          <table style={{ width: '100%', marginBottom: 18, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: 10, fontSize: '13px' }}>
+            <tbody>
+              <tr>
+                <td style={{ padding: '6px 10px' }}><b>اسم التلميذ:</b> {assessment.studentName || '—'}</td>
+                <td style={{ padding: '6px 10px' }}><b>العمر الزمني:</b> {assessment.age || '—'}</td>
+                <td style={{ padding: '6px 10px' }}><b>تاريخ الفحص:</b> {assessment.date || '—'}</td>
+              </tr>
+              <tr>
+                <td style={{ padding: '6px 10px' }}><b>المدرسة / الصف:</b> {assessment.schoolName || '—'} ({assessment.studentGrade || assessment.semester || '—'})</td>
+                <td style={{ padding: '6px 10px' }}><b>القائم بالتقييم:</b> {assessment.evaluator || assessment.specialistName || 'معلم صعوبات التعلم'}</td>
+                <td style={{ padding: '6px 10px' }}><b>ولي الأمر:</b> {assessment.parentName || '—'} ({assessment.parentPhone || '—'})</td>
+              </tr>
+            </tbody>
+          </table>
 
-          {/* Overall Diagnostic Summary Banner */}
-          <div
-            style={{
-              border: `2px solid ${psych.overallColor}`,
-              background: psych.overallKey === 'severe' ? '#fef2f2' : psych.overallKey === 'borderline' ? '#fffbeb' : '#f0fdf4',
-              borderRadius: 12,
-              padding: '16px 20px',
-              marginBottom: 24,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: 16,
-            }}
-          >
-            <div>
-              <div style={{ fontSize: '.84rem', fontWeight: 700, color: 'var(--text-sub)', marginBottom: 4 }}>
-                النتيجة والقرار التشخيصي النهائي (بناءً على جدول التائية المعياري ملحق 2)
-              </div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: psych.overallColor }}>
-                {psych.overallStatus}
-              </div>
-              <p style={{ margin: '6px 0 0', fontSize: '.82rem', color: '#334155', maxWidth: 650, lineHeight: 1.5 }}>
-                {psych.conclusionText}
-              </p>
-            </div>
-
-            <div style={{ textAlign: 'center', background: '#fff', padding: '12px 18px', borderRadius: 10, border: '1px solid #e2e8f0', minWidth: 140 }}>
-              <div style={{ fontSize: '.76rem', color: 'var(--text-sub)', fontWeight: 700 }}>الدرجة التائية المعيارية</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#1e3a8a', lineHeight: 1.2 }}>
-                T = {psych.totalTScore}
-              </div>
-              <div style={{ fontSize: '.76rem', color: '#64748b', marginTop: 2 }}>
-                الخام: {psych.totalRawScore} / 250
-              </div>
-            </div>
-          </div>
-
-          {/* Dimensions Performance Table (Form 3 Reproduction) */}
-          <div style={{ marginBottom: 24 }}>
-            <h4 style={{ margin: '0 0 10px', fontSize: '.95rem', fontWeight: 800, color: '#1e3a8a' }}>
-              مصفوفة الأبعاد الثلاثة وتوزيع الدرجات الخام ومستويات القطع
+          {/* KPI Psychometric Box */}
+          <div style={{ background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: 10, padding: 14, marginBottom: 20 }}>
+            <h4 style={{ margin: '0 0 10px 0', color: '#1e40af', fontSize: '14px', fontWeight: 800 }}>
+              📊 الدرجات المعيارية والتائية المعتمدة لمقياس السرطاوي:
             </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10, textAlign: 'center' }}>
+              <div style={{ background: '#fff', padding: '10px 14px', borderRadius: 8, border: '1px solid #bfdbfe' }}>
+                <div style={{ color: '#64748b', fontSize: '12px' }}>الدرجة الخام الكلية</div>
+                <div style={{ fontSize: '20px', fontWeight: 900, color: psych.overallColor }}>
+                  {psych.totalRawScore} <span style={{ fontSize: '12px', color: '#94a3b8' }}>/ 250</span>
+                </div>
+                <div style={{ fontSize: '11px', color: '#64748b' }}>الحد الأدنى: 50</div>
+              </div>
 
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.84rem' }}>
-              <thead>
-                <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1', textAlign: 'right' }}>
-                  <th style={{ padding: '10px 12px' }}>البعد / المجال الفرعي</th>
-                  <th style={{ padding: '10px 12px', textAlign: 'center' }}>عدد العبارات</th>
-                  <th style={{ padding: '10px 12px', textAlign: 'center' }}>الدرجة الخام</th>
-                  <th style={{ padding: '10px 12px', textAlign: 'center' }}>النسبة المئوية</th>
-                  <th style={{ padding: '10px 12px', textAlign: 'center' }}>الحد الفاصل للصعوبة</th>
-                  <th style={{ padding: '10px 12px', textAlign: 'center' }}>التشخيص الفرعي</th>
-                </tr>
-              </thead>
-              <tbody>
-                {psych.dimensionsResults.map(dim => (
-                  <tr key={dim.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '10px 12px', fontWeight: 700, color: '#1e293b' }}>
-                      <span style={{ marginRight: 6 }}>{dim.icon}</span> {dim.name}
-                    </td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center' }}>{dim.itemsCount}</td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: dim.color }}>
-                      {dim.rawScore} / {dim.maxRawScore}
-                    </td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center' }}>{dim.percentage}%</td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center', fontSize: '.78rem', color: '#64748b' }}>
-                      ≥ {dim.cutoffLD}
-                    </td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                      <span
-                        className="bdg"
-                        style={{
-                          background: dim.isDeficit ? '#fee2e2' : '#dcfce7',
-                          color: dim.severityColor,
-                          fontWeight: 800,
-                          fontSize: '.75rem',
-                        }}
-                      >
-                        {dim.severity}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                <tr style={{ background: '#f8fafc', fontWeight: 800, borderTop: '2px solid #cbd5e1' }}>
-                  <td style={{ padding: '10px 12px', color: '#1e3a8a' }}>المجموع الكلي للمقياس</td>
-                  <td style={{ padding: '10px 12px', textAlign: 'center' }}>50</td>
-                  <td style={{ padding: '10px 12px', textAlign: 'center', color: '#1e3a8a', fontSize: '.95rem' }}>
-                    {psych.totalRawScore} / 250
+              <div style={{ background: '#fff', padding: '10px 14px', borderRadius: 8, border: '1px solid #bfdbfe' }}>
+                <div style={{ color: '#64748b', fontSize: '12px' }}>الدرجة التائية المعيارية (T)</div>
+                <div style={{ fontSize: '20px', fontWeight: 900, color: '#1e40af' }}>
+                  T = {psych.totalTScore}
+                </div>
+                <div style={{ fontSize: '11px', color: '#64748b' }}>الرتبة المئينية: {psych.percentile}%</div>
+              </div>
+
+              <div style={{ background: '#fff', padding: '10px 14px', borderRadius: 8, border: `1px solid ${psych.deficitDimensions.length > 0 ? '#fecaca' : '#bfdbfe'}` }}>
+                <div style={{ color: '#64748b', fontSize: '12px' }}>الأبعاد المتأثرة بالعجز</div>
+                <div style={{ fontSize: '20px', fontWeight: 900, color: psych.deficitDimensions.length > 0 ? '#dc2626' : '#16a34a' }}>
+                  {psych.deficitDimensions.length} <span style={{ fontSize: '12px', color: '#94a3b8' }}>/ 3 أبعاد</span>
+                </div>
+                <div style={{ fontSize: '11px', color: psych.deficitDimensions.length > 0 ? '#dc2626' : '#16a34a', fontWeight: 700 }}>
+                  {psych.deficitDimensions.length > 0 ? 'توجد صعوبات دالة' : 'ضمن المدى الطبيعي'}
+                </div>
+              </div>
+
+              <div style={{ background: '#fff', padding: '10px 14px', borderRadius: 8, border: `1.5px solid ${psych.overallColor}` }}>
+                <div style={{ color: '#64748b', fontSize: '12px' }}>التصنيف التشخيصي النهائي</div>
+                <div style={{ fontSize: '14px', fontWeight: 900, color: psych.overallColor, marginTop: 4 }}>
+                  {psych.overallStatus}
+                </div>
+                <div style={{ fontSize: '11px', color: '#64748b' }}>نسبة الإنجاز: {psych.completionPercentage}%</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Dimensions Breakdown Table */}
+          <h4 style={{ color: '#1e40af', fontSize: '14px', margin: '16px 0 8px 0', fontWeight: 800 }}>
+            🌐 تحليل أداء التلميذ على أبعاد المقياس الثلاثة (الدرجات الخام والتائية):
+          </h4>
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 18, fontSize: '13px', border: '1px solid #e2e8f0' }}>
+            <thead>
+              <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
+                <th style={{ padding: '8px 12px', textAlign: 'right' }}>البعد التشخيصي</th>
+                <th style={{ padding: '8px 12px', textAlign: 'center' }}>الدرجة الخام</th>
+                <th style={{ padding: '8px 12px', textAlign: 'center' }}>الدرجة التائية (T-Score)</th>
+                <th style={{ padding: '8px 12px', textAlign: 'center' }}>الرتبة المئينية</th>
+                <th style={{ padding: '8px 12px', textAlign: 'center' }}>التفسير والنتيجة</th>
+              </tr>
+            </thead>
+            <tbody>
+              {psych.dimensions.map(d => (
+                <tr key={d.id} style={{ borderBottom: '1px solid #e2e8f0', background: d.isDeficit ? '#fef2f2' : '#ffffff' }}>
+                  <td style={{ padding: '8px 12px', fontWeight: 700, color: '#1e293b' }}>
+                    {d.name}
+                    <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 400 }}>{d.itemsCount} عبارة</div>
                   </td>
-                  <td style={{ padding: '10px 12px', textAlign: 'center' }}>{psych.totalPercentage}%</td>
-                  <td style={{ padding: '10px 12px', textAlign: 'center', fontSize: '.78rem' }}>≥ 150 (T≥60)</td>
-                  <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                    <span
-                      className="bdg"
-                      style={{
-                        background: psych.overallKey === 'severe' ? '#fee2e2' : psych.overallKey === 'borderline' ? '#fef3c7' : '#dcfce7',
-                        color: psych.overallColor,
-                        fontWeight: 800,
-                      }}
-                    >
-                      T = {psych.totalTScore} ({psych.overallStatus})
+                  <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 700 }}>
+                    {d.rawScore} / {d.maxRaw}
+                  </td>
+                  <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 900, color: d.isDeficit ? '#dc2626' : '#1e40af' }}>
+                    T = {d.tScore}
+                  </td>
+                  <td style={{ padding: '8px 12px', textAlign: 'center', color: '#64748b' }}>
+                    {d.percentile}%
+                  </td>
+                  <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                    <span style={{ fontWeight: 800, color: d.isDeficit ? '#dc2626' : '#16a34a', fontSize: '12px' }}>
+                      {d.levelLabel}
                     </span>
                   </td>
                 </tr>
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
 
-          {/* Critical Problematic Items (Score 4 or 5) for IEP Direct Translation */}
-          <div style={{ marginBottom: 24 }}>
-            <h4 style={{ margin: '0 0 10px', fontSize: '.95rem', fontWeight: 800, color: '#dc2626' }}>
-              🎯 العبارات الأشد تأثراً وتتطلب تدخلاً عاجلاً في الخطة الفردية (تقدير 4 و 5)
-            </h4>
+          {/* Detailed Items Table */}
+          <h4 style={{ color: '#1e40af', fontSize: '14px', margin: '16px 0 8px 0', fontWeight: 800 }}>
+            📝 جدول تقييم بنود مقياس السرطاوي التفصيلية (50 عبارة):
+          </h4>
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 20, fontSize: '12px', border: '1px solid #e2e8f0' }}>
+            <thead>
+              <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
+                <th style={{ padding: '6px 8px', width: '30px', textAlign: 'center' }}>#</th>
+                <th style={{ padding: '6px 8px', textAlign: 'right' }}>نص العبارة</th>
+                <th style={{ padding: '6px 8px', width: '130px', textAlign: 'center' }}>البعد</th>
+                <th style={{ padding: '6px 8px', width: '60px', textAlign: 'center' }}>الدرجة</th>
+                <th style={{ padding: '6px 8px', width: '130px', textAlign: 'center' }}>التقدير</th>
+                <th style={{ padding: '6px 8px', textAlign: 'right' }}>ملاحظات الأخصائي</th>
+              </tr>
+            </thead>
+            <tbody>
+              {SARTAWI_ITEMS.map(it => {
+                const itemScore = scores[it.id];
+                const opt = SARTAWI_RATING_OPTIONS.find(o => o.score === itemScore);
+                const note = assessment.itemNotes?.[it.id];
+                const dim = SARTAWI_DIMENSIONS.find(d => d.id === it.dimensionId);
+                const isDeficit = itemScore >= 4;
 
-            {(() => {
-              const criticalItems = SARTAWI_ITEMS.filter(it => (scores[it.id] || 1) >= 4);
-              if (criticalItems.length === 0) {
                 return (
-                  <div style={{ padding: 14, background: '#f0fdf4', color: '#15803d', borderRadius: 8, fontSize: '.84rem' }}>
-                    ✅ لا توجد عبارات حاصلة على درجات شديدة (4 أو 5) لدى الطالب.
-                  </div>
+                  <tr key={it.id} style={{ borderBottom: '1px solid #e2e8f0', background: isDeficit ? '#fef2f2' : '#ffffff' }}>
+                    <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 800, color: '#64748b' }}>{it.id}</td>
+                    <td style={{ padding: '6px 8px', fontWeight: 600, color: '#1e293b' }}>{it.text}</td>
+                    <td style={{ padding: '6px 8px', textAlign: 'center', fontSize: '11px', color: '#64748b' }}>{dim?.name}</td>
+                    <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 900, color: isDeficit ? '#dc2626' : '#1e40af' }}>
+                      {itemScore !== undefined ? itemScore : '—'}
+                    </td>
+                    <td style={{ padding: '6px 8px', textAlign: 'center', fontSize: '11px', fontWeight: 700, color: isDeficit ? '#dc2626' : '#16a34a' }}>
+                      {opt?.label || '—'}
+                    </td>
+                    <td style={{ padding: '6px 8px', color: '#475569', fontSize: '11px' }}>
+                      {note || '—'}
+                    </td>
+                  </tr>
                 );
-              }
-              return (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
-                  {criticalItems.map(item => {
-                    const val = scores[item.id];
-                    const dim = SARTAWI_DIMENSIONS.find(d => d.id === item.dimensionId);
-                    return (
-                      <div
-                        key={item.id}
-                        style={{
-                          background: '#fff',
-                          border: '1px solid #fee2e2',
-                          borderRadius: 8,
-                          padding: '10px 12px',
-                          borderRight: `4px solid ${val === 5 ? '#dc2626' : '#ea580c'}`,
-                          fontSize: '.8rem',
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <span style={{ fontWeight: 800, color: '#991b1b' }}>بند {item.num} ({dim?.name?.split(':')[0]})</span>
-                          <span className="bdg b-rd" style={{ fontSize: '.7rem' }}>
-                            {val === 5 ? 'عالية جداً (5)' : 'عالية (4)'}
-                          </span>
-                        </div>
-                        <div style={{ color: '#1e293b', fontWeight: 600 }}>{item.text}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })()}
-          </div>
+              })}
+            </tbody>
+          </table>
 
-          {/* Clinical Notes & Recommendations */}
-          <div style={{ marginBottom: 24 }}>
-            <h4 style={{ margin: '0 0 8px', fontSize: '.92rem', fontWeight: 800, color: '#1e3a8a' }}>
-              التوصيات التربوية والإكلينيكية لغرفة المصادر
+          {/* Clinical Impression & Recommendations */}
+          <div style={{ marginBottom: 16 }}>
+            <h4 style={{ color: '#1e40af', fontSize: '14px', margin: '0 0 6px 0', fontWeight: 800 }}>
+              📌 الخلاصة التشخيصية والتفسير الإكلينيكي:
             </h4>
-            <div
-              style={{
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                borderRadius: 8,
-                padding: '12px 16px',
-                fontSize: '.84rem',
-                color: '#334155',
-                lineHeight: 1.6,
-              }}
-            >
-              {assessment.notes ? (
-                <p style={{ margin: 0 }}>{assessment.notes}</p>
-              ) : (
-                <ul style={{ margin: 0, paddingRight: 20 }}>
-                  {psych.overallKey === 'severe' ? (
-                    <>
-                      <li>قبول الطالب في برنامج صعوبات التعلم بالمدرسة وتفعيل غرفة المصادر.</li>
-                      <li>إعداد خطة تربوية فردية (IEP) تركز على الأبعاد ذات الدرجات الحرجة (الأكاديمية، السلوكية، الإدراكية).</li>
-                      <li>استخدام استراتيجيات التدريس المباشر، وتجزئة المهمات، والتعزيز الإيجابي المستمر.</li>
-                      <li>تكييف البيئة الصفية لتقليل المشتتات البصرية والسمعية.</li>
-                    </>
-                  ) : psych.overallKey === 'borderline' ? (
-                    <>
-                      <li>تقديم دعم صفي وقائي من قبل معلم المادة والمرشد الطلابي.</li>
-                      <li>إعادة التقييم والملاحظة المستمرة خلال الفصل الدراسي.</li>
-                    </>
-                  ) : (
-                    <>
-                      <li>مواصلة التعلم بالصف العادي مع تشجيع المهارات الأكاديمية والدافعية الذاتية.</li>
-                    </>
-                  )}
-                </ul>
-              )}
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: 12, fontSize: '13px', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+              {assessment.clinicalSummary || psych.overallDescription}
             </div>
           </div>
 
-          {/* Official Signature Lines */}
-          <div
-            style={{
-              marginTop: 32,
-              paddingTop: 16,
-              borderTop: '1px dashed #cbd5e1',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 20,
-              textAlign: 'center',
-              fontSize: '.82rem',
-            }}
-          >
-            <div>
-              <div style={{ fontWeight: 800, color: '#1e3a8a', marginBottom: 28 }}>معلم / أخصائي صعوبات التعلم</div>
-              <div style={{ borderBottom: '1px solid #94a3b8', width: '80%', margin: '0 auto' }}></div>
-              <div style={{ marginTop: 4, color: '#64748b', fontSize: '.75rem' }}>{assessment.evaluator}</div>
+          <div style={{ marginBottom: 24 }}>
+            <h4 style={{ color: '#1e40af', fontSize: '14px', margin: '0 0 6px 0', fontWeight: 800 }}>
+              💡 التوصيات التربوية والخطة العلاجية المقترحة:
+            </h4>
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: 12, fontSize: '13px', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+              {assessment.recommendations || 'يوصى بتسجيل الطالب في برنامج غرف المصادر ووضع خطة تربوية فردية تركز على أبعاد القصور.'}
+            </div>
+          </div>
+
+          {/* Signatures Footer */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: 32, paddingTop: 16, borderTop: '2px solid #e2e8f0', fontSize: '13px' }}>
+            <div style={{ textAlign: 'center', width: '200px' }}>
+              <div style={{ fontWeight: 700, color: '#334155', marginBottom: 35 }}>معلم / أخصائي صعوبات التعلم</div>
+              <div style={{ borderTop: '1px dotted #94a3b8', paddingTop: 4, color: '#64748b' }}>
+                {assessment.evaluator || assessment.specialistName || 'التوقيع والاعتماد'}
+              </div>
             </div>
 
-            <div>
-              <div style={{ fontWeight: 800, color: '#1e3a8a', marginBottom: 28 }}>المرشد الطلابي / الأخصائي النفسي</div>
-              <div style={{ borderBottom: '1px solid #94a3b8', width: '80%', margin: '0 auto' }}></div>
-              <div style={{ marginTop: 4, color: '#64748b', fontSize: '.75rem' }}>التوقيع والاعتماد</div>
+            <div style={{ textAlign: 'center', width: '200px' }}>
+              <div style={{ fontWeight: 700, color: '#334155', marginBottom: 35 }}>المرشد الطلابي / الأخصائي النفسي</div>
+              <div style={{ borderTop: '1px dotted #94a3b8', paddingTop: 4, color: '#64748b' }}>
+                الختم والتوقيع
+              </div>
             </div>
 
-            <div>
-              <div style={{ fontWeight: 800, color: '#1e3a8a', marginBottom: 28 }}>مدير المدرسة / قائد المجمع</div>
-              <div style={{ borderBottom: '1px solid #94a3b8', width: '80%', margin: '0 auto' }}></div>
-              <div style={{ marginTop: 4, color: '#64748b', fontSize: '.75rem' }}>الختم الرسمي للمدرسة</div>
+            <div style={{ textAlign: 'center', width: '200px' }}>
+              <div style={{ fontWeight: 700, color: '#334155', marginBottom: 35 }}>مدير المدرسة / قائد البرنامج</div>
+              <div style={{ borderTop: '1px dotted #94a3b8', paddingTop: 4, color: '#64748b' }}>
+                الاعتماد الرسمي
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* IEP Bridge Modal Integration */}
+      {bridgeOpen && (
+        <IepBridgeModal
+          isOpen={bridgeOpen}
+          onClose={() => setBridgeOpen(false)}
+          assessment={assessment}
+          goals={recommendedGoals}
+        />
+      )}
     </div>
   );
 }

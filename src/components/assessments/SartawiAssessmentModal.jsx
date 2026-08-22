@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { uid, todayStr } from '../../utils/dateHelpers';
 import { lsAdd, lsUpd } from '../../hooks/useStorage';
@@ -9,6 +9,32 @@ import {
   SARTAWI_RATING_OPTIONS,
   calculateSartawiPsychometrics,
 } from '../../data/sartawiData';
+import { StudentPicker, validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
+
+const EMPTY_SARTAWI_FORM = {
+  mode: 'registered',
+  stuId: '',
+  studentName: '',
+  dob: '',
+  age: '',
+  diagnosis: '',
+  parentName: '',
+  parentPhone: '',
+  parentPhone2: '',
+  fileNo: '',
+  specialistName: '',
+  schoolName: 'المدرسة الابتدائية النموذجية',
+  semester: 'الفصل الدراسي الأول',
+  academicYear: '1445 / 1446 هـ',
+  evaluatorRole: 'معلم صعوبات التعلم / المرشد الطلابي',
+  relationship: 'معلم الفصل / معلم صعوبات التعلم',
+  date: todayStr(),
+  notes: '',
+  itemNotes: {},
+  scores: {},
+  clinicalSummary: '',
+  recommendations: '',
+};
 
 export default function SartawiAssessmentModal({
   isOpen,
@@ -20,52 +46,51 @@ export default function SartawiAssessmentModal({
 }) {
   const { toast } = useApp?.() || { toast: () => {} };
 
-  const [selectedStudentId, setSelectedStudentId] = useState(
-    initialData?.studentId || (students[0]?.id ? String(students[0].id) : '')
-  );
-  const [evaluatorName, setEvaluatorName] = useState(
-    initialData?.evaluator || (emps[0]?.name || 'معلم / أخصائي صعوبات التعلم')
-  );
-  const [evaluatorRole, setEvaluatorRole] = useState(
-    initialData?.evaluatorRole || 'معلم صعوبات التعلم / المرشد الطلابي'
-  );
-  const [relationship, setRelationship] = useState(
-    initialData?.relationship || 'معلم الفصل / معلم صعوبات التعلم'
-  );
-  const [evalDate, setEvalDate] = useState(
-    initialData?.date || todayStr()
-  );
-  const [schoolName, setSchoolName] = useState(
-    initialData?.schoolName || 'مدرسة الابتدائية النموذجية'
-  );
-  const [semester, setSemester] = useState(
-    initialData?.semester || 'الفصل الدراسي الأول'
-  );
-  const [notes, setNotes] = useState(initialData?.notes || '');
+  const [form, setForm] = useState(() => {
+    if (initialData) {
+      return {
+        ...EMPTY_SARTAWI_FORM,
+        ...initialData,
+        scores: initialData.scores || initialData.results || {},
+        itemNotes: initialData.itemNotes || {},
+      };
+    }
+    return { ...EMPTY_SARTAWI_FORM };
+  });
 
-  const [activeDimensionId, setActiveDimensionId] = useState('all');
-  const [scores, setScores] = useState(initialData?.scores || initialData?.results || {});
-  const [viewMode, setViewMode] = useState('items'); // 'items' | 'summary'
-
-  const selectedStudent = useMemo(() => {
-    return students.find(s => String(s.id) === String(selectedStudentId)) || null;
-  }, [students, selectedStudentId]);
+  const [activeTab, setActiveTab] = useState('all');
+  const [expandedNotes, setExpandedNotes] = useState({});
 
   const psychometrics = useMemo(() => {
-    return calculateSartawiPsychometrics(scores);
-  }, [scores]);
-
-  const filteredItems = useMemo(() => {
-    if (activeDimensionId === 'all') return SARTAWI_ITEMS;
-    return SARTAWI_ITEMS.filter(it => it.dimensionId === activeDimensionId);
-  }, [activeDimensionId]);
+    return calculateSartawiPsychometrics(form.scores || {});
+  }, [form.scores]);
 
   if (!isOpen) return null;
 
-  function handleScoreChange(itemId, value) {
-    setScores(prev => ({
+  function handleScoreChange(itemId, scoreValue) {
+    setForm(f => ({
+      ...f,
+      scores: {
+        ...f.scores,
+        [itemId]: Number(scoreValue),
+      },
+    }));
+  }
+
+  function handleNoteChange(itemId, noteText) {
+    setForm(f => ({
+      ...f,
+      itemNotes: {
+        ...f.itemNotes,
+        [itemId]: noteText,
+      },
+    }));
+  }
+
+  function toggleItemNote(itemId) {
+    setExpandedNotes(prev => ({
       ...prev,
-      [itemId]: Number(value),
+      [itemId]: !prev[itemId],
     }));
   }
 
@@ -74,591 +99,662 @@ export default function SartawiAssessmentModal({
 
     SARTAWI_ITEMS.forEach(item => {
       if (fillLevel === 'normal') {
-        // درجات منخفضة (1 أو 2) -> لا توجد صعوبات
-        newScores[item.id] = Math.random() > 0.3 ? 1 : 2;
+        // Low scores (1 or 2) -> No LD
+        newScores[item.id] = (item.id % 4 === 0) ? 2 : 1;
       } else if (fillLevel === 'borderline') {
-        // درجات متوسطة (2 أو 3 أو 4)
-        newScores[item.id] = Math.random() > 0.5 ? 3 : (Math.random() > 0.5 ? 2 : 4);
+        // Moderate scores (2, 3, 4)
+        newScores[item.id] = (item.id % 3 === 0) ? 4 : (item.id % 2 === 0 ? 3 : 2);
       } else if (fillLevel === 'ld') {
-        // درجات عالية (4 أو 5) -> صعوبة تعلم محتملة ومؤكدة
-        newScores[item.id] = Math.random() > 0.3 ? 5 : 4;
+        // High scores (4 or 5) -> LD confirmed
+        newScores[item.id] = (item.id % 3 === 0) ? 4 : 5;
       }
     });
 
-    setScores(newScores);
-    toast(`⚡ تم تعبئة استجابات نموذجية لمقياس السرطاوي (${fillLevel === 'normal' ? 'أداء طبيعي' : fillLevel === 'borderline' ? 'فئة حدية' : 'صعوبات تعلم محتملة'})`, 'ok');
+    setForm(f => ({ ...f, scores: newScores }));
+    toast(`⚡ تم تعبئة استجابات نموذجية لمقياس السرطاوي (${fillLevel === 'normal' ? 'أداء طبيعي' : fillLevel === 'borderline' ? 'فئة حدية' : 'صعوبات تعلم مؤكدة'})`, 'ok');
   }
 
-  function handleSave() {
-    if (!selectedStudentId) {
-      toast('⚠️ يرجى اختيار التلميذ أولاً', 'er');
+  function applyAutoClinicalSummary() {
+    if (psychometrics.totalAnswered < 15) {
+      toast('⚠️ يرجى تقييم 15 عبارة على الأقل لتوليد الخلاصة التشخيصية المعتمدة', 'er');
       return;
     }
 
-    const assessmentRecord = {
-      id: initialData?.id || uid(),
+    const dimensionDetails = psychometrics.dimensions.map(d => {
+      return `• ${d.name}: الدرجة الخام (${d.rawScore}/${d.maxRaw}) ➔ الدرجة التائية (T = ${d.tScore}) برتبة مئينية (${d.percentile}%) - [${d.levelLabel}]`;
+    }).join('\n');
+
+    const deficitsText = psychometrics.deficitDimensions.length > 0
+      ? `الأبعاد التي تظهر صعوبات واضحة تتطلب تدخلاً علاجياً:\n` + psychometrics.deficitDimensions.map(d => `- ${d.name} (T = ${d.tScore})`).join('\n')
+      : 'لا توجد أبعاد تقع في النطاق الحرج لصعوبات التعلم.';
+
+    const summary = `تقرير التقييم بمقياس صعوبات التعلم المقنن - إعداد وتقنين أ.د. زيدان أحمد السرطاوي (50 عبارة):\n\n` +
+      `- الدرجة الخام الكلية للمقياس: (${psychometrics.totalRawScore} / 250).\n` +
+      `- الدرجة التائية المعيارية الإجمالية: (T = ${psychometrics.totalTScore}) برتبة مئينية (${psychometrics.percentile}%).\n\n` +
+      `القرار التشخيصي الإكلينيكي:\n` +
+      `[${psychometrics.overallStatus}] - ${psychometrics.overallDescription}\n\n` +
+      `الأداء التفصيلي على أبعاد المقياس الثلاثة:\n` +
+      `${dimensionDetails}\n\n` +
+      `${deficitsText}\n\n` +
+      `الخلاصة:\n` +
+      `استناداً إلى معايير مقياس السرطاوي المقنن للبيئة العربية، ${psychometrics.recommendation}`;
+
+    const recs = psychometrics.overallKey === 'ld' || psychometrics.overallKey === 'borderline'
+      ? `1. تسجيل الطالب في برنامج صعوبات التعلم وغرف المصادر لتلقي التدريس الفردي المباشر.\n` +
+        `2. تصميم خطة تربوية فردية (IEP) تركز على مجالات الاحتياج (${psychometrics.deficitDimensions.map(d => d.name).join('، ')}).\n` +
+        `3. استخدام أسلوب التعلم النشط وتدريب الحواس المتعددة على مهارات القراءة والكتابة والعمليات الحسابية.\n` +
+        `4. تعديل وتكييف أساليب التقييم الصفي والامتحانات المدرسية (زيادة الوقت، تقليل عدد الفقرات، قراءة الأسئلة).\n` +
+        `5. تقديم برامج الدعم السلوكي والإرشادي لتعزيز الدافعية وثقة الطالب بنفسه.`
+      : `1. استمرار الطالب في بيئة التعليم العام مع المتابعة الصفية الدورية.\n` +
+        `2. تعزيز دافعية التعلم والمشاركة الفاعلة في الأنشطة المدرسية.\n` +
+        `3. تقديم برامج إثرائية لتطوير القدرات الأكاديمية والمهارات الذاتية.`;
+
+    setForm(f => ({
+      ...f,
+      clinicalSummary: summary,
+      recommendations: recs,
+    }));
+
+    toast('✨ تم توليد الخلاصة التشخيصية والتوصيات التربوية بناءً على تقنين د. زيدان السرطاوي', 'ok');
+  }
+
+  function handleSave() {
+    if (!validateStudentPick(form)) {
+      toast('⚠️ يرجى اختيار التلميذ أولاً من القائمة', 'er');
+      return;
+    }
+    if (!form.date) {
+      toast('⚠️ يرجى تحديد تاريخ التقييم', 'er');
+      return;
+    }
+
+    if (psychometrics.totalAnswered < SARTAWI_ITEMS.length) {
+      if (!window.confirm(`⚠️ تم تقييم ${psychometrics.totalAnswered} من أصل ${SARTAWI_ITEMS.length} عبارة. هل تود حفظ التقييم كمسودة؟`)) {
+        return;
+      }
+    }
+
+    const payload = {
+      ...form,
       measureId: 'sartawi_scale',
       scaleId: 'sartawi_scale',
       scaleType: 'sartawi_ld',
-      measureName: 'مقياس صعوبات التعلم (إعداد وتقنين د. زيدان السرطاوي)',
-      measureNameEn: 'Learning Disabilities Scale (Dr. Zaydan Al-Sartawi)',
+      measureName: 'مقياس صعوبات التعلم (أ.د. زيدان السرطاوي)',
+      scaleName: 'مقياس صعوبات التعلم (أ.د. زيدان السرطاوي)',
       category: 'learning_academic',
       categoryName: 'صعوبات التعلم الأكاديمية والسلوكية',
       author: SARTAWI_COPYRIGHT_INFO.authorAr,
-      studentId: selectedStudentId,
-      studentName: selectedStudent?.name || initialData?.studentName || 'تلميذ غير محدد',
-      studentGrade: selectedStudent?.grade || initialData?.studentGrade || 'الصف الابتدائي',
-      evaluator: evaluatorName,
-      evaluatorRole,
-      relationship,
-      schoolName,
-      semester,
-      date: evalDate,
-      notes,
-      scores,
-      results: scores,
-      psychometrics,
       score: psychometrics.totalRawScore,
       maxScore: 250,
       tScore: psychometrics.totalTScore,
+      percentage: `${psychometrics.completionPercentage}%`,
       level: psychometrics.overallStatus,
       severityKey: psychometrics.overallKey,
       severityColor: psychometrics.overallColor,
+      results: form.scores,
+      scores: form.scores,
+      itemNotes: form.itemNotes,
+      psychometrics,
       updatedAt: new Date().toISOString(),
     };
 
     if (initialData?.id) {
-      lsUpd('studentAssessments', initialData.id, assessmentRecord);
+      lsUpd('studentAssessments', initialData.id, payload);
       toast('✅ تم تحديث تطبيق مقياس السرطاوي لصعوبات التعلم بنجاح', 'ok');
     } else {
       lsAdd('studentAssessments', {
-        ...assessmentRecord,
+        ...payload,
+        id: uid(),
         createdAt: new Date().toISOString(),
       });
       toast('✅ تم حفظ تطبيق مقياس السرطاوي لصعوبات التعلم بنجاح', 'ok');
     }
 
-    if (onSaved) onSaved(assessmentRecord);
+    if (onSaved) onSaved();
     onClose();
   }
 
+  const filteredItems = activeTab === 'all'
+    ? SARTAWI_ITEMS
+    : SARTAWI_ITEMS.filter(it => it.dimensionId === activeTab);
+
   return (
-    <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()} style={{ zIndex: 1050 }}>
+    <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()} style={{ zIndex: 1100 }}>
       <div
-        className="mb"
+        className="mb mb-xl"
         style={{
-          maxWidth: 1040,
-          width: '96%',
-          maxHeight: 'min(94vh, calc(100dvh - 16px))',
           padding: 0,
+          overflow: 'hidden',
+          borderRadius: 16,
+          maxHeight: 'min(95vh, calc(100dvh - 20px))',
           display: 'flex',
           flexDirection: 'column',
-          borderRadius: 16,
-          overflow: 'hidden',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          width: '100%',
+          maxWidth: '1200px',
         }}
       >
-        {/* Header with official styling */}
+        {/* Header */}
         <div
+          className="fhd modal-header-custom"
           style={{
+            padding: '14px 20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%)',
             color: '#fff',
-            padding: '16px 20px',
-            borderBottom: '2px solid rgba(255,255,255,0.1)',
-            position: 'relative',
+            flexShrink: 0,
+            gap: 12,
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: '1.8rem' }}>📑</span>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: '1.4rem' }}>📘</span>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>
-                  مقياس صعوبات التعلم — إعداد وتقنين أ.د. زيدان السرطاوي
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h3 style={{ margin: 0, fontSize: '1.12rem', fontWeight: 800, color: '#fff' }}>
+                  مقياس صعوبات التعلم المقنن (أ.د. زيدان أحمد السرطاوي)
                 </h3>
-                <span className="bdg" style={{ background: '#f59e0b', color: '#78350f', fontWeight: 800, fontSize: '.72rem' }}>
-                  معتمد بوزارة التعليم (50 عبارة)
+                <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontWeight: 800, fontSize: '.74rem' }}>
+                  50 عبارة تقييمية
+                </span>
+                <span className="bdg" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, fontSize: '.72rem' }}>
+                  الأبعاد الأكاديمية والسلوكية والإدراكية
                 </span>
               </div>
-              <p style={{ margin: '4px 0 0', fontSize: '.78rem', color: '#cbd5e1' }}>
-                ملحق رقم (1) بنود التقدير الخماسية · ملحق (2) جدول الدرجات التائية المعيارية · ملحق (3) استمارة خلاصة النتائج
+              <p style={{ margin: '3px 0 0', fontSize: '.78rem', opacity: 0.92, fontWeight: 400 }}>
+                ملحق رقم (3) · جامعة الملك سعود · تشخيص صعوبات القراءة والكتابة والرياضيات والسلوك والإدراك الحركي
               </p>
             </div>
-
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <button
-                type="button"
-                className="btn btn-xs"
-                onClick={() => setViewMode(viewMode === 'items' ? 'summary' : 'items')}
-                style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', fontWeight: 700 }}
-              >
-                {viewMode === 'items' ? '📊 ملخص الأبعاد' : '📝 بنود التقدير (50)'}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                style={{
-                  background: 'rgba(255,255,255,0.2)',
-                  border: 'none',
-                  color: '#fff',
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  fontSize: '1.1rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                ✕
-              </button>
-            </div>
           </div>
+
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={onClose}
+            style={{
+              background: 'rgba(255,255,255,0.2)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              padding: '6px 14px',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            ✕ إغلاق
+          </button>
         </div>
 
-        {/* Quick Diagnostic Strip */}
+        {/* Live Psychometrics Status Banner */}
         <div
           style={{
             background: '#f8fafc',
-            borderBottom: '1px solid var(--border-color)',
-            padding: '10px 18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
+            borderBottom: '1.5px solid #e2e8f0',
+            padding: '12px 20px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
             gap: 12,
-            fontSize: '.82rem',
+            alignItems: 'center',
+            flexShrink: 0,
           }}
         >
-          <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-            <div>
-              <span style={{ color: 'var(--text-sub)' }}>الدرجة الخام الكلية: </span>
-              <strong style={{ fontSize: '1rem', color: '#1e40af' }}>{psychometrics.totalRawScore} / 250</strong>
-            </div>
-            <div style={{ width: 1, height: 16, background: '#cbd5e1' }} />
-            <div>
-              <span style={{ color: 'var(--text-sub)' }}>الدرجة التائية المعيارية (T-Score): </span>
-              <strong style={{ fontSize: '1rem', color: '#7c3aed' }}>{psychometrics.totalTScore}</strong>
-            </div>
-            <div style={{ width: 1, height: 16, background: '#cbd5e1' }} />
-            <div>
-              <span style={{ color: 'var(--text-sub)' }}>القرار التشخيصي: </span>
-              <span
-                className="bdg"
-                style={{
-                  background: psychometrics.overallKey === 'severe' ? '#fee2e2' : psychometrics.overallKey === 'borderline' ? '#fef3c7' : '#dcfce7',
-                  color: psychometrics.overallColor,
-                  fontWeight: 800,
-                  fontSize: '.8rem',
-                  padding: '2px 8px',
-                }}
-              >
-                {psychometrics.overallStatus}
+          {/* Total Raw Score */}
+          <div style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: 10, padding: '8px 12px' }}>
+            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>الدرجة الخام الكلية:</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
+              <span style={{ fontSize: '1.3rem', fontWeight: 900, color: psychometrics.overallColor }}>
+                {psychometrics.totalRawScore}
               </span>
+              <span style={{ fontSize: '.75rem', color: '#94a3b8' }}>/ 250 (الحد الأدنى 50)</span>
+            </div>
+            <div style={{ background: '#e2e8f0', height: 5, borderRadius: 3, marginTop: 4, overflow: 'hidden' }}>
+              <div style={{ width: `${psychometrics.completionPercentage}%`, height: '100%', background: psychometrics.overallColor }} />
             </div>
           </div>
 
-          {/* Quick Mock Auto-Fill Controls */}
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <span style={{ fontSize: '.72rem', color: 'var(--text-sub)' }}>تعبئة سريعة:</span>
-            <button
-              type="button"
-              className="btn btn-xs"
-              style={{ background: '#dcfce7', color: '#15803d', fontSize: '.72rem', padding: '2px 7px' }}
-              onClick={() => handleAutoFill('normal')}
-              title="تعبئة نموذجية بدون صعوبات"
-            >
-              طبيعي
-            </button>
-            <button
-              type="button"
-              className="btn btn-xs"
-              style={{ background: '#fef3c7', color: '#b45309', fontSize: '.72rem', padding: '2px 7px' }}
-              onClick={() => handleAutoFill('borderline')}
-              title="تعبئة بدرجات فئة حدية"
-            >
-              حدي
-            </button>
-            <button
-              type="button"
-              className="btn btn-xs"
-              style={{ background: '#fee2e2', color: '#b91c1c', fontSize: '.72rem', padding: '2px 7px' }}
-              onClick={() => handleAutoFill('ld')}
-              title="تعبئة بدرجات صعوبات محتملة"
-            >
-              صعوبة محتملة
-            </button>
+          {/* T-Score */}
+          <div style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: 10, padding: '8px 12px' }}>
+            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>الدرجة التائية المعيارية:</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
+              <span style={{ fontSize: '1.3rem', fontWeight: 900, color: '#1e40af' }}>
+                T = {psychometrics.totalTScore}
+              </span>
+              <span style={{ fontSize: '.75rem', color: '#64748b' }}>({psychometrics.percentile}%)</span>
+            </div>
+            <div style={{ fontSize: '.7rem', color: '#64748b', marginTop: 2 }}>
+              الفاصل: T &ge; 60 يشير لصعوبة تعلم
+            </div>
+          </div>
+
+          {/* Deficit Dimensions */}
+          <div style={{ background: '#fff', border: `1px solid ${psychometrics.deficitDimensions.length > 0 ? '#fca5a5' : '#cbd5e1'}`, borderRadius: 10, padding: '8px 12px' }}>
+            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>الأبعاد المتأثرة (العجز):</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: psychometrics.deficitDimensions.length > 0 ? '#dc2626' : '#16a34a' }}>
+                {psychometrics.deficitDimensions.length} من 3
+              </span>
+              <span style={{ fontSize: '.75rem', color: '#64748b' }}>أبعاد</span>
+            </div>
+            <div style={{ fontSize: '.7rem', color: '#64748b', marginTop: 2 }}>
+              {psychometrics.deficitDimensions.length > 0 ? 'يوجد تأثر دال في أبعاد التقييم' : 'جميع الأبعاد في النطاق الطبيعي'}
+            </div>
+          </div>
+
+          {/* Clinical Classification */}
+          <div style={{ background: '#fff', border: `1.5px solid ${psychometrics.overallColor}`, borderRadius: 10, padding: '8px 12px' }}>
+            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>التصنيف التشخيصي المعتمد:</div>
+            <div style={{ fontSize: '.92rem', fontWeight: 900, color: psychometrics.overallColor, marginTop: 2 }}>
+              {psychometrics.overallStatus}
+            </div>
+            <div style={{ fontSize: '.7rem', color: '#64748b', marginTop: 2 }}>
+              تم تقييم: {psychometrics.totalAnswered} من {SARTAWI_ITEMS.length} عبارة
+            </div>
           </div>
         </div>
 
-        {/* Main Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', background: '#fff' }}>
-          {/* Metadata Grid */}
-          <div
+        {/* Quick Action & Testing Bar */}
+        <div
+          style={{
+            background: '#eff6ff',
+            borderBottom: '1px solid #dbeafe',
+            padding: '8px 20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 8,
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '.75rem', fontWeight: 800, color: '#1e40af' }}>تعبئة سريعة للتجربة:</span>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={() => handleAutoFill('normal')}
+              style={{ background: '#dcfce7', color: '#15803d', fontWeight: 700 }}
+            >
+              ⚡ أداء طبيعي (درجات منخفضة)
+            </button>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={() => handleAutoFill('borderline')}
+              style={{ background: '#fef3c7', color: '#b45309', fontWeight: 700 }}
+            >
+              ⚡ فئة حدية (درجات متوسطة)
+            </button>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={() => handleAutoFill('ld')}
+              style={{ background: '#fee2e2', color: '#b91c1c', fontWeight: 700 }}
+            >
+              ⚡ صعوبات تعلم مؤكدة (درجات مرتفعة)
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-xs"
+            onClick={applyAutoClinicalSummary}
             style={{
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: 12,
-              padding: '12px 16px',
-              marginBottom: 16,
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: 12,
+              background: 'linear-gradient(135deg, #1e40af, #2563eb)',
+              color: '#fff',
+              fontWeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
             }}
           >
-            <div>
-              <label style={{ fontSize: '.75rem', fontWeight: 700, color: 'var(--text-sub)', display: 'block', marginBottom: 4 }}>
-                اسم التلميذ / التلميذة *
-              </label>
-              <select
-                className="inp"
-                value={selectedStudentId}
-                onChange={e => setSelectedStudentId(e.target.value)}
-                style={{ width: '100%', fontSize: '.84rem', padding: '6px 10px', height: 36 }}
+            <span>✨</span>
+            <span>توليد التقرير والخلاصة تلقائياً</span>
+          </button>
+        </div>
+
+        {/* Dimension Filter Tabs */}
+        <div
+          style={{
+            background: '#fff',
+            borderBottom: '1px solid #e2e8f0',
+            padding: '8px 20px',
+            display: 'flex',
+            gap: 6,
+            overflowX: 'auto',
+            flexShrink: 0,
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setActiveTab('all')}
+            className={`btn btn-xs ${activeTab === 'all' ? 'btn-p' : 'btn-g'}`}
+            style={{
+              borderRadius: 8,
+              fontWeight: activeTab === 'all' ? 800 : 600,
+              padding: '6px 12px',
+              whiteSpace: 'nowrap',
+              background: activeTab === 'all' ? '#1e40af' : undefined,
+              color: activeTab === 'all' ? '#fff' : undefined,
+            }}
+          >
+            الكل (جميع العبارات الـ 50)
+          </button>
+
+          {SARTAWI_DIMENSIONS.map(dim => {
+            const dimScore = psychometrics.dimensions.find(d => d.id === dim.id);
+            const isDeficit = dimScore?.isDeficit;
+            const countAnswered = SARTAWI_ITEMS.filter(it => it.dimensionId === dim.id && form.scores[it.id] !== undefined).length;
+            const isComplete = countAnswered === dim.itemsCount;
+
+            return (
+              <button
+                key={dim.id}
+                type="button"
+                onClick={() => setActiveTab(dim.id)}
+                className={`btn btn-xs ${activeTab === dim.id ? 'btn-p' : 'btn-g'}`}
+                style={{
+                  borderRadius: 8,
+                  fontWeight: activeTab === dim.id ? 800 : 600,
+                  padding: '6px 12px',
+                  whiteSpace: 'nowrap',
+                  background: activeTab === dim.id ? '#1e40af' : undefined,
+                  color: activeTab === dim.id ? '#fff' : undefined,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
               >
-                <option value="">-- اختر التلميذ --</option>
-                {students.map(st => (
-                  <option key={st.id} value={st.id}>
-                    {st.name} {st.grade ? `(${st.grade})` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <span>{dim.icon}</span>
+                <span>{dim.name}</span>
+                <span
+                  style={{
+                    background: isDeficit ? '#fee2e2' : isComplete ? '#dcfce7' : '#f1f5f9',
+                    color: isDeficit ? '#b91c1c' : isComplete ? '#15803d' : '#64748b',
+                    fontSize: '.68rem',
+                    padding: '1px 5px',
+                    borderRadius: 4,
+                    fontWeight: 700,
+                  }}
+                >
+                  {dimScore ? `خام: ${dimScore.rawScore} (T=${dimScore.tScore})` : `${countAnswered}/${dim.itemsCount}`}
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
-            <div>
-              <label style={{ fontSize: '.75rem', fontWeight: 700, color: 'var(--text-sub)', display: 'block', marginBottom: 4 }}>
-                القائم بالتقدير *
-              </label>
-              <input
-                type="text"
-                className="inp"
-                value={evaluatorName}
-                onChange={e => setEvaluatorName(e.target.value)}
-                placeholder="اسم المعلم / الأخصائي"
-                style={{ width: '100%', fontSize: '.84rem', padding: '6px 10px', height: 36 }}
-              />
-            </div>
+        {/* Scrollable Assessment Content */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', background: '#f8fafc' }}>
+          {/* Student Picker & Diagnostic Meta Card */}
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid #e2e8f0',
+              borderRadius: 12,
+              padding: '16px',
+              marginBottom: 16,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            }}
+          >
+            <StudentPicker
+              form={form}
+              setForm={setForm}
+              students={students}
+              emps={emps}
+              showExtra={true}
+            />
 
-            <div>
-              <label style={{ fontSize: '.75rem', fontWeight: 700, color: 'var(--text-sub)', display: 'block', marginBottom: 4 }}>
-                علاقته بالطالب (ملحق 3)
-              </label>
-              <input
-                type="text"
-                className="inp"
-                value={relationship}
-                onChange={e => setRelationship(e.target.value)}
-                placeholder="معلم الفصل / معلم الصعوبات"
-                style={{ width: '100%', fontSize: '.84rem', padding: '6px 10px', height: 36 }}
-              />
-            </div>
-
-            <div>
-              <label style={{ fontSize: '.75rem', fontWeight: 700, color: 'var(--text-sub)', display: 'block', marginBottom: 4 }}>
-                اسم المدرسة والفصل الدراسي
-              </label>
-              <div style={{ display: 'flex', gap: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginTop: 14, paddingTop: 14, borderTop: '1px dashed #e2e8f0' }}>
+              <div>
+                <label className="lbl" style={{ fontSize: '.78rem' }}>المدرسة / المؤسسة التعليمية:</label>
                 <input
                   type="text"
                   className="inp"
-                  value={schoolName}
-                  onChange={e => setSchoolName(e.target.value)}
-                  placeholder="المدرسة"
-                  style={{ width: '60%', fontSize: '.8rem', padding: '6px 8px', height: 36 }}
+                  value={form.schoolName || ''}
+                  onChange={e => setForm(f => ({ ...f, schoolName: e.target.value }))}
+                  placeholder="المدرسة الابتدائية النموذجية"
                 />
+              </div>
+
+              <div>
+                <label className="lbl" style={{ fontSize: '.78rem' }}>الفصل الدراسي:</label>
+                <select
+                  className="inp"
+                  value={form.semester || 'الفصل الدراسي الأول'}
+                  onChange={e => setForm(f => ({ ...f, semester: e.target.value }))}
+                >
+                  <option value="الفصل الدراسي الأول">الفصل الدراسي الأول</option>
+                  <option value="الفصل الدراسي الثاني">الفصل الدراسي الثاني</option>
+                  <option value="الفصل الدراسي الثالث">الفصل الدراسي الثالث</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="lbl" style={{ fontSize: '.78rem' }}>العام الدراسي:</label>
                 <input
                   type="text"
                   className="inp"
-                  value={semester}
-                  onChange={e => setSemester(e.target.value)}
-                  placeholder="الفصل"
-                  style={{ width: '40%', fontSize: '.8rem', padding: '6px 8px', height: 36 }}
+                  value={form.academicYear || ''}
+                  onChange={e => setForm(f => ({ ...f, academicYear: e.target.value }))}
+                  placeholder="1445 / 1446 هـ"
                 />
               </div>
             </div>
-
-            <div>
-              <label style={{ fontSize: '.75rem', fontWeight: 700, color: 'var(--text-sub)', display: 'block', marginBottom: 4 }}>
-                تاريخ التطبيق
-              </label>
-              <input
-                type="date"
-                className="inp"
-                value={evalDate}
-                onChange={e => setEvalDate(e.target.value)}
-                style={{ width: '100%', fontSize: '.84rem', padding: '6px 10px', height: 36 }}
-              />
-            </div>
           </div>
 
-          {/* Dimension Selector Tabs */}
-          <div
-            style={{
-              display: 'flex',
-              gap: 8,
-              marginBottom: 16,
-              borderBottom: '1px solid #e2e8f0',
-              paddingBottom: 10,
-              overflowX: 'auto',
-            }}
-          >
-            <button
-              type="button"
-              className={`btn btn-sm ${activeDimensionId === 'all' ? 'btn-p' : 'btn-g'}`}
-              onClick={() => setActiveDimensionId('all')}
-              style={{ fontWeight: 800, whiteSpace: 'nowrap' }}
-            >
-              📑 جميع الأبعاد الثلاثة (50 عبارة)
-            </button>
-            {SARTAWI_DIMENSIONS.map(dim => {
-              const dimRes = psychometrics.dimensionsResults.find(d => d.id === dim.id);
-              const isActive = activeDimensionId === dim.id;
+          {/* Assessment Items List */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {filteredItems.map(it => {
+              const currentScore = form.scores[it.id];
+              const isAnswered = currentScore !== undefined && currentScore !== null;
+              const hasNote = Boolean(form.itemNotes[it.id]);
+              const isNoteOpen = expandedNotes[it.id] || hasNote;
+              const dim = SARTAWI_DIMENSIONS.find(d => d.id === it.dimensionId);
+
               return (
-                <button
-                  key={dim.id}
-                  type="button"
-                  className={`btn btn-sm ${isActive ? 'btn-p' : 'btn-g'}`}
-                  onClick={() => setActiveDimensionId(dim.id)}
+                <div
+                  key={it.id}
                   style={{
-                    fontWeight: 700,
-                    whiteSpace: 'nowrap',
-                    borderRight: `4px solid ${dim.color}`,
+                    background: '#fff',
+                    border: `1.5px solid ${isAnswered ? (currentScore >= 4 ? '#fca5a5' : '#93c5fd') : '#e2e8f0'}`,
+                    borderRadius: 12,
+                    padding: '14px 16px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                    transition: 'all 0.15s ease',
                   }}
                 >
-                  <span>{dim.icon} {dim.name}</span>
-                  <span
-                    className="bdg"
+                  {/* Item Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span
+                        style={{
+                          background: '#1e40af',
+                          color: '#fff',
+                          fontWeight: 900,
+                          fontSize: '.76rem',
+                          padding: '2px 8px',
+                          borderRadius: 6,
+                        }}
+                      >
+                        عبارة {it.id}
+                      </span>
+                      <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.72rem', fontWeight: 700 }}>
+                        {dim?.name}
+                      </span>
+                      <h4 style={{ margin: 0, fontSize: '.95rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                        {it.text}
+                      </h4>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => toggleItemNote(it.id)}
+                      className="btn btn-xs"
+                      style={{
+                        background: hasNote ? '#fef3c7' : '#f1f5f9',
+                        color: hasNote ? '#b45309' : '#64748b',
+                        fontWeight: 600,
+                        padding: '3px 8px',
+                        borderRadius: 6,
+                      }}
+                    >
+                      💬 {hasNote ? 'تعديل الملاحظة' : '+ ملاحظة سلوكية'}
+                    </button>
+                  </div>
+
+                  {/* 5 Rating Options */}
+                  <div
                     style={{
-                      marginRight: 6,
-                      fontSize: '.7rem',
-                      background: dimRes?.isDeficit ? '#fee2e2' : '#f1f5f9',
-                      color: dimRes?.isDeficit ? '#991b1b' : 'inherit',
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                      gap: 8,
+                      marginTop: 10,
                     }}
                   >
-                    {dimRes?.rawScore || dim.minRawScore} / {dim.maxRawScore}
-                  </span>
-                </button>
+                    {SARTAWI_RATING_OPTIONS.map(opt => {
+                      const isSelected = currentScore === opt.score;
+                      const isHighRisk = opt.score >= 4;
+
+                      return (
+                        <button
+                          key={opt.score}
+                          type="button"
+                          onClick={() => handleScoreChange(it.id, opt.score)}
+                          style={{
+                            background: isSelected ? (isHighRisk ? '#fee2e2' : '#dbeafe') : '#fafafa',
+                            border: `2px solid ${isSelected ? (isHighRisk ? '#dc2626' : '#1e40af') : '#e2e8f0'}`,
+                            borderRadius: 8,
+                            padding: '8px 10px',
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 4,
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <span style={{ fontWeight: 800, fontSize: '.84rem', color: isSelected ? (isHighRisk ? '#b91c1c' : '#1e40af') : '#334155' }}>
+                            ({opt.score}) {opt.label}
+                          </span>
+                          <span style={{ fontSize: '.68rem', color: '#64748b' }}>
+                            {opt.desc}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Expandable Note */}
+                  {isNoteOpen && (
+                    <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px dashed #e2e8f0' }}>
+                      <input
+                        type="text"
+                        className="inp"
+                        value={form.itemNotes[it.id] || ''}
+                        onChange={e => handleNoteChange(it.id, e.target.value)}
+                        placeholder={`أدخل ملاحظاتك الإكلينيكية حول استجابة الطالب للعبارة [${it.id}]...`}
+                        style={{ fontSize: '.8rem', padding: '6px 10px' }}
+                      />
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
 
-          {/* View Mode 1: Items Evaluation Table */}
-          {viewMode === 'items' && (
-            <div>
-              <div
-                style={{
-                  background: '#f1f5f9',
-                  padding: '8px 14px',
-                  borderRadius: 8,
-                  marginBottom: 12,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  fontSize: '.82rem',
-                }}
+          {/* Clinical Impression & Recommendations */}
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid #e2e8f0',
+              borderRadius: 12,
+              padding: '16px',
+              marginTop: 20,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                📝 الخلاصة التشخيصية والتوصيات التربوية
+              </h3>
+              <button
+                type="button"
+                className="btn btn-xs"
+                onClick={applyAutoClinicalSummary}
+                style={{ background: '#dbeafe', color: '#1e40af', fontWeight: 700 }}
               >
-                <div style={{ fontWeight: 700, color: '#334155' }}>
-                  سلم التقدير: 5 (ينطبق بدرجة عالية جداً) · 4 (عالية) · 3 (متوسطة) · 2 (منخفضة) · 1 (منخفضة جداً)
-                </div>
-                <div style={{ color: 'var(--text-sub)', fontSize: '.76rem' }}>
-                  معروض: {filteredItems.length} من أصل 50 عبارة
-                </div>
+                ✨ إعادة توليد النص
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 14 }}>
+              <div>
+                <label className="lbl" style={{ fontSize: '.8rem' }}>التقرير الإكلينيكي وتفسير الدرجات التائية:</label>
+                <textarea
+                  className="inp"
+                  rows={6}
+                  value={form.clinicalSummary || ''}
+                  onChange={e => setForm(f => ({ ...f, clinicalSummary: e.target.value }))}
+                  placeholder="اضغط على زر (توليد التقرير والخلاصة تلقائياً) أو اكتب التقرير التشخيصي هنا..."
+                  style={{ fontSize: '.82rem', lineHeight: 1.5 }}
+                />
               </div>
 
-              <div style={{ border: '1px solid #e2e8f0', borderRadius: 12, overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.84rem' }}>
-                  <thead>
-                    <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1', textAlign: 'right' }}>
-                      <th style={{ padding: '10px 12px', width: 44, textAlign: 'center' }}>الرقم</th>
-                      <th style={{ padding: '10px 12px' }}>العبـــــــارة</th>
-                      <th style={{ padding: '10px 12px', textAlign: 'center', width: 340 }}>مستوى الانطباق</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredItems.map((item, idx) => {
-                      const currentValue = scores[item.id] || 1;
-                      const dim = SARTAWI_DIMENSIONS.find(d => d.id === item.dimensionId);
-                      return (
-                        <tr
-                          key={item.id}
-                          style={{
-                            borderBottom: '1px solid #f1f5f9',
-                            background: idx % 2 === 0 ? '#fff' : '#fafafa',
-                          }}
-                        >
-                          <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: dim?.color }}>
-                            {item.num}
-                          </td>
-                          <td style={{ padding: '10px 12px', lineHeight: 1.5 }}>
-                            <div style={{ fontWeight: 600, color: '#1e293b' }}>{item.text}</div>
-                            <div style={{ fontSize: '.72rem', color: '#64748b', marginTop: 2 }}>
-                              {dim?.name}
-                            </div>
-                          </td>
-                          <td style={{ padding: '10px 12px' }}>
-                            <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
-                              {SARTAWI_RATING_OPTIONS.map(opt => {
-                                const isChecked = currentValue === opt.value;
-                                return (
-                                  <button
-                                    key={opt.value}
-                                    type="button"
-                                    onClick={() => handleScoreChange(item.id, opt.value)}
-                                    style={{
-                                      padding: '6px 8px',
-                                      fontSize: '.72rem',
-                                      borderRadius: 6,
-                                      border: isChecked ? `2px solid ${opt.color}` : '1px solid #e2e8f0',
-                                      background: isChecked ? opt.color : '#fff',
-                                      color: isChecked ? '#fff' : '#475569',
-                                      fontWeight: isChecked ? 800 : 500,
-                                      cursor: 'pointer',
-                                      flex: 1,
-                                      minWidth: 54,
-                                      textAlign: 'center',
-                                      transition: 'all 0.15s ease',
-                                    }}
-                                    title={opt.label}
-                                  >
-                                    <div>{opt.value}</div>
-                                    <div style={{ fontSize: '.62rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                      {opt.value === 5 ? 'عالية جداً' : opt.value === 4 ? 'عالية' : opt.value === 3 ? 'متوسطة' : opt.value === 2 ? 'منخفضة' : 'منخفضة جداً'}
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <div>
+                <label className="lbl" style={{ fontSize: '.8rem' }}>توصيات الخطة الفردية (IEP) والتدخل العلاجي:</label>
+                <textarea
+                  className="inp"
+                  rows={6}
+                  value={form.recommendations || ''}
+                  onChange={e => setForm(f => ({ ...f, recommendations: e.target.value }))}
+                  placeholder="أدخل التوصيات الأكاديمية والتربوية والتعديلات الصفية المقترحة..."
+                  style={{ fontSize: '.82rem', lineHeight: 1.5 }}
+                />
               </div>
             </div>
-          )}
-
-          {/* View Mode 2: Statistical & Dimensional Summary (ملحق 3) */}
-          {viewMode === 'summary' && (
-            <div>
-              <h4 style={{ margin: '0 0 12px', fontSize: '.95rem', fontWeight: 800, color: '#1e3a8a' }}>
-                استمارة خلاصة النتائج وتوزيع الأبعاد (ملحق رقم 3)
-              </h4>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 14, marginBottom: 20 }}>
-                {psychometrics.dimensionsResults.map(dim => (
-                  <div
-                    key={dim.id}
-                    style={{
-                      border: `1.5px solid ${dim.color}`,
-                      borderRadius: 12,
-                      padding: 16,
-                      background: dim.bgLight,
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                      <div style={{ fontWeight: 800, fontSize: '.92rem', color: dim.color }}>
-                        {dim.icon} {dim.name}
-                      </div>
-                      <span
-                        className="bdg"
-                        style={{
-                          background: dim.isDeficit ? '#fee2e2' : '#dcfce7',
-                          color: dim.severityColor,
-                          fontWeight: 800,
-                          fontSize: '.75rem',
-                        }}
-                      >
-                        {dim.severity}
-                      </span>
-                    </div>
-
-                    <p style={{ fontSize: '.78rem', color: '#475569', margin: '0 0 12px', lineHeight: 1.4 }}>
-                      {dim.description}
-                    </p>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.82rem', marginBottom: 6 }}>
-                      <span>الدرجة الخام المحققة:</span>
-                      <strong>{dim.rawScore} من {dim.maxRawScore} ({dim.percentage}%)</strong>
-                    </div>
-
-                    <div style={{ width: '100%', height: 8, background: 'rgba(0,0,0,0.08)', borderRadius: 4, overflow: 'hidden' }}>
-                      <div
-                        style={{
-                          height: '100%',
-                          width: `${Math.min(100, dim.percentage)}%`,
-                          background: dim.color,
-                          borderRadius: 4,
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.72rem', color: '#64748b', marginTop: 8 }}>
-                      <span>حد عدم الصعوبة: ≤ {dim.cutoffNormal}</span>
-                      <span>الحد الفاصل للصعوبة: ≥ {dim.cutoffLD}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Total Normative Summary Box */}
-              <div
-                style={{
-                  border: '2px solid #1e40af',
-                  borderRadius: 12,
-                  padding: 18,
-                  background: '#f8fafc',
-                }}
-              >
-                <h5 style={{ margin: '0 0 10px', fontSize: '.9rem', fontWeight: 800, color: '#1e40af' }}>
-                  📋 التفسير السيكومتري والقرار التشخيصي النهائي
-                </h5>
-                <p style={{ fontSize: '.84rem', lineHeight: 1.6, color: '#334155', margin: 0 }}>
-                  {psychometrics.conclusionText}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Notes textarea */}
-          <div style={{ marginTop: 16 }}>
-            <label style={{ fontSize: '.78rem', fontWeight: 700, color: 'var(--text-sub)', display: 'block', marginBottom: 4 }}>
-              الملاحظات والتوصيات الإكلينيكية والتربوية
-            </label>
-            <textarea
-              className="inp"
-              rows={2}
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              placeholder="اكتب أية ملاحظات سلوكية أو توصيات تخص الخطة الفردية وغرفة المصادر..."
-              style={{ width: '100%', fontSize: '.82rem', padding: '8px 12px', resize: 'vertical' }}
-            />
           </div>
         </div>
 
-        {/* Footer actions */}
+        {/* Modal Footer */}
         <div
           style={{
-            background: '#f8fafc',
-            borderTop: '1px solid #e2e8f0',
             padding: '12px 20px',
+            background: '#fff',
+            borderTop: '1px solid #e2e8f0',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 10,
+            flexShrink: 0,
           }}
         >
-          <div style={{ fontSize: '.8rem', color: '#64748b' }}>
-            الدرجة الكلية: <strong>{psychometrics.totalRawScore} / 250</strong> · الدرجة التائية: <strong>T={psychometrics.totalTScore}</strong>
+          <div style={{ fontSize: '.82rem', color: '#64748b' }}>
+            تم تقييم <strong style={{ color: '#1e40af' }}>{psychometrics.totalAnswered}</strong> من أصل {SARTAWI_ITEMS.length} عبارة · المجموع الخام: <strong style={{ color: psychometrics.overallColor }}>{psychometrics.totalRawScore}/250</strong> (T = {psychometrics.totalTScore})
           </div>
 
           <div style={{ display: 'flex', gap: 10 }}>
-            <button type="button" className="btn btn-g" onClick={onClose} style={{ fontWeight: 700 }}>
+            <button
+              type="button"
+              className="btn btn-g"
+              onClick={onClose}
+              style={{ padding: '8px 16px', fontWeight: 700 }}
+            >
               إلغاء
             </button>
-            <button type="button" className="btn btn-p" onClick={handleSave} style={{ fontWeight: 800, minWidth: 140 }}>
-              💾 حفظ النتيجة والتشخيص
+
+            <button
+              type="button"
+              className="btn btn-p"
+              onClick={handleSave}
+              style={{
+                background: 'linear-gradient(135deg, #1e3a8a, #1e40af)',
+                color: '#fff',
+                padding: '8px 24px',
+                fontWeight: 800,
+                boxShadow: '0 4px 12px rgba(30, 64, 175, 0.25)',
+              }}
+            >
+              💾 حفظ وحساب نتيجة مقياس السرطاوي
             </button>
           </div>
         </div>

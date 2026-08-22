@@ -3,27 +3,32 @@ import { useApp } from '../../context/AppContext';
 import { uid, todayStr } from '../../utils/dateHelpers';
 import { lsAdd, lsUpd } from '../../hooks/useStorage';
 import {
-  DEV_LD_ITEMS,
-  DEV_LD_DOMAINS,
-  DEV_LD_RESPONSE_OPTIONS,
   DEV_LD_COPYRIGHT_INFO,
+  DEV_LD_DOMAINS,
+  DEV_LD_ITEMS,
+  DEV_LD_RESPONSE_OPTIONS,
   calculateDevLdPsychometrics,
 } from '../../data/devLdData';
 import { StudentPicker, validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
 
 const EMPTY_DEV_LD_FORM = {
-  mode: 'select',
+  mode: 'registered',
   stuId: '',
   studentName: '',
   dob: '',
   age: '',
-  grade: 'المستوى الثاني روضة (KG2)',
-  school: '',
-  raterName: '',
-  raterRelation: 'معلمة الروضة',
-  relationshipDuration: 'عام دراسي كامل بالروضة',
-  examinerName: '',
-  examinerRole: 'أخصائي نفسي وتربية خاصة وتدخل مبكر',
+  diagnosis: '',
+  parentName: '',
+  parentPhone: '',
+  parentPhone2: '',
+  fileNo: '',
+  specialistName: '',
+  schoolName: 'روضة براعم الأمل',
+  grade: 'تمهيدي / روضة ثانية (KG2)',
+  semester: 'الفصل الدراسي الأول',
+  academicYear: '1445 / 1446 هـ',
+  evaluatorRole: 'معلمة الروضة / أخصائية التشخيص النمائي',
+  relationship: 'معلمة الفصل / أخصائية التربية الخاصة',
   date: todayStr(),
   notes: '',
   itemNotes: {},
@@ -40,164 +45,160 @@ export default function DevLdAssessmentModal({
   emps = [],
   initialData = null,
 }) {
-  const { toast, currentUser } = useApp();
+  const { toast } = useApp?.() || { toast: () => {} };
 
   const [form, setForm] = useState(() => {
     if (initialData) {
       return {
         ...EMPTY_DEV_LD_FORM,
         ...initialData,
-        scores: initialData.results || initialData.scores || {},
+        scores: initialData.scores || initialData.results || {},
         itemNotes: initialData.itemNotes || {},
       };
     }
-    return {
-      ...EMPTY_DEV_LD_FORM,
-      examinerName: currentUser?.name || '',
-      date: todayStr(),
-    };
+    return { ...EMPTY_DEV_LD_FORM };
   });
 
-  const [activeDomainFilter, setActiveDomainFilter] = useState('all');
-  const [showCopyrightDetails, setShowCopyrightDetails] = useState(false);
+  const [activeDomainId, setActiveDomainId] = useState('all');
+  const [expandedNotes, setExpandedNotes] = useState({});
 
-  // Psychometrics Calculation
   const psychometrics = useMemo(() => {
-    return calculateDevLdPsychometrics(form.scores);
+    return calculateDevLdPsychometrics(form.scores || {});
   }, [form.scores]);
-
-  const filteredItems = useMemo(() => {
-    if (activeDomainFilter === 'all') return DEV_LD_ITEMS;
-    return DEV_LD_ITEMS.filter(it => it.domainId === activeDomainFilter);
-  }, [activeDomainFilter]);
 
   if (!isOpen) return null;
 
-  function handleScoreSelect(itemId, scoreValue) {
-    setForm(prev => ({
-      ...prev,
+  function handleScoreChange(itemId, scoreValue) {
+    setForm(f => ({
+      ...f,
       scores: {
-        ...prev.scores,
-        [itemId]: scoreValue,
+        ...f.scores,
+        [itemId]: Number(scoreValue),
       },
     }));
   }
 
-  function handleItemNoteChange(itemId, noteText) {
-    setForm(prev => ({
-      ...prev,
+  function handleNoteChange(itemId, noteText) {
+    setForm(f => ({
+      ...f,
       itemNotes: {
-        ...prev.itemNotes,
+        ...f.itemNotes,
         [itemId]: noteText,
       },
     }));
   }
 
-  function autoFillSample(level = 'at_risk') {
-    const scores = {};
+  function toggleItemNote(itemId) {
+    setExpandedNotes(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId],
+    }));
+  }
+
+  function handleAutoFill(level = 'normal') {
+    const newScores = {};
+
     DEV_LD_ITEMS.forEach(it => {
       if (level === 'normal') {
         // Mostly 0, few 1s
-        scores[it.id] = (it.id % 6 === 0) ? 1 : 0;
+        newScores[it.id] = (it.id % 5 === 0) ? 1 : 0;
+      } else if (level === 'mild') {
+        // Some 1s, occasional 2
+        newScores[it.id] = (it.id % 3 === 0) ? 1 : (it.id % 7 === 0 ? 2 : 0);
       } else if (level === 'at_risk') {
-        // ~ 55% score (mostly 1s, some 2s in attention/perception)
-        if (it.domainId === 'attention' || it.domainId === 'perception') {
-          scores[it.id] = (it.id % 2 === 0) ? 2 : 1;
-        } else {
-          scores[it.id] = (it.id % 3 === 0) ? 2 : 1;
-        }
+        // Mix of 1s and 2s -> 50% - 69%
+        newScores[it.id] = (it.id % 2 === 0) ? 1 : (it.id % 3 === 0 ? 2 : 1);
       } else if (level === 'severe') {
-        // ~ 75-80% score (mostly 2s, few 1s)
-        scores[it.id] = (it.id % 4 === 0) ? 1 : 2;
+        // High scores (2 and 1) -> >= 70%
+        newScores[it.id] = (it.id % 4 === 0) ? 1 : 2;
       }
     });
 
-    setForm(f => ({ ...f, scores }));
-    toast(`⚡ تم تعبئة استجابات نموذجية (${level === 'normal' ? 'أداء طبيعي' : level === 'at_risk' ? 'معرض لخطر الصعوبات (55%)' : 'صعوبات نمائية مؤكدة (75%)'}) للمعاينة السريعة`, 'ok');
+    setForm(f => ({ ...f, scores: newScores }));
+    toast(`⚡ تم تعبئة استجابات نموذجية (${level === 'normal' ? 'أداء نمائي طبيعي' : level === 'mild' ? 'مؤشرات حدية خفيفة' : level === 'at_risk' ? 'معرض للخطر At-Risk' : 'صعوبات نمائية مؤكدة'})`, 'ok');
   }
 
   function applyAutoClinicalSummary() {
-    if (psychometrics.totalAnswered < 15) {
-      toast('⚠️ يرجى تقييم عدد كافٍ من العبارات (15 عبارة على الأقل) لتوليد التقرير التشخيصي', 'er');
+    if (psychometrics.totalAnswered < 20) {
+      toast('⚠️ يرجى تقييم 20 عبارة على الأقل لتوليد الخلاصة التشخيصية المعتمدة', 'er');
       return;
     }
 
     const domainDetails = psychometrics.domainResults.map(d => {
-      return `• ${d.name}: الدرجة الخام (${d.rawScore}/${d.maxScore}) بنسبة (${d.percentage}%) - [${d.domainStatus}]`;
+      return `• ${d.name}: الدرجة الخام (${d.rawScore}/${d.maxScore}) - [${d.domainStatus}] (${d.percentage}%)`;
     }).join('\n');
 
-    const pillarsDetails = `1. صعوبات التعلم المعرفية (الانتباه، الإدراك، الذاكرة): ${psychometrics.cognitiveRaw}/${psychometrics.cognitiveMax} (${psychometrics.cognitivePct}%)\n` +
-      `2. صعوبات التعلم اللغوية والتفكير: ${psychometrics.langThinkingRaw}/${psychometrics.langThinkingMax} (${psychometrics.langThinkingPct}%)\n` +
-      `3. صعوبات التعلم البصرية - الحركية: ${psychometrics.visualMotorRaw}/${psychometrics.visualMotorMax} (${psychometrics.visualMotorPct}%)`;
+    const pillarsReport = `المجالات النمائية الكبرى (Kirk & Chalfant):\n` +
+      `- المجال المعرفي (انتباه، إدراك، ذاكرة): (${psychometrics.cognitiveRaw}/${psychometrics.cognitiveMax}) بنسبة ${psychometrics.cognitivePct}%\n` +
+      `- المجال اللغوي والتفكير: (${psychometrics.langThinkingRaw}/${psychometrics.langThinkingMax}) بنسبة ${psychometrics.langThinkingPct}%\n` +
+      `- المجال البصري الحركي: (${psychometrics.visualMotorRaw}/${psychometrics.visualMotorMax}) بنسبة ${psychometrics.visualMotorPct}%`;
 
-    const deficitsText = psychometrics.deficitDomains.length > 0
-      ? `الأبعاد النمائية التي تظهر قصوراً جوهرياً يستدعي التدخل الفردي المبكر:\n` + psychometrics.deficitDomains.map(d => `- ${d.name} (${d.percentage}%)`).join('\n')
-      : 'لا توجد أبعاد تقع في النطاق الحرج الشديد.';
+    const summary = `تقرير تشخيصي بقائمة صعوبات التعلم النمائية لأطفال الروضة - أ.د. عادل عبدالله محمد (80 عبارة):\n\n` +
+      `- إجمالي الدرجة الخام المحققة: (${psychometrics.totalRawScore} / ${psychometrics.totalMaxScore}) بنسبة شدة إجمالية (${psychometrics.overallPercentage}%).\n` +
+      `- تم إكمال تقييم: (${psychometrics.totalAnswered} من ${psychometrics.totalItems} عبارة).\n\n` +
+      `القرار التشخيصي وتصنيف الحالة:\n` +
+      `[${psychometrics.probability}] - ${psychometrics.severityLevel}\n\n` +
+      `${pillarsReport}\n\n` +
+      `تفاصيل الأداء على أبعاد القائمة الستة:\n` +
+      `${domainDetails}\n\n` +
+      `التفسير والتوصية العامة:\n` +
+      `${psychometrics.recommendationSummary}`;
 
-    const suggestedSummary = `تقرير التقييم والتشخيص النمائي - قائمة صعوبات التعلم النمائية لأطفال الروضة:\n` +
-      `إعداد: أ.د. عادل عبدالله محمد (جامعة الزقازيق - دار الرشاد) وفق تصنيف كيرك وكالفنت (Kirk & Chalfant):\n\n` +
-      `- الدرجة الخام الكلية: (${psychometrics.totalRawScore} من أصل ${psychometrics.totalMaxScore}) بنسبة كلية (${psychometrics.overallPercentage}%).\n` +
-      `- النتيجة والتشخيص: [${psychometrics.probability}]\n` +
-      `- التفسير الإكلينيكي: ${psychometrics.severityLevel}.\n\n` +
-      `توزيع الدرجات على الأبعاد النمائية الثلاثة الكبرى:\n${pillarsDetails}\n\n` +
-      `النتائج التفصيلية على المقاييس الفرعية الستة:\n${domainDetails}\n\n` +
-      `${deficitsText}\n\n` +
-      `الخلاصة:\n` +
-      `استناداً إلى معايير القائمة ومحك الـ 50% للفرز الأولي ومحك الـ 70% للتشخيص المؤكد، فإن الطفل يندرج ضمن [${psychometrics.probability}]، مما يبرز أهمية تطبيق برامج التدخل المبكر لتنمية المهارات قبل الأكاديمية وتهيئة الطفل للالتحاق بالمدرسة الابتدائية.`;
-
-    const suggestedRecs = psychometrics.severityKey === 'normal'
-      ? '1. استمرار الطفل في الأنشطة النمائية الاعتيادية بالروضة.\n2. إثراء الحصيلة اللغوية والمهارات الحركية الدقيقة من خلال اللعب الهادف.\n3. المتابعة الدورية لملاحظة تطور المهارات قبل الأكاديمية.'
-      : psychometrics.severityKey === 'at_risk'
-      ? '1. إدراج الطفل في برنامج الفرز والتدخل المبكر والوقائي بالروضة (Tier 2).\n2. تصميم خطة نمائية مساندة تركز على تدريب الانتباه المشترك، التمييز البصري والسمعي، والذاكرة العاملة.\n3. تدريب الطفل على تتبع التسلسل الزمني والمنطقي وحل المتاهات والألغاز البسيطة.\n4. تدريبات التناسق الحركي البصري (مسك القلم، قص الأشكال، التلوين داخل الحدود، التوازن).\n5. إرشاد الأسرة بتطبيق أنشطة التفاعل اللغوي والحسي في المنزل.'
-      : '1. وضع خطة تربوية فردية مكثفة للتدخل النمائي المبكر (Intensive Early Intervention IEP) تحت إشراف فريق التربية الخاصة والتشخيص.\n2. تطبيق استراتيجيات التدريس الحواسي المتعدد (VAKT) لتعزيز الذاكرة والإدراك السمعي والبصري.\n3. تخصيص جلسات فردية لتنمية الانتباه والحد من الاندفاعية وفرط الحركة، وجلسات تخاطب لتعزيز النمو اللغوي.\n4. تدريبات علاج وظيفي وحركي لتحسين التآزر الحركي العام والدقيق وتعديل قبضة القلم.\n5. مواءمة البيئة الصفية بالروضة لتخفيف المشتتات وتقديم التعليمات خطوة بخطوة مصحوبة بنماذج بصرية.\n6. المتابعة الأسرية الوثيقة وتقديم الدعم الإرشادي المستمر.';
+    const recs = psychometrics.overallPercentage >= 50
+      ? `1. تسجيل الطفل في برنامج التدخل المبكر لتنمية المهارات النمائية قبل الانتقال للمرحلة الابتدائية.\n` +
+        `2. التركيز على أنشطة تنمية الانتباه المشترك، الذاكرة العاملة السمعية والبصرية، والتآزر البصري الحركي.\n` +
+        `3. استخدام الألعاب التعليمية الحسية واستراتيجيات الحواس المتعددة.\n` +
+        `4. تقديم الدعم والإرشاد الأسري لتطبيق برامج التهيئة المنزلية المساندة.\n` +
+        `5. إعادة التقييم بعد 6 أشهر لقياس مدى الاستجابة للتدخل (RTI).`
+      : `1. استمرار الطفل في برنامج الروضة العادي مع تقديم أنشطة الإثراء النمائي.\n` +
+        `2. تنمية مهارات التفكير والتعبير اللغوي والتفاعل الاجتماعي الإيجابي.\n` +
+        `3. المتابعة الدورية لمعدلات النمو والتطور الحركي واللغوي.`;
 
     setForm(f => ({
       ...f,
-      clinicalSummary: suggestedSummary,
-      recommendations: suggestedRecs,
+      clinicalSummary: summary,
+      recommendations: recs,
     }));
 
-    toast('✨ تم توليد الخلاصة التشخيصية الشاملة وتوصيات التدخل المبكر بنجاح', 'ok');
+    toast('✨ تم توليد الخلاصة التشخيصية والتوصيات بناءً على قائمة صعوبات التعلم النمائية', 'ok');
   }
 
   function handleSave() {
     if (!validateStudentPick(form)) {
-      toast('⚠️ يرجى اختيار الطفل أولاً', 'er');
+      toast('⚠️ يرجى اختيار الطفل أولاً من القائمة', 'er');
       return;
     }
-
     if (!form.date) {
-      toast('⚠️ يرجى إدخال تاريخ التقييم', 'er');
+      toast('⚠️ يرجى تحديد تاريخ التقييم', 'er');
       return;
     }
 
     if (psychometrics.totalAnswered < DEV_LD_ITEMS.length) {
-      if (!window.confirm(`⚠️ تم تقييم ${psychometrics.totalAnswered} من أصل ${DEV_LD_ITEMS.length} عبارة. هل تود حفظ القائمة كمسودة؟`)) {
+      if (!window.confirm(`⚠️ تم تقييم ${psychometrics.totalAnswered} من أصل ${DEV_LD_ITEMS.length} عبارة. هل تود حفظ التقييم كمسودة؟`)) {
         return;
       }
     }
 
     const payload = {
       ...form,
-      measureId: 'dev_learning_difficulties',
-      scaleId: 'dev_learning_difficulties',
-      measureName: 'قائمة صعوبات التعلم النمائية لأطفال الروضة',
-      scaleName: 'قائمة صعوبات التعلم النمائية لأطفال الروضة - د. عادل عبدالله',
+      measureId: 'dev_ld_preschool',
+      scaleId: 'dev_ld_preschool',
+      scaleType: 'dev_ld',
+      measureName: 'قائمة صعوبات التعلم النمائية لأطفال الروضة (أ.د. عادل عبدالله)',
+      scaleName: 'قائمة صعوبات التعلم النمائية لأطفال الروضة (أ.د. عادل عبدالله)',
       category: 'learning_academic',
-      categoryName: 'صعوبات التعلم النمائية والتدخل المبكر',
+      categoryName: 'صعوبات التعلم النمائية والتشخيص المبكر',
+      author: DEV_LD_COPYRIGHT_INFO.authorAr,
       score: psychometrics.totalRawScore,
-      maxScore: psychometrics.totalMaxScore,
-      percentage: psychometrics.overallPercentage,
+      maxScore: 160,
+      percentage: `${psychometrics.overallPercentage}%`,
       level: psychometrics.probability,
-      severityLevel: psychometrics.severityLevel,
       severityKey: psychometrics.severityKey,
-      color: psychometrics.severityColor,
+      severityColor: psychometrics.severityColor,
       results: form.scores,
       scores: form.scores,
       itemNotes: form.itemNotes,
       psychometrics,
-      author: DEV_LD_COPYRIGHT_INFO.authorAr,
-      publisher: DEV_LD_COPYRIGHT_INFO.publisherAr,
       updatedAt: new Date().toISOString(),
     };
 
@@ -205,21 +206,24 @@ export default function DevLdAssessmentModal({
       lsUpd('studentAssessments', initialData.id, payload);
       toast('✅ تم تحديث قائمة صعوبات التعلم النمائية للروضة بنجاح', 'ok');
     } else {
-      const newId = uid();
       lsAdd('studentAssessments', {
         ...payload,
-        id: newId,
+        id: uid(),
         createdAt: new Date().toISOString(),
       });
-      toast('✅ تم حفظ تطبيق قائمة صعوبات التعلم النمائية لأطفال الروضة بنجاح', 'ok');
+      toast('✅ تم حفظ تطبيق قائمة صعوبات التعلم النمائية للروضة بنجاح', 'ok');
     }
 
     if (onSaved) onSaved();
     onClose();
   }
 
+  const filteredItems = activeDomainId === 'all'
+    ? DEV_LD_ITEMS
+    : DEV_LD_ITEMS.filter(it => it.domainId === activeDomainId);
+
   return (
-    <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()} style={{ zIndex: 1100 }}>
       <div
         className="mb mb-xl"
         style={{
@@ -233,7 +237,7 @@ export default function DevLdAssessmentModal({
           maxWidth: '1200px',
         }}
       >
-        {/* Modal Main Header */}
+        {/* Header */}
         <div
           className="fhd modal-header-custom"
           style={{
@@ -248,471 +252,491 @@ export default function DevLdAssessmentModal({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: '1.8rem' }}>🌱</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: '1.8rem' }}>🧸</span>
+            <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h2 style={{ fontSize: '1.18rem', fontWeight: 800, margin: 0, color: '#fff' }}>
-                  قائمة صعوبات التعلم النمائية لأطفال الروضة
-                </h2>
-                <span className="bdg" style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>
-                  80 عبارة · 6 مقاييس فرعية
+                <h3 style={{ margin: 0, fontSize: '1.12rem', fontWeight: 800, color: '#fff' }}>
+                  قائمة صعوبات التعلم النمائية لأطفال الروضة (التشخيص المبكر)
+                </h3>
+                <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontWeight: 800, fontSize: '.74rem' }}>
+                  80 عبارة نمائية
                 </span>
-                <span className="bdg" style={{ background: '#134e4a', color: '#ccfbf1', fontSize: '0.68rem', fontWeight: 800 }}>
-                  أ.د. عادل عبدالله محمد · دار الرشاد
+                <span className="bdg" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, fontSize: '.72rem' }}>
+                  أ.د. عادل عبدالله محمد
                 </span>
               </div>
-              <span style={{ fontSize: '0.76rem', opacity: 0.95, display: 'block', marginTop: 2 }}>
-                كراسة التعليمات والاستجابات المقننة للفرز والتشخيص المبكر لأطفال ما قبل المدرسة (4-6 سنوات)
-              </span>
+              <p style={{ margin: '3px 0 0', fontSize: '.78rem', opacity: 0.92, fontWeight: 400 }}>
+                جامعة الزقازيق · الكشف المبكر عن صعوبات الانتباه، الإدراك، الذاكرة، التفكير، اللغة، والتناسق البصري الحركي
+              </p>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            <button
-              type="button"
-              className="btn btn-xs"
-              onClick={() => setShowCopyrightDetails(s => !s)}
-              style={{
-                background: showCopyrightDetails ? '#fff' : 'rgba(255,255,255,0.2)',
-                color: showCopyrightDetails ? '#0f766e' : '#fff',
-                border: '1px solid rgba(255,255,255,0.35)',
-                fontWeight: 700,
-              }}
-            >
-              📜 {showCopyrightDetails ? 'إخفاء الأمانة العلمية' : 'بيان الأمانة وحقوق الملكية'}
-            </button>
-            <button
-              type="button"
-              className="btn btn-xs"
-              onClick={onClose}
-              style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', fontWeight: 700 }}
-            >
-              ✖ إغلاق
-            </button>
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={onClose}
+            style={{
+              background: 'rgba(255,255,255,0.2)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              padding: '6px 14px',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            ✕ إغلاق
+          </button>
+        </div>
+
+        {/* Live Psychometrics Status Banner */}
+        <div
+          style={{
+            background: '#f8fafc',
+            borderBottom: '1.5px solid #e2e8f0',
+            padding: '12px 20px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 12,
+            alignItems: 'center',
+            flexShrink: 0,
+          }}
+        >
+          {/* Total Raw Score & Percentage */}
+          <div style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: 10, padding: '8px 12px' }}>
+            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>المجموع الكلي الخام:</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
+              <span style={{ fontSize: '1.3rem', fontWeight: 900, color: psychometrics.severityColor }}>
+                {psychometrics.totalRawScore}
+              </span>
+              <span style={{ fontSize: '.75rem', color: '#94a3b8' }}>/ 160 ({psychometrics.overallPercentage}%)</span>
+            </div>
+            <div style={{ background: '#e2e8f0', height: 5, borderRadius: 3, marginTop: 4, overflow: 'hidden' }}>
+              <div style={{ width: `${psychometrics.overallPercentage}%`, height: '100%', background: psychometrics.severityColor }} />
+            </div>
+          </div>
+
+          {/* Cognitive Pillar */}
+          <div style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: 10, padding: '8px 12px' }}>
+            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>المجال المعرفي (انتباه/إدراك/ذاكرة):</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: psychometrics.cognitivePct >= 50 ? '#dc2626' : '#0f766e' }}>
+                {psychometrics.cognitiveRaw}
+              </span>
+              <span style={{ fontSize: '.75rem', color: '#64748b' }}>/ {psychometrics.cognitiveMax} ({psychometrics.cognitivePct}%)</span>
+            </div>
+          </div>
+
+          {/* Language & Thinking Pillar */}
+          <div style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: 10, padding: '8px 12px' }}>
+            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>مجال اللغة والتفكير:</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: psychometrics.langThinkingPct >= 50 ? '#dc2626' : '#0f766e' }}>
+                {psychometrics.langThinkingRaw}
+              </span>
+              <span style={{ fontSize: '.75rem', color: '#64748b' }}>/ {psychometrics.langThinkingMax} ({psychometrics.langThinkingPct}%)</span>
+            </div>
+          </div>
+
+          {/* Clinical Diagnostic Decision */}
+          <div style={{ background: '#fff', border: `1.5px solid ${psychometrics.severityColor}`, borderRadius: 10, padding: '8px 12px' }}>
+            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>التصنيف والقرار التشخيصي:</div>
+            <div style={{ fontSize: '.9rem', fontWeight: 900, color: psychometrics.severityColor, marginTop: 2 }}>
+              {psychometrics.probability}
+            </div>
+            <div style={{ fontSize: '.7rem', color: '#64748b', marginTop: 2 }}>
+              تم تقييم: {psychometrics.totalAnswered} من {DEV_LD_ITEMS.length} عبارة
+            </div>
           </div>
         </div>
 
-        {/* COPYRIGHT AND INTELLECTUAL PROPERTY BANNER */}
+        {/* Quick Action & Testing Bar */}
         <div
           style={{
             background: '#f0fdfa',
             borderBottom: '1px solid #ccfbf1',
-            padding: '10px 18px',
-            fontSize: '0.8rem',
-            color: '#115e59',
+            padding: '8px 20px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
-            gap: 10,
+            gap: 8,
             flexShrink: 0,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: '1.2rem' }}>⚖️</span>
-            <div>
-              <strong>إشعار الملكية الفكرية والأمانة العلمية:</strong> قائمة صعوبات التعلم النمائية لأطفال الروضة — إعداد: <b>أ.د. عادل عبدالله محمد</b> (أستاذ ورئيس قسم الصحة النفسية - كلية التربية - جامعة الزقازيق) · الناشر: <b>دار الرشاد / عربية للطباعة والنشر</b>.
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '.75rem', fontWeight: 800, color: '#0f766e' }}>تعبئة سريعة للتجربة:</span>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={() => handleAutoFill('normal')}
+              style={{ background: '#dcfce7', color: '#15803d', fontWeight: 700 }}
+            >
+              ⚡ أداء نمائي طبيعي
+            </button>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={() => handleAutoFill('mild')}
+              style={{ background: '#fef3c7', color: '#b45309', fontWeight: 700 }}
+            >
+              ⚡ مؤشرات حدية
+            </button>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={() => handleAutoFill('at_risk')}
+              style={{ background: '#ffedd5', color: '#c2410c', fontWeight: 700 }}
+            >
+              ⚡ معرض للخطر (At-Risk)
+            </button>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={() => handleAutoFill('severe')}
+              style={{ background: '#fee2e2', color: '#b91c1c', fontWeight: 700 }}
+            >
+              ⚡ صعوبات نمائية مؤكدة
+            </button>
           </div>
-          <span style={{ fontSize: '0.72rem', background: '#ccfbf1', color: '#0f766e', padding: '3px 8px', borderRadius: 6, border: '1px solid #99f6e4', fontWeight: 700 }}>
-            مبني على نموذج كيرك وكالفنت (Kirk & Chalfant)
-          </span>
-        </div>
 
-        {/* EXPANDABLE DETAILED COPYRIGHT NOTICE */}
-        {showCopyrightDetails && (
-          <div
+          <button
+            type="button"
+            className="btn btn-xs"
+            onClick={applyAutoClinicalSummary}
             style={{
-              background: '#f0fdf4',
-              padding: '14px 20px',
-              borderBottom: '2px solid #5eead4',
-              fontSize: '0.82rem',
-              color: '#065f46',
-              lineHeight: 1.6,
-              flexShrink: 0,
+              background: 'linear-gradient(135deg, #0f766e, #0d9488)',
+              color: '#fff',
+              fontWeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
             }}
           >
-            <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>📜</span> بطاقة التوثيق العلمي والتقنين السيكومتري:
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, marginBottom: 8 }}>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #a7f3d0' }}>
-                <strong>المؤلف والباحث:</strong> {DEV_LD_COPYRIGHT_INFO.authorAr} ({DEV_LD_COPYRIGHT_INFO.authorTitle})
-              </div>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #a7f3d0' }}>
-                <strong>جهة النشر:</strong> {DEV_LD_COPYRIGHT_INFO.publisherAr}
-              </div>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #a7f3d0' }}>
-                <strong>الفئة المستهدفة:</strong> {DEV_LD_COPYRIGHT_INFO.targetAge}
-              </div>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #a7f3d0' }}>
-                <strong>المرجعية النظرية:</strong> {DEV_LD_COPYRIGHT_INFO.theoreticalFramework}
-              </div>
-            </div>
-            <div style={{ fontSize: '0.78rem', color: '#047857', background: '#d1fae5', padding: '8px 12px', borderRadius: 8 }}>
-              {DEV_LD_COPYRIGHT_INFO.notice}
-              <br />
-              <strong>{DEV_LD_COPYRIGHT_INFO.disclaimer}</strong>
-            </div>
-          </div>
-        )}
+            <span>✨</span>
+            <span>توليد التقرير والخلاصة تلقائياً</span>
+          </button>
+        </div>
 
-        {/* Real-time Psychometrics & Diagnostic Strip */}
+        {/* Domain Filter Tabs */}
         <div
-          className="modal-subbar"
           style={{
-            background: 'var(--g0)',
-            padding: '10px 18px',
-            borderBottom: '1px solid var(--border-color)',
+            background: '#fff',
+            borderBottom: '1px solid #e2e8f0',
+            padding: '8px 20px',
             display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: 12,
-            flexWrap: 'wrap',
+            gap: 6,
+            overflowX: 'auto',
             flexShrink: 0,
           }}
         >
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-            {/* Total Raw Score & Percentage */}
-            <div
-              style={{
-                background: 'var(--bg-card)',
-                padding: '6px 12px',
-                borderRadius: 8,
-                border: `1.5px solid ${psychometrics.severityColor}`,
-                textAlign: 'center',
-              }}
-            >
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>الدرجة الكلية والنسبة:</span>
-              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: psychometrics.severityColor }}>
-                {psychometrics.totalRawScore} <small style={{ fontSize: '0.75rem', color: 'var(--text-sub)' }}>/ {psychometrics.totalMaxScore}</small>
-              </span>
-              <span style={{ fontSize: '0.74rem', fontWeight: 800, color: psychometrics.severityColor, marginRight: 4 }}>
-                ({psychometrics.overallPercentage}%)
-              </span>
-            </div>
+          <button
+            type="button"
+            onClick={() => setActiveDomainId('all')}
+            className={`btn btn-xs ${activeDomainId === 'all' ? 'btn-p' : 'btn-g'}`}
+            style={{
+              borderRadius: 8,
+              fontWeight: activeDomainId === 'all' ? 800 : 600,
+              padding: '6px 12px',
+              whiteSpace: 'nowrap',
+              background: activeDomainId === 'all' ? '#0d9488' : undefined,
+              color: activeDomainId === 'all' ? '#fff' : undefined,
+            }}
+          >
+            الكل (جميع العبارات الـ 80)
+          </button>
 
-            {/* Three Pillars Summary */}
-            <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-color)', textAlign: 'center' }}>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>الأبعاد النمائية الثلاثة:</span>
-              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                معرفية: <b style={{ color: '#7c3aed' }}>{psychometrics.cognitivePct}%</b> | لغوية/تفكير: <b style={{ color: '#d97706' }}>{psychometrics.langThinkingPct}%</b> | بصرية حركية: <b style={{ color: '#0d9488' }}>{psychometrics.visualMotorPct}%</b>
-              </span>
-            </div>
+          {DEV_LD_DOMAINS.map(dim => {
+            const dimPsych = psychometrics.domainResults.find(d => d.id === dim.id);
+            const isDeficit = dimPsych?.isDeficit;
+            const countAnswered = DEV_LD_ITEMS.filter(it => it.domainId === dim.id && form.scores[it.id] !== undefined).length;
+            const isComplete = countAnswered === dim.itemsCount;
+            const isCurrent = activeDomainId === dim.id;
 
-            {/* Diagnosis Result Badge */}
-            <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>التصنيف:</span>
-              <span className={`bdg ${psychometrics.severityKey === 'severe' ? 'b-rd' : psychometrics.severityKey === 'at_risk' ? 'b-or' : psychometrics.severityKey === 'mild' ? 'b-bl' : 'b-gr'}`} style={{ fontWeight: 800, fontSize: '0.78rem' }}>
-                {psychometrics.probability}
-              </span>
-            </div>
-
-            {/* Progress */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>
-                {psychometrics.totalAnswered} / {psychometrics.totalItems} عبارة
-              </span>
-              <div style={{ width: 60, height: 8, background: 'var(--border-color)', borderRadius: 4, overflow: 'hidden' }}>
-                <div
+            return (
+              <button
+                key={dim.id}
+                type="button"
+                onClick={() => setActiveDomainId(dim.id)}
+                className={`btn btn-xs ${isCurrent ? 'btn-p' : 'btn-g'}`}
+                style={{
+                  borderRadius: 8,
+                  fontWeight: isCurrent ? 800 : 600,
+                  padding: '6px 12px',
+                  whiteSpace: 'nowrap',
+                  background: isCurrent ? '#0d9488' : undefined,
+                  color: isCurrent ? '#fff' : undefined,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span>{dim.icon}</span>
+                <span>{dim.name}</span>
+                <span
                   style={{
-                    width: `${psychometrics.completionPercentage}%`,
-                    height: '100%',
-                    background: psychometrics.completionPercentage === 100 ? 'var(--ok)' : '#0d9488',
-                    transition: 'width 0.3s',
+                    background: isDeficit ? '#fee2e2' : isComplete ? '#dcfce7' : '#f1f5f9',
+                    color: isDeficit ? '#b91c1c' : isComplete ? '#15803d' : '#64748b',
+                    fontSize: '.68rem',
+                    padding: '1px 5px',
+                    borderRadius: 4,
+                    fontWeight: 700,
                   }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions Strip */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-            <button
-              type="button"
-              className="btn btn-xs btn-g"
-              onClick={() => autoFillSample('at_risk')}
-              title="تعبئة نموذج افتراضي لطفل معرض لخطر صعوبات التعلم النمائية (55%)"
-            >
-              ⚡ تجربة (معرض للخطر 55%)
-            </button>
-            <button
-              type="button"
-              className="btn btn-xs btn-p"
-              onClick={applyAutoClinicalSummary}
-              style={{ fontWeight: 700, background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 100%)', color: '#fff', border: 'none' }}
-            >
-              ✨ توليد التقرير والتوصيات آلياً
-            </button>
-          </div>
+                >
+                  {dimPsych ? `${dimPsych.rawScore}/${dim.maxScore}` : `${countAnswered}/${dim.itemsCount}`}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Scrollable Form Body */}
-        <div className="modal-body-scroll" style={{ padding: '16px 20px', flex: 1, overflowY: 'auto' }}>
-          
-          {/* 1. Student & Assessment Info Card */}
-          <div style={{ background: 'var(--g0)', padding: 14, borderRadius: 12, marginBottom: 16, border: '1px solid var(--border-color)' }}>
-            <div style={{ fontSize: '0.86rem', fontWeight: 800, marginBottom: 10, color: '#0f766e', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>👦</span> بيانات الطفل ومرحلة الروضة والمستجيب
-            </div>
-            <div className="fg c3">
-              <StudentPicker form={form} setForm={setForm} students={students} emps={emps} showExtra />
-              <div className="fl">
-                <label>المستوى الدراسي بالروضة</label>
+        {/* Scrollable Assessment Content */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', background: '#f8fafc' }}>
+          {/* Student Picker Card */}
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid #e2e8f0',
+              borderRadius: 12,
+              padding: '16px',
+              marginBottom: 16,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            }}
+          >
+            <StudentPicker
+              form={form}
+              setForm={setForm}
+              students={students}
+              emps={emps}
+              showExtra={true}
+            />
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginTop: 14, paddingTop: 14, borderTop: '1px dashed #e2e8f0' }}>
+              <div>
+                <label className="lbl" style={{ fontSize: '.78rem' }}>اسم الروضة / المركز:</label>
                 <input
                   type="text"
-                  placeholder="مثال: روضة أولى (KG1) / روضة ثانية (KG2)"
-                  value={form.grade || ''}
-                  onChange={e => setForm(f => ({ ...f, grade: e.target.value }))}
+                  className="inp"
+                  value={form.schoolName || ''}
+                  onChange={e => setForm(f => ({ ...f, schoolName: e.target.value }))}
+                  placeholder="روضة براعم الأمل"
                 />
               </div>
-              <div className="fl">
-                <label>اسم الروضة / المدرسة</label>
-                <input
-                  type="text"
-                  placeholder="اسم روضة الأطفال الحالية"
-                  value={form.school || ''}
-                  onChange={e => setForm(f => ({ ...f, school: e.target.value }))}
-                />
-              </div>
-              <div className="fl">
-                <label>اسم الفاحص / الأخصائي</label>
-                <input
-                  type="text"
-                  value={form.examinerName || ''}
-                  onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
-                />
-              </div>
-              <div className="fl">
-                <label>المستجيب (معلمة الروضة / ولي الأمر)</label>
-                <input
-                  type="text"
-                  placeholder="اسم المعلمة أو القائم بالملاحظة"
-                  value={form.raterName || ''}
-                  onChange={e => setForm(f => ({ ...f, raterName: e.target.value }))}
-                />
-              </div>
-              <div className="fl">
-                <label>الصفة / صلة القرابة</label>
+
+              <div>
+                <label className="lbl" style={{ fontSize: '.78rem' }}>مستوى الروضة / الصف:</label>
                 <select
-                  value={form.raterRelation || ''}
-                  onChange={e => setForm(f => ({ ...f, raterRelation: e.target.value }))}
+                  className="inp"
+                  value={form.grade || 'تمهيدي / روضة ثانية (KG2)'}
+                  onChange={e => setForm(f => ({ ...f, grade: e.target.value }))}
                 >
-                  <option value="معلمة الروضة (معلمة الفصل)">معلمة الروضة (معلمة الفصل)</option>
-                  <option value="أخصائي نفسي وتربية خاصة">أخصائي نفسي وتربية خاصة</option>
-                  <option value="أخصائي تدخل مبكر وتخاطب">أخصائي تدخل مبكر وتخاطب</option>
-                  <option value="الأم">الأم</option>
-                  <option value="الأب">الأب</option>
+                  <option value="روضة أولى (KG1)">روضة أولى (KG1)</option>
+                  <option value="تمهيدي / روضة ثانية (KG2)">تمهيدي / روضة ثانية (KG2)</option>
+                  <option value="تمهيدي متقدم (KG3)">تمهيدي متقدم (KG3)</option>
+                  <option value="الصف الأول الابتدائي">الصف الأول الابتدائي (تهيئة)</option>
                 </select>
               </div>
-              <div className="fl">
-                <label>تاريخ تطبيق القائمة</label>
+
+              <div>
+                <label className="lbl" style={{ fontSize: '.78rem' }}>العام الدراسي:</label>
                 <input
-                  type="date"
-                  value={form.date || todayStr()}
-                  onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                  type="text"
+                  className="inp"
+                  value={form.academicYear || ''}
+                  onChange={e => setForm(f => ({ ...f, academicYear: e.target.value }))}
+                  placeholder="1445 / 1446 هـ"
                 />
               </div>
             </div>
           </div>
 
-          {/* 2. Subscale Navigation Tabs & Filter */}
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
-              <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                📑 بنود المقاييس الفرعية الستة (الأبعاد النمائية):
-              </div>
-              <div style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>
-                خيارات التقدير: <strong>نعم (2 درجات)</strong> - تنطبق تماماً | <strong>أحياناً (درجة واحدة)</strong> - جزئياً | <strong>لا (0 / صفر)</strong> - لا تنطبق
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 6 }}>
-              <button
-                type="button"
-                className={`tab ${activeDomainFilter === 'all' ? 'on' : ''}`}
-                onClick={() => setActiveDomainFilter('all')}
-                style={{ fontSize: '0.78rem', padding: '6px 12px', whiteSpace: 'nowrap' }}
-              >
-                🌐 جميع العبارات ({DEV_LD_ITEMS.length})
-              </button>
-              {DEV_LD_DOMAINS.map(dom => {
-                const domStat = psychometrics.domainResults.find(d => d.id === dom.id);
-                return (
-                  <button
-                    key={dom.id}
-                    type="button"
-                    className={`tab ${activeDomainFilter === dom.id ? 'on' : ''}`}
-                    onClick={() => setActiveDomainFilter(dom.id)}
-                    style={{
-                      fontSize: '0.78rem',
-                      padding: '6px 12px',
-                      whiteSpace: 'nowrap',
-                      borderRight: `3px solid ${dom.color}`,
-                    }}
-                  >
-                    {dom.icon} {dom.name} ({domStat?.answeredCount || 0}/{dom.itemsCount})
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 3. Items Evaluation Grid */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
-            {filteredItems.map(item => {
-              const domain = DEV_LD_DOMAINS.find(d => d.id === item.domainId);
-              const currentScore = form.scores[item.id];
-              const currentNote = form.itemNotes[item.id] || '';
+          {/* Assessment Items List */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {filteredItems.map(it => {
+              const currentScore = form.scores[it.id];
+              const isAnswered = currentScore !== undefined && currentScore !== null;
+              const hasNote = Boolean(form.itemNotes[it.id]);
+              const isNoteOpen = expandedNotes[it.id] || hasNote;
+              const dim = DEV_LD_DOMAINS.find(d => d.id === it.domainId);
 
               return (
                 <div
-                  key={item.id}
+                  key={it.id}
                   style={{
-                    background: 'var(--bg-card)',
-                    border: currentScore !== undefined ? `1.5px solid ${domain.color}` : '1px solid var(--border-color)',
-                    borderRadius: 10,
-                    padding: '12px 16px',
-                    transition: 'all 0.2s ease',
+                    background: '#fff',
+                    border: `1.5px solid ${isAnswered ? (currentScore === 2 ? '#fca5a5' : currentScore === 1 ? '#fed7aa' : '#99f6e4') : '#e2e8f0'}`,
+                    borderRadius: 12,
+                    padding: '14px 16px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1, minWidth: '260px' }}>
+                  {/* Item Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       <span
                         style={{
-                          background: domain.color,
+                          background: '#0d9488',
                           color: '#fff',
-                          fontWeight: 800,
-                          fontSize: '0.74rem',
-                          padding: '3px 8px',
+                          fontWeight: 900,
+                          fontSize: '.76rem',
+                          padding: '2px 8px',
                           borderRadius: 6,
-                          flexShrink: 0,
                         }}
                       >
-                        #{item.id} · {domain.code}
+                        عبارة {it.id}
                       </span>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.4 }}>
-                          {item.text}
-                        </div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)', marginTop: 2 }}>
-                          المجال: {domain.name} ({domain.pillarName})
-                        </div>
-                      </div>
+                      <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontSize: '.72rem', fontWeight: 700 }}>
+                        {dim?.name}
+                      </span>
+                      <h4 style={{ margin: 0, fontSize: '.92rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                        {it.text}
+                      </h4>
                     </div>
 
-                    {/* Rating Scale Buttons (نعم 2, أحيانا 1, لا 0) */}
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                      {DEV_LD_RESPONSE_OPTIONS.map(opt => {
-                        const isSelected = currentScore === opt.value;
-                        return (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => handleScoreSelect(item.id, opt.value)}
-                            className={`btn btn-xs ${isSelected ? 'btn-p' : 'btn-g'}`}
-                            style={{
-                              padding: '5px 12px',
-                              fontSize: '0.78rem',
-                              fontWeight: isSelected ? 800 : 500,
-                              background: isSelected ? opt.color : undefined,
-                              color: isSelected ? '#fff' : undefined,
-                              border: isSelected ? 'none' : undefined,
-                            }}
-                            title={opt.description}
-                          >
-                            {opt.label} {isSelected && '✓'}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Optional Item Observation Note */}
-                  <div style={{ marginTop: 6 }}>
-                    <input
-                      type="text"
-                      placeholder="ملاحظات سلوكية أو شواهد بيئية في الروضة لهذا البند (اختياري)..."
-                      value={currentNote}
-                      onChange={e => handleItemNoteChange(item.id, e.target.value)}
+                    <button
+                      type="button"
+                      onClick={() => toggleItemNote(it.id)}
+                      className="btn btn-xs"
                       style={{
-                        fontSize: '0.76rem',
-                        padding: '4px 8px',
+                        background: hasNote ? '#fef3c7' : '#f1f5f9',
+                        color: hasNote ? '#b45309' : '#64748b',
+                        fontWeight: 600,
+                        padding: '3px 8px',
                         borderRadius: 6,
-                        border: '1px dashed var(--border-color)',
-                        width: '100%',
-                        background: 'var(--g0)',
                       }}
-                    />
+                    >
+                      💬 {hasNote ? 'تعديل الملاحظة' : '+ ملاحظة سلوكية'}
+                    </button>
                   </div>
+
+                  {/* 3 Rating Options */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                      gap: 8,
+                      marginTop: 10,
+                    }}
+                  >
+                    {DEV_LD_RESPONSE_OPTIONS.map(opt => {
+                      const isSelected = currentScore === opt.score;
+                      const isDeficit = opt.score === 2;
+
+                      return (
+                        <button
+                          key={opt.score}
+                          type="button"
+                          onClick={() => handleScoreChange(it.id, opt.score)}
+                          style={{
+                            background: isSelected ? (isDeficit ? '#fee2e2' : opt.score === 1 ? '#ffedd5' : '#ccfbf1') : '#fafafa',
+                            border: `2px solid ${isSelected ? (isDeficit ? '#dc2626' : opt.score === 1 ? '#ea580c' : '#0d9488') : '#e2e8f0'}`,
+                            borderRadius: 8,
+                            padding: '8px 10px',
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 4,
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <span style={{ fontWeight: 800, fontSize: '.84rem', color: isSelected ? (isDeficit ? '#b91c1c' : opt.score === 1 ? '#c2410c' : '#0f766e') : '#334155' }}>
+                            {opt.label}
+                          </span>
+                          <span style={{ fontSize: '.68rem', color: '#64748b' }}>
+                            {opt.description}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Expandable Note */}
+                  {isNoteOpen && (
+                    <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px dashed #e2e8f0' }}>
+                      <input
+                        type="text"
+                        className="inp"
+                        value={form.itemNotes[it.id] || ''}
+                        onChange={e => handleNoteChange(it.id, e.target.value)}
+                        placeholder={`أدخل ملاحظاتك حول سلوك الطفل في العبارة [${it.id}]...`}
+                        style={{ fontSize: '.8rem', padding: '6px 10px' }}
+                      />
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
 
-          {/* 4. Diagnostic Interpretation & Recommendations Section */}
-          <div style={{ background: 'var(--g0)', padding: 16, borderRadius: 12, border: '1px solid var(--border-color)', marginTop: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-              <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f766e', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span>📝</span> الخلاصة التشخيصية وتوصيات التدخل المبكر بالروضة
-              </div>
+          {/* Clinical Impression & Recommendations */}
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid #e2e8f0',
+              borderRadius: 12,
+              padding: '16px',
+              marginTop: 20,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                📝 الخلاصة التشخيصية والتوصيات التربوية
+              </h3>
               <button
                 type="button"
-                className="btn btn-xs btn-p"
+                className="btn btn-xs"
                 onClick={applyAutoClinicalSummary}
-                style={{ fontWeight: 700, background: '#0d9488', color: '#fff', border: 'none' }}
+                style={{ background: '#ccfbf1', color: '#0f766e', fontWeight: 700 }}
               >
-                ✨ إعادة توليد الخلاصة بناءً على الدرجات
+                ✨ إعادة توليد النص
               </button>
             </div>
 
-            <div className="fg c1">
-              <div className="fl">
-                <label style={{ fontWeight: 700, fontSize: '0.8rem' }}>التقرير الإكلينيكي والفرز النمائي</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 14 }}>
+              <div>
+                <label className="lbl" style={{ fontSize: '.8rem' }}>التقرير الإكلينيكي وتفسير المؤشرات النمائية:</label>
                 <textarea
+                  className="inp"
                   rows={6}
-                  placeholder="الخلاصة التشخيصية والوصف النفسي النمائي وفق معايير قائمة أ.د. عادل عبدالله..."
                   value={form.clinicalSummary || ''}
                   onChange={e => setForm(f => ({ ...f, clinicalSummary: e.target.value }))}
-                  style={{ fontSize: '0.82rem', lineHeight: 1.5 }}
+                  placeholder="اضغط على زر (توليد التقرير والخلاصة تلقائياً) أو اكتب التقرير التشخيصي هنا..."
+                  style={{ fontSize: '.82rem', lineHeight: 1.5 }}
                 />
               </div>
 
-              <div className="fl">
-                <label style={{ fontWeight: 700, fontSize: '0.8rem' }}>توصيات الخطة الفردية للتدخل المبكر (Early Intervention IEP)</label>
+              <div>
+                <label className="lbl" style={{ fontSize: '.8rem' }}>توصيات برنامج التدخل المبكر والخطة الفردية:</label>
                 <textarea
-                  rows={5}
-                  placeholder="الاستراتيجيات النمائية المقترحة، أنشطة غرف المصادر والروضة، وبرامج تنمية المهارات قبل الأكاديمية..."
+                  className="inp"
+                  rows={6}
                   value={form.recommendations || ''}
                   onChange={e => setForm(f => ({ ...f, recommendations: e.target.value }))}
-                  style={{ fontSize: '0.82rem', lineHeight: 1.5 }}
+                  placeholder="أدخل التوصيات النمائية والأنشطة الإثرائية للروضة والمنزل..."
+                  style={{ fontSize: '.82rem', lineHeight: 1.5 }}
                 />
               </div>
             </div>
           </div>
-
         </div>
 
-        {/* Modal Footer Controls */}
+        {/* Modal Footer */}
         <div
           style={{
             padding: '12px 20px',
-            background: 'var(--g0)',
-            borderTop: '1px solid var(--border-color)',
+            background: '#fff',
+            borderTop: '1px solid #e2e8f0',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexShrink: 0,
-            gap: 10,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>
-              تم الإجابة على <strong>{psychometrics.totalAnswered}</strong> من <strong>{DEV_LD_ITEMS.length}</strong> عبارة
-            </span>
-            <span className={`bdg ${psychometrics.completionPercentage === 100 ? 'b-gr' : 'b-or'}`} style={{ fontSize: '0.72rem' }}>
-              {psychometrics.completionPercentage}% مكتمل
-            </span>
+          <div style={{ fontSize: '.82rem', color: '#64748b' }}>
+            تم تقييم <strong style={{ color: '#0d9488' }}>{psychometrics.totalAnswered}</strong> من {DEV_LD_ITEMS.length} عبارة · المجموع الخام: <strong style={{ color: psychometrics.severityColor }}>{psychometrics.totalRawScore}/160</strong> ({psychometrics.overallPercentage}%)
           </div>
 
           <div style={{ display: 'flex', gap: 10 }}>
@@ -720,22 +744,24 @@ export default function DevLdAssessmentModal({
               type="button"
               className="btn btn-g"
               onClick={onClose}
+              style={{ padding: '8px 16px', fontWeight: 700 }}
             >
               إلغاء
             </button>
+
             <button
               type="button"
               className="btn btn-p"
               onClick={handleSave}
               style={{
-                background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 100%)',
+                background: 'linear-gradient(135deg, #0f766e, #0d9488)',
                 color: '#fff',
+                padding: '8px 24px',
                 fontWeight: 800,
-                border: 'none',
-                padding: '8px 20px',
+                boxShadow: '0 4px 12px rgba(13, 148, 136, 0.25)',
               }}
             >
-              💾 حفظ قائمة صعوبات التعلم النمائية
+              💾 حفظ وحساب نتيجة قائمة صعوبات التعلم النمائية
             </button>
           </div>
         </div>
