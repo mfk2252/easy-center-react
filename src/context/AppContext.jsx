@@ -34,6 +34,21 @@ function applyTheme(color) {
   document.documentElement.style.setProperty('--pr-l',`rgba(${r},${g},${b},0.1)`);
 }
 
+export const FONT_OPTIONS = [
+  { id: 'arabicui', name: 'خط ون يو آي (Arabic UI One UI)', family: "'Arabic UI One UI', 'MainFont', 'Tajawal', sans-serif" },
+  { id: 'tajawal', name: 'خط تجوال (Tajawal)', family: "'Tajawal', sans-serif" },
+  { id: 'cairo', name: 'خط كايرو (Cairo)', family: "'Cairo', sans-serif" },
+  { id: 'almarai', name: 'خط المراعي (Almarai)', family: "'Almarai', sans-serif" },
+  { id: 'alexandria', name: 'خط الإسكندرية (Alexandria)', family: "'Alexandria', sans-serif" },
+];
+
+export function applyFontFamily(fontId) {
+  const selected = FONT_OPTIONS.find(f => f.id === fontId) || FONT_OPTIONS[0];
+  document.documentElement.style.setProperty('--font-main', selected.family);
+  localStorage.setItem('scs_fontfamily', selected.id);
+  return selected.id;
+}
+
 /** كائن currentUser الموحّد لمالك المنصة — نفس الشكل سواء جاء من login() المباشر
  *  أو من onAuthStateChanged (بعد تحديث الصفحة مثلاً)، لتفادي أي تعارض بينهما. */
 function buildPlatformAdminUser(fbUser) {
@@ -65,8 +80,10 @@ export function AppProvider({ children }) {
     if (dm) { document.body.classList.add('dark'); setDarkMode(true); }
     const fs = localStorage.getItem('scs_fontsize');
     const fw = localStorage.getItem('scs_fontweight');
+    const ff = localStorage.getItem('scs_fontfamily') || 'arabicui';
     if (fs) document.documentElement.style.setProperty('--fs', fs+'px');
     if (fw) document.documentElement.style.setProperty('--fw', fw);
+    applyFontFamily(ff);
   }, []);
 
   // أيقونة تبويب المتصفح (Favicon) تتحدّث تلقائياً حسب شعار المركز الحالي.
@@ -240,6 +257,11 @@ export function AppProvider({ children }) {
     });
     if (data.fontSize) localStorage.setItem('scs_fontsize', String(data.fontSize));
     if (data.fontWeight) localStorage.setItem('scs_fontweight', String(data.fontWeight));
+    if (data.fontFamily) applyFontFamily(data.fontFamily);
+    else {
+      const savedFf = localStorage.getItem('scs_fontfamily') || 'arabicui';
+      applyFontFamily(savedFf);
+    }
     if (data.platformLang) localStorage.setItem('scs_lang', data.platformLang);
     applyTheme(c.color);
     document.title = c.name || 'نظام إدارة المركز';

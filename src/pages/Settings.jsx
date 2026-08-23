@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, FONT_OPTIONS, applyFontFamily } from '../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel, refreshAllSystemData, getCenterId } from '../hooks/useStorage';
 import { uid, todayStr } from '../utils/dateHelpers';
 import { ROLES } from '../utils/constants';
@@ -60,6 +60,7 @@ export default function Settings() {
   const { t } = useLang();
   const [fontSize, setFontSize] = useState(() => Number(localStorage.getItem('scs_fontsize')) || 15);
   const [fontWeight, setFontWeight] = useState(() => localStorage.getItem('scs_fontweight') || '600');
+  const [fontFamily, setFontFamily] = useState(() => localStorage.getItem('scs_fontfamily') || center.fontFamily || 'arabicui');
   const [tab, setTab] = useState('center');
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -342,18 +343,22 @@ export default function Settings() {
     }
   }
 
-  function applyFontSettings(size, weight) {
+  function applyFontSettings(size, weight, family) {
+    const activeFamily = family || fontFamily;
     document.documentElement.style.setProperty('--fs', `${size}px`);
     document.documentElement.style.setProperty('--fw', weight);
     localStorage.setItem('scs_fontsize', String(size));
     localStorage.setItem('scs_fontweight', weight);
+    if (activeFamily) {
+      applyFontFamily(activeFamily);
+    }
     if (centerId) {
-      updateCenterSettings(centerId, { fontSize: size, fontWeight: weight }).catch(() => {});
+      updateCenterSettings(centerId, { fontSize: size, fontWeight: weight, fontFamily: activeFamily }).catch(() => {});
     }
   }
 
   function saveAppearance() {
-    applyFontSettings(fontSize, fontWeight);
+    applyFontSettings(fontSize, fontWeight, fontFamily);
     saveCenter();
   }
 
@@ -487,18 +492,64 @@ export default function Settings() {
         <div className="wg">
           <div className="wg-h"><h3>🎨 {t('settings.appearance')}</h3></div>
           <div className="wg-b">
+            {/* اختيار الخط المجهز */}
+            <div style={{ marginBottom: 22, padding: '16px', background: 'var(--g0)', borderRadius: 12, border: '1px solid var(--border-color)' }}>
+              <label style={{ fontWeight: 800, display: 'block', marginBottom: 6, fontSize: '.95rem', color: 'var(--text-main)' }}>
+                🔤 نوع الخط المعتمد للواجهة والتقارير
+              </label>
+              <p style={{ fontSize: '.82rem', color: 'var(--text-sub)', marginBottom: 12 }}>
+                اختر الخط المفضل لمركزك، وسيتم تطبيقه فوراً على كافة صفحات النظام والمطبوعات
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 10 }}>
+                {FONT_OPTIONS.map(f => {
+                  const isSelected = fontFamily === f.id;
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => {
+                        setFontFamily(f.id);
+                        applyFontSettings(fontSize, fontWeight, f.id);
+                      }}
+                      style={{
+                        padding: '12px 14px',
+                        borderRadius: 10,
+                        border: isSelected ? '2px solid var(--pr)' : '1.5px solid var(--border-color)',
+                        background: isSelected ? 'var(--pr-l)' : 'var(--bg-card)',
+                        color: isSelected ? 'var(--pr-d)' : 'var(--text-main)',
+                        textAlign: 'right',
+                        cursor: 'pointer',
+                        transition: 'all 0.18s ease',
+                        fontFamily: f.family,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        boxShadow: isSelected ? 'var(--sh)' : 'none',
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '.95rem' }}>{f.name}</div>
+                        <div style={{ fontSize: '.78rem', opacity: 0.8, marginTop: 2 }}>معاينة النص العربي 123</div>
+                      </div>
+                      {isSelected && <span style={{ color: 'var(--pr)', fontWeight: 900, fontSize: '1.1rem' }}>✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="fg c2" style={{ marginBottom: 20 }}>
               <div className="fl">
                 <label>{t('settings.fontSize')}</label>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <button type="button" className="btn btn-g btn-sm" onClick={() => { const n = Math.max(12, fontSize - 1); setFontSize(n); applyFontSettings(n, fontWeight); }}>{t('settings.fontSmaller')}</button>
+                  <button type="button" className="btn btn-g btn-sm" onClick={() => { const n = Math.max(12, fontSize - 1); setFontSize(n); applyFontSettings(n, fontWeight, fontFamily); }}>{t('settings.fontSmaller')}</button>
                   <span style={{ fontWeight: 700, minWidth: 48, textAlign: 'center' }}>{fontSize}px</span>
-                  <button type="button" className="btn btn-g btn-sm" onClick={() => { const n = Math.min(22, fontSize + 1); setFontSize(n); applyFontSettings(n, fontWeight); }}>{t('settings.fontLarger')}</button>
+                  <button type="button" className="btn btn-g btn-sm" onClick={() => { const n = Math.min(22, fontSize + 1); setFontSize(n); applyFontSettings(n, fontWeight, fontFamily); }}>{t('settings.fontLarger')}</button>
                 </div>
               </div>
               <div className="fl">
                 <label>{t('settings.fontWeight')}</label>
-                <select value={fontWeight} onChange={e => { setFontWeight(e.target.value); applyFontSettings(fontSize, e.target.value); }}>
+                <select value={fontWeight} onChange={e => { setFontWeight(e.target.value); applyFontSettings(fontSize, e.target.value, fontFamily); }}>
                   <option value="400">{t('settings.fontNormal')}</option>
                   <option value="600">600</option>
                   <option value="700">{t('settings.fontBold')}</option>
