@@ -11,16 +11,25 @@ const SESSION_TYPES = ['تخاطب ونطق','تعديل سلوك','علاج ف�
 const STATUSES = { active:'✅ نشط', inactive:'⏸️ منقطع', graduated:'🎓 متخرج', transferred:'🔄 محوّل', waitlist:'⏳ انتظار', rejected:'❌ غير مناسب' };
 const STATUS_BADGE = { active:'b-gr', inactive:'b-gy', graduated:'b-cy', transferred:'b-bl', waitlist:'b-or', rejected:'b-rd' };
 
-const EMPTY_STU = { name:'', className:'', dob:'', gender:'', nationality:'سعودي', joinDate:'', status:'active', specialistId:'', sessionTypes:[], diagnosis:'', diagnosis2:'', hospital:'', doctor:'', medications:'', medNotes:'', parentName:'', parentPhone:'', parentPhone2:'', parentRelation:'', parentJob:'', parentEmail:'', address:'', progMorning:{enabled:false}, progEvening:{enabled:false}, progSessions:{enabled:false,emp:'',type:'',freq:'أسبوعي'}, progOnline:{enabled:false,emp:'',type:'',dur:'45 دقيقة',link:''}, notes:'', photo:'', attachments:[] };
+const DEFAULT_SECTIONS = [
+  { id: 'sec_autism', name: 'قسم اضطراب طيف التوحد (صف اللؤلؤ)', type: 'قسم متخصص', capacity: 10, supervisorId: '', color: '#1a56db', icon: '🧩', description: 'برامج التأهيل والتدريب لاضطراب طيف التوحد' },
+  { id: 'sec_down', name: 'قسم متلازمة داون (صف المرجان)', type: 'قسم متخصص', capacity: 8, supervisorId: '', color: '#059669', icon: '🌟', description: 'تنمية المهارات الإدراكية والحركية والاجتماعية' },
+  { id: 'sec_early', name: 'قسم التدخل المبكر (صف الزمرد)', type: 'مرحلة تأهيلية', capacity: 12, supervisorId: '', color: '#7c3aed', icon: '🌱', description: 'الرعاية التأهيلية والتدخل المبكر للأطفال' },
+];
+
+const EMPTY_STU = { name:'', className:'', sectionId:'', dob:'', gender:'', nationality:'سعودي', joinDate:'', status:'active', specialistId:'', sessionTypes:[], diagnosis:'', diagnosis2:'', hospital:'', doctor:'', medications:'', medNotes:'', parentName:'', parentPhone:'', parentPhone2:'', parentRelation:'', parentJob:'', parentEmail:'', address:'', progMorning:{enabled:false}, progEvening:{enabled:false}, progSessions:{enabled:false,emp:'',type:'',freq:'أسبوعي'}, progOnline:{enabled:false,emp:'',type:'',dur:'45 دقيقة',link:''}, notes:'', photo:'', attachments:[] };
 const EMPTY_QS = { stuId:'', type:'تخاطب ونطق', date:'', time:'', duration:45, empId:'', notes:'', attachData:'', attachName:'' };
 const EMPTY_CONSULT = { beneficiaryName:'', parentName:'', date:'', time:'', empId:'', duration:45, notes:'', attachData:'', attachName:'' };
+const EMPTY_SEC = { name: '', type: 'قسم متخصص', capacity: 10, supervisorId: '', color: '#1a56db', icon: '🧩', description: '' };
 
 export default function StudentsPage() {
   const { go, toast, currentUser, activeView, center } = useApp();
   const isParent = currentUser?.role === 'parent';
   const [students, setStudents] = useState([]);
+  const [sections, setSections] = useState([]);
   const [emps, setEmps] = useState([]);
-  const [tab, setTab] = useState('active');
+  const [viewMode, setViewMode] = useState('sections'); // 'sections' | 'list'
+  const [tab, setTab] = useState('all');
   const [q, setQ] = useState('');
   const [filterDiag, setFilterDiag] = useState('');
   const [filterSpec, setFilterSpec] = useState('');
@@ -33,18 +42,38 @@ export default function StudentsPage() {
   const [showConsult, setShowConsult] = useState(false);
   const [consultForm, setConsultForm] = useState(EMPTY_CONSULT);
 
+  // Section Modal State
+  const [showSecModal, setShowSecModal] = useState(false);
+  const [secEditId, setSecEditId] = useState(null);
+  const [secForm, setSecForm] = useState(EMPTY_SEC);
+
   const canAdd = !isParent && ['manager','vice','reception'].includes(currentUser?.role);
   const canEdit = !isParent && ['manager','vice','reception'].includes(currentUser?.role);
   const centerWa = centerWhatsAppUrl(center?.whatsapp, center?.phoneCode, center?.phone);
   const specialists = emps.filter(e => SPECIALIST_ROLES.includes(e.role));
 
-  useEffect(() => { setStudents(lsGet('students')); setEmps(lsGet('employees')); }, [activeView]);
+  useEffect(() => {
+    setStudents(lsGet('students'));
+    setEmps(lsGet('employees'));
+    let storedSecs = lsGet('sections');
+    if (!storedSecs || storedSecs.length === 0) {
+      storedSecs = DEFAULT_SECTIONS;
+      localStorage.setItem('scs_sections', JSON.stringify(storedSecs));
+    }
+    setSections(storedSecs);
+  }, [activeView]);
+
   useEffect(() => {
     if (!isParent || detailId) return;
     const mine = lsGet('students').filter(s => parentCanViewStudent(s, currentUser));
     if (mine.length === 1) setDetailId(mine[0].id);
   }, [isParent, currentUser?.studentId, currentUser?.username]);
-  function reload() { setStudents(lsGet('students')); }
+
+  function reload() {
+    setStudents(lsGet('students'));
+    setSections(lsGet('sections') || DEFAULT_SECTIONS);
+  }
+
   const fld = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
   function fldProg(prog, key) { return e => setForm(f => ({ ...f, [prog]: { ...f[prog], [key]: e.target.value } })); }
   function toggleProg(prog) { setForm(f => ({ ...f, [prog]: { ...f[prog], enabled: !f[prog].enabled } })); }
@@ -68,9 +97,9 @@ export default function StudentsPage() {
     return true;
   });
 
-  function openForm(stu = null) {
+  function openForm(stu = null, defaultSecId = '') {
     if (stu) { setForm({ ...EMPTY_STU, ...stu, attachments: stu.attachments || [] }); setEditId(stu.id); }
-    else { setForm({ ...EMPTY_STU, joinDate: todayStr(), attachments: [] }); setEditId(null); }
+    else { setForm({ ...EMPTY_STU, sectionId: defaultSecId, joinDate: todayStr(), attachments: [] }); setEditId(null); }
     setShowForm(true);
   }
 
@@ -80,8 +109,16 @@ export default function StudentsPage() {
     if (!form.parentName?.trim()) { toast('⚠️ أدخل اسم ولي الأمر', 'er'); return; }
     if (!form.parentRelation?.trim()) { toast('⚠️ أدخل صلة القرابة', 'er'); return; }
     if (!form.parentPhone?.trim()) { toast('⚠️ أدخل جوال ولي الأمر', 'er'); return; }
-    if (editId) { lsUpd('students', editId, form); toast('✅ تم تحديث بيانات الطالب', 'ok'); }
-    else { lsAdd('students', { ...form, id: uid() }); toast('✅ تم إضافة الطالب', 'ok'); }
+    
+    // Auto sync className if section selected
+    let updatedForm = { ...form };
+    if (form.sectionId) {
+      const sec = sections.find(s => s.id === form.sectionId);
+      if (sec) updatedForm.className = sec.name;
+    }
+
+    if (editId) { lsUpd('students', editId, updatedForm); toast('✅ تم تحديث بيانات الطالب', 'ok'); }
+    else { lsAdd('students', { ...updatedForm, id: uid() }); toast('✅ تم إضافة الطالب', 'ok'); }
     setShowForm(false); reload();
   }
 
@@ -89,6 +126,39 @@ export default function StudentsPage() {
     if (!window.confirm('⚠️ تحذير نهائي: سيتم حذف الطالب وجميع الارتباطات المحلية ببياناته من هذا الجهاز.\nهل تريد المتابعة؟')) return;
     if (!window.confirm('تأكيد أخير: حذف نهائي لا يمكن التراجع عنه. المتابعة؟')) return;
     lsDel('students', id); toast('🗑️ تم الحذف', 'ok'); reload(); setDetailId(null);
+  }
+
+  // Section CRUD
+  function openSecForm(sec = null) {
+    if (sec) { setSecForm({ ...EMPTY_SEC, ...sec }); setSecEditId(sec.id); }
+    else { setSecForm(EMPTY_SEC); setSecEditId(null); }
+    setShowSecModal(true);
+  }
+
+  function saveSec() {
+    if (!secForm.name.trim()) { toast('⚠️ أدخل اسم القسم / الصف', 'er'); return; }
+    if (secEditId) {
+      lsUpd('sections', secEditId, secForm);
+      toast('✅ تم تحديث بيانات القسم/الصف', 'ok');
+    } else {
+      lsAdd('sections', { ...secForm, id: uid() });
+      toast('✅ تم إضافة القسم/الصف الجديد', 'ok');
+    }
+    setShowSecModal(false);
+    reload();
+  }
+
+  function deleteSec(secId) {
+    if (!window.confirm('⚠️ هل أنت متأكد من حذف هذا القسم؟ سيصبح جميع طلاب هذا القسم غير موزعين.')) return;
+    lsDel('sections', secId);
+    // Unassign students
+    students.forEach(s => {
+      if (s.sectionId === secId) {
+        lsUpd('students', s.id, { ...s, sectionId: '' });
+      }
+    });
+    toast('🗑️ تم حذف القسم', 'ok');
+    reload();
   }
 
   function handlePhoto(e) { const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>setForm(fm=>({...fm,photo:ev.target.result})); r.readAsDataURL(f); }
@@ -181,22 +251,44 @@ export default function StudentsPage() {
   return (
     <div>
       <div className="ph">
-        <div className="ph-t"><h2>👦 {isParent ? 'بيانات الطفل' : 'الطلاب'}</h2><p>{isParent ? 'عرض بيانات طفلك والتواصل مع المركز' : 'قاعدة بيانات الطلاب المسجلين'}</p></div>
+        <div className="ph-t"><h2>👦 {isParent ? 'بيانات الطفل' : 'الطلاب والصفوف'}</h2><p>{isParent ? 'عرض بيانات طفلك والتواصل مع المركز' : 'إدارة الطلاب وتوزيعهم حسب الأقسام والصفوف الدراسية'}</p></div>
         {isParent && centerWa && (
           <a href={centerWa} target="_blank" rel="noreferrer" className="btn btn-bl">💬 واتساب المركز</a>
         )}
         <div className="ph-a" style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+          {canAdd && <button type="button" className="btn btn-p" style={{ background:'var(--ok,#059669)', borderColor:'var(--ok,#059669)' }} onClick={() => openSecForm()}>➕ إضافة قسم/صف</button>}
           {canAdd && <button type="button" className="btn btn-p" onClick={() => openForm()}>➕ طالب جديد</button>}
           {canEdit && <button type="button" className="btn btn-s" onClick={openQuickSession}>🩺 تسجيل جلسة</button>}
           {canEdit && <button type="button" className="btn btn-sm" onClick={openConsult} style={{background:'var(--cyan-l,#ecfeff)',color:'var(--cyan)',border:'1px solid var(--cyan)'}}>💬 تسجيل استشارة</button>}
         </div>
       </div>
 
-      <div className="tabs" style={{ flexWrap:'wrap' }}>
-        {[['active','✅ نشط'],['morning','☀️ صباحي'],['evening','🌙 مسائي'],['sessions','🩺 جلسات'],['online','🌐 أونلاين'],['waitlist','⏳ انتظار'],['inactive','⏸️ منقطعون'],['graduated','🎓 تخرج'],['all','📋 الكل']].map(([v,l])=>(
-          <button key={v} className={`tab ${tab===v?'on':''}`} onClick={()=>setTab(v)}>{l}</button>
-        ))}
+      <div style={{ display:'flex', gap:8, marginBottom:14, flexWrap:'wrap' }}>
+        <button
+          type="button"
+          className={`tab ${viewMode==='sections'?'on':''}`}
+          onClick={()=>setViewMode('sections')}
+          style={{ fontWeight:800 }}
+        >
+          🗂️ عرض حسب الأقسام والصفوف ({sections.length})
+        </button>
+        <button
+          type="button"
+          className={`tab ${viewMode==='list'?'on':''}`}
+          onClick={()=>setViewMode('list')}
+          style={{ fontWeight:800 }}
+        >
+          📋 قائمة الطلاب العامة ({students.length})
+        </button>
       </div>
+
+      {viewMode === 'list' && (
+        <div className="tabs" style={{ flexWrap:'wrap' }}>
+          {[['all','📋 الكل'],['active','✅ نشط'],['morning','☀️ صباحي'],['evening','🌙 مسائي'],['sessions','🩺 جلسات'],['online','🌐 أونلاين'],['waitlist','⏳ انتظار'],['inactive','⏸️ منقطعون'],['graduated','🎓 تخرج']].map(([v,l])=>(
+            <button key={v} className={`tab ${tab===v?'on':''}`} onClick={()=>setTab(v)}>{l}</button>
+          ))}
+        </div>
+      )}
 
       <div className="tb">
         <input className="srch" value={q} onChange={e=>setQ(e.target.value)} placeholder="🔍 ابحث بالاسم أو التشخيص أو ولي الأمر..."/>
@@ -212,39 +304,148 @@ export default function StudentsPage() {
 
       <div className="stats" style={{ gridTemplateColumns:'repeat(4,1fr)' }}>
         <div className="sc g"><div className="lb">النشطون</div><div className="vl">{activeCount}</div></div>
-        <div className="sc"><div className="lb">جلسات</div><div className="vl">{students.filter(s=>s.progSessions?.enabled).length}</div></div>
+        <div className="sc"><div className="lb">الأقسام والصفوف</div><div className="vl">{sections.length}</div></div>
         <div className="sc o"><div className="lb">قائمة الانتظار</div><div className="vl">{waitlistCount}</div></div>
-        <div className="sc v"><div className="lb">الكل</div><div className="vl">{students.length}</div></div>
+        <div className="sc v"><div className="lb">إجمالي الطلاب</div><div className="vl">{students.length}</div></div>
       </div>
 
-      {filtered.length === 0
-        ? <EmptyState icon="👦" title="لا يوجد طلاب" sub={canAdd ? 'اضغط ➕ طالب جديد' : ''}/>
-        : filtered.map(s => {
-          const spec = emps.find(e => e.id === s.specialistId);
-          const progs = [s.progMorning?.enabled&&'☀️', s.progEvening?.enabled&&'🌙', s.progSessions?.enabled&&'🩺', s.progOnline?.enabled&&'🌐'].filter(Boolean);
-          return (
-            <div key={s.id} className="card clickable" onClick={() => setDetailId(s.id)}>
-              <div className="av lg">
-                {s.photo ? <img src={s.photo} alt={s.name}/> : (s.name||'?').slice(0,2)}
+      {/* VIEW MODE 1: SECTIONS CARDS VIEW */}
+      {viewMode === 'sections' && (
+        <div style={{ display:'flex', flexDirection:'column', gap:18, marginTop:16 }}>
+          {sections.map(sec => {
+            const secStudents = filtered.filter(s => s.sectionId === sec.id || s.className === sec.name);
+            const supervisor = emps.find(e => e.id === sec.supervisorId);
+            const capacity = Number(sec.capacity) || 10;
+
+            return (
+              <div key={sec.id} className="card" style={{ padding:0, overflow:'hidden', borderTop:`5px solid ${sec.color||'#1a56db'}`, display:'flex', flexDirection:'column' }}>
+                <div style={{ padding:'14px 18px', background:'var(--g0)', borderBottom:'1px solid var(--border-color)', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:10 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <div style={{ width:42, height:42, borderRadius:12, background:`${sec.color||'#1a56db'}18`, color:sec.color||'#1a56db', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.4rem' }}>
+                      {sec.icon || '🧩'}
+                    </div>
+                    <div>
+                      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                        <h3 style={{ fontSize:'1.1rem', fontWeight:800 }}>{sec.name}</h3>
+                        <span className="bdg b-gy" style={{ fontSize:'.75rem' }}>{sec.type || 'قسم/صف'}</span>
+                      </div>
+                      <div style={{ fontSize:'.8rem', color:'var(--text-sub)', marginTop:2 }}>
+                        <span>👤 المشرف المسؤول: <strong>{supervisor ? supervisor.name : 'غير محدد'}</strong></span> · 
+                        <span> 📊 الطلاب المسجلون: <strong>{secStudents.length} / {capacity}</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                    {canAdd && (
+                      <button type="button" className="btn btn-xs btn-p" onClick={() => openForm(null, sec.id)}>
+                        + طالب جديد بهذا الصف
+                      </button>
+                    )}
+                    {canEdit && (
+                      <button type="button" className="btn btn-xs btn-g" onClick={() => openSecForm(sec)} title="تعديل بيانات القسم">
+                        ✏️
+                      </button>
+                    )}
+                    {canEdit && (
+                      <button type="button" className="btn btn-xs btn-d" onClick={() => deleteSec(sec.id)} title="حذف القسم">
+                        🗑️
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ padding:14 }}>
+                  {secStudents.length === 0 ? (
+                    <div style={{ textAlign:'center', padding:16, color:'var(--text-sub)', fontSize:'.85rem' }}>
+                      لا يوجد طلاب مسجلون بهذا القسم/الصف حالياً.
+                    </div>
+                  ) : (
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(260px, 1fr))', gap:10 }}>
+                      {secStudents.map(s => {
+                        const spec = emps.find(e => e.id === s.specialistId);
+                        return (
+                          <div key={s.id} className="card clickable" onClick={() => setDetailId(s.id)} style={{ padding:10, margin:0, border:'1px solid var(--border-color)', background:'var(--bg-card)' }}>
+                            <div className="av sm">
+                              {s.photo ? <img src={s.photo} alt={s.name}/> : (s.name||'?').slice(0,2)}
+                            </div>
+                            <div className="ci" style={{ fontSize:'.85rem' }}>
+                              <div className="cn" style={{ fontSize:'.9rem' }}>{s.name}</div>
+                              <div className="cm">{s.diagnosis || '—'} · {calcAge(s.dob)}</div>
+                              <div className="cm">👨‍👩‍👦 {s.parentName} ({s.parentPhone})</div>
+                            </div>
+                            <div className="c-badges">
+                              <span className={`bdg ${STATUS_BADGE[s.status]||'b-gy'}`} style={{ fontSize:'.7rem' }}>{STATUSES[s.status]||s.status}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="ci">
-                <div className="cn">{s.name}</div>
-                <div className="cm">{s.className && `📚 ${s.className} · `}{s.diagnosis||'—'} · {calcAge(s.dob)} · {spec?.name||'—'}</div>
-                <div className="cm">{s.parentName&&'👨‍👩‍👦 '+s.parentName} {s.parentPhone&&'· '+s.parentPhone}</div>
+            );
+          })}
+
+          {/* Unassigned Students */}
+          {(() => {
+            const unassigned = filtered.filter(s => !s.sectionId && (!s.className || !sections.some(sec => sec.name === s.className)));
+            if (unassigned.length === 0) return null;
+            return (
+              <div className="card" style={{ padding:14, borderTop:'5px solid var(--warn)', background:'var(--warn-l,#fefce8)' }}>
+                <h3 style={{ fontSize:'1rem', color:'var(--warn,#b45309)', marginBottom:8 }}>
+                  📂 الطلاب غير الموزعين على أقسام ({unassigned.length})
+                </h3>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(260px, 1fr))', gap:10 }}>
+                  {unassigned.map(s => (
+                    <div key={s.id} className="card clickable" onClick={() => setDetailId(s.id)} style={{ padding:10, margin:0, background:'var(--bg-card)' }}>
+                      <div className="ci" style={{ fontSize:'.85rem' }}>
+                        <div className="cn">{s.name}</div>
+                        <div className="cm">{s.diagnosis || 'غير محدد'} · {s.parentPhone}</div>
+                      </div>
+                      <button type="button" className="btn btn-xs btn-p" onClick={(e) => { e.stopPropagation(); openForm(s); }}>
+                        📌 تعيين صف
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="c-badges">
-                <span className={`bdg ${STATUS_BADGE[s.status]||'b-gy'}`}>{STATUSES[s.status]||s.status}</span>
-                {progs.map((p,i)=><span key={i} className="bdg b-cy">{p}</span>)}
+            );
+          })()}
+        </div>
+      )}
+
+      {/* VIEW MODE 2: GENERAL LIST VIEW */}
+      {viewMode === 'list' && (
+        filtered.length === 0
+          ? <EmptyState icon="👦" title="لا يوجد طلاب" sub={canAdd ? 'اضغط ➕ طالب جديد' : ''}/>
+          : filtered.map(s => {
+            const spec = emps.find(e => e.id === s.specialistId);
+            const progs = [s.progMorning?.enabled&&'☀️', s.progEvening?.enabled&&'🌙', s.progSessions?.enabled&&'🩺', s.progOnline?.enabled&&'🌐'].filter(Boolean);
+            const sec = sections.find(sec => sec.id === s.sectionId || sec.name === s.className);
+
+            return (
+              <div key={s.id} className="card clickable" onClick={() => setDetailId(s.id)}>
+                <div className="av lg">
+                  {s.photo ? <img src={s.photo} alt={s.name}/> : (s.name||'?').slice(0,2)}
+                </div>
+                <div className="ci">
+                  <div className="cn">{s.name}</div>
+                  <div className="cm">{sec ? `🏫 ${sec.name} · ` : s.className ? `📚 ${s.className} · ` : ''}{s.diagnosis||'—'} · {calcAge(s.dob)} · {spec?.name||'—'}</div>
+                  <div className="cm">{s.parentName&&'👨‍👩‍👦 '+s.parentName} {s.parentPhone&&'· '+s.parentPhone}</div>
+                </div>
+                <div className="c-badges">
+                  <span className={`bdg ${STATUS_BADGE[s.status]||'b-gy'}`}>{STATUSES[s.status]||s.status}</span>
+                  {progs.map((p,i)=><span key={i} className="bdg b-cy">{p}</span>)}
+                </div>
+                <div className="c-acts" onClick={ev=>ev.stopPropagation()}>
+                  {!isParent && s.parentPhone && <a href={`https://wa.me/${s.parentPhone.replace(/[^0-9+]/g,'').replace(/^0/,'966')}`} target="_blank" rel="noreferrer" className="btn btn-xs btn-bl">💬</a>}
+                  {isParent && centerWa && <a href={centerWa} target="_blank" rel="noreferrer" className="btn btn-xs btn-bl">💬 المركز</a>}
+                  {canEdit && <button className="btn btn-xs btn-g" onClick={()=>openForm(s)}>✏️</button>}
+                </div>
               </div>
-              <div className="c-acts" onClick={ev=>ev.stopPropagation()}>
-                {!isParent && s.parentPhone && <a href={`https://wa.me/${s.parentPhone.replace(/[^0-9+]/g,'').replace(/^0/,'966')}`} target="_blank" rel="noreferrer" className="btn btn-xs btn-bl">💬</a>}
-                {isParent && centerWa && <a href={centerWa} target="_blank" rel="noreferrer" className="btn btn-xs btn-bl">💬 المركز</a>}
-                {canEdit && <button className="btn btn-xs btn-g" onClick={()=>openForm(s)}>✏️</button>}
-              </div>
-            </div>
-          );
-        })
-      }
+            );
+          })
+      )}
 
       {/* Student Form Modal */}
       {showForm && (
@@ -266,7 +467,17 @@ export default function StudentsPage() {
                 </div>
                 <div className="fg c3">
                   <div className="fl"><label>الاسم الكامل <span className="req">*</span></label><input value={form.name} onChange={fld('name')} placeholder="اسم الطالب كاملاً"/></div>
-                  <div className="fl"><label>الصف / الفصل</label><input value={form.className} onChange={fld('className')} placeholder="مثال: الصف الثاني أ"/></div>
+                  <div className="fl">
+                    <label>القسم / الصف التابع له</label>
+                    <select value={form.sectionId||''} onChange={e => {
+                      const secId = e.target.value;
+                      const sec = sections.find(s=>s.id===secId);
+                      setForm(f=>({...f, sectionId: secId, className: sec ? sec.name : f.className}));
+                    }}>
+                      <option value="">-- غير موزرع (بدون قسم) --</option>
+                      {sections.map(sec => <option key={sec.id} value={sec.id}>{sec.name}</option>)}
+                    </select>
+                  </div>
                   <div className="fl"><label>تاريخ الميلاد <span className="req">*</span></label><input type="date" value={form.dob} onChange={fld('dob')}/></div>
                   <div className="fl"><label>العمر</label><input value={calcAge(form.dob)} readOnly style={{ background:'var(--g0)' }}/></div>
                 </div>
@@ -469,6 +680,89 @@ export default function StudentsPage() {
             <div className="fa">
               <button type="button" className="btn btn-p" onClick={saveConsult}>💾 حفظ الاستشارة</button>
               <button type="button" className="btn btn-g" onClick={() => setShowConsult(false)}>إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Section Form Modal */}
+      {showSecModal && (
+        <div className="mbg" onClick={e=>{ if(e.target===e.currentTarget) setShowSecModal(false); }}>
+          <div className="mb mb-medium" style={{ padding:0, overflow:'hidden', borderRadius:16 }}>
+            <div className="fhd" style={{ padding:'16px 20px', borderRadius:0, background:'var(--ok,#059669)' }}>
+              <h2 style={{ color:'#fff' }}>{secEditId ? '✏️ تعديل بيانات القسم / الصف' : '➕ إضافة قسم أو صف جديد'}</h2>
+              <p style={{ color:'rgba(255,255,255,0.9)', fontSize:'.85rem' }}>إدارة الهيكل التنظيمي للأقسام والصفوف الدراسية</p>
+            </div>
+            <div className="modal-body-scroll" style={{ padding:'18px 20px' }}>
+              <div className="fg c2">
+                <div className="fl full">
+                  <label>اسم القسم أو الصف <span className="req">*</span></label>
+                  <input value={secForm.name} onChange={e=>setSecForm(f=>({...f, name:e.target.value}))} placeholder="مثال: قسم اضطراب طيف التوحد (صف اللؤلؤ)"/>
+                </div>
+                <div className="fl">
+                  <label>تصنيف القسم</label>
+                  <select value={secForm.type} onChange={e=>setSecForm(f=>({...f, type:e.target.value}))}>
+                    <option value="قسم متخصص">قسم متخصص</option>
+                    <option value="صف دراسي">صف دراسي</option>
+                    <option value="مجموعة تأهيلية">مجموعة تأهيلية</option>
+                    <option value="مرحلة تعليمية">مرحلة تعليمية</option>
+                  </select>
+                </div>
+                <div className="fl">
+                  <label>السعة الاستيعابية (عدد الطلاب)</label>
+                  <input type="number" min={1} max={100} value={secForm.capacity} onChange={e=>setSecForm(f=>({...f, capacity:Number(e.target.value)}))}/>
+                </div>
+                <div className="fl full">
+                  <label>المشرف / الأخصائي المسؤول</label>
+                  <select value={secForm.supervisorId} onChange={e=>setSecForm(f=>({...f, supervisorId:e.target.value}))}>
+                    <option value="">-- اختر مشرف القسم --</option>
+                    {emps.map(e => <option key={e.id} value={e.id}>{e.name} ({e.role})</option>)}
+                  </select>
+                </div>
+                <div className="fl full">
+                  <label>الرمز / الأيقونة</label>
+                  <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:4 }}>
+                    {['🧩','🌟','🌱','🏫','🎨','🐬','💎','☀️','🚀','📚','🧸','🏆'].map(ic => (
+                      <button
+                        key={ic}
+                        type="button"
+                        onClick={() => setSecForm(f=>({...f, icon:ic}))}
+                        style={{
+                          width:36, height:36, borderRadius:8, fontSize:'1.2rem', cursor:'pointer',
+                          border: secForm.icon===ic ? '2px solid var(--pr,#1a56db)' : '1px solid var(--border-color)',
+                          background: secForm.icon===ic ? 'var(--pr-l,#eff6ff)' : 'transparent'
+                        }}
+                      >
+                        {ic}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="fl full">
+                  <label>اللون التمييزي</label>
+                  <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:4 }}>
+                    {['#1a56db','#059669','#7c3aed','#d97706','#dc2626','#0891b2','#db2777','#475569'].map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setSecForm(f=>({...f, color:c}))}
+                        style={{
+                          width:30, height:30, borderRadius:'50%', background:c, cursor:'pointer',
+                          border: secForm.color===c ? '3px solid #000' : 'none'
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="fl full">
+                  <label>الوصف والأهداف الفئوية</label>
+                  <textarea rows={2} value={secForm.description} onChange={e=>setSecForm(f=>({...f, description:e.target.value}))} placeholder="وصف للبرنامج أو الفئة المستهدفة..."/>
+                </div>
+              </div>
+            </div>
+            <div className="fa">
+              <button type="button" className="btn btn-p" onClick={saveSec}>💾 حفظ بيانات القسم</button>
+              <button type="button" className="btn btn-g" onClick={() => setShowSecModal(false)}>إلغاء</button>
             </div>
           </div>
         </div>
