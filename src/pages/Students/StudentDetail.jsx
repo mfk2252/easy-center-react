@@ -22,6 +22,7 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
   const isParent = currentUser?.role === 'parent';
   const centerWa = centerWhatsAppUrl(center?.whatsapp, center?.phoneCode, center?.phone);
   const [stu, setStu] = useState(null);
+  const [sections, setSections] = useState([]);
   const [tab, setTab] = useState('info');
   const [emps, setEmps] = useState([]);
   const [iepGoals, setIepGoals] = useState([]);
@@ -61,6 +62,7 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
 
   function load() {
     setStu(lsGet('students').find(s => s.id === stuId));
+    setSections(lsGet('sections') || []);
     setEmps(lsGet('employees'));
     setIepGoals(lsGet('iepGoals').filter(g => g.stuId === stuId));
     setSessions(lsGet('sessions').filter(s => s.stuId === stuId).sort((a,b)=>(b.date||'').localeCompare(a.date||'')));
@@ -245,11 +247,14 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
         <div className="det-info">
           <h2>{stu.name}</h2>
           <div className="det-sub">
-            <span>{stu.diagnosis}</span>
+            <span>{stu.disability || stu.diagnosis || 'طالب'}</span>
+            {stu.sectionId && <span>🏫 {sections.find(s => s.id === stu.sectionId)?.name || 'قسم/صف'}</span>}
             {stu.className && <span>📚 {stu.className}</span>}
-            <span>👶 {calcAge(stu.dob)}</span>
+            <span>👶 {calcAge(stu.birthDate || stu.dob)}</span>
             {spec && <span>🩺 {spec.name}</span>}
-            {stu.parentPhone && <span>👨‍👩‍👦 {stu.parentName} {stu.parentPhone}</span>}
+            {(stu.guardianPhone || stu.parentPhone) && (
+              <span>👨‍👩‍👦 {stu.guardianName || stu.parentName} ({stu.guardianPhone || stu.parentPhone})</span>
+            )}
           </div>
           {progs.length > 0 && <div style={{ marginTop:6, display:'flex', gap:6, flexWrap:'wrap' }}>{progs.map((p,i)=><span key={i} className="bdg b-cy">{p}</span>)}</div>}
         </div>
