@@ -2,7 +2,7 @@
 .btn {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 8px 16px; border: none; border-radius: var(--r2);
-  font-family: 'Tajawal', sans-serif; font-size: .85rem;
+  font-family: var(--font-main); font-size: .85rem;
   font-weight: 600; cursor: pointer; transition: all .15s;
   white-space: nowrap; text-decoration: none;
 }
@@ -122,7 +122,7 @@
 .fl label { font-size: .76rem; font-weight: 600; color: var(--text-sub); display: flex; align-items: center; gap: 4px; }
 .fl input, .fl select, .fl textarea {
   padding: 9px 12px; border: 1.5px solid var(--border-color);
-  border-radius: var(--r2); font-family: 'Tajawal', sans-serif;
+  border-radius: var(--r2); font-family: var(--font-main);
   font-size: .88rem; font-weight: 400; background: var(--bg-input); color: var(--text-main);
   outline: none; transition: border .15s, box-shadow .15s; width: 100%;
 }
@@ -140,15 +140,15 @@
 /* ══ TABS ══ */
 .tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; background: var(--g1); border: 1px solid var(--border-color); border-radius: var(--r2); padding: 4px; margin-bottom: 12px; }
 .tabs::-webkit-scrollbar { display: none; }
-.tab { padding: 7px 14px; border: none; background: transparent; border-radius: var(--r3); font-family: 'Tajawal', sans-serif; font-size: .8rem; font-weight: 600; cursor: pointer; white-space: nowrap; color: var(--text-sub); transition: all .15s; }
+.tab { padding: 7px 14px; border: none; background: transparent; border-radius: var(--r3); font-family: var(--font-main); font-size: .8rem; font-weight: 600; cursor: pointer; white-space: nowrap; color: var(--text-sub); transition: all .15s; }
 .tab:hover { background: var(--bg-card); color: var(--text-main); }
 .tab.on { background: var(--bg-card); color: var(--pr); box-shadow: var(--sh); font-weight: 700; }
 
 /* ══ SEARCH BAR ══ */
 .tb { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
-.srch { flex: 1; min-width: 200px; padding: 9px 14px; border: 1.5px solid var(--border-color); border-radius: var(--r2); font-family: 'Tajawal', sans-serif; font-size: .88rem; font-weight: 400; background: var(--bg-card); color: var(--text-main); outline: none; transition: border .15s; }
+.srch { flex: 1; min-width: 200px; padding: 9px 14px; border: 1.5px solid var(--border-color); border-radius: var(--r2); font-family: var(--font-main); font-size: .88rem; font-weight: 400; background: var(--bg-card); color: var(--text-main); outline: none; transition: border .15s; }
 .srch:focus { border-color: var(--pr); }
-.fsel { padding: 9px 12px; border: 1.5px solid var(--border-color); border-radius: var(--r2); font-family: 'Tajawal', sans-serif; font-size: .85rem; font-weight: 500; background: var(--bg-card); color: var(--text-main); outline: none; cursor: pointer; }
+.fsel { padding: 9px 12px; border: 1.5px solid var(--border-color); border-radius: var(--r2); font-family: var(--font-main); font-size: .85rem; font-weight: 500; background: var(--bg-card); color: var(--text-main); outline: none; cursor: pointer; }
 
 /* ══ TABLE ══ */
 .tbl-wrap, .table-wrap, .table-responsive {
