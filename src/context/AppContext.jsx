@@ -35,7 +35,7 @@ function applyTheme(color) {
 }
 
 export const FONT_OPTIONS = [
-  { id: 'arabicui', name: 'خط ون يو آي (Arabic UI One UI)', family: "'Arabic UI One UI', 'MainFont', 'Tajawal', sans-serif" },
+  { id: 'arabicui', name: 'خط ون يو آي (Arabic UI One UI)', family: "'Arabic UI One UI', 'ArabicUIOneUI', 'ArabicUI', 'MainFont', sans-serif" },
   { id: 'tajawal', name: 'خط تجوال (Tajawal)', family: "'Tajawal', sans-serif" },
   { id: 'cairo', name: 'خط كايرو (Cairo)', family: "'Cairo', sans-serif" },
   { id: 'almarai', name: 'خط المراعي (Almarai)', family: "'Almarai', sans-serif" },
