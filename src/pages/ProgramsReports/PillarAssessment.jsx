@@ -796,27 +796,16 @@ export default function PillarAssessment({ onDataChange }) {
         <div>
           {activeCategoryView === null ? (
             <div>
-              {/* Category Search Header / Description */}
-              <div style={{ textAlign: 'center', margin: '24px 0 32px 0' }}>
-                <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-                  <span>📂 مركز الفئات التشخيصية المعتمدة</span>
-                  <span className="bdg b-bl" style={{ fontSize: '0.85rem', padding: '4px 10px', borderRadius: '12px', fontWeight: 500 }}>13 فئة معتمدة</span>
-                </h2>
-                <p style={{ fontSize: '0.95rem', color: 'var(--text-sub)', maxWidth: '650px', margin: '0 auto', lineHeight: 1.6, fontWeight: 400 }}>
-                  مكتبة متكاملة ومصنفة لتطبيق أدوات قياس الاضطرابات النفسية والنمائية وصعوبات التعلم والتربية الخاصة. انقر على أي قسم لبدء الفحص والتقييم.
-                </p>
-
-                {/* Optional category-grid text search */}
-                <div style={{ marginTop: 20, display: 'flex', justifyContent: 'center' }}>
-                  <input
-                    type="text"
-                    className="prog-search-input"
-                    style={{ maxWidth: '450px', width: '100%', padding: '10px 16px', borderRadius: '24px', fontSize: '0.9rem', border: '1.5px solid var(--border-color)', boxShadow: 'var(--sh)', textAlign: 'center' }}
-                    placeholder="🔍 ابحث عن مقياس محدد أو فئة تشخيصية مباشرة..."
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                  />
-                </div>
+              {/* Search Bar */}
+              <div style={{ margin: '8px 0 24px 0', display: 'flex', justifyContent: 'center' }}>
+                <input
+                  type="text"
+                  className="prog-search-input"
+                  style={{ maxWidth: '450px', width: '100%', padding: '10px 16px', borderRadius: '24px', fontSize: '0.9rem', border: '1.5px solid var(--border-color)', boxShadow: 'var(--sh)', textAlign: 'center' }}
+                  placeholder="🔍 ابحث عن مقياس محدد أو فئة تشخيصية مباشرة..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                />
               </div>
 
               {searchTerm ? (
