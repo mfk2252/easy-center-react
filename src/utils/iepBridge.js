@@ -514,6 +514,114 @@ export const SCALE_GOAL_TEMPLATES = {
     }
   },
 
+  // Family Disintegration Scale (مقياس التفكك الأسري - د. عادل العمرو)
+  family_disintegration: {
+    fam_1: {
+      domain: 'family',
+      code: 'FAM-ATT-1',
+      title: 'الاستجابة لمطالب واحتياجات المفحوص',
+      goals: [
+        { text: 'أن تحدد الأسرة وقتاً يومياً ثابتاً للاستماع إلى مطالب المفحوص وتلبيتها بشكل متوازن بنسبة التزام 80%.', mastery: 'التزام أسري في 4 من 5 أيام أسبوعياً' }
+      ]
+    },
+    fam_3: {
+      domain: 'family',
+      code: 'FAM-SUP-3',
+      title: 'الدعم النفسي والتعامل مع المشكلات الفردية',
+      goals: [
+        { text: 'أن يشارك الوالدان في جلسات إرشادية أسبوعية لتعلم أساليب المساندة وحل المشكلات مع المفحوص بشكل إيجابي.', mastery: 'حضور 8 جلسات إرشادية متتالية' }
+      ]
+    },
+    fam_4: {
+      domain: 'family',
+      code: 'FAM-EMO-4',
+      title: 'الدفء الأسري والاحتواء العاطفي',
+      goals: [
+        { text: 'أن يقدم الوالدان عبارات تشجيع وتعزيز وجداني للمفحوص بمعدل 3 مرات يومياً لتعزيز شعوره بالأمان النفسي.', mastery: 'تحسن بنسبة 85% في مقياس الأمان العاطفي' }
+      ]
+    },
+    fam_6: {
+      domain: 'family',
+      code: 'FAM-REL-6',
+      title: 'بناء علاقة صداقة وثقة والدية',
+      goals: [
+        { text: 'أن يخصص الوالد نشاطاً ترفيهياً مشتركاً أسبوعياً مع المفحوص لتعزيز الثقة وكسر حواجز الخوف والتباعد.', mastery: 'تنفيذ نشاط أسبوعي لمدة شهرين' }
+      ]
+    },
+    fam_10: {
+      domain: 'family',
+      code: 'FAM-BEH-10',
+      title: 'إيقاف الشتائم والعنف اللفظي المنزلي',
+      goals: [
+        { text: 'أن تلتزم الأسرة بميثاق الحوار الإيجابي الخالي من الشتائم والإهانات اللفظية بنسبة انخفاض 90%.', mastery: 'بيئة حوارية خالية من الشتائم لأربعة أسابيع' }
+      ]
+    },
+    fam_11: {
+      domain: 'family',
+      code: 'FAM-DOM-11',
+      title: 'الحماية من العنف والنزاعات الزوجية',
+      goals: [
+        { text: 'أن يشارك الزوجان في برنامج استشارات زوجية وأسرية لحل الخلافات بالطرق السلمية وتجنيب الأبناء المشاهد العدوانية.', mastery: 'تحسن الاستقرار الزوجي بنسبة 80%' }
+      ]
+    },
+    fam_12: {
+      domain: 'family',
+      code: 'FAM-RES-12',
+      title: 'حل المشكلات الأسرية بطرق سلمية وديمقراطية',
+      goals: [
+        { text: 'أن تعتمد الأسرة أسلوب مجلس العائلة الدوري لحل المشكلات بالتفاهم ودون صراخ أو تهديد.', mastery: 'عقد اجتماعات أسرية أسبوعية منتظمة' }
+      ]
+    },
+    fam_17: {
+      domain: 'family',
+      code: 'FAM-AFF-17',
+      title: 'إشباع الحاجة للعطف والتشجيع الوالدي',
+      goals: [
+        { text: 'أن يظهر الوالد دعماً وتشجيعاً مباشراً لجهود وإنجازات المفحوص الصفية والتأهيلية في 90% من المناسبات.', mastery: 'متابعة دورية مع المرشد النفسي' }
+      ]
+    },
+    fam_18: {
+      domain: 'family',
+      code: 'FAM-VER-18',
+      title: 'تعديل أسلوب التخاطب الوالدي والحد من التجريح',
+      goals: [
+        { text: 'أن يستبدل الوالد لغة التأنيب والتجريح بالتوجيه الإيجابي والتعزيز السلوكي في جميع المواقف اليومية.', mastery: 'تطبيق التوجيه الإيجابي بنسبة 85%' }
+      ]
+    },
+    fam_19: {
+      domain: 'family',
+      code: 'FAM-ABU-19',
+      title: 'إيقاف العقاب البدني واستبداله بأساليب التعزيز',
+      goals: [
+        { text: 'أن يتوقف الوالد تماماً عن استخدام الضرب كوسيلة تأديب واعتماد أساليب تكلفة الاستجابة والتعزيز الإيجابي.', mastery: 'انعدام العقاب البدني 100%' }
+      ]
+    },
+    fam_20: {
+      domain: 'family',
+      code: 'FAM-ACA-20',
+      title: 'المتابعة التعليمية والمنزلية المنتظمة',
+      goals: [
+        { text: 'أن تتابع الأسرة الواجبات والتمارين التأهيلية المنزلية للمفحوص وتسجلها في دفتر المتابعة اليومي بدقة.', mastery: 'متابعة منزلية في 5 أيام أسبوعياً' }
+      ]
+    },
+    fam_21: {
+      domain: 'family',
+      code: 'FAM-CON-21',
+      title: 'خفض المشاحنات والشجار الأسري',
+      goals: [
+        { text: 'أن يتدرب أفراد الأسرة على مهارات إدارة الغضب والتواصل اللاعنفي للحد من الشجار والمشاحنات المنزلية.', mastery: 'انخفاض نوبات الشجار بنسبة 75%' }
+      ]
+    },
+    fam_22: {
+      domain: 'family',
+      code: 'FAM-STR-22',
+      title: 'المساندة النفسية أثناء الانفصال أو الهجر',
+      goals: [
+        { text: 'أن يتلقى المفحوص دعماً نفسياً وتأهيلياً لمساعدته على التكيف مع تغيرات البنية الأسرية دون تراجع أكاديمي.', mastery: 'استقرار انفعالي بنسبة 80%' }
+      ]
+    }
+  },
+
   // GARS-3 (Gilliam-3) Items to IEP Goals
   gars_3: {
     1: {
@@ -620,7 +728,8 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
   const rawId = (measureId || 'cars').toLowerCase().replace(/[-_]/g, '');
   
   let lookupKey = 'cars';
-  if (rawId.includes('myklebust') || rawId.includes('prs')) lookupKey = 'myklebust';
+  if (rawId.includes('family') || rawId.includes('disintegration')) lookupKey = 'family_disintegration';
+  else if (rawId.includes('myklebust') || rawId.includes('prs')) lookupKey = 'myklebust';
   else if (rawId.includes('sartawi') || rawId.includes('sarta')) lookupKey = 'sartawi';
   else if (rawId.includes('cars')) lookupKey = 'cars';
   else if (rawId.includes('ldes') || rawId.includes('learningdiff') || rawId.includes('learning')) lookupKey = 'learning_difficulties';

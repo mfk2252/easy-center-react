@@ -32,12 +32,15 @@ import SartawiAssessmentModal from '../../components/assessments/SartawiAssessme
 import SartawiReportModal from '../../components/assessments/SartawiReportModal';
 import MyklebustAssessmentModal from '../../components/assessments/MyklebustAssessmentModal';
 import MyklebustReportModal from '../../components/assessments/MyklebustReportModal';
+import FamilyDisintegrationAssessmentModal from '../../components/assessments/FamilyDisintegrationAssessmentModal';
+import FamilyDisintegrationReportModal from '../../components/assessments/FamilyDisintegrationReportModal';
 import { PEP3_ITEMS } from '../../data/pep3Data';
 import { LDES_ITEMS } from '../../data/ldesData';
 import { DEV_LD_ITEMS } from '../../data/devLdData';
 import { LDDRS_ITEMS } from '../../data/lddrsData';
 import { SARTAWI_ITEMS } from '../../data/sartawiData';
 import { MYKLEBUST_ITEMS } from '../../data/myklebustData';
+import { FAMILY_DISINTEGRATION_ITEMS } from '../../data/familyDisintegrationData';
 import IepBridgeModal from './IepBridgeModal';
 import { extractRecommendedGoals } from '../../utils/iepBridge';
 import {
@@ -172,6 +175,12 @@ export default function PillarAssessment({ onDataChange }) {
   const [myklebustEditData, setMyklebustEditData] = useState(null);
   const [myklebustReportOpen, setMyklebustReportOpen] = useState(false);
   const [selectedMyklebustAssessment, setSelectedMyklebustAssessment] = useState(null);
+
+  // Family Disintegration Scale States
+  const [familyModalOpen, setFamilyModalOpen] = useState(false);
+  const [familyEditData, setFamilyEditData] = useState(null);
+  const [familyReportOpen, setFamilyReportOpen] = useState(false);
+  const [selectedFamilyAssessment, setSelectedFamilyAssessment] = useState(null);
 
   // IEP Bridge State
   const [bridgeOpen, setBridgeOpen] = useState(false);
@@ -317,6 +326,11 @@ export default function PillarAssessment({ onDataChange }) {
       setMyklebustModalOpen(true);
       return;
     }
+    if (scaleId === 'family_disintegration' || scaleId === 'family' || scaleId === 'family_climate') {
+      setFamilyEditData(null);
+      setFamilyModalOpen(true);
+      return;
+    }
     const scale = allScales.find(s => s.id === scaleId) || activeScale;
     setSelectedScaleId(scale?.id || 'cars');
     setScaleResponses({});
@@ -458,6 +472,16 @@ export default function PillarAssessment({ onDataChange }) {
     setMyklebustReportOpen(true);
   }
 
+  function openEditFamilyAssessment(item) {
+    setFamilyEditData(item);
+    setFamilyModalOpen(true);
+  }
+
+  function openViewFamilyReport(item) {
+    setSelectedFamilyAssessment(item);
+    setFamilyReportOpen(true);
+  }
+
   function handleScaleOptionChange(itemId, value) {
     setScaleResponses(prev => ({
       ...prev,
@@ -513,6 +537,8 @@ export default function PillarAssessment({ onDataChange }) {
       setBridgeScaleItems(SARTAWI_ITEMS);
     } else if (item.measureId === 'myklebust_scale' || item.scaleType === 'myklebust') {
       setBridgeScaleItems(MYKLEBUST_ITEMS);
+    } else if (item.measureId === 'family_disintegration' || item.scaleType === 'family_disintegration') {
+      setBridgeScaleItems(FAMILY_DISINTEGRATION_ITEMS);
     } else {
       const scale = allScales.find(s => s.id === item.measureId) || null;
       setBridgeScaleItems(scale?.items || []);
@@ -1675,13 +1701,14 @@ export default function PillarAssessment({ onDataChange }) {
                 const isLddrs = item.measureId === 'lddrs_battery' || item.scaleType === 'lddrs' || item.measureId?.startsWith('lddrs');
                 const isSartawi = item.measureId === 'sartawi_scale' || item.scaleType === 'sartawi_ld' || item.scaleType === 'sartawi';
                 const isMyklebust = item.measureId === 'myklebust_scale' || item.scaleType === 'myklebust' || item.measureId === 'myklebust';
+                const isFamily = item.measureId === 'family_disintegration' || item.scaleType === 'family_disintegration';
                 return (
                   <div
                     key={item.id}
                     className="prog-item-card"
                     style={{
-                      border: isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
-                      boxShadow: isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
+                      border: isFamily ? '1.5px solid #7c3aed' : isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
+                      boxShadow: isFamily ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
@@ -1701,13 +1728,22 @@ export default function PillarAssessment({ onDataChange }) {
                           {isLddrs && <span className="bdg" style={{ background: '#fee2e2', color: '#991b1b', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>بطارية الزيات LDDRS</span>}
                           {isSartawi && <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>مقياس السرطاوي (50)</span>}
                           {isMyklebust && <span className="bdg" style={{ background: '#cffafe', color: '#0e7490', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>مايكل بست PRS</span>}
+                          {isFamily && <span className="bdg" style={{ background: '#f5f3ff', color: '#7c3aed', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>التفكك الأسري</span>}
                         </div>
                         <div className="prog-student-meta">{item.measureName} · {item.date}</div>
                       </div>
                       <span className="bdg b-gr" style={{ fontSize: '0.82rem', fontWeight: 800, flexShrink: 0 }}>
-                        {isMyklebust ? `الخام: ${item.score || 0} / 120 (LQ=${item.lq || item.psychometrics?.learningQuotient || '—'})` : isSartawi ? `الخام: ${item.score || 0} / 250 (T=${item.tScore || item.psychometrics?.totalTScore || '—'})` : isLddrs ? `الدرجة الكلية: ${item.score || 0}` : isDevLd ? `الخام: ${item.score} / ${item.maxScore || 160}` : isLdes ? `معامل LDEQ: ${item.ldeq || item.score}` : isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
+                        {isFamily ? `الخام: ${item.score || 0} / 130` : isMyklebust ? `الخام: ${item.score || 0} / 120 (LQ=${item.lq || item.psychometrics?.learningQuotient || '—'})` : isSartawi ? `الخام: ${item.score || 0} / 250 (T=${item.tScore || item.psychometrics?.totalTScore || '—'})` : isLddrs ? `الدرجة الكلية: ${item.score || 0}` : isDevLd ? `الخام: ${item.score} / ${item.maxScore || 160}` : isLdes ? `معامل LDEQ: ${item.ldeq || item.score}` : isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
                       </span>
                     </div>
+
+                    {isFamily && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>المستوى: <strong style={{ color: item.severityColor || '#7c3aed' }}>{item.level || 'طبيعي'}</strong></span>
+                        <span>نسبة التفكك: <strong style={{ color: item.severityColor || '#7c3aed' }}>{item.percentage || '—'}</strong></span>
+                        <span>المتوسط الفرضي: <strong style={{ color: 'var(--text-main)' }}>78 درجة</strong></span>
+                      </div>
+                    )}
 
                     {isMyklebust && (
                       <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
@@ -1879,6 +1915,27 @@ export default function PillarAssessment({ onDataChange }) {
                             className="btn btn-xs btn-g"
                             onClick={() => openEditMyklebustAssessment(item)}
                             title="تعديل درجات مايكل بيست"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isFamily && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewFamilyReport(item)}
+                            style={{ fontWeight: 800, background: '#7c3aed', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isFamily && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditFamilyAssessment(item)}
+                            title="تعديل درجات مقياس التفكك الأسري"
                           >
                             ✏️
                           </button>
@@ -2591,6 +2648,34 @@ export default function PillarAssessment({ onDataChange }) {
           onClose={() => setMyklebustReportOpen(false)}
           assessment={selectedMyklebustAssessment}
           onEdit={(item) => openEditMyklebustAssessment(item)}
+        />
+      )}
+
+      {/* MODAL: FAMILY DISINTEGRATION SCALE WORKSTATION */}
+      {familyModalOpen && (
+        <FamilyDisintegrationAssessmentModal
+          isOpen={familyModalOpen}
+          onClose={() => {
+            setFamilyModalOpen(false);
+            setFamilyEditData(null);
+          }}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={familyEditData}
+        />
+      )}
+
+      {/* MODAL: FAMILY DISINTEGRATION DIAGNOSTIC REPORT */}
+      {familyReportOpen && selectedFamilyAssessment && (
+        <FamilyDisintegrationReportModal
+          isOpen={familyReportOpen}
+          onClose={() => setFamilyReportOpen(false)}
+          assessment={selectedFamilyAssessment}
+          onEdit={(item) => openEditFamilyAssessment(item)}
         />
       )}
 

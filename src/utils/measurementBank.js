@@ -4,6 +4,7 @@ import { DEV_LD_ITEMS } from '../data/devLdData';
 import { LDDRS_ITEMS } from '../data/lddrsData';
 import { SARTAWI_ITEMS } from '../data/sartawiData';
 import { MYKLEBUST_ITEMS } from '../data/myklebustData';
+import { FAMILY_DISINTEGRATION_ITEMS, calculateFamilyDisintegrationScore } from '../data/familyDisintegrationData';
 
 export const MEASUREMENT_CATEGORIES = [
   {
@@ -1010,6 +1011,28 @@ const DEFAULT_SCALE_LIBRARY = [
     thresholdText: 'تحديد مرحلة اللعب الحالية وتوجيه أولياء الأمور لتطوير استراتيجيات اللعب النمائي',
     isDefault: true,
   },
+  {
+    id: 'family_disintegration',
+    name: 'مقياس التفكك الأسري (د. عادل العمرو)',
+    nameEn: 'Family Disintegration Scale (Al-Amro, 2007)',
+    category: 'play_environmental',
+    description: '26 فقرة مقننة لقياس التفكك والتصدع الأسري والنزاعات والعنف والانفصال والإنفاق المنزلي',
+    icon: '👨‍👩‍👧‍👦',
+    color: '#7c3aed',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 1,
+    maxValue: 5,
+    maxScore: 130,
+    items: FAMILY_DISINTEGRATION_ITEMS.map(it => ({
+      id: it.id,
+      text: it.text,
+      domain: it.domainId,
+      isReverse: it.isReverse,
+    })),
+    thresholdText: 'المتوسط الفرضي 78 درجة. الدرجات الأعلى تشير إلى تفكك وتصدع أسري أكبر يتطلب تدخلاً إرشادياً ونفسياً.',
+    isDefault: true,
+  },
 ];
 
 export function getScaleById(scaleId) {
@@ -1063,6 +1086,24 @@ function getScaleMax(scale) {
 }
 
 export function buildAssessmentResult(scale, answers = {}) {
+  if (scale?.id === 'family_disintegration') {
+    const famResult = calculateFamilyDisintegrationScore(answers);
+    return {
+      total: famResult.totalRawScore,
+      score: famResult.totalRawScore,
+      maxScore: famResult.maxPossible,
+      percentage: `${famResult.percentage}%`,
+      percentageNum: famResult.percentage,
+      level: famResult.level,
+      color: famResult.severityColor,
+      severityColor: famResult.severityColor,
+      note: famResult.interpretation,
+      subscales: famResult.subscales,
+      isFamilyDisintegration: true,
+      theoreticalMean: famResult.theoreticalMean,
+    };
+  }
+
   if (scale?.id === 'srs') {
     const srsResult = calculateSRS2Score(answers);
     if (srsResult.isComplete) {

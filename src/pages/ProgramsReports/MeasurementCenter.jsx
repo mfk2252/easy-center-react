@@ -18,6 +18,8 @@ import DevLdAssessmentModal from '../../components/assessments/DevLdAssessmentMo
 import DevLdReportModal from '../../components/assessments/DevLdReportModal';
 import LDDRSAssessmentModal from '../../components/assessments/LDDRSAssessmentModal';
 import LDDRSReportModal from '../../components/assessments/LDDRSReportModal';
+import FamilyDisintegrationAssessmentModal from '../../components/assessments/FamilyDisintegrationAssessmentModal';
+import FamilyDisintegrationReportModal from '../../components/assessments/FamilyDisintegrationReportModal';
 
 const EMPTY_MEASURE = {
   id: '',
@@ -82,6 +84,11 @@ export default function MeasurementCenter({ onBack }) {
   const [lddrsModalOpen, setLddrsModalOpen] = useState(false);
   const [lddrsReportOpen, setLddrsReportOpen] = useState(false);
   const [selectedLddrsAssessment, setSelectedLddrsAssessment] = useState(null);
+
+  // Family Disintegration Scale Specific Modals
+  const [familyModalOpen, setFamilyModalOpen] = useState(false);
+  const [familyReportOpen, setFamilyReportOpen] = useState(false);
+  const [selectedFamilyAssessment, setSelectedFamilyAssessment] = useState(null);
 
   function reload() {
     setStudents(lsGet('students'));
@@ -168,6 +175,10 @@ export default function MeasurementCenter({ onBack }) {
     }
     if (scaleId === 'lddrs_battery' || scaleId === 'lddrs' || scaleId.startsWith('lddrs_')) {
       setLddrsModalOpen(true);
+      return;
+    }
+    if (scaleId === 'family_disintegration' || scaleId === 'family') {
+      setFamilyModalOpen(true);
       return;
     }
     const scale = getAvailableScales().find(item => item.id === scaleId);
@@ -473,6 +484,25 @@ export default function MeasurementCenter({ onBack }) {
           isOpen={lddrsReportOpen}
           onClose={() => setLddrsReportOpen(false)}
           assessment={selectedLddrsAssessment}
+        />
+      )}
+
+      {/* FAMILY DISINTEGRATION MODALS */}
+      {familyModalOpen && (
+        <FamilyDisintegrationAssessmentModal
+          isOpen={familyModalOpen}
+          onClose={() => setFamilyModalOpen(false)}
+          onSaved={() => reload()}
+          students={students}
+          emps={[]}
+        />
+      )}
+
+      {familyReportOpen && selectedFamilyAssessment && (
+        <FamilyDisintegrationReportModal
+          isOpen={familyReportOpen}
+          onClose={() => setFamilyReportOpen(false)}
+          assessment={selectedFamilyAssessment}
         />
       )}
 
