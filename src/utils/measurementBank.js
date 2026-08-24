@@ -5,6 +5,7 @@ import { LDDRS_ITEMS } from '../data/lddrsData';
 import { SARTAWI_ITEMS } from '../data/sartawiData';
 import { MYKLEBUST_ITEMS } from '../data/myklebustData';
 import { FAMILY_DISINTEGRATION_ITEMS, calculateFamilyDisintegrationScore } from '../data/familyDisintegrationData';
+import { SENSORY_INTEGRATION_ITEMS, calculateSensoryIntegrationScore } from '../data/sensoryIntegrationData';
 
 export const MEASUREMENT_CATEGORIES = [
   {
@@ -908,6 +909,32 @@ const DEFAULT_SCALE_LIBRARY = [
 
   // 10. Sensory Processing & Motor Scales (المعالجة الحسية والتآزر الحركي)
   {
+    id: 'sensory_integration_scale',
+    name: 'مقياس التكامل الحسي للأطفال (Sensory Integration Scale)',
+    nameEn: 'Sensory Integration Scale for Children',
+    author: 'أ. داليا طعيمة · د. محمود الطنطاوي · أ.د. عبد العزيز الشخص (جامعة عين شمس 2017)',
+    publisher: 'مجلة الإرشاد النفسي - مركز الإرشاد النفسي - جامعة عين شمس',
+    category: 'sensory_motor',
+    description: 'المقياس المقنن الأكاديمي لتقييم كفاءة التكامل الحسي للأطفال (90 مهمة أدائية مقسمة على 9 محاور: التآزر البصري الحركي، الشكل والأرضية، الموضع في الفراغ، نسخ الأشكال، المثير اللمسي، تمييز الأصابع، الكتابة على الكف، التوازن الدهليزي، محاكاة وضع الجسم) مع حساب محك القطع (45 درجة) والتفسير الإكلينيكي.',
+    icon: '🎯',
+    color: '#0891b2',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 1,
+    maxScore: 90,
+    items: SENSORY_INTEGRATION_ITEMS.map(it => ({
+      id: it.id,
+      num: it.num,
+      text: `${it.title}: ${it.instruction}`,
+      domain: it.domainId,
+      target: it.target,
+      scoringGuide: it.scoringGuide,
+    })),
+    thresholdText: 'المدى (0-90 درجة) · محك القطع: 45 درجة (نصف المجموع) · الدرجات 45 فأقل تشير إلى اضطراب التكامل الحسي والحاجة لتأهيل وعلاج وظيفي',
+    isDefault: true,
+  },
+  {
     id: 'sensory_profile_2',
     name: 'الملف الحسي الثاني (Sensory Profile-2)',
     nameEn: 'Sensory Profile 2 (Winnie Dunn)',
@@ -1086,6 +1113,24 @@ function getScaleMax(scale) {
 }
 
 export function buildAssessmentResult(scale, answers = {}) {
+  if (scale?.id === 'sensory_integration_scale' || scale?.id === 'sensory_integration') {
+    const siResult = calculateSensoryIntegrationScore(answers);
+    return {
+      total: siResult.totalRawScore,
+      score: siResult.totalRawScore,
+      maxScore: siResult.maxPossible,
+      percentage: `${siResult.percentage}%`,
+      percentageNum: siResult.percentage,
+      level: siResult.level,
+      color: siResult.severityColor,
+      severityColor: siResult.severityColor,
+      note: siResult.interpretation,
+      subscales: siResult.subscales,
+      isSensoryIntegration: true,
+      cutoffScore: siResult.cutoffScore,
+    };
+  }
+
   if (scale?.id === 'family_disintegration') {
     const famResult = calculateFamilyDisintegrationScore(answers);
     return {

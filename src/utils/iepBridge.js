@@ -909,6 +909,37 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
         }
       }
     });
+  } else if (lookupKey === 'sensory_integration_scale' || lookupKey === 'sensory_integration') {
+    Object.entries(responses).forEach(([itemId, score]) => {
+      const numScore = Number(score);
+      const targetItem = items.find(it => String(it.id) === String(itemId));
+      if (targetItem && numScore === 0) {
+        const priorityRank = 1;
+        const priority = 'critical';
+        const itemTitle = targetItem.title || targetItem.text;
+
+        const baseline = generatePlepBaseline(
+          itemTitle,
+          0,
+          1,
+          `قصوراً في الأداء الحسي/الحركي لمهمة (${itemTitle}) وفشل في استكمال المهمة وفق المعايير السيكومترية`,
+          'جلسات العلاج الوظيفي (OT) وتمارين التكامل الحسي المتدرجة والحمية الحسية'
+        );
+
+        recommended.push(buildGoalItem({
+          code: `SI-${(targetItem.domainId || 'GEN').slice(0, 4).toUpperCase()}-${targetItem.num || itemId}`,
+          domain: 'sensory_integration',
+          title: `تأهيل حسي: ${itemTitle}`,
+          text: `أن يتدرب التلميذ على أداء مهمة (${itemTitle}) وتحقيق الاستجابة الحركية الحسية السليمة بنسبة نجاح 80% في 4 من أصل 5 محاولات أثناء جلسات العلاج الوظيفي.`,
+          mastery: 'إتقان حركي بنسبة 80% في جلستي علاج وظيفي متتاليتين',
+          reason: `مشتق من مقياس التكامل الحسي للأطفال (بند ${targetItem.num || itemId}) بدرجة (0/1 - غير مستوفٍ)`,
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: 8,
+        }));
+      }
+    });
   } else if (lookupKey === 'gars_3') {
     Object.entries(responses).forEach(([itemId, score]) => {
       const numScore = Number(score);

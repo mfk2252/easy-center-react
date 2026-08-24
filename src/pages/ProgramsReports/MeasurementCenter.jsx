@@ -20,6 +20,8 @@ import LDDRSAssessmentModal from '../../components/assessments/LDDRSAssessmentMo
 import LDDRSReportModal from '../../components/assessments/LDDRSReportModal';
 import FamilyDisintegrationAssessmentModal from '../../components/assessments/FamilyDisintegrationAssessmentModal';
 import FamilyDisintegrationReportModal from '../../components/assessments/FamilyDisintegrationReportModal';
+import SensoryIntegrationAssessmentModal from '../../components/assessments/SensoryIntegrationAssessmentModal';
+import SensoryIntegrationReportModal from '../../components/assessments/SensoryIntegrationReportModal';
 
 const EMPTY_MEASURE = {
   id: '',
@@ -89,6 +91,11 @@ export default function MeasurementCenter({ onBack }) {
   const [familyModalOpen, setFamilyModalOpen] = useState(false);
   const [familyReportOpen, setFamilyReportOpen] = useState(false);
   const [selectedFamilyAssessment, setSelectedFamilyAssessment] = useState(null);
+
+  // Sensory Integration Scale Specific Modals
+  const [sensoryModalOpen, setSensoryModalOpen] = useState(false);
+  const [sensoryReportOpen, setSensoryReportOpen] = useState(false);
+  const [selectedSensoryAssessment, setSelectedSensoryAssessment] = useState(null);
 
   function reload() {
     setStudents(lsGet('students'));
@@ -179,6 +186,10 @@ export default function MeasurementCenter({ onBack }) {
     }
     if (scaleId === 'family_disintegration' || scaleId === 'family') {
       setFamilyModalOpen(true);
+      return;
+    }
+    if (scaleId === 'sensory_integration_scale' || scaleId === 'sensory_integration' || scaleId === 'sensory') {
+      setSensoryModalOpen(true);
       return;
     }
     const scale = getAvailableScales().find(item => item.id === scaleId);
@@ -335,6 +346,8 @@ export default function MeasurementCenter({ onBack }) {
               const isLdes = item.measureId === 'learning_difficulties' || item.scaleType === 'learning_difficulties' || item.measureId === 'ldes';
               const isDevLd = item.measureId === 'dev_learning_difficulties' || item.scaleType === 'dev_learning_difficulties' || item.measureId === 'dev_ld_preschool' || item.scaleType === 'dev_ld_preschool';
               const isLddrs = item.measureId === 'lddrs_battery' || item.scaleType === 'lddrs' || item.measureId?.startsWith('lddrs');
+              const isFamily = item.measureId === 'family_disintegration' || item.scaleType === 'family_disintegration' || item.isFamilyDisintegration;
+              const isSensory = item.measureId === 'sensory_integration_scale' || item.scaleType === 'sensory_integration' || item.isSensoryIntegration;
               return (
                 <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: 12, borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap' }}>
                   <div>
@@ -344,6 +357,8 @@ export default function MeasurementCenter({ onBack }) {
                       {isLdes && <span className="bdg" style={{ background: '#fef3c7', color: '#b45309', fontSize: '.68rem', fontWeight: 800 }}>LDES</span>}
                       {isDevLd && <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontSize: '.68rem', fontWeight: 800 }}>صعوبات الروضة</span>}
                       {isLddrs && <span className="bdg" style={{ background: '#fee2e2', color: '#991b1b', fontSize: '.68rem', fontWeight: 800 }}>بطارية الزيات</span>}
+                      {isFamily && <span className="bdg" style={{ background: '#f3e8ff', color: '#7e22ce', fontSize: '.68rem', fontWeight: 800 }}>التفكك الأسري</span>}
+                      {isSensory && <span className="bdg" style={{ background: '#e0f2fe', color: '#0369a1', fontSize: '.68rem', fontWeight: 800 }}>التكامل الحسي (90)</span>}
                     </div>
                     <div style={{ fontSize: '.76rem', color: 'var(--g5)' }}>
                       {item.studentName || 'طالب'} • {item.date} • {item.level || 'نتيجة'} {item.tScore ? `(T: ${item.tScore} | ${item.percentile}%)` : ''} {item.percentage ? `(${item.percentage})` : ''}
@@ -400,6 +415,32 @@ export default function MeasurementCenter({ onBack }) {
                         }}
                       >
                         📄 تقرير بطارية الزيات
+                      </button>
+                    )}
+                    {isFamily && (
+                      <button
+                        type="button"
+                        className="btn btn-xs"
+                        style={{ background: '#7e22ce', color: '#fff', fontWeight: 800 }}
+                        onClick={() => {
+                          setSelectedFamilyAssessment(item);
+                          setFamilyReportOpen(true);
+                        }}
+                      >
+                        📄 تقرير التفكك الأسري
+                      </button>
+                    )}
+                    {isSensory && (
+                      <button
+                        type="button"
+                        className="btn btn-xs"
+                        style={{ background: '#0284c7', color: '#fff', fontWeight: 800 }}
+                        onClick={() => {
+                          setSelectedSensoryAssessment(item);
+                          setSensoryReportOpen(true);
+                        }}
+                      >
+                        📄 تقرير التكامل الحسي
                       </button>
                     )}
                     <button type="button" className="btn btn-xs btn-d" onClick={() => deleteAssessment(item.id)}>🗑️</button>
@@ -503,6 +544,25 @@ export default function MeasurementCenter({ onBack }) {
           isOpen={familyReportOpen}
           onClose={() => setFamilyReportOpen(false)}
           assessment={selectedFamilyAssessment}
+        />
+      )}
+
+      {/* SENSORY INTEGRATION MODALS */}
+      {sensoryModalOpen && (
+        <SensoryIntegrationAssessmentModal
+          isOpen={sensoryModalOpen}
+          onClose={() => setSensoryModalOpen(false)}
+          onSaved={() => reload()}
+          students={students}
+          emps={[]}
+        />
+      )}
+
+      {sensoryReportOpen && selectedSensoryAssessment && (
+        <SensoryIntegrationReportModal
+          isOpen={sensoryReportOpen}
+          onClose={() => setSensoryReportOpen(false)}
+          assessment={selectedSensoryAssessment}
         />
       )}
 
