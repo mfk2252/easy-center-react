@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLang } from '../../context/LanguageContext';
 import { useApp } from '../../context/AppContext';
 import { lsGet } from '../../hooks/useStorage';
+import { MEASUREMENT_CATEGORIES } from '../../utils/measurementBank';
 import PillarAssessment from './PillarAssessment';
 import PillarPlans from './PillarPlans';
 import PillarProgress from './PillarProgress';
@@ -66,6 +67,8 @@ export default function ProgramsReportsHub() {
     return sessionStorage.getItem('scs_prog_active_view') || 'hub';
   });
 
+  const [assessmentCategory, setAssessmentCategory] = useState(null);
+
   const [stats, setStats] = useState({
     evalCount: 0,
     planCount: 0,
@@ -96,12 +99,14 @@ export default function ProgramsReportsHub() {
   }, [currentView]);
 
   function navigateTo(viewId) {
+    setAssessmentCategory(null);
     setCurrentView(viewId);
     sessionStorage.setItem('scs_prog_active_view', viewId);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function backToHub() {
+    setAssessmentCategory(null);
     setCurrentView('hub');
     sessionStorage.removeItem('scs_prog_active_view');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -109,95 +114,214 @@ export default function ProgramsReportsHub() {
 
   const activeSectionObj = SECTIONS.find(s => s.id === currentView);
 
+  const activeCatMeta = (currentView === 'assessment' && assessmentCategory)
+    ? (assessmentCategory === 'all'
+        ? { id: 'all', name: 'جميع المقاييس السيكومترية', nameEn: 'All Diagnostic Scales', icon: '🌟', color: 'var(--pr)', description: 'استعراض وتصفح كافة المقاييس والأدوات التشخيصية المعتمدة بالمنظومة دفعة واحدة مع التصفية والبحث المتقدم.' }
+        : MEASUREMENT_CATEGORIES.find(c => c.id === assessmentCategory) || { name: 'الفئة التشخيصية', icon: '📁', color: 'var(--pr)', description: '' })
+    : null;
+
   // ==========================================
   // العرض في حالة فتح أحد الأقسام كصفحة كاملة مستقلة
   // ==========================================
   if (currentView !== 'hub' && activeSectionObj) {
     return (
       <div className="programs-section-page">
-        {/* شريط المسار والتنقل العلوي (Breadcrumbs & Back Bar) */}
-        <div className="ph" style={{ marginBottom: 14 }}>
-          <div className="ph-t" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        {/* شريط المسار والتنقل العلوي (Breadcrumbs) */}
+        {activeCatMeta ? (
+          /* المسار العميق عند الدخول لفئة تشخيصية فرعية */
+          <div className="ph" style={{ marginBottom: 14 }}>
+            <div className="ph-t" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: '0.88rem' }}>
+              <button
+                type="button"
+                className="btn btn-g btn-xs"
+                onClick={backToHub}
+                style={{ fontWeight: 600, borderRadius: 'var(--r2)', padding: '4px 10px' }}
+              >
+                <span>🏠</span>
+                <span>الرئيسية</span>
+              </button>
+              <span style={{ color: 'var(--g5)', fontSize: '0.8rem' }}>&gt;</span>
+              <button
+                type="button"
+                className="btn btn-g btn-xs"
+                onClick={backToHub}
+                style={{ fontWeight: 600, borderRadius: 'var(--r2)', padding: '4px 10px' }}
+              >
+                <span>البرامج والتقارير</span>
+              </button>
+              <span style={{ color: 'var(--g5)', fontSize: '0.8rem' }}>&gt;</span>
+              <button
+                type="button"
+                className="btn btn-g btn-xs"
+                onClick={() => setAssessmentCategory(null)}
+                style={{ fontWeight: 600, borderRadius: 'var(--r2)', padding: '4px 10px', color: 'var(--pr)' }}
+              >
+                <span>🎯</span>
+                <span>مركز التقييم والتشخيص</span>
+              </button>
+              <span style={{ color: 'var(--g5)', fontSize: '0.8rem' }}>&gt;</span>
+              <span style={{ fontWeight: 800, color: 'var(--text-main)', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.9rem' }}>
+                <span>{activeCatMeta.icon}</span>
+                <span>{activeCatMeta.name}</span>
+              </span>
+            </div>
+
+            <div className="ph-a" style={{ display: 'flex', gap: 6 }}>
+              <span className="bdg b-bl" style={{ fontSize: '0.78rem' }}>
+                {activeCatMeta.name}
+              </span>
+            </div>
+          </div>
+        ) : (
+          /* المسار الافتراضي عند التواجد في الصفحة الرئيسية للقسم */
+          <div className="ph" style={{ marginBottom: 14 }}>
+            <div className="ph-t" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="btn btn-g btn-sm"
+                onClick={backToHub}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  fontWeight: 700,
+                  borderRadius: 'var(--r2)',
+                }}
+              >
+                <span>➡️</span>
+                <span>العودة للأقسام الرئيسية</span>
+              </button>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--g5)' }}>
+                <span>/</span>
+                <span style={{ fontWeight: 800, color: 'var(--text-main)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <span>{activeSectionObj.icon}</span>
+                  <span>{activeSectionObj.title}</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="ph-a" style={{ display: 'flex', gap: 6 }}>
+              <span className={`bdg ${activeSectionObj.badgeClass}`}>
+                {activeSectionObj.tag}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* ترويسة الصفحة الحالية (Banner) */}
+        {activeCatMeta ? (
+          /* ترويسة مدمجة داخل صفحة الفئة الفرعية مع زر العودة للفئات على اليسار وإخفاء الأزرار الخارجية */
+          <div
+            className="prog-page-banner"
+            style={{
+              borderRight: `4px solid ${activeCatMeta.color || activeSectionObj.color}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 16,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+              <div
+                className="prog-page-icon"
+                style={{
+                  background: `${activeCatMeta.color || 'var(--pr)'}15`,
+                  color: activeCatMeta.color || 'var(--pr)',
+                }}
+              >
+                {activeCatMeta.icon || '🎯'}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <h3 className="prog-page-title" style={{ margin: 0, fontWeight: 700 }}>
+                  {activeCatMeta.name}
+                </h3>
+                <p className="prog-page-subtitle" style={{ margin: '4px 0 0 0', fontWeight: 400 }}>
+                  {activeCatMeta.description || activeSectionObj.subtitle}
+                </p>
+              </div>
+            </div>
+
+            {/* زر العودة للفئات المدمج في ترويسة القسم ومحاذى لليسار */}
             <button
               type="button"
-              className="btn btn-g btn-sm"
-              onClick={backToHub}
+              className="btn btn-g"
+              onClick={() => setAssessmentCategory(null)}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
                 fontWeight: 700,
+                fontSize: '0.88rem',
+                padding: '8px 16px',
                 borderRadius: 'var(--r2)',
+                border: '1.5px solid var(--border-color)',
+                background: 'var(--bg-card)',
+                boxShadow: 'var(--sh)',
+                cursor: 'pointer',
               }}
             >
-              <span>➡️</span>
-              <span>العودة للأقسام الرئيسية</span>
+              <span>←</span>
+              <span>العودة للفئات</span>
             </button>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--g5)' }}>
-              <span>/</span>
-              <span style={{ fontWeight: 800, color: 'var(--text-main)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <span>{activeSectionObj.icon}</span>
-                <span>{activeSectionObj.title}</span>
-              </span>
-            </div>
           </div>
-
-          <div className="ph-a" style={{ display: 'flex', gap: 6 }}>
-            <span className={`bdg ${activeSectionObj.badgeClass}`}>
-              {activeSectionObj.tag}
-            </span>
-          </div>
-        </div>
-
-        {/* ترويسة الصفحة الحالية المتوافقة مع نمط الـ Widgets في النظام */}
-        <div
-          className="prog-page-banner"
-          style={{
-            borderRight: `4px solid ${activeSectionObj.color}`,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-            <div
-              className="prog-page-icon"
-              style={{
-                background: activeSectionObj.accentBg,
-                color: activeSectionObj.color,
-              }}
-            >
-              {activeSectionObj.icon}
-            </div>
-            <div style={{ minWidth: 0 }}>
-              <h3 className="prog-page-title">
-                {activeSectionObj.title}
-              </h3>
-              <p className="prog-page-subtitle">
-                {activeSectionObj.subtitle}
-              </p>
-            </div>
-          </div>
-
-          {/* أزرار الانتقال السريع بين الأقسام */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {SECTIONS.filter(s => s.id !== currentView).map(s => (
-              <button
-                key={s.id}
-                type="button"
-                className="btn btn-xs btn-g"
-                onClick={() => navigateTo(s.id)}
-                title={s.title}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+        ) : (
+          /* الترويسة الرئيسية للقسم مع أزرار التنقل السريع بين الأقسام */
+          <div
+            className="prog-page-banner"
+            style={{
+              borderRight: `4px solid ${activeSectionObj.color}`,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+              <div
+                className="prog-page-icon"
+                style={{
+                  background: activeSectionObj.accentBg,
+                  color: activeSectionObj.color,
+                }}
               >
-                <span>{s.icon}</span>
-                <span>{s.title.split(' ')[0]}</span>
-              </button>
-            ))}
+                {activeSectionObj.icon}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <h3 className="prog-page-title">
+                  {activeSectionObj.title}
+                </h3>
+                <p className="prog-page-subtitle">
+                  {activeSectionObj.subtitle}
+                </p>
+              </div>
+            </div>
+
+            {/* أزرار الانتقال السريع بين الأقسام */}
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {SECTIONS.filter(s => s.id !== currentView).map(s => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className="btn btn-xs btn-g"
+                  onClick={() => navigateTo(s.id)}
+                  title={s.title}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                >
+                  <span>{s.icon}</span>
+                  <span>{s.title.split(' ')[0]}</span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* محتوى الصفحة المستقلة المختارة */}
         <div className="section-content-wrapper">
-          {currentView === 'assessment' && <PillarAssessment onDataChange={refreshCounts} />}
+          {currentView === 'assessment' && (
+            <PillarAssessment
+              onDataChange={refreshCounts}
+              activeCategoryView={assessmentCategory}
+              onCategoryChange={setAssessmentCategory}
+            />
+          )}
           {currentView === 'plans' && <PillarPlans onDataChange={refreshCounts} />}
           {currentView === 'progress' && <PillarProgress onDataChange={refreshCounts} />}
           {currentView === 'family' && <PillarFamily onDataChange={refreshCounts} />}

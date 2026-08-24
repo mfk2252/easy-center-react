@@ -80,7 +80,7 @@ const EMPTY_ASSESSMENT = {
   recommendations: '',
 };
 
-export default function PillarAssessment({ onDataChange }) {
+export default function PillarAssessment({ onDataChange, activeCategoryView: extActiveCategoryView, onCategoryChange }) {
   const { toast, center, currentUser } = useApp();
   const [subTab, setSubTab] = useState('scales'); // 'scales' | 'initial' | 'results'
   const [students, setStudents] = useState([]);
@@ -88,7 +88,30 @@ export default function PillarAssessment({ onDataChange }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudentFilter, setSelectedStudentFilter] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
-  const [activeCategoryView, setActiveCategoryView] = useState(null); // null = browse categories grid, 'all' = browse all scales, otherwise specific category ID
+
+  const isControlled = extActiveCategoryView !== undefined;
+  const [internalActiveCategoryView, setInternalActiveCategoryView] = useState(null);
+  const activeCategoryView = isControlled ? extActiveCategoryView : internalActiveCategoryView;
+
+  const setActiveCategoryView = (cat) => {
+    if (!isControlled) {
+      setInternalActiveCategoryView(cat);
+    }
+    if (onCategoryChange) {
+      onCategoryChange(cat);
+    }
+    setSelectedCategoryFilter(cat || 'all');
+    setSearchTerm('');
+    setSelectedStudentFilter('');
+  };
+
+  useEffect(() => {
+    if (extActiveCategoryView !== undefined) {
+      setSelectedCategoryFilter(extActiveCategoryView || 'all');
+      setSearchTerm('');
+      setSelectedStudentFilter('');
+    }
+  }, [extActiveCategoryView]);
 
   // Initial Assessment States
   const [evaluations, setEvaluations] = useState([]);
@@ -654,40 +677,42 @@ export default function PillarAssessment({ onDataChange }) {
 
   return (
     <div>
-      {/* Pillar Header & Controls using native Easy Center Tab System */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-        <div className="tabs" style={{ margin: 0, flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            className={`tab ${subTab === 'scales' ? 'on' : ''}`}
-            onClick={() => { setSubTab('scales'); setActiveCategoryView(null); setSelectedCategoryFilter('all'); }}
-          >
-            🧪 مقاييس وتشخيص مقنن ({allScales.length})
-          </button>
-          <button
-            type="button"
-            className={`tab ${subTab === 'initial' ? 'on' : ''}`}
-            onClick={() => setSubTab('initial')}
-          >
-            📋 التقييم والتشخيص المبدئي ({evaluations.length})
-          </button>
-          <button
-            type="button"
-            className={`tab ${subTab === 'results' ? 'on' : ''}`}
-            onClick={() => setSubTab('results')}
-          >
-            📊 نتائج المقاييس المسجلة ({assessments.length})
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', gap: 8 }}>
-          {subTab === 'initial' && (
-            <button type="button" className="btn btn-p" onClick={openNewEval}>
-              ➕ تقييم مبدئي جديد
+      {/* Pillar Header & Controls using native Easy Center Tab System - Only visible in Root View */}
+      {activeCategoryView === null && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+          <div className="tabs" style={{ margin: 0, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className={`tab ${subTab === 'scales' ? 'on' : ''}`}
+              onClick={() => { setSubTab('scales'); setActiveCategoryView(null); setSelectedCategoryFilter('all'); }}
+            >
+              🧪 مقاييس وتشخيص مقنن ({allScales.length})
             </button>
-          )}
+            <button
+              type="button"
+              className={`tab ${subTab === 'initial' ? 'on' : ''}`}
+              onClick={() => setSubTab('initial')}
+            >
+              📋 التقييم والتشخيص المبدئي ({evaluations.length})
+            </button>
+            <button
+              type="button"
+              className={`tab ${subTab === 'results' ? 'on' : ''}`}
+              onClick={() => setSubTab('results')}
+            >
+              📊 نتائج المقاييس المسجلة ({assessments.length})
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            {subTab === 'initial' && (
+              <button type="button" className="btn btn-p" onClick={openNewEval}>
+                ➕ تقييم مبدئي جديد
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
 
 
@@ -973,76 +998,22 @@ export default function PillarAssessment({ onDataChange }) {
           ) : (
             /* Sub-Page for Specific Category View */
             <div>
-              {/* Category Header Banner */}
-              <div
-                style={{
-                  background: 'var(--bg-card)',
-                  border: '1.5px solid var(--border-color)',
-                  borderRadius: 16,
-                  padding: '24px',
-                  marginBottom: 20,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: 16,
-                  boxShadow: 'var(--sh)',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: '1 1 300px' }}>
-                  <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: currentCategoryMeta ? `${currentCategoryMeta.color}15` : 'var(--pr-l)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', border: `1px solid ${currentCategoryMeta ? currentCategoryMeta.color : 'var(--pr)'}30` }}>
-                    {currentCategoryMeta ? currentCategoryMeta.icon : '🌟'}
-                  </div>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                      <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                        {currentCategoryMeta ? currentCategoryMeta.name : 'جميع المقاييس السيكومترية'}
-                      </h2>
-                      <span className="bdg b-bl" style={{ fontWeight: 600 }}>
-                        {currentCategoryMeta ? (scalesGrouped[currentCategoryMeta.id] || []).length : allScales.length} مقياس متاح
-                      </span>
-                    </div>
-                    <p style={{ margin: '6px 0 0 0', fontSize: '0.88rem', color: 'var(--text-sub)', maxWidth: '750px', lineHeight: 1.55, fontWeight: 400 }}>
-                      {currentCategoryMeta ? currentCategoryMeta.description : 'تقارير وفحوصات جميع المقاييس السيكومترية والنمائية المعتمدة للتشخيص والتحليل.'}
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  className="btn btn-g"
-                  onClick={() => { setActiveCategoryView(null); setSelectedCategoryFilter('all'); }}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    fontWeight: 800,
-                    fontSize: '0.86rem',
-                    padding: '8px 14px',
-                    borderRadius: 'var(--r2)',
-                  }}
-                >
-                  <span>🔙</span>
-                  <span>العودة للفئات التشخيصية</span>
-                </button>
-              </div>
-
               {/* Subtab Compact Filter Bar inside selected Category */}
               <div className="prog-filter-bar" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 20, background: 'var(--g0)', padding: '10px 14px', borderRadius: 12, border: '1px solid var(--border-color)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.88rem', color: 'var(--text-sub)', fontWeight: 600, flexShrink: 0 }}>
-                  <span>🔍 تصفية المقاييس الحالية:</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.88rem', color: 'var(--text-sub)', fontWeight: 700, flexShrink: 0 }}>
+                  <span>🔍 تصفية مقاييس {currentCategoryMeta ? currentCategoryMeta.name : 'الفئة'}:</span>
                 </div>
                 <input
                   type="text"
                   className="prog-search-input"
-                  style={{ flex: '1 1 200px', maxWidth: '300px', padding: '6px 12px', fontSize: '0.85rem' }}
-                  placeholder="البحث باسم المقياس أو الوصف..."
+                  style={{ flex: '1 1 200px', maxWidth: '320px', padding: '7px 12px', fontSize: '0.85rem' }}
+                  placeholder="البحث باسم المقياس أو الوصف في هذه الفئة..."
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                 />
                 <select
                   className="prog-select-filter"
-                  style={{ flex: '0 1 180px', padding: '6px 12px', fontSize: '0.85rem' }}
+                  style={{ flex: '0 1 180px', padding: '7px 12px', fontSize: '0.85rem' }}
                   value={selectedStudentFilter}
                   onChange={e => setSelectedStudentFilter(e.target.value)}
                 >
