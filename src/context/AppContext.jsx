@@ -35,11 +35,12 @@ function applyTheme(color) {
 }
 
 export const FONT_OPTIONS = [
-  { id: 'arabicui', name: 'خط ون يو آي (Arabic UI One UI)', family: "'Arabic UI One UI', 'ArabicUIOneUI', 'ArabicUI', 'MainFont', sans-serif" },
-  { id: 'tajawal', name: 'خط تجوال (Tajawal)', family: "'Tajawal', sans-serif" },
-  { id: 'cairo', name: 'خط كايرو (Cairo)', family: "'Cairo', sans-serif" },
-  { id: 'almarai', name: 'خط المراعي (Almarai)', family: "'Almarai', sans-serif" },
-  { id: 'alexandria', name: 'خط الإسكندرية (Alexandria)', family: "'Alexandria', sans-serif" },
+  { id: 'arabicui', name: 'خط ون يو آي (Arabic UI One UI)', family: "'Arabic UI One UI', 'ArabicUIOneUI', 'ArabicUI', 'MainFont', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
+  { id: 'tajawal', name: 'خط تجوال (Tajawal)', family: "'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
+  { id: 'cairo', name: 'خط كايرو (Cairo)', family: "'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
+  { id: 'almarai', name: 'خط المراعي (Almarai)', family: "'Almarai', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
+  { id: 'alexandria', name: 'خط الإسكندرية (Alexandria)', family: "'Alexandria', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
+  { id: 'system', name: 'خط النظام (San Francisco / Apple)', family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
 ];
 
 export function applyFontFamily(fontId) {

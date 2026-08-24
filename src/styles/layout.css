@@ -15,7 +15,7 @@
 .nav-icon-btn:hover{background:rgba(255,255,255,.16);color:white}
 .dark-toggle{background:transparent;border:none;cursor:pointer;color:var(--g4);font-size:1.15rem;width:34px;height:34px;border-radius:7px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .dark-toggle:hover{background:rgba(255,255,255,.12);color:white}
-.nav-logout{background:transparent;color:var(--g5);border:1px solid rgba(255,255,255,.12);padding:6px 12px;border-radius:7px;font-family:'Tajawal',sans-serif;font-size:.76rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.nav-logout{background:transparent;color:var(--g5);border:1px solid rgba(255,255,255,.12);padding:6px 12px;border-radius:7px;font-family:var(--font-main);font-size:.76rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
 .nav-logout:hover{background:var(--err-l);color:var(--err);border-color:var(--err)}
 .page{padding:18px 16px;max-width:1280px;margin:0 auto}
 
@@ -101,7 +101,7 @@
 @media(max-width:540px){.sw-g{grid-template-columns:1fr}}
 .sw-f{display:flex;flex-direction:column;gap:5px}
 .sw-f label{font-size:.75rem;font-weight:600;color:var(--g6);display:flex;align-items:center;gap:4px}
-.sw-f input,.sw-f select,.sw-f textarea{padding:10px 13px;border:1.5px solid var(--border-color);border-radius:9px;font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:400;background:var(--bg-card);color:var(--text-main);outline:none;transition:border .15s}
+.sw-f input,.sw-f select,.sw-f textarea{padding:10px 13px;border:1.5px solid var(--border-color);border-radius:9px;font-family:var(--font-main);font-size:.9rem;font-weight:400;background:var(--bg-card);color:var(--text-main);outline:none;transition:border .15s}
 .sw-f input:focus,.sw-f select:focus{border-color:var(--pr);box-shadow:0 0 0 3px var(--pr-l)}
 .sw-f.full{grid-column:1/-1}
 .sw-note{background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:12px 16px;font-size:.81rem;font-weight:400;color:#1e40af;margin-bottom:14px;line-height:1.8}
@@ -113,7 +113,7 @@
 .sw-logo-box:hover{border-color:var(--pr);background:var(--pr-l)}
 .sw-err{background:var(--err-l);border:1.5px solid #fecaca;border-radius:8px;padding:10px 14px;font-size:.82rem;font-weight:500;color:var(--err);margin-top:10px}
 .sw-footer{padding:16px 30px;background:var(--g0);border-top:1px solid var(--border-color);border-radius:0 0 20px 20px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
-.sw-btn{padding:10px 22px;border-radius:10px;border:none;font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .15s}
+.sw-btn{padding:10px 22px;border-radius:10px;border:none;font-family:var(--font-main);font-size:.9rem;font-weight:600;cursor:pointer;transition:all .15s}
 .sw-btn-p{background:var(--pr);color:white}.sw-btn-p:hover{background:var(--pr-d);transform:translateY(-1px)}
 .sw-btn-s{background:var(--g2);color:var(--g6)}.sw-btn-s:hover{background:var(--g3)}
 .sw-btn-g{background:var(--ok-l);color:var(--ok-d);border:1.5px solid #a7f3d0}.sw-btn-g:hover{background:var(--ok);color:white}
@@ -136,16 +136,16 @@
 .login-body{padding:24px;background:var(--bg-card)}
 .lf{margin-bottom:12px}
 .lf label{display:block;font-size:.76rem;font-weight:600;color:var(--text-sub);margin-bottom:5px}
-.lf input{width:100%;padding:10px 13px;border:1.5px solid var(--border-color);border-radius:9px;font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:400;outline:none;transition:border .15s;background:var(--bg-input);color:var(--text-main)}
+.lf input{width:100%;padding:10px 13px;border:1.5px solid var(--border-color);border-radius:9px;font-family:var(--font-main);font-size:.9rem;font-weight:400;outline:none;transition:border .15s;background:var(--bg-input);color:var(--text-main)}
 .lf input:focus{border-color:var(--pr);box-shadow:0 0 0 3px var(--pr-l)}
-.login-btn{width:100%;padding:12px;background:var(--pr);color:white;border:none;border-radius:10px;font-family:'Tajawal',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:background .15s}
+.login-btn{width:100%;padding:12px;background:var(--pr);color:white;border:none;border-radius:10px;font-family:var(--font-main);font-size:1rem;font-weight:700;cursor:pointer;transition:background .15s}
 .login-btn:hover{background:var(--pr-d)}
 .login-err{background:var(--err-l);border:1px solid #fecaca;border-radius:8px;padding:9px 13px;font-size:.82rem;color:var(--err);margin-bottom:12px}
 .login-footer{text-align:center;margin-top:14px;font-size:.74rem;color:var(--g4)}
 .gsrch-overlay{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:56px 16px 16px}
 .gsrch-box{background:var(--bg-card);border-radius:16px;width:100%;max-width:680px;box-shadow:0 24px 60px rgba(0,0,0,.35);overflow:hidden}
 .gsrch-hd{padding:13px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border-color)}
-.gsrch-hd input{flex:1;border:none;outline:none;font-size:1rem;font-family:'Tajawal',sans-serif;font-weight:700;background:transparent;color:var(--text-main)}
+.gsrch-hd input{flex:1;border:none;outline:none;font-size:1rem;font-family:var(--font-main);font-weight:700;background:transparent;color:var(--text-main)}
 .gsrch-hd input::placeholder{color:var(--g4);font-weight:500}
 .gsrch-results{max-height:430px;overflow-y:auto}
 .gsrch-sec{padding:7px 14px 3px;font-size:.7rem;font-weight:900;color:var(--pr);background:var(--g0);letter-spacing:.3px}
@@ -173,7 +173,7 @@
 .cal-hd-day{text-align:center;font-size:.75rem;font-weight:900;color:var(--text-sub);padding:6px 0}
 /* ===== Login: mode toggle (دخول / إنشاء حساب مركز) ===== */
 .login-tabs{display:flex;gap:4px;background:var(--g0);border-radius:10px;padding:4px;margin:0 24px 18px}
-.login-tab{flex:1;padding:9px 12px;border:none;background:transparent;border-radius:7px;font-family:'Tajawal',sans-serif;font-size:.84rem;font-weight:800;color:var(--text-sub);cursor:pointer;transition:all .18s}
+.login-tab{flex:1;padding:9px 12px;border:none;background:transparent;border-radius:7px;font-family:var(--font-main);font-size:.84rem;font-weight:800;color:var(--text-sub);cursor:pointer;transition:all .18s}
 .login-tab:hover{color:var(--pr)}
 .login-tab.on{background:var(--bg-card);color:var(--pr);box-shadow:0 1px 4px rgba(0,0,0,.12)}
 
@@ -200,7 +200,7 @@
 @media (prefers-reduced-motion: reduce){.login-box{animation:none}}
 
 /* ===== Login: زر Google — تأكيد نفس نصف قطر الزوايا وارتفاع الأزرار الأساسية ===== */
-.login-google-btn{width:100%;padding:12px 16px;background:var(--bg-card);border:1.5px solid var(--border-color);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-size:.9rem;font-family:'Tajawal',sans-serif;font-weight:700;color:var(--text-main);transition:all .15s}
+.login-google-btn{width:100%;padding:12px 16px;background:var(--bg-card);border:1.5px solid var(--border-color);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-size:.9rem;font-family:var(--font-main);font-weight:700;color:var(--text-main);transition:all .15s}
 .login-google-btn:hover:not(:disabled){border-color:var(--pr);box-shadow:0 2px 10px rgba(0,0,0,.08)}
 .login-google-btn:disabled{opacity:.7;cursor:wait}
 
