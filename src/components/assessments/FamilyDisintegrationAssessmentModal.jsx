@@ -147,18 +147,8 @@ export default function FamilyDisintegrationAssessmentModal({
 
   return (
     <div className="mbg" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div
-        className="mb"
-        style={{
-          width: '96%',
-          maxWidth: 1100,
-          maxHeight: 'min(94vh, calc(100dvh - 24px))',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: 0,
-          borderRadius: 16,
-          overflow: 'hidden',
-        }}
+      <div className="mb mb-xl"
+        
       >
         {/* Header */}
         <div

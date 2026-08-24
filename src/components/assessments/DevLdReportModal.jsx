@@ -63,20 +63,8 @@ export default function DevLdReportModal({
 
   return (
     <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()} style={{ zIndex: 1100 }}>
-      <div
-        className="mb mb-xl"
-        style={{
-          width: '96vw',
-          maxWidth: 1040,
-          maxHeight: 'min(95vh, calc(100dvh - 20px))',
-          display: 'flex',
-          flexDirection: 'column',
-          backgroundColor: '#fff',
-          borderRadius: 16,
-          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-          overflow: 'hidden',
-          padding: 0,
-        }}
+      <div className="mb mb-xl"
+        
       >
         {/* Modal Top Bar */}
         <div

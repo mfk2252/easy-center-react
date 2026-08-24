@@ -244,18 +244,8 @@ export default function LDESReportModal({
   return (
     <>
       <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()}>
-        <div
-          className="mb mb-xl"
-          style={{
-            padding: 0,
-            overflow: 'hidden',
-            borderRadius: 16,
-            maxHeight: 'min(95vh, calc(100dvh - 20px))',
-            display: 'flex',
-            flexDirection: 'column',
-            width: '100%',
-            maxWidth: '1100px',
-          }}
+      <div className="mb mb-xl"
+          
         >
           {/* Modal Top Banner */}
           <div

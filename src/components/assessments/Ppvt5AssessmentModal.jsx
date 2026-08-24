@@ -387,7 +387,7 @@ ${conceptRecommendations}
 
   return (
     <div className="mbg">
-      <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '96vh', display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '1150px' }}>
+      <div className="mb mb-xl">
         
         {/* Modal Header */}
         <div className="fhd" style={{ padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)', color: '#fff' }}>

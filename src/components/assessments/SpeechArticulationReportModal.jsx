@@ -364,7 +364,7 @@ export default function SpeechArticulationReportModal({
 
   return (
     <div className="mbg">
-      <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: '96vh', display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '1050px' }}>
+      <div className="mb mb-xl">
         
         {/* Modal Header */}
         <div className="fhd" style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #0e7490 0%, #155e75 100%)', color: '#fff' }}>

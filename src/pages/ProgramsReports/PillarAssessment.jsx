@@ -720,21 +720,19 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
       {subTab === 'initial' && (
         <div>
           {/* Custom Compact Filter Bar */}
-          <div className="prog-filter-bar" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16, background: 'var(--g0)', padding: '10px 14px', borderRadius: 12, border: '1px solid var(--border-color)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.88rem', color: 'var(--text-sub)', fontWeight: 700, flexShrink: 0 }}>
+          <div className="prog-filter-bar">
+            <div className="prog-filter-title">
               <span>🔍 تصفية الفحوصات المبدئية:</span>
             </div>
             <input
               type="text"
               className="prog-search-input"
-              style={{ flex: '1 1 200px', maxWidth: '300px', padding: '6px 12px', fontSize: '0.85rem' }}
               placeholder="البحث باسم الطالب أو الأخصائي..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
             <select
               className="prog-select-filter"
-              style={{ flex: '0 1 180px', padding: '6px 12px', fontSize: '0.85rem' }}
               value={selectedStudentFilter}
               onChange={e => setSelectedStudentFilter(e.target.value)}
             >
@@ -744,8 +742,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
             {(searchTerm || selectedStudentFilter) && (
               <button
                 type="button"
-                className="btn btn-sm btn-g"
-                style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+                className="btn btn-sm btn-g prog-filter-clear-btn"
                 onClick={() => { setSearchTerm(''); setSelectedStudentFilter(''); }}
               >
                 مسح التصفية ✖
@@ -999,21 +996,19 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
             /* Sub-Page for Specific Category View */
             <div>
               {/* Subtab Compact Filter Bar inside selected Category */}
-              <div className="prog-filter-bar" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 20, background: 'var(--g0)', padding: '10px 14px', borderRadius: 12, border: '1px solid var(--border-color)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.88rem', color: 'var(--text-sub)', fontWeight: 700, flexShrink: 0 }}>
+              <div className="prog-filter-bar">
+                <div className="prog-filter-title">
                   <span>🔍 تصفية مقاييس {currentCategoryMeta ? currentCategoryMeta.name : 'الفئة'}:</span>
                 </div>
                 <input
                   type="text"
                   className="prog-search-input"
-                  style={{ flex: '1 1 200px', maxWidth: '320px', padding: '7px 12px', fontSize: '0.85rem' }}
                   placeholder="البحث باسم المقياس أو الوصف في هذه الفئة..."
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                 />
                 <select
                   className="prog-select-filter"
-                  style={{ flex: '0 1 180px', padding: '7px 12px', fontSize: '0.85rem' }}
                   value={selectedStudentFilter}
                   onChange={e => setSelectedStudentFilter(e.target.value)}
                 >
@@ -1023,8 +1018,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                 {(searchTerm || selectedStudentFilter) && (
                   <button
                     type="button"
-                    className="btn btn-sm btn-g"
-                    style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+                    className="btn btn-sm btn-g prog-filter-clear-btn"
                     onClick={() => { setSearchTerm(''); setSelectedStudentFilter(''); }}
                   >
                     مسح التصفية ✖
@@ -1620,21 +1614,19 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
       {subTab === 'results' && (
         <div>
           {/* Custom Filter Bar for Results */}
-          <div className="prog-filter-bar" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16, background: 'var(--g0)', padding: '10px 14px', borderRadius: 12, border: '1px solid var(--border-color)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.88rem', color: 'var(--text-sub)', fontWeight: 700, flexShrink: 0 }}>
+          <div className="prog-filter-bar">
+            <div className="prog-filter-title">
               <span>📊 تصفية نتائج المقاييس:</span>
             </div>
             <input
               type="text"
               className="prog-search-input"
-              style={{ flex: '1 1 200px', maxWidth: '280px', padding: '6px 12px', fontSize: '0.85rem' }}
               placeholder="البحث باسم الطالب أو المقياس..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
             <select
               className="prog-select-filter"
-              style={{ flex: '0 1 180px', padding: '6px 12px', fontSize: '0.85rem' }}
               value={selectedStudentFilter}
               onChange={e => setSelectedStudentFilter(e.target.value)}
             >
@@ -1643,7 +1635,6 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
             </select>
             <select
               className="prog-select-filter"
-              style={{ flex: '0 1 200px', padding: '6px 12px', fontSize: '0.85rem' }}
               value={selectedCategoryFilter}
               onChange={e => setSelectedCategoryFilter(e.target.value)}
             >
@@ -1660,8 +1651,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
             {(searchTerm || selectedStudentFilter || selectedCategoryFilter !== 'all') && (
               <button
                 type="button"
-                className="btn btn-sm btn-g"
-                style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+                className="btn btn-sm btn-g prog-filter-clear-btn"
                 onClick={() => { setSearchTerm(''); setSelectedStudentFilter(''); setSelectedCategoryFilter('all'); }}
               >
                 مسح التصفية ✖

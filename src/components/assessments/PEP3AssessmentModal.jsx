@@ -205,19 +205,8 @@ export default function PEP3AssessmentModal({
 
   return (
     <div className="mbg" style={{ zIndex: 1100 }}>
-      <div
-        className="mb mb-xl"
-        style={{
-          padding: 0,
-          overflow: 'hidden',
-          borderRadius: 16,
-          maxHeight: '96vh',
-          display: 'flex',
-          flexDirection: 'column',
-          width: 'min(1040px, calc(100vw - 20px))',
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-        }}
+      <div className="mb mb-xl"
+        
       >
         {/* Modal Header */}
         <div

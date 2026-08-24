@@ -53,7 +53,7 @@ export default function SensoryIntegrationReportModal({
 
   return (
     <div className="mbg" style={{ zIndex: 1150, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="mb" style={{ maxWidth: 1050, width: '96vw', maxHeight: '94vh', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', borderRadius: 16 }}>
+      <div className="mb mb-xl">
         
         {/* ACTION BAR (Print, Share, Edit, Close) */}
         <div className="no-print" style={{ padding: '12px 20px', background: '#0f172a', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>

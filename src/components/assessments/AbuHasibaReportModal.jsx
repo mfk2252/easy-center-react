@@ -60,7 +60,7 @@ export default function AbuHasibaReportModal({
 
   return (
     <div className="mbg" style={{ zIndex: 1200 }}>
-      <div className="mb" style={{ maxWidth: 'min(950px, calc(100vw - 20px))', width: '100%', padding: 0, overflow: 'hidden', borderRadius: 16 }}>
+      <div className="mb mb-xl">
         
         {/* Header Toolbar */}
         <div className="fhd modal-header-custom" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--g0)', padding: '12px 20px', borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap', gap: 10 }}>

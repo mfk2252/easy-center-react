@@ -185,16 +185,8 @@ export default function CARS2AssessmentModal({
 
   return (
     <div className="mbg" style={{ zIndex: 1100 }}>
-      <div
-        className="mb mb-xl"
-        style={{
-          maxHeight: '96vh',
-          display: 'flex',
-          flexDirection: 'column',
-          width: 'min(980px, calc(100vw - 20px))',
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-        }}
+      <div className="mb mb-xl"
+        
       >
         {/* Modal Header */}
         <div

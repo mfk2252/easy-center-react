@@ -44,7 +44,7 @@ export default function Ppvt5ReportModal({
 
   return (
     <div className="mbg" style={{ zIndex: 1200 }}>
-      <div className="mb" style={{ maxWidth: '900px', width: '100%', padding: 0, overflow: 'hidden', borderRadius: 16 }}>
+      <div className="mb mb-xl">
         
         {/* Header toolbar */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--g0)', padding: '12px 20px', borderBottom: '1px solid var(--border-color)' }}>

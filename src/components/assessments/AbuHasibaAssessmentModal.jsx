@@ -226,7 +226,7 @@ export default function AbuHasibaAssessmentModal({
 
   return (
     <div className="mbg" style={{ zIndex: 1100 }}>
-      <div className="mb" style={{ maxWidth: 'min(1000px, calc(100vw - 20px))', width: '100%', height: '90vh', maxHeight: 'calc(100dvh - 20px)', padding: 0, overflow: 'hidden', borderRadius: 16, display: 'flex', flexDirection: 'column' }}>
+      <div className="mb mb-xl">
         
         {/* Modal Header */}
         <div className="fhd modal-header-custom" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--g0)', padding: '14px 20px', borderBottom: '1px solid var(--border-color)', gap: 12, flexShrink: 0 }}>

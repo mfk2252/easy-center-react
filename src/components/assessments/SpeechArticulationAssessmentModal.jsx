@@ -329,7 +329,7 @@ ${psychometrics.clinicalImpression}
 
   return (
     <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: 'min(94vh, calc(100dvh - 20px))', display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '1200px' }}>
+      <div className="mb mb-xl">
         
         {/* Modal Main Banner Header */}
         <div className="fhd modal-header-custom" style={{ padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #0e7490 0%, #155e75 100%)', color: '#fff', flexShrink: 0, gap: 12 }}>

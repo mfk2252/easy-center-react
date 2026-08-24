@@ -334,7 +334,7 @@ export default function PLS5Assessment({
 
   return (
     <div className="mbg" style={{ zIndex: 1100 }}>
-      <div className="mb" style={{ maxWidth: 'min(1100px, calc(100vw - 20px))', width: '100%', height: '92vh', maxHeight: 'calc(100dvh - 20px)', padding: 0, overflow: 'hidden', borderRadius: 16, display: 'flex', flexDirection: 'column' }}>
+      <div className="mb mb-xl">
         
         {/* Modal Header */}
         <div className="fhd modal-header-custom" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--g0)', padding: '10px 18px', borderBottom: '1px solid var(--border-color)', flexShrink: 0, gap: 12 }}>

@@ -224,18 +224,8 @@ export default function DevLdAssessmentModal({
 
   return (
     <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()} style={{ zIndex: 1100 }}>
-      <div
-        className="mb mb-xl"
-        style={{
-          padding: 0,
-          overflow: 'hidden',
-          borderRadius: 16,
-          maxHeight: 'min(96vh, calc(100dvh - 12px))',
-          display: 'flex',
-          flexDirection: 'column',
-          width: '100%',
-          maxWidth: '1200px',
-        }}
+      <div className="mb mb-xl"
+        
       >
         {/* Header */}
         <div

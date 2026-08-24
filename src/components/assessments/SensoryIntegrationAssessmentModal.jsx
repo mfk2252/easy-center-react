@@ -159,7 +159,7 @@ export default function SensoryIntegrationAssessmentModal({
 
   return (
     <div className="mbg" style={{ zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="mb" style={{ maxWidth: 1100, width: '96vw', maxHeight: '92vh', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', borderRadius: 16 }}>
+      <div className="mb mb-xl">
         
         {/* HEADER */}
         <div style={{ padding: '16px 22px', background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
