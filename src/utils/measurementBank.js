@@ -1040,8 +1040,8 @@ const DEFAULT_SCALE_LIBRARY = [
   },
   {
     id: 'family_disintegration',
-    name: 'مقياس التفكك الأسري (د. عادل العمرو)',
-    nameEn: 'Family Disintegration Scale (Al-Amro, 2007)',
+    name: 'مقياس التفكك الأسري',
+    nameEn: 'Family Disintegration Scale',
     category: 'play_environmental',
     description: '26 فقرة مقننة لقياس التفكك والتصدع الأسري والنزاعات والعنف والانفصال والإنفاق المنزلي',
     icon: '👨‍👩‍👧‍👦',

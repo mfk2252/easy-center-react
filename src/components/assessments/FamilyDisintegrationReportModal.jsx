@@ -96,7 +96,7 @@ export default function FamilyDisintegrationReportModal({
           <div>
             <h1 style="color:#6d28d9;margin:0 0 6px 0;font-size:1.6rem;">${center?.name || 'مركز التأهيل والرعاية المتخصصة'}</h1>
             <h2 style="color:#334155;margin:0;font-size:1.2rem;">تقرير تشخيص وتقييم مقياس التفكك الأسري</h2>
-            <div style="font-size:0.85rem;color:#64748b;margin-top:4px;">إعداد: د. عادل العمرو (2007) · سلسلة المقاييس والاختبارات النفسية</div>
+            <div style="font-size:0.85rem;color:#64748b;margin-top:4px;">مقياس تشخيصي مقنن للبيئة والمناخ الأسري · 26 فقرة</div>
           </div>
           <div style="text-align:left;">
             <div style="font-size:0.9rem;font-weight:bold;color:#6d28d9;">تاريخ التقرير: ${assessment.date || ''}</div>
@@ -237,7 +237,7 @@ export default function FamilyDisintegrationReportModal({
       parentPhone,
       parentName: assessment.parentName || 'ولي الأمر الكريم',
       studentName: assessment.studentName,
-      reportTitle: 'تقرير مقياس التفكك الأسري (د. عادل العمرو)',
+      reportTitle: 'تقرير مقياس التفكك الأسري',
       reportType: 'تقييم نفسي وإرشاد أسري',
       date: assessment.date,
       summary: reportSummary,

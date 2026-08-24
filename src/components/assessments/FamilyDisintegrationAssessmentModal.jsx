@@ -11,7 +11,7 @@ import {
 import { StudentPicker, validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
 
 const EMPTY_FAM_FORM = {
-  mode: 'select',
+  mode: 'registered',
   stuId: '',
   studentName: '',
   dob: '',
@@ -109,7 +109,7 @@ export default function FamilyDisintegrationAssessmentModal({
       ...form,
       measureId: 'family_disintegration',
       scaleType: 'family_disintegration',
-      measureName: 'مقياس التفكك الأسري (د. عادل العمرو)',
+      measureName: 'مقياس التفكك الأسري',
       category: 'play_environmental',
       score: results.totalRawScore,
       maxScore: results.maxPossible,
@@ -175,10 +175,10 @@ export default function FamilyDisintegrationAssessmentModal({
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ fontSize: '1.4rem' }}>👨‍👩‍👧‍👦</span>
               <h2 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: 800 }}>
-                مقياس التفكك الأسري (Family Disintegration Scale)
+                مقياس التفكك الأسري
               </h2>
               <span className="bdg" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', fontSize: '.75rem' }}>
-                د. عادل العمرو (2007) · 26 فقرة
+                26 فقرة مقننة
               </span>
             </div>
             <p style={{ margin: '4px 0 0', color: 'rgba(255,255,255,0.9)', fontSize: '.84rem' }}>
@@ -277,9 +277,11 @@ export default function FamilyDisintegrationAssessmentModal({
               📋 بيانات المفحوص والتطبيق الإرشادي
             </h4>
             <StudentPicker
+              form={form}
+              setForm={setForm}
               students={students}
-              value={form}
-              onChange={f => setForm(prev => ({ ...prev, ...f }))}
+              emps={emps}
+              showExtra={true}
             />
 
             <div className="fg c3" style={{ marginTop: 12 }}>

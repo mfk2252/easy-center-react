@@ -514,7 +514,7 @@ export const SCALE_GOAL_TEMPLATES = {
     }
   },
 
-  // Family Disintegration Scale (مقياس التفكك الأسري - د. عادل العمرو)
+  // Family Disintegration Scale (مقياس التفكك الأسري)
   family_disintegration: {
     fam_1: {
       domain: 'family',
