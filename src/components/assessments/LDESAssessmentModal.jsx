@@ -291,33 +291,6 @@ export default function LDESAssessmentModal({
           </div>
         </div>
 
-        {/* COPYRIGHT AND INTELLECTUAL PROPERTY BANNER */}
-        <div
-          style={{
-            background: '#fffbeb',
-            borderBottom: '1px solid #fde68a',
-            padding: '10px 18px',
-            fontSize: '0.8rem',
-            color: '#92400e',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 10,
-            flexShrink: 0,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: '1.2rem' }}>⚖️</span>
-            <div>
-              <strong>إشعار حقوق الملكية الفكرية والاعتماد العلمي:</strong> مقياس التقدير التشخيصي لصعوبات التعلم (LDES) — إعداد د. ستيفن ب. ماكارني (Stephen B. McCarney, Ed.D.) · دار هوثورن التعليمية الأمريكية (Hawthorne Educational Services, Inc.).
-            </div>
-          </div>
-          <span style={{ fontSize: '0.72rem', background: '#fef3c7', padding: '3px 8px', borderRadius: 6, border: '1px solid #fcd34d', fontWeight: 700 }}>
-            مخصص للتشخيص والتقييم التربوي المرخص
-          </span>
-        </div>
-
         {/* EXPANDABLE DETAILED COPYRIGHT NOTICE */}
         {showCopyrightDetails && (
           <div
@@ -331,9 +304,38 @@ export default function LDESAssessmentModal({
               flexShrink: 0,
             }}
           >
-            <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>📜</span> بيان حقوق الملكية والأمانة العلمية لمقياس LDES:
+            <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>📜</span> إشعار حقوق الملكية الفكرية والاعتماد العلمي لمقياس LDES:
             </div>
+
+            {/* Copyright Banner within details */}
+            <div
+              style={{
+                background: '#fffbeb',
+                border: '1px solid #fde68a',
+                borderRadius: 8,
+                padding: '8px 12px',
+                marginBottom: 10,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 8,
+                fontSize: '0.8rem',
+                color: '#92400e',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: '1.2rem' }}>⚖️</span>
+                <div>
+                  <strong>إشعار حقوق الملكية الفكرية والاعتماد العلمي:</strong> مقياس التقدير التشخيصي لصعوبات التعلم (LDES) — إعداد د. ستيفن ب. ماكارني (Stephen B. McCarney, Ed.D.) · دار هوثورن التعليمية الأمريكية (Hawthorne Educational Services, Inc.).
+                </div>
+              </div>
+              <span style={{ fontSize: '0.72rem', background: '#fef3c7', padding: '3px 8px', borderRadius: 6, border: '1px solid #fcd34d', fontWeight: 700 }}>
+                مخصص للتشخيص والتقييم التربوي المرخص
+              </span>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, marginBottom: 8 }}>
               <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #fde68a' }}>
                 <strong>المؤلف الأصلي:</strong> {LDES_COPYRIGHT_INFO.authorAr} ({LDES_COPYRIGHT_INFO.authorEn})
