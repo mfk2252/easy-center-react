@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
-import { uid, todayStr } from '../../utils/dateHelpers';
+import { uid, todayStr, calcAge } from '../../utils/dateHelpers';
 import { lsAdd, lsUpd } from '../../hooks/useStorage';
 import {
   MYKLEBUST_COPYRIGHT_INFO,
@@ -9,7 +9,7 @@ import {
   MYKLEBUST_RATING_OPTIONS,
   calculateMyklebustPsychometrics,
 } from '../../data/myklebustData';
-import { StudentPicker, validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
+import { validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
 
 const EMPTY_MYKLEBUST_FORM = {
   mode: 'registered',
@@ -18,14 +18,11 @@ const EMPTY_MYKLEBUST_FORM = {
   dob: '',
   age: '',
   diagnosis: '',
-  parentName: '',
-  parentPhone: '',
-  parentPhone2: '',
-  fileNo: '',
-  specialistName: '',
-  schoolName: 'المدرسة الابتدائية',
-  semester: 'الفصل الدراسي الأول',
-  academicYear: '1445 / 1446 هـ',
+  grade: '',
+  school: '',
+  raterName: '',
+  raterRelation: '',
+  examinerName: '',
   date: todayStr(),
   notes: '',
   itemNotes: {},
@@ -42,7 +39,7 @@ export default function MyklebustAssessmentModal({
   emps = [],
   initialData = null,
 }) {
-  const { toast } = useApp?.() || { toast: () => {} };
+  const { toast, currentUser } = useApp?.() || { toast: () => {}, currentUser: null };
 
   const [form, setForm] = useState(() => {
     if (initialData) {
@@ -53,15 +50,62 @@ export default function MyklebustAssessmentModal({
         itemNotes: initialData.itemNotes || {},
       };
     }
-    return { ...EMPTY_MYKLEBUST_FORM };
+    return {
+      ...EMPTY_MYKLEBUST_FORM,
+      examinerName: currentUser?.name || '',
+      date: todayStr(),
+    };
   });
 
   const [activeTab, setActiveTab] = useState('all');
-  const [expandedNotes, setExpandedNotes] = useState({});
+  const [showCopyrightDetails, setShowCopyrightDetails] = useState(false);
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
+  const [isManualEdit, setIsManualEdit] = useState(false);
+
+  function handleSelectStudent(e) {
+    const val = e.target.value;
+    if (val === '__other__') {
+      setForm(f => ({
+        ...f,
+        mode: 'other',
+        stuId: '',
+        studentName: '',
+        dob: '',
+        age: '',
+        diagnosis: '',
+        grade: '',
+        school: '',
+      }));
+      return;
+    }
+    const stu = students.find(s => s.id === val);
+    if (!stu) {
+      setForm(f => ({ ...f, mode: 'registered', stuId: '', studentName: '' }));
+      return;
+    }
+
+    const calculatedAge = stu.dob ? calcAge(stu.dob) : '';
+    setForm(f => ({
+      ...f,
+      mode: 'registered',
+      stuId: stu.id,
+      studentName: stu.name || '',
+      dob: stu.dob || '',
+      diagnosis: stu.diagnosis || '',
+      age: calculatedAge || stu.age || '',
+      grade: stu.grade || stu.className || '',
+      school: stu.school || stu.schoolName || '',
+    }));
+  }
 
   const psychometrics = useMemo(() => {
     return calculateMyklebustPsychometrics(form.scores || {});
   }, [form.scores]);
+
+  const filteredItems = useMemo(() => {
+    if (activeTab === 'all') return MYKLEBUST_ITEMS;
+    return MYKLEBUST_ITEMS.filter(it => it.dimensionId === activeTab);
+  }, [activeTab]);
 
   if (!isOpen) return null;
 
@@ -85,39 +129,27 @@ export default function MyklebustAssessmentModal({
     }));
   }
 
-  function toggleItemNote(itemId) {
-    setExpandedNotes(prev => ({
-      ...prev,
-      [itemId]: !prev[itemId],
-    }));
-  }
-
   function handleAutoFill(type = 'normal') {
     const newScores = {};
     MYKLEBUST_ITEMS.forEach(it => {
       const n = it.num || 1;
       if (type === 'normal') {
-        // Average to above average (3, 4, 5)
         newScores[it.id] = (n % 3 === 0) ? 5 : ((n % 2 === 0) ? 4 : 3);
       } else if (type === 'borderline') {
-        // Borderline / at risk (3 or 2)
         newScores[it.id] = (n % 2 === 0) ? 3 : 2;
       } else if (type === 'verbal_ld') {
-        // Verbal deficit (dimensions 1 & 2 low, others normal)
         if (it.dimensionId === 'auditory_comprehension' || it.dimensionId === 'spoken_language') {
           newScores[it.id] = (n % 2 === 0) ? 1 : 2;
         } else {
           newScores[it.id] = (n % 2 === 0) ? 4 : 3;
         }
       } else if (type === 'nonverbal_ld') {
-        // Non-verbal deficit (dimensions 3, 4, 5 low, verbal normal)
         if (it.dimensionId === 'orientation' || it.dimensionId === 'motor_coordination' || it.dimensionId === 'personal_social') {
           newScores[it.id] = (n % 2 === 0) ? 1 : 2;
         } else {
           newScores[it.id] = 4;
         }
       } else if (type === 'severe_ld') {
-        // Comprehensive LD (scores 1 and 2)
         newScores[it.id] = (n % 3 === 0) ? 1 : 2;
       }
     });
@@ -229,563 +261,764 @@ export default function MyklebustAssessmentModal({
     onClose();
   }
 
-  const filteredItems = activeTab === 'all'
-    ? MYKLEBUST_ITEMS
-    : MYKLEBUST_ITEMS.filter(it => it.dimensionId === activeTab);
+  function handleSafeClose() {
+    const answeredCount = Object.keys(form.scores || {}).length;
+    if (answeredCount > 0) {
+      if (window.confirm(`⚠️ تنبيه: تم رصد إجابات لـ (${answeredCount}) بنداً في مقياس مايكل بست. هل أنت متأكد من رغبتك في الإغلاق دون حفظ التغييرات؟`)) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  }
 
   return (
-    <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()} style={{ zIndex: 1100 }}>
-      <div className="mb mb-xl"
-        
+    <div className="mbg" style={{ zIndex: 1100 }}>
+      <div
+        className="mb"
+        style={{
+          maxWidth: 'min(1360px, calc(100vw - 24px))',
+          width: '100%',
+        }}
       >
         {/* Modal Main Header */}
         <div
           className="fhd modal-header-custom"
           style={{
-            padding: '12px 18px',
+            padding: '14px 20px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             background: 'linear-gradient(135deg, #0e7490 0%, #0891b2 50%, #0284c7 100%)',
             color: '#fff',
             flexShrink: 0,
-            gap: 10,
+            gap: 12,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: '1.6rem' }}>📊</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: '1.8rem' }}>📊</span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#fff' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h2 style={{ fontSize: '1.18rem', fontWeight: 800, margin: 0, color: '#fff' }}>
                   مقياس مايكل بيست للتعرف على صعوبات التعلم (Myklebust PRS)
-                </h3>
-                <span className="bdg" style={{ background: '#ecfeff', color: '#0891b2', fontWeight: 800, fontSize: '.72rem' }}>
-                  24 بنداً تقييمياً مقنناً
+                </h2>
+                <span className="bdg" style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>
+                  24 بنداً تقييمياً · 5 أبعاد رئيسية
                 </span>
-                <span className="bdg" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, fontSize: '.7rem' }}>
+                <span className="bdg" style={{ background: '#ecfeff', color: '#0891b2', fontSize: '0.7rem', fontWeight: 800 }}>
                   المجال اللفظي وغير اللفظي
                 </span>
               </div>
-              <p style={{ margin: '3px 0 0', fontSize: '.76rem', opacity: 0.92, fontWeight: 400, lineHeight: 1.35 }}>
-                إعداد: هلمر مايكل بيست · تقنين د. مصطفى كامل ود. تيسير كوافحة · تقدير السمات السلوكية
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 3 }}>
+                <span className="bdg" style={{ background: '#164e63', color: '#cffafe', fontSize: '0.68rem', fontWeight: 800 }}>
+                  © هلمر مايكل بيست / تقنين د. مصطفى كامل ود. تيسير كوافحة
+                </span>
+                <span style={{ fontSize: '0.76rem', opacity: 0.95 }}>
+                  Pupil Rating Scale (PRS) — أداة الملاحظة والتقدير السلوكي للكشف عن صعوبات التعلم
+                </span>
+              </div>
             </div>
           </div>
 
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={onClose}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={() => setShowCopyrightDetails(s => !s)}
+              style={{
+                background: showCopyrightDetails ? '#fff' : 'rgba(255,255,255,0.2)',
+                color: showCopyrightDetails ? '#0891b2' : '#fff',
+                border: '1px solid rgba(255,255,255,0.35)',
+                fontWeight: 700,
+              }}
+            >
+              📜 {showCopyrightDetails ? 'إخفاء حقوق المقياس' : 'حقوق المقياس والتقنين'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={handleSafeClose}
+              style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', fontWeight: 700 }}
+            >
+              ✖ إغلاق
+            </button>
+          </div>
+        </div>
+
+        {/* EXPANDABLE DETAILED COPYRIGHT NOTICE */}
+        {showCopyrightDetails && (
+          <div
             style={{
-              background: 'rgba(255,255,255,0.2)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 8,
-              padding: '6px 14px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              alignSelf: 'flex-start',
+              background: '#f0fdfa',
+              padding: '14px 20px',
+              borderBottom: '2px solid #5eead4',
+              fontSize: '0.82rem',
+              color: '#134e4a',
+              lineHeight: 1.6,
+              flexShrink: 0,
             }}
           >
-            ✕ إغلاق
-          </button>
-        </div>
+            <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>📜</span> إشعار حقوق الملكية الفكرية والاعتماد العلمي لمقياس مايكل بيست (PRS):
+            </div>
 
-        {/* Live Psychometrics Status Banner */}
+            <div
+              style={{
+                background: '#ccfbf1',
+                border: '1px solid #99f6e4',
+                borderRadius: 8,
+                padding: '8px 12px',
+                marginBottom: 10,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 8,
+                fontSize: '0.8rem',
+                color: '#115e59',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: '1.2rem' }}>⚖️</span>
+                <div>
+                  <strong>إشعار حقوق الملكية الفكرية والتقنين:</strong> {MYKLEBUST_COPYRIGHT_INFO.scaleNameAr} — إعداد د. هلمر ر. مايكل بيست ({MYKLEBUST_COPYRIGHT_INFO.authorOriginal}) · التقنين والتعريب: {MYKLEBUST_COPYRIGHT_INFO.authorAr}.
+                </div>
+              </div>
+              <span style={{ fontSize: '0.72rem', background: '#f0fdfa', padding: '3px 8px', borderRadius: 6, border: '1px solid #5eead4', fontWeight: 700 }}>
+                مخصص للتشخيص والتقييم التربوي المرخص
+              </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, marginBottom: 8 }}>
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #99f6e4' }}>
+                <strong>المؤلف الأصلي:</strong> {MYKLEBUST_COPYRIGHT_INFO.authorOriginal}
+              </div>
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #99f6e4' }}>
+                <strong>التقنين العربي:</strong> {MYKLEBUST_COPYRIGHT_INFO.authorAr}
+              </div>
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #99f6e4' }}>
+                <strong>الفئة المستهدفة:</strong> {MYKLEBUST_COPYRIGHT_INFO.targetGroup}
+              </div>
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #99f6e4' }}>
+                <strong>طريقة التطبيق:</strong> {MYKLEBUST_COPYRIGHT_INFO.measurementMethod}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Real-time Psychometrics & Diagnostic Strip */}
         <div
-          className="assessment-stats-grid"
+          className="modal-subbar"
           style={{
-            background: '#f8fafc',
-            borderBottom: '1.5px solid #e2e8f0',
-            padding: '10px 16px',
-            alignItems: 'center',
-            flexShrink: 0,
-          }}
-        >
-          {/* Total Raw Score */}
-          <div style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: 10, padding: '8px 12px' }}>
-            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>المجموع الكلي للمقياس:</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
-              <span style={{ fontSize: '1.3rem', fontWeight: 900, color: psychometrics.overallColor }}>
-                {psychometrics.totalRawScore}
-              </span>
-              <span style={{ fontSize: '.75rem', color: '#94a3b8' }}>/ 120 (المتوسط 72)</span>
-            </div>
-            <div style={{ background: '#e2e8f0', height: 5, borderRadius: 3, marginTop: 4, overflow: 'hidden' }}>
-              <div style={{ width: `${psychometrics.overallPercentage}%`, height: '100%', background: psychometrics.overallColor }} />
-            </div>
-          </div>
-
-          {/* Verbal Scale Score */}
-          <div style={{ background: '#fff', border: `1px solid ${psychometrics.isVerbalDeficit ? '#fca5a5' : '#cbd5e1'}`, borderRadius: 10, padding: '8px 12px' }}>
-            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
-              <span>المجال اللفظي (9 بنود):</span>
-              <span style={{ color: psychometrics.isVerbalDeficit ? '#dc2626' : '#16a34a', fontWeight: 800 }}>
-                {psychometrics.isVerbalDeficit ? '⚠️ قصور دال' : '✓ طبيعي'}
-              </span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
-              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: psychometrics.isVerbalDeficit ? '#dc2626' : '#2563eb' }}>
-                {psychometrics.verbalScore}
-              </span>
-              <span style={{ fontSize: '.75rem', color: '#94a3b8' }}>/ 45 (الفاصل: 27)</span>
-            </div>
-          </div>
-
-          {/* Non-Verbal Scale Score */}
-          <div style={{ background: '#fff', border: `1px solid ${psychometrics.isNonVerbalDeficit ? '#fca5a5' : '#cbd5e1'}`, borderRadius: 10, padding: '8px 12px' }}>
-            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
-              <span>المجال غير اللفظي (15 بنداً):</span>
-              <span style={{ color: psychometrics.isNonVerbalDeficit ? '#dc2626' : '#16a34a', fontWeight: 800 }}>
-                {psychometrics.isNonVerbalDeficit ? '⚠️ قصور دال' : '✓ طبيعي'}
-              </span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
-              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: psychometrics.isNonVerbalDeficit ? '#dc2626' : '#0891b2' }}>
-                {psychometrics.nonVerbalScore}
-              </span>
-              <span style={{ fontSize: '.75rem', color: '#94a3b8' }}>/ 75 (الفاصل: 45)</span>
-            </div>
-          </div>
-
-          {/* Clinical Diagnostic Decision */}
-          <div style={{ background: '#fff', border: `1.5px solid ${psychometrics.overallColor}`, borderRadius: 10, padding: '8px 12px' }}>
-            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>التصنيف التشخيصي المعتمد:</div>
-            <div style={{ fontSize: '.92rem', fontWeight: 900, color: psychometrics.overallColor, marginTop: 2 }}>
-              {psychometrics.diagnosisType}
-            </div>
-            <div style={{ fontSize: '.7rem', color: '#64748b', marginTop: 2 }}>
-              تم تقييم: {psychometrics.totalAnswered} من {MYKLEBUST_ITEMS.length} بنداً
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Action & Testing Bar */}
-        <div
-          style={{
-            background: '#ecfeff',
-            borderBottom: '1px solid #cffafe',
-            padding: '8px 20px',
+            background: 'var(--g0)',
+            padding: '10px 18px',
+            borderBottom: '1px solid var(--border-color)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            gap: 12,
             flexWrap: 'wrap',
-            gap: 8,
             flexShrink: 0,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '.75rem', fontWeight: 800, color: '#0e7490' }}>تعبئة سريعة للتجربة:</span>
-            <button
-              type="button"
-              className="btn btn-xs"
-              onClick={() => handleAutoFill('normal')}
-              style={{ background: '#dcfce7', color: '#15803d', fontWeight: 700 }}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* Total Raw Score Metric */}
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                padding: '6px 12px',
+                borderRadius: 8,
+                border: '1.5px solid #0891b2',
+                textAlign: 'center',
+              }}
             >
-              ⚡ أداء طبيعي
-            </button>
-            <button
-              type="button"
-              className="btn btn-xs"
-              onClick={() => handleAutoFill('borderline')}
-              style={{ background: '#fef3c7', color: '#b45309', fontWeight: 700 }}
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>المجموع الكلي للمقياس:</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: psychometrics.overallColor }}>
+                {psychometrics.totalRawScore}
+              </span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-sub)', marginRight: 4 }}>
+                / 120 (المتوسط 72)
+              </span>
+            </div>
+
+            {/* Verbal Scale Score */}
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                padding: '6px 12px',
+                borderRadius: 8,
+                border: `1.5px solid ${psychometrics.isVerbalDeficit ? '#fca5a5' : '#cbd5e1'}`,
+                textAlign: 'center',
+              }}
             >
-              ⚡ فئة حدية
-            </button>
-            <button
-              type="button"
-              className="btn btn-xs"
-              onClick={() => handleAutoFill('verbal_ld')}
-              style={{ background: '#e0e7ff', color: '#4338ca', fontWeight: 700 }}
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>المجال اللفظي (9 بنود):</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: psychometrics.isVerbalDeficit ? '#dc2626' : '#2563eb' }}>
+                {psychometrics.verbalScore}
+              </span>
+              <span style={{ fontSize: '0.7rem', color: psychometrics.isVerbalDeficit ? '#dc2626' : 'var(--text-sub)', marginRight: 4, fontWeight: 700 }}>
+                / 45 {psychometrics.isVerbalDeficit ? '(⚠️ قصور)' : '(✓ طبيعي)'}
+              </span>
+            </div>
+
+            {/* Non-Verbal Scale Score */}
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                padding: '6px 12px',
+                borderRadius: 8,
+                border: `1.5px solid ${psychometrics.isNonVerbalDeficit ? '#fca5a5' : '#cbd5e1'}`,
+                textAlign: 'center',
+              }}
             >
-              ⚡ صعوبات لفظية
-            </button>
-            <button
-              type="button"
-              className="btn btn-xs"
-              onClick={() => handleAutoFill('nonverbal_ld')}
-              style={{ background: '#e0f2fe', color: '#0369a1', fontWeight: 700 }}
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>المجال غير اللفظي (15 بنداً):</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: psychometrics.isNonVerbalDeficit ? '#dc2626' : '#0891b2' }}>
+                {psychometrics.nonVerbalScore}
+              </span>
+              <span style={{ fontSize: '0.7rem', color: psychometrics.isNonVerbalDeficit ? '#dc2626' : 'var(--text-sub)', marginRight: 4, fontWeight: 700 }}>
+                / 75 {psychometrics.isNonVerbalDeficit ? '(⚠️ قصور)' : '(✓ طبيعي)'}
+              </span>
+            </div>
+
+            {/* Diagnostic Classification Badge */}
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                padding: '6px 12px',
+                borderRadius: 8,
+                border: `1.5px solid ${psychometrics.overallColor}`,
+              }}
             >
-              ⚡ صعوبات غير لفظية
-            </button>
-            <button
-              type="button"
-              className="btn btn-xs"
-              onClick={() => handleAutoFill('severe_ld')}
-              style={{ background: '#fee2e2', color: '#b91c1c', fontWeight: 700 }}
-            >
-              ⚡ صعوبات شاملة
-            </button>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>التصنيف التشخيصي المعتمد:</span>
+              <span style={{ fontSize: '0.92rem', fontWeight: 800, color: psychometrics.overallColor }}>
+                {psychometrics.diagnosisType}
+              </span>
+            </div>
           </div>
 
-          <button
-            type="button"
-            className="btn btn-xs"
-            onClick={applyAutoClinicalSummary}
-            style={{
-              background: 'linear-gradient(135deg, #0e7490, #0891b2)',
-              color: '#fff',
-              fontWeight: 800,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-            }}
-          >
-            <span>✨</span>
-            <span>توليد التقرير والخلاصة تلقائياً</span>
-          </button>
+          {/* Progress & Quick Auto Fill */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                {psychometrics.totalAnswered} / {MYKLEBUST_ITEMS.length} بنداً تم تقييمه
+              </div>
+              <div style={{ background: 'var(--border-color)', height: 6, width: 120, borderRadius: 3, marginTop: 3, overflow: 'hidden' }}>
+                <div
+                  style={{
+                    background: psychometrics.completionPercentage === 100 ? '#059669' : '#0891b2',
+                    height: '100%',
+                    width: `${psychometrics.completionPercentage}%`,
+                    transition: 'width 0.3s ease',
+                  }}
+                />
+              </div>
+            </div>
+
+            <span className={`bdg ${psychometrics.completionPercentage === 100 ? 'b-gr' : 'b-or'}`} style={{ fontSize: '0.75rem' }}>
+              {psychometrics.completionPercentage}%
+            </span>
+          </div>
         </div>
 
-        {/* Dimension Filter Tabs */}
+        {/* Modal Scrollable Body */}
         <div
+          className="modal-scrollable-content"
           style={{
-            background: '#fff',
-            borderBottom: '1px solid #e2e8f0',
-            padding: '8px 20px',
+            flex: 1,
+            overflowY: 'auto',
+            padding: '16px 20px',
             display: 'flex',
-            gap: 6,
-            overflowX: 'auto',
-            flexShrink: 0,
+            flexDirection: 'column',
+            gap: 16,
           }}
         >
-          <button
-            type="button"
-            onClick={() => setActiveTab('all')}
-            className={`btn btn-xs ${activeTab === 'all' ? 'btn-p' : 'btn-g'}`}
-            style={{
-              borderRadius: 8,
-              fontWeight: activeTab === 'all' ? 800 : 600,
-              padding: '6px 12px',
-              whiteSpace: 'nowrap',
-              background: activeTab === 'all' ? '#0891b2' : undefined,
-              color: activeTab === 'all' ? '#fff' : undefined,
-            }}
-          >
-            الكل (جميع البنود الـ 24)
-          </button>
-
-          {MYKLEBUST_DIMENSIONS.map(dim => {
-            const dimScore = psychometrics.dimensionScores.find(d => d.id === dim.id);
-            const isDeficit = dimScore?.isDeficit;
-            const countAnswered = MYKLEBUST_ITEMS.filter(it => it.dimensionId === dim.id && form.scores[it.id] !== undefined).length;
-            const isComplete = countAnswered === dim.itemsCount;
-
-            return (
-              <button
-                key={dim.id}
-                type="button"
-                onClick={() => setActiveTab(dim.id)}
-                className={`btn btn-xs ${activeTab === dim.id ? 'btn-p' : 'btn-g'}`}
-                style={{
-                  borderRadius: 8,
-                  fontWeight: activeTab === dim.id ? 800 : 600,
-                  padding: '6px 12px',
-                  whiteSpace: 'nowrap',
-                  background: activeTab === dim.id ? '#0891b2' : undefined,
-                  color: activeTab === dim.id ? '#fff' : undefined,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                <span>{dim.icon}</span>
-                <span>{dim.name.split(':')[1] || dim.name}</span>
-                <span
-                  style={{
-                    background: isDeficit ? '#fee2e2' : isComplete ? '#dcfce7' : '#f1f5f9',
-                    color: isDeficit ? '#b91c1c' : isComplete ? '#15803d' : '#64748b',
-                    fontSize: '.68rem',
-                    padding: '1px 5px',
-                    borderRadius: 4,
-                    fontWeight: 700,
-                  }}
-                >
-                  {dimScore ? `${dimScore.score}/${dim.maxScore}` : `${countAnswered}/${dim.itemsCount}`}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Scrollable Assessment Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', background: '#f8fafc' }}>
-          {/* Student Picker & Diagnostic Meta Card */}
+          {/* 1. Clinical Meta Header: 2-Row Layout with Collapse & Edit Controls */}
           <div
             style={{
-              background: '#fff',
-              border: '1px solid #e2e8f0',
-              borderRadius: 12,
-              padding: '16px',
-              marginBottom: 16,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 10,
+              padding: '10px 14px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
             }}
           >
-            <div className="fg c2">
-              <StudentPicker
-                form={form}
-                setForm={setForm}
-                students={students}
-                emps={emps}
-                showExtra={true}
-              />
+            {/* Meta Top Header with Collapsible & Manual Edit Buttons */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: isHeaderCollapsed ? 'none' : '1px dashed var(--border-color)', paddingBottom: isHeaderCollapsed ? 0 : 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: '0.9rem' }}>📋</span>
+                <span style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--text-main)' }}>
+                  بيانات المفحوص وبيئة التطبيق الإكلينيكي
+                </span>
+                {form.studentName && (
+                  <span className="bdg b-bl" style={{ fontSize: '0.74rem', fontWeight: 800 }}>
+                    الطالب: {form.studentName}
+                  </span>
+                )}
+                {form.age && (
+                  <span className="bdg b-gr" style={{ fontSize: '0.72rem' }}>
+                    العمر: {form.age}
+                  </span>
+                )}
+                {form.diagnosis && (
+                  <span className="bdg b-or" style={{ fontSize: '0.72rem' }}>
+                    التشخيص: {form.diagnosis}
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => setIsManualEdit(prev => !prev)}
+                  className={`btn btn-xs ${isManualEdit ? 'btn-or' : 'btn-g'}`}
+                  style={{ fontSize: '0.72rem', padding: '3px 8px', height: 24, fontWeight: 700 }}
+                  title="تفعيل/قفل التعديل اليدوي المباشر على الحقول المستوردة"
+                >
+                  {isManualEdit ? '🔒 قفل التعديل' : '✏️ تعديل يدوي'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsHeaderCollapsed(prev => !prev)}
+                  className="btn btn-xs btn-g"
+                  style={{ fontSize: '0.72rem', padding: '3px 8px', height: 24, fontWeight: 700 }}
+                >
+                  {isHeaderCollapsed ? '⬇️ إظهار التفاصيل' : '⬆️ إخفاء التفاصيل'}
+                </button>
+              </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginTop: 14, paddingTop: 14, borderTop: '1px dashed #e2e8f0' }}>
-              <div>
-                <label className="lbl" style={{ fontSize: '.78rem' }}>المدرسة / المؤسسة التعليمية:</label>
-                <input
-                  type="text"
-                  className="inp"
-                  value={form.schoolName || ''}
-                  onChange={e => setForm(f => ({ ...f, schoolName: e.target.value }))}
-                  placeholder="المدرسة الابتدائية"
-                />
-              </div>
+            {!isHeaderCollapsed && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                {/* Mode toggle if other */}
+                {form.mode === 'other' && (
+                  <div style={{ marginBottom: 4 }}>
+                    <div className="fl full">
+                      <label style={{ fontSize: '0.76rem', marginBottom: 2 }}>اسم المستفيد الخارجي <span className="req">*</span></label>
+                      <input
+                        style={{ height: 32, fontSize: '0.82rem' }}
+                        value={form.studentName || ''}
+                        onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
+                        placeholder="اكتب اسم الطالب / المستفيد..."
+                      />
+                    </div>
+                  </div>
+                )}
 
-              <div>
-                <label className="lbl" style={{ fontSize: '.78rem' }}>الفصل الدراسي:</label>
-                <select
-                  className="inp"
-                  value={form.semester || 'الفصل الدراسي الأول'}
-                  onChange={e => setForm(f => ({ ...f, semester: e.target.value }))}
+                {/* ROW 1: Clinical Essentials (4 Columns) */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 8,
+                  }}
                 >
-                  <option value="الفصل الدراسي الأول">الفصل الدراسي الأول</option>
-                  <option value="الفصل الدراسي الثاني">الفصل الدراسي الثاني</option>
-                  <option value="الفصل الدراسي الثالث">الفصل الدراسي الثالث</option>
-                </select>
-              </div>
+                  {/* 1. Student Selection */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الطالب المسجل <span className="req">*</span></label>
+                    <select
+                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
+                      value={form.mode === 'other' ? '__other__' : (form.stuId || '')}
+                      onChange={handleSelectStudent}
+                    >
+                      <option value="">— اختر من الطلاب المسجلين بالمركز —</option>
+                      {students.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                      <option value="__other__">➕ مستفيد خارجي (غير مسجل)</option>
+                    </select>
+                  </div>
 
-              <div>
-                <label className="lbl" style={{ fontSize: '.78rem' }}>العام الدراسي:</label>
-                <input
-                  type="text"
-                  className="inp"
-                  value={form.academicYear || ''}
-                  onChange={e => setForm(f => ({ ...f, academicYear: e.target.value }))}
-                  placeholder="1445 / 1446 هـ"
-                />
+                  {/* 2. Chronological Age */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>العمر الزمني</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.age || (form.dob ? calcAge(form.dob) : '')}
+                      readOnly={!isManualEdit}
+                      onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
+                      placeholder="تلقائي حسب تاريخ الميلاد"
+                    />
+                  </div>
+
+                  {/* 3. Medical / Educational Diagnosis */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>التشخيص الطبي / التربوي</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.diagnosis || ''}
+                      readOnly={!isManualEdit && form.mode !== 'other'}
+                      onChange={e => setForm(f => ({ ...f, diagnosis: e.target.value }))}
+                      placeholder="مثال: صعوبات تعلم، تشتت انتباه..."
+                    />
+                  </div>
+
+                  {/* 4. Assessment Date */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>تاريخ التقييم</label>
+                    <input
+                      type="date"
+                      dir="ltr"
+                      style={{ height: 32, fontSize: '0.82rem', textAlign: 'right', padding: '2px 8px' }}
+                      value={form.date || todayStr()}
+                      onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                {/* ROW 2: Respondent and Testing Details (4 Columns) */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 8,
+                  }}
+                >
+                  {/* 1. Examiner Name */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الأخصائي الفاحص</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      type="text"
+                      placeholder="اسم الأخصائي الفاحص"
+                      value={form.examinerName || ''}
+                      onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* 2. Respondent Name */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>المستجيب (معلم / ولي أمر)</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      type="text"
+                      placeholder="اسم المستجيب على المقياس"
+                      value={form.raterName || ''}
+                      onChange={e => setForm(f => ({ ...f, raterName: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* 3. Grade / Academic Level */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الصف / المستوى الدراسي</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      type="text"
+                      placeholder="مثال: الصف الثالث الابتدائي"
+                      value={form.grade || ''}
+                      readOnly={!isManualEdit && form.mode !== 'other'}
+                      onChange={e => setForm(f => ({ ...f, grade: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* 4. Relationship / Role */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>صلة القرابة / الصفة</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      type="text"
+                      placeholder="مثال: معلم الفصل، معلم صعوبات التعلم، الأب..."
+                      value={form.raterRelation || ''}
+                      onChange={e => setForm(f => ({ ...f, raterRelation: e.target.value }))}
+                    />
+                  </div>
+                </div>
               </div>
+            )}
+          </div>
+
+          {/* 2. Subscale Navigation Tabs & Filter */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
+              <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                📑 أبعاد مقياس مايكل بيست (Myklebust Dimensions):
+              </div>
+              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                اختر 1 لمنخفض جداً، 2 لمنخفض، 3 لمتوسط (عادي)، 4 لفوق المتوسط، 5 لممتاز/متفوق
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 6 }}>
+              <button
+                type="button"
+                className={`tab ${activeTab === 'all' ? 'on' : ''}`}
+                onClick={() => setActiveTab('all')}
+                style={{ fontSize: '0.78rem', padding: '6px 12px', whiteSpace: 'nowrap' }}
+              >
+                🌐 جميع البنود ({MYKLEBUST_ITEMS.length})
+              </button>
+              {MYKLEBUST_DIMENSIONS.map(dom => {
+                const domStat = psychometrics.dimensionScores.find(d => d.id === dom.id);
+                const countAnswered = MYKLEBUST_ITEMS.filter(it => it.dimensionId === dom.id && form.scores[it.id] !== undefined).length;
+                return (
+                  <button
+                    key={dom.id}
+                    type="button"
+                    className={`tab ${activeTab === dom.id ? 'on' : ''}`}
+                    onClick={() => setActiveTab(dom.id)}
+                    style={{
+                      fontSize: '0.78rem',
+                      padding: '6px 12px',
+                      whiteSpace: 'nowrap',
+                      borderRight: `3px solid ${dom.color}`,
+                    }}
+                  >
+                    {dom.icon} {dom.name.split(':')[1] || dom.name} ({countAnswered}/{dom.itemsCount})
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Assessment Items Grid */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {filteredItems.map(it => {
-              const currentScore = form.scores[it.id];
-              const isAnswered = currentScore !== undefined && currentScore !== null;
-              const hasNote = Boolean(form.itemNotes[it.id]);
-              const isNoteOpen = expandedNotes[it.id] || hasNote;
-              const dim = MYKLEBUST_DIMENSIONS.find(d => d.id === it.dimensionId);
+          {/* 3. Items Evaluation Grid */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+            {filteredItems.map(item => {
+              const domain = MYKLEBUST_DIMENSIONS.find(d => d.id === item.dimensionId);
+              const currentScore = form.scores[item.id];
+              const currentNote = form.itemNotes[item.id] || '';
 
               return (
                 <div
-                  key={it.id}
+                  key={item.id}
                   style={{
-                    background: '#fff',
-                    border: `1.5px solid ${isAnswered ? (currentScore <= 2 ? '#fca5a5' : '#7dd3fc') : '#e2e8f0'}`,
-                    borderRadius: 12,
-                    padding: '14px 16px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-                    transition: 'all 0.15s ease',
+                    background: 'var(--bg-card)',
+                    border: currentScore !== undefined ? `1.5px solid ${domain?.color || '#0891b2'}` : '1px solid var(--border-color)',
+                    borderRadius: 10,
+                    padding: '12px 16px',
+                    transition: 'all 0.2s ease',
                   }}
                 >
-                  {/* Item Header */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1, minWidth: '260px' }}>
                       <span
                         style={{
-                          background: '#0891b2',
+                          background: domain?.color || '#0891b2',
                           color: '#fff',
-                          fontWeight: 900,
-                          fontSize: '.76rem',
-                          padding: '2px 8px',
+                          fontWeight: 800,
+                          fontSize: '0.74rem',
+                          padding: '3px 8px',
                           borderRadius: 6,
+                          flexShrink: 0,
                         }}
                       >
-                        بند {it.num || it.id.replace('myk_', '')}
+                        #{item.num || item.id.replace('myk_', '')} · {domain?.name?.split(':')[1] || domain?.name}
                       </span>
-                      <span className="bdg" style={{ background: '#ecfeff', color: '#0e7490', fontSize: '.72rem', fontWeight: 700 }}>
-                        {dim?.name?.split(':')[1] || dim?.name}
-                      </span>
-                      <h4 style={{ margin: 0, fontSize: '.95rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                        {it.title}
-                      </h4>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.4 }}>
+                          {item.title}
+                        </div>
+                        {item.text && (
+                          <div
+                            style={{
+                              fontSize: '0.78rem',
+                              color: 'var(--text-sub)',
+                              marginTop: 4,
+                              display: 'flex',
+                              alignItems: 'baseline',
+                              gap: 6,
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            <span style={{ color: '#0891b2', fontWeight: 800, flexShrink: 0, fontSize: '0.74rem' }}>
+                              💡 الوصف السلوكي:
+                            </span>
+                            <span style={{ color: 'var(--text-sub)' }}>
+                              {item.text}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => toggleItemNote(it.id)}
-                      className="btn btn-xs"
+                    {/* Rating Scale Buttons (1 to 5) */}
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                      {(item.options || MYKLEBUST_RATING_OPTIONS).map(opt => {
+                        const scoreVal = opt.score || opt.value;
+                        const isSelected = currentScore === scoreVal;
+                        return (
+                          <button
+                            key={scoreVal}
+                            type="button"
+                            onClick={() => handleScoreChange(item.id, scoreVal)}
+                            className={`btn btn-xs ${isSelected ? 'btn-p' : 'btn-g'}`}
+                            style={{
+                              padding: '5px 10px',
+                              fontSize: '0.75rem',
+                              fontWeight: isSelected ? 800 : 500,
+                              background: isSelected
+                                ? (scoreVal === 1 ? '#dc2626' : scoreVal === 2 ? '#ea580c' : scoreVal === 3 ? '#0284c7' : scoreVal === 4 ? '#059669' : '#16a34a')
+                                : undefined,
+                              color: isSelected ? '#fff' : undefined,
+                              border: isSelected ? 'none' : undefined,
+                            }}
+                            title={opt.description || opt.desc}
+                          >
+                            {scoreVal} - {opt.label.split(' ')[0]} {isSelected && '✓'}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Selected Option Description Banner */}
+                  {currentScore !== undefined && (
+                    <div
                       style={{
-                        background: hasNote ? '#fef3c7' : '#f1f5f9',
-                        color: hasNote ? '#b45309' : '#64748b',
-                        fontWeight: 600,
-                        padding: '3px 8px',
+                        fontSize: '0.75rem',
+                        color: currentScore <= 2 ? '#b91c1c' : '#0369a1',
+                        background: currentScore <= 2 ? '#fee2e2' : '#f0f9ff',
+                        padding: '4px 10px',
                         borderRadius: 6,
+                        marginBottom: 6,
+                        border: `1px solid ${currentScore <= 2 ? '#fca5a5' : '#bae6fd'}`,
                       }}
                     >
-                      💬 {hasNote ? 'تعديل الملاحظة' : '+ ملاحظة سلوكية'}
-                    </button>
-                  </div>
-
-                  {/* 5 Rating Options with Detailed Behavioral Anchors */}
-                  <div
-                    className="assessment-options-grid"
-                    style={{
-                      marginTop: 10,
-                    }}
-                  >
-                    {(it.options || MYKLEBUST_RATING_OPTIONS).map(opt => {
-                      const isSelected = currentScore === opt.score;
-                      const optMeta = MYKLEBUST_RATING_OPTIONS.find(r => r.score === opt.score) || {};
-
-                      return (
-                        <button
-                          key={opt.score}
-                          type="button"
-                          onClick={() => handleScoreChange(it.id, opt.score)}
-                          style={{
-                            background: isSelected ? (opt.score <= 2 ? '#fee2e2' : '#e0f2fe') : '#fafafa',
-                            border: `2px solid ${isSelected ? (opt.score <= 2 ? '#dc2626' : '#0284c7') : '#e2e8f0'}`,
-                            borderRadius: 8,
-                            padding: '10px 12px',
-                            textAlign: 'right',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            gap: 6,
-                            transition: 'all 0.15s ease',
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontWeight: 800, fontSize: '.84rem', color: isSelected ? (opt.score <= 2 ? '#b91c1c' : '#0369a1') : '#334155' }}>
-                              ({opt.score}) {opt.label}
-                            </span>
-                            {isSelected && (
-                              <span style={{ fontSize: '1rem', color: opt.score <= 2 ? '#dc2626' : '#0284c7' }}>
-                                ✓
-                              </span>
-                            )}
-                          </div>
-                          <p style={{ margin: 0, fontSize: '.75rem', color: '#64748b', lineHeight: 1.4 }}>
-                            {opt.description}
-                          </p>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Expandable Note Input */}
-                  {isNoteOpen && (
-                    <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px dashed #e2e8f0' }}>
-                      <input
-                        type="text"
-                        className="inp"
-                        value={form.itemNotes[it.id] || ''}
-                        onChange={e => handleNoteChange(it.id, e.target.value)}
-                        placeholder={`أدخل ملاحظاتك الإكلينيكية حول استجابة الطالب للبند [${it.id}]...`}
-                        style={{ fontSize: '.8rem', padding: '6px 10px' }}
-                      />
+                      <strong>المستوى المختار ({currentScore}): </strong>
+                      {item.options?.find(o => o.score === currentScore)?.description ||
+                        MYKLEBUST_RATING_OPTIONS.find(o => o.score === currentScore)?.desc}
                     </div>
                   )}
+
+                  {/* Optional Item Observation Note */}
+                  <div style={{ marginTop: 6 }}>
+                    <input
+                      type="text"
+                      placeholder="ملاحظات سلوكية أو تفاصيل إضافية لهذا البند (اختياري)..."
+                      value={currentNote}
+                      onChange={e => handleNoteChange(item.id, e.target.value)}
+                      style={{
+                        fontSize: '0.76rem',
+                        padding: '4px 8px',
+                        borderRadius: 6,
+                        border: '1px dashed var(--border-color)',
+                        width: '100%',
+                        background: 'var(--g0)',
+                      }}
+                    />
+                  </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Diagnostic Impression & Recommendations Section */}
-          <div
-            style={{
-              background: '#fff',
-              border: '1px solid #e2e8f0',
-              borderRadius: 12,
-              padding: '16px',
-              marginTop: 20,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                📝 الخلاصة التشخيصية والتوصيات التربوية
-              </h3>
+          {/* 4. Diagnostic Interpretation & Recommendations Section */}
+          <div style={{ background: 'var(--g0)', padding: 16, borderRadius: 12, border: '1px solid var(--border-color)', marginTop: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+              <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0891b2', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>📝</span> الخلاصة التشخيصية والتوصيات التربوية المعتمدة
+              </div>
               <button
                 type="button"
-                className="btn btn-xs"
+                className="btn btn-xs btn-p"
                 onClick={applyAutoClinicalSummary}
-                style={{ background: '#ecfeff', color: '#0891b2', fontWeight: 700 }}
+                style={{ fontWeight: 700, background: '#0891b2', border: 'none' }}
               >
-                ✨ إعادة توليد النص
+                ✨ إعادة توليد الخلاصة بناءً على الدرجات
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 14 }}>
-              <div>
-                <label className="lbl" style={{ fontSize: '.8rem' }}>التقرير الإكلينيكي وتفسير الدرجات:</label>
+            <div className="fg c1">
+              <div className="fl">
+                <label style={{ fontWeight: 700, fontSize: '0.8rem' }}>التقرير السيكومتري والتشخيص الإكلينيكي</label>
                 <textarea
-                  className="inp"
                   rows={6}
+                  placeholder="الخلاصة التشخيصية والوصف النفسي التربوي وفق محكات مايكل بيست..."
                   value={form.clinicalSummary || ''}
                   onChange={e => setForm(f => ({ ...f, clinicalSummary: e.target.value }))}
-                  placeholder="اضغط على زر (توليد التقرير والخلاصة تلقائياً) أو اكتب التقرير التشخيصي هنا..."
-                  style={{ fontSize: '.82rem', lineHeight: 1.5 }}
+                  style={{ fontSize: '0.82rem', lineHeight: 1.5 }}
                 />
               </div>
 
-              <div>
-                <label className="lbl" style={{ fontSize: '.8rem' }}>توصيات الخطة الفردية (IEP) والتدخل العلاجي:</label>
+              <div className="fl">
+                <label style={{ fontWeight: 700, fontSize: '0.8rem' }}>توصيات الخطة التربوية الفردية (IEP) وغرفة المصادر</label>
                 <textarea
-                  className="inp"
-                  rows={6}
+                  rows={5}
+                  placeholder="التوصيات العلاجية، المواءمات الأكاديمية والبيئية، وتعديلات التدخل الفردي..."
                   value={form.recommendations || ''}
                   onChange={e => setForm(f => ({ ...f, recommendations: e.target.value }))}
-                  placeholder="أدخل التوصيات الأكاديمية والتربوية والتعديلات الصفية المقترحة..."
-                  style={{ fontSize: '.82rem', lineHeight: 1.5 }}
+                  style={{ fontSize: '0.82rem', lineHeight: 1.5 }}
                 />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Modal Footer Action Buttons */}
+        {/* Modal Footer Controls */}
         <div
           style={{
-            padding: '12px 20px',
-            background: '#fff',
-            borderTop: '1px solid #e2e8f0',
+            padding: '10px 20px',
+            background: 'var(--g0)',
+            borderTop: '1px solid var(--border-color)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexShrink: 0,
+            gap: 10,
+            flexWrap: 'wrap',
           }}
         >
-          <div style={{ fontSize: '.82rem', color: '#64748b' }}>
-            تم تقييم <strong style={{ color: '#0891b2' }}>{psychometrics.totalAnswered}</strong> من أصل {MYKLEBUST_ITEMS.length} بنداً · المجموع: <strong style={{ color: psychometrics.overallColor }}>{psychometrics.totalRawScore}/120</strong>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>
+              تم الإجابة على <strong>{psychometrics.totalAnswered}</strong> من <strong>{MYKLEBUST_ITEMS.length}</strong> بنداً
+            </span>
+            <span className={`bdg ${psychometrics.completionPercentage === 100 ? 'b-gr' : 'b-or'}`} style={{ fontSize: '0.72rem' }}>
+              {psychometrics.completionPercentage}% مكتمل
+            </span>
+
+            {/* Quick Actions moved to footer */}
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginRight: 6 }}>
+              <button
+                type="button"
+                className="btn btn-xs btn-g"
+                onClick={() => handleAutoFill('borderline')}
+                title="تعبئة نموذج افتراضي يظهر أداء حدي"
+                style={{ fontSize: '0.74rem' }}
+              >
+                ⚡ تجربة (فئة حدية)
+              </button>
+              <button
+                type="button"
+                className="btn btn-xs btn-g"
+                onClick={() => handleAutoFill('verbal_ld')}
+                title="تعبئة نموذج افتراضي يظهر صعوبات تعلم لفظية"
+                style={{ fontSize: '0.74rem' }}
+              >
+                ⚡ تجربة (صعوبات لفظية)
+              </button>
+              <button
+                type="button"
+                className="btn btn-xs btn-p"
+                onClick={applyAutoClinicalSummary}
+                style={{ fontWeight: 700, fontSize: '0.74rem', background: '#0891b2', border: 'none' }}
+              >
+                ✨ توليد التقرير والتوصيات آلياً
+              </button>
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: 10 }}>
             <button
               type="button"
               className="btn btn-g"
-              onClick={onClose}
-              style={{ padding: '8px 16px', fontWeight: 700 }}
+              onClick={handleSafeClose}
             >
               إلغاء
             </button>
-
             <button
               type="button"
               className="btn btn-p"
               onClick={handleSave}
               style={{
-                background: 'linear-gradient(135deg, #0e7490, #0891b2)',
+                background: 'linear-gradient(135deg, #0e7490 0%, #0891b2 100%)',
                 color: '#fff',
-                padding: '8px 24px',
                 fontWeight: 800,
-                boxShadow: '0 4px 12px rgba(8, 145, 178, 0.25)',
+                border: 'none',
+                padding: '8px 20px',
               }}
             >
-              💾 حفظ وحساب نتيجة مقياس مايكل بيست
+              💾 حفظ وحساب تقييم مايكل بيست (PRS)
             </button>
           </div>
         </div>
