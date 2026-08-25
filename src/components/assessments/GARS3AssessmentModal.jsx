@@ -364,7 +364,7 @@ export default function GARS3AssessmentModal({
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="modal-body-scroll" style={{ padding: '18px 22px' }}>
+        <div className="modal-body-scroll" style={{ padding: '18px 22px', flex: 1, overflowY: 'auto' }}>
           {/* Student Picker & Examiner Setup */}
           <div
             style={{

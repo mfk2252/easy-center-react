@@ -270,7 +270,7 @@ export default function GARS3ReportModal({
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="modal-body-scroll" style={{ padding: '20px 24px' }}>
+        <div className="modal-body-scroll" style={{ padding: '20px 24px', flex: 1, overflowY: 'auto' }}>
           {/* Header Card with Meta info */}
           <div
             style={{

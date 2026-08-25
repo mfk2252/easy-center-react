@@ -870,7 +870,7 @@ export default function PLS5Assessment({
             </div>
 
             {/* Bottom Actions Bar */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 20px', background: 'var(--g0)', borderTop: '1px solid var(--border-color)', shrink: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 20px', background: 'var(--g0)', borderTop: '1px solid var(--border-color)', flexShrink: 0 }}>
               <div>
                 <button
                   type="button"

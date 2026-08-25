@@ -197,8 +197,8 @@ export default function FamilyDisintegrationAssessmentModal({
         <div
           style={{
             padding: '10px 20px',
-            background: 'var(--g0, #f8fafc)',
-            borderBottom: '1px solid var(--border-color, #e2e8f0)',
+            background: 'var(--g0)',
+            borderBottom: '1px solid var(--border-color)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -239,7 +239,7 @@ export default function FamilyDisintegrationAssessmentModal({
             </div>
           </div>
 
-          <div style={{ width: 140, background: '#e2e8f0', borderRadius: 10, height: 8, overflow: 'hidden' }}>
+          <div style={{ width: 140, background: 'var(--border-color)', borderRadius: 10, height: 8, overflow: 'hidden' }}>
             <div
               style={{
                 height: '100%',
@@ -256,8 +256,8 @@ export default function FamilyDisintegrationAssessmentModal({
           {/* Metadata Section */}
           <div
             style={{
-              background: '#fff',
-              border: '1px solid var(--border-color, #e2e8f0)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
               borderRadius: 12,
               padding: 16,
               marginBottom: 18,
@@ -327,7 +327,7 @@ export default function FamilyDisintegrationAssessmentModal({
               overflowX: 'auto',
               paddingBottom: 8,
               marginBottom: 16,
-              borderBottom: '1px solid var(--border-color, #e2e8f0)',
+              borderBottom: '1px solid var(--border-color)',
             }}
           >
             <button
@@ -340,7 +340,7 @@ export default function FamilyDisintegrationAssessmentModal({
                 fontWeight: 700,
                 cursor: 'pointer',
                 border: activeDomainFilter === 'all' ? '2px solid #7c3aed' : '1px solid var(--border-color)',
-                background: activeDomainFilter === 'all' ? '#f5f3ff' : '#fff',
+                background: activeDomainFilter === 'all' ? 'var(--pr-l)' : 'var(--bg-card)',
                 color: activeDomainFilter === 'all' ? '#6d28d9' : 'var(--text-main)',
                 whiteSpace: 'nowrap',
               }}
@@ -364,7 +364,7 @@ export default function FamilyDisintegrationAssessmentModal({
                     fontWeight: 700,
                     cursor: 'pointer',
                     border: isAct ? `2px solid ${dom.color}` : '1px solid var(--border-color)',
-                    background: isAct ? dom.bgLight : '#fff',
+                    background: isAct ? dom.bgLight : 'var(--bg-card)',
                     color: isAct ? dom.color : 'var(--text-main)',
                     whiteSpace: 'nowrap',
                   }}
@@ -387,8 +387,8 @@ export default function FamilyDisintegrationAssessmentModal({
                 <div
                   key={item.id}
                   style={{
-                    background: '#fff',
-                    border: isAnswered ? `1.5px solid ${domMeta?.borderColor || '#e2e8f0'}` : '1.5px solid #e2e8f0',
+                    background: 'var(--bg-card)',
+                    border: isAnswered ? `1.5px solid ${domMeta?.borderColor || 'var(--border-color)'}` : '1.5px solid var(--border-color)',
                     borderRadius: 12,
                     padding: '14px 16px',
                     boxShadow: isAnswered ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
@@ -470,10 +470,10 @@ export default function FamilyDisintegrationAssessmentModal({
                             borderRadius: 10,
                             border: isSelected
                               ? `2px solid ${domMeta?.color || '#7c3aed'}`
-                              : '1px solid var(--border-color, #cbd5e1)',
+                              : '1px solid var(--border-color, var(--border-color))',
                             background: isSelected
-                              ? (domMeta?.bgLight || '#f5f3ff')
-                              : '#fff',
+                              ? (domMeta?.bgLight || 'var(--pr-l)')
+                              : 'var(--bg-card)',
                             color: isSelected
                               ? (domMeta?.color || '#6d28d9')
                               : 'var(--text-main)',
@@ -507,7 +507,7 @@ export default function FamilyDisintegrationAssessmentModal({
                         fontSize: '.78rem',
                         padding: '4px 8px',
                         borderRadius: 6,
-                        border: '1px dashed var(--border-color, #cbd5e1)',
+                        border: '1px dashed var(--border-color, var(--border-color))',
                         width: '100%',
                         background: '#fafafa',
                       }}
@@ -522,8 +522,8 @@ export default function FamilyDisintegrationAssessmentModal({
           <div
             style={{
               marginTop: 24,
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
+              background: 'var(--bg)',
+              border: '1px solid var(--border-color)',
               borderRadius: 12,
               padding: 16,
             }}
@@ -536,7 +536,7 @@ export default function FamilyDisintegrationAssessmentModal({
                 <div
                   key={sub.id}
                   style={{
-                    background: '#fff',
+                    background: 'var(--bg-card)',
                     border: `1.5px solid ${sub.color}30`,
                     borderRadius: 10,
                     padding: 12,
@@ -560,7 +560,7 @@ export default function FamilyDisintegrationAssessmentModal({
                   <div style={{ fontSize: '.82rem', color: 'var(--text-sub)' }}>
                     الدرجة: <strong>{sub.raw}</strong> / {sub.maxRaw} ({sub.percentage}%)
                   </div>
-                  <div style={{ background: '#e2e8f0', height: 6, borderRadius: 4, marginTop: 6, overflow: 'hidden' }}>
+                  <div style={{ background: 'var(--border-color)', height: 6, borderRadius: 4, marginTop: 6, overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${sub.percentage}%`, background: sub.color }} />
                   </div>
                 </div>
@@ -586,8 +586,8 @@ export default function FamilyDisintegrationAssessmentModal({
         <div
           style={{
             padding: '14px 22px',
-            background: 'var(--g0, #f8fafc)',
-            borderTop: '1px solid var(--border-color, #e2e8f0)',
+            background: 'var(--g0)',
+            flexShrink: 0, borderTop: '1px solid var(--border-color)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',

@@ -36,7 +36,7 @@ export default function FamilyDisintegrationReportModal({
 
   function handlePrint() {
     const subscaleHtml = results.subscales.map(s => `
-      <tr style="border-bottom:1px solid #e2e8f0;">
+      <tr style="border-bottom:1px solid var(--border-color);">
         <td style="padding:10px 12px;font-weight:bold;color:${s.color};">${s.name}</td>
         <td style="padding:10px 12px;text-align:center;">${s.raw} / ${s.maxRaw}</td>
         <td style="padding:10px 12px;text-align:center;font-weight:bold;color:${s.color};">${s.percentage}%</td>
@@ -46,7 +46,7 @@ export default function FamilyDisintegrationReportModal({
             border-radius:4px;
             font-size:0.85em;
             font-weight:bold;
-            background:${s.level === 'طبيعي' ? '#ecfdf5' : s.level === 'تفكك طفيف' ? '#eff6ff' : s.level === 'تفكك ملحوظ' ? '#fffbeb' : '#fee2e2'};
+            background:${s.level === 'طبيعي' ? '#ecfdf5' : s.level === 'تفكك طفيف' ? '#eff6ff' : s.level === 'تفكك ملحوظ' ? 'var(--bg-card)beb' : '#fee2e2'};
             color:${s.level === 'طبيعي' ? '#047857' : s.level === 'تفكك طفيف' ? '#0369a1' : s.level === 'تفكك ملحوظ' ? '#b45309' : '#b91c1c'};
           ">
             ${s.level}
@@ -61,11 +61,11 @@ export default function FamilyDisintegrationReportModal({
       const note = assessment.itemNotes?.[it.id] || '';
 
       return `
-        <tr style="border-bottom:1px solid #e2e8f0;background:${isDef ? '#fee2e2' : it.calculatedScore >= 3 ? '#fffbeb' : '#ffffff'};">
+        <tr style="border-bottom:1px solid var(--border-color);background:${isDef ? '#fee2e2' : it.calculatedScore >= 3 ? 'var(--bg-card)beb' : 'var(--bg-card)'};">
           <td style="padding:8px 10px;text-align:center;font-weight:bold;">${it.num}</td>
           <td style="padding:8px 10px;">${it.text}</td>
-          <td style="padding:8px 10px;font-size:0.85em;color:#64748b;">${domMeta?.name || ''}</td>
-          <td style="padding:8px 10px;text-align:center;font-weight:bold;color:${isDef ? '#b91c1c' : '#1e293b'};">
+          <td style="padding:8px 10px;font-size:0.85em;color:var(--text-sub);">${domMeta?.name || ''}</td>
+          <td style="padding:8px 10px;text-align:center;font-weight:bold;color:${isDef ? '#b91c1c' : 'var(--text-main)'};">
             ${it.calculatedScore ?? '-'} / 5
           </td>
           <td style="padding:8px 10px;text-align:center;">
@@ -74,38 +74,38 @@ export default function FamilyDisintegrationReportModal({
               border-radius:4px;
               font-size:0.8em;
               font-weight:bold;
-              background:${isDef ? '#f87171' : '#e2e8f0'};
-              color:${isDef ? '#ffffff' : '#334155'};
+              background:${isDef ? '#f87171' : 'var(--border-color)'};
+              color:${isDef ? 'var(--bg-card)' : 'var(--text-main)'};
             ">
               ${isDef ? 'تفكك/خطر' : it.calculatedScore >= 3 ? 'متوسط' : 'تماسك سليم'}
             </span>
           </td>
-          <td style="padding:8px 10px;font-size:0.82em;color:#64748b;">${note || '-'}</td>
+          <td style="padding:8px 10px;font-size:0.82em;color:var(--text-sub);">${note || '-'}</td>
         </tr>
       `;
     }).join('');
 
     const recsHtml = results.recommendations.map(r => `
-      <li style="margin-bottom:6px;color:#334155;line-height:1.5;">${r}</li>
+      <li style="margin-bottom:6px;color:var(--text-main);line-height:1.5;">${r}</li>
     `).join('');
 
     const printHtml = `
-      <div style="direction:rtl;text-align:right;font-family:system-ui, -apple-system, sans-serif;padding:20px;color:#1e293b;">
+      <div style="direction:rtl;text-align:right;font-family:system-ui, -apple-system, sans-serif;padding:20px;color:var(--text-main);">
         <!-- Header -->
         <div style="border-bottom:2px solid #7c3aed;padding-bottom:12px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;">
           <div>
             <h1 style="color:#6d28d9;margin:0 0 6px 0;font-size:1.6rem;">${center?.name || 'مركز التأهيل والرعاية المتخصصة'}</h1>
-            <h2 style="color:#334155;margin:0;font-size:1.2rem;">تقرير تشخيص وتقييم مقياس التفكك الأسري</h2>
-            <div style="font-size:0.85rem;color:#64748b;margin-top:4px;">مقياس تشخيصي مقنن للبيئة والمناخ الأسري · 26 فقرة</div>
+            <h2 style="color:var(--text-main);margin:0;font-size:1.2rem;">تقرير تشخيص وتقييم مقياس التفكك الأسري</h2>
+            <div style="font-size:0.85rem;color:var(--text-sub);margin-top:4px;">مقياس تشخيصي مقنن للبيئة والمناخ الأسري · 26 فقرة</div>
           </div>
           <div style="text-align:left;">
             <div style="font-size:0.9rem;font-weight:bold;color:#6d28d9;">تاريخ التقرير: ${assessment.date || ''}</div>
-            <div style="font-size:0.85rem;color:#64748b;">الرقم المرجعي: ${assessment.id?.slice(0, 8) || ''}</div>
+            <div style="font-size:0.85rem;color:var(--text-sub);">الرقم المرجعي: ${assessment.id?.slice(0, 8) || ''}</div>
           </div>
         </div>
 
         <!-- Student Info Card -->
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 18px;margin-bottom:20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+        <div style="background:var(--bg-input);border:1px solid var(--border-color);border-radius:8px;padding:14px 18px;margin-bottom:20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
           <div><strong>اسم المفحوص:</strong> ${assessment.studentName || '-'}</div>
           <div><strong>العمر / تاريخ الميلاد:</strong> ${assessment.age || '-'} / ${assessment.dob || '-'}</div>
           <div><strong>الصف / المرحلة:</strong> ${assessment.grade || assessment.className || '-'}</div>
@@ -118,18 +118,18 @@ export default function FamilyDisintegrationReportModal({
         <div style="background:linear-gradient(135deg, #f5f3ff, #ede9fe);border:2px solid #7c3aed;border-radius:10px;padding:16px;margin-bottom:20px;display:flex;justify-content:space-around;align-items:center;text-align:center;">
           <div>
             <div style="font-size:0.85rem;color:#6d28d9;font-weight:bold;">الدرجة الكلية الخام</div>
-            <div style="font-size:1.8rem;font-weight:900;color:${results.severityColor};">${results.totalRawScore} <span style="font-size:0.9rem;color:#64748b;">/ ${results.maxPossible}</span></div>
-            <div style="font-size:0.75rem;color:#64748b;">المدى (26 - 130)</div>
+            <div style="font-size:1.8rem;font-weight:900;color:${results.severityColor};">${results.totalRawScore} <span style="font-size:0.9rem;color:var(--text-sub);">/ ${results.maxPossible}</span></div>
+            <div style="font-size:0.75rem;color:var(--text-sub);">المدى (26 - 130)</div>
           </div>
           <div>
             <div style="font-size:0.85rem;color:#6d28d9;font-weight:bold;">المتوسط الفرضي للمقياس</div>
-            <div style="font-size:1.6rem;font-weight:800;color:#334155;">${results.theoreticalMean}</div>
-            <div style="font-size:0.75rem;color:#64748b;">نقطة التوازن المعياري</div>
+            <div style="font-size:1.6rem;font-weight:800;color:var(--text-main);">${results.theoreticalMean}</div>
+            <div style="font-size:0.75rem;color:var(--text-sub);">نقطة التوازن المعياري</div>
           </div>
           <div>
             <div style="font-size:0.85rem;color:#6d28d9;font-weight:bold;">نسبة التفكك المقدرة</div>
             <div style="font-size:1.8rem;font-weight:900;color:${results.severityColor};">${results.percentage}%</div>
-            <div style="font-size:0.75rem;color:#64748b;">مؤشر الشدة التراكمي</div>
+            <div style="font-size:0.75rem;color:var(--text-sub);">مؤشر الشدة التراكمي</div>
           </div>
           <div>
             <div style="font-size:0.85rem;color:#6d28d9;font-weight:bold;">المستوى التشخيصي العام</div>
@@ -138,20 +138,20 @@ export default function FamilyDisintegrationReportModal({
         </div>
 
         <!-- Clinical Narrative -->
-        <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:14px 18px;margin-bottom:20px;">
+        <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:8px;padding:14px 18px;margin-bottom:20px;">
           <h3 style="color:#6d28d9;margin:0 0 8px 0;font-size:1.05rem;">📝 التفسير الإكلينيكي لدرجة التفكك الأسري:</h3>
-          <p style="margin:0;line-height:1.6;color:#334155;font-size:0.95rem;">${results.interpretation}</p>
+          <p style="margin:0;line-height:1.6;color:var(--text-main);font-size:0.95rem;">${results.interpretation}</p>
         </div>
 
         <!-- Subscales Breakdown -->
         <h3 style="color:#6d28d9;margin:0 0 10px 0;font-size:1.1rem;">📊 تحليل الأبعاد والمحاور الفرعية للتفكك الأسري:</h3>
         <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
           <thead>
-            <tr style="background:#f1f5f9;border-bottom:2px solid #cbd5e1;">
-              <th style="padding:10px 12px;text-align:right;color:#334155;">البعد والمجال الفرعي</th>
-              <th style="padding:10px 12px;text-align:center;color:#334155;">الدرجة المحققة</th>
-              <th style="padding:10px 12px;text-align:center;color:#334155;">نسبة التفكك</th>
-              <th style="padding:10px 12px;text-align:center;color:#334155;">المستوى التقديري</th>
+            <tr style="background:var(--bg-input);border-bottom:2px solid var(--border-color);">
+              <th style="padding:10px 12px;text-align:right;color:var(--text-main);">البعد والمجال الفرعي</th>
+              <th style="padding:10px 12px;text-align:center;color:var(--text-main);">الدرجة المحققة</th>
+              <th style="padding:10px 12px;text-align:center;color:var(--text-main);">نسبة التفكك</th>
+              <th style="padding:10px 12px;text-align:center;color:var(--text-main);">المستوى التقديري</th>
             </tr>
           </thead>
           <tbody>
@@ -172,7 +172,7 @@ export default function FamilyDisintegrationReportModal({
         <h3 style="color:#6d28d9;margin:0 0 10px 0;font-size:1.1rem;page-break-before:always;">📋 استجابات بنود المقياس التفصيلية (26 فقرة):</h3>
         <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:0.88rem;">
           <thead>
-            <tr style="background:#f1f5f9;border-bottom:2px solid #cbd5e1;">
+            <tr style="background:var(--bg-input);border-bottom:2px solid var(--border-color);">
               <th style="padding:8px 10px;text-align:center;width:40px;">#</th>
               <th style="padding:8px 10px;text-align:right;">نص الفقرة</th>
               <th style="padding:8px 10px;text-align:right;">البعد</th>
@@ -189,11 +189,11 @@ export default function FamilyDisintegrationReportModal({
         <!-- Signature Block -->
         <div style="margin-top:40px;display:flex;justify-content:space-between;padding:0 20px;">
           <div style="text-align:center;">
-            <div style="font-weight:bold;color:#334155;margin-bottom:50px;">الأخصائي النفسي / المرشد الأسري</div>
+            <div style="font-weight:bold;color:var(--text-main);margin-bottom:50px;">الأخصائي النفسي / المرشد الأسري</div>
             <div>${assessment.examinerName || '.....................................'}</div>
           </div>
           <div style="text-align:center;">
-            <div style="font-weight:bold;color:#334155;margin-bottom:50px;">مدير المركز / المشرف العام</div>
+            <div style="font-weight:bold;color:var(--text-main);margin-bottom:50px;">مدير المركز / المشرف العام</div>
             <div>.....................................</div>
           </div>
         </div>
@@ -257,7 +257,7 @@ export default function FamilyDisintegrationReportModal({
           style={{
             padding: '16px 22px',
             background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
-            color: '#fff',
+            color: 'var(--bg-card)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -266,7 +266,7 @@ export default function FamilyDisintegrationReportModal({
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: '1.4rem' }}>📄</span>
-              <h2 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: 800 }}>
+              <h2 style={{ margin: 0, color: 'var(--bg-card)', fontSize: '1.2rem', fontWeight: 800 }}>
                 تقرير نتائج مقياس التفكك الأسري
               </h2>
             </div>
@@ -279,7 +279,7 @@ export default function FamilyDisintegrationReportModal({
               type="button"
               onClick={handlePrint}
               style={{
-                background: '#fff',
+                background: 'var(--bg-card)',
                 color: '#6d28d9',
                 border: 'none',
                 padding: '6px 14px',
@@ -297,7 +297,7 @@ export default function FamilyDisintegrationReportModal({
               style={{
                 background: 'rgba(255,255,255,0.15)',
                 border: 'none',
-                color: '#fff',
+                color: 'var(--bg-card)',
                 width: 34,
                 height: 34,
                 borderRadius: '50%',
@@ -323,8 +323,8 @@ export default function FamilyDisintegrationReportModal({
           >
             <div
               style={{
-                background: '#fff',
-                border: '1px solid #e2e8f0',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
                 borderRadius: 12,
                 padding: 14,
                 textAlign: 'center',
@@ -339,15 +339,15 @@ export default function FamilyDisintegrationReportModal({
 
             <div
               style={{
-                background: '#fff',
-                border: '1px solid #e2e8f0',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
                 borderRadius: 12,
                 padding: 14,
                 textAlign: 'center',
               }}
             >
               <div style={{ fontSize: '.78rem', color: 'var(--text-sub)' }}>المتوسط الفرضي</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#334155' }}>
+              <div style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--text-main)' }}>
                 {results.theoreticalMean}
               </div>
               <div style={{ fontSize: '.72rem', color: 'var(--text-sub)' }}>نقطة التوازن (78 درجة)</div>
@@ -355,8 +355,8 @@ export default function FamilyDisintegrationReportModal({
 
             <div
               style={{
-                background: '#fff',
-                border: '1px solid #e2e8f0',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
                 borderRadius: 12,
                 padding: 14,
                 textAlign: 'center',
@@ -371,8 +371,8 @@ export default function FamilyDisintegrationReportModal({
 
             <div
               style={{
-                background: '#fff',
-                border: '1px solid #e2e8f0',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
                 borderRadius: 12,
                 padding: 14,
                 textAlign: 'center',
@@ -400,8 +400,8 @@ export default function FamilyDisintegrationReportModal({
           {/* Clinical Interpretation */}
           <div
             style={{
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
+              background: 'var(--bg-input)',
+              border: '1px solid var(--border-color)',
               borderRadius: 12,
               padding: '14px 18px',
               marginBottom: 20,
@@ -418,8 +418,8 @@ export default function FamilyDisintegrationReportModal({
           {/* Subscales Analysis */}
           <div
             style={{
-              background: '#fff',
-              border: '1px solid #e2e8f0',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
               borderRadius: 12,
               padding: 16,
               marginBottom: 20,
@@ -434,7 +434,7 @@ export default function FamilyDisintegrationReportModal({
                 <div
                   key={sub.id}
                   style={{
-                    background: '#f8fafc',
+                    background: 'var(--bg-input)',
                     border: `1.5px solid ${sub.color}30`,
                     borderRadius: 10,
                     padding: 12,
@@ -458,7 +458,7 @@ export default function FamilyDisintegrationReportModal({
                   <div style={{ fontSize: '.78rem', color: 'var(--text-sub)', marginBottom: 6 }}>
                     الدرجة: <strong>{sub.raw}</strong> / {sub.maxRaw} ({sub.percentage}%)
                   </div>
-                  <div style={{ background: '#e2e8f0', height: 6, borderRadius: 4, overflow: 'hidden' }}>
+                  <div style={{ background: 'var(--border-color)', height: 6, borderRadius: 4, overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${sub.percentage}%`, background: sub.color }} />
                   </div>
                 </div>
@@ -494,8 +494,8 @@ export default function FamilyDisintegrationReportModal({
           {/* Items Breakdown Table */}
           <div
             style={{
-              background: '#fff',
-              border: '1px solid #e2e8f0',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
               borderRadius: 12,
               padding: 16,
             }}
@@ -507,7 +507,7 @@ export default function FamilyDisintegrationReportModal({
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.85rem' }}>
                 <thead>
-                  <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                  <tr style={{ background: 'var(--bg-input)', borderBottom: '2px solid var(--border-color)' }}>
                     <th style={{ padding: '8px 10px', textAlign: 'center', width: 40 }}>#</th>
                     <th style={{ padding: '8px 10px', textAlign: 'right' }}>نص الفقرة</th>
                     <th style={{ padding: '8px 10px', textAlign: 'right' }}>البعد</th>
@@ -524,14 +524,14 @@ export default function FamilyDisintegrationReportModal({
                       <tr
                         key={it.id}
                         style={{
-                          borderBottom: '1px solid #f1f5f9',
-                          background: isDef ? '#fef2f2' : it.calculatedScore >= 3 ? '#fffbeb' : '#fff',
+                          borderBottom: '1px solid var(--bg-input)',
+                          background: isDef ? '#fef2f2' : it.calculatedScore >= 3 ? 'var(--bg-card)beb' : 'var(--bg-card)',
                         }}
                       >
                         <td style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 700 }}>{it.num}</td>
                         <td style={{ padding: '8px 10px' }}>{it.text}</td>
                         <td style={{ padding: '8px 10px', fontSize: '.8rem', color: domMeta?.color }}>{domMeta?.name}</td>
-                        <td style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 800, color: isDef ? '#dc2626' : '#334155' }}>
+                        <td style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 800, color: isDef ? '#dc2626' : 'var(--text-main)' }}>
                           {it.calculatedScore ?? '-'} / 5
                         </td>
                         <td style={{ padding: '8px 10px', textAlign: 'center' }}>
@@ -541,8 +541,8 @@ export default function FamilyDisintegrationReportModal({
                               borderRadius: 4,
                               fontSize: '.75rem',
                               fontWeight: 700,
-                              background: isDef ? '#fee2e2' : '#f1f5f9',
-                              color: isDef ? '#dc2626' : '#475569',
+                              background: isDef ? '#fee2e2' : 'var(--bg-input)',
+                              color: isDef ? '#dc2626' : 'var(--text-sub)',
                             }}
                           >
                             {isDef ? '⚠️ تفكك/خطر' : it.calculatedScore >= 3 ? 'متوسط' : '✅ سليم'}
@@ -561,8 +561,8 @@ export default function FamilyDisintegrationReportModal({
         <div
           style={{
             padding: '14px 22px',
-            background: 'var(--g0, #f8fafc)',
-            borderTop: '1px solid var(--border-color, #e2e8f0)',
+            background: 'var(--g0, var(--bg-input))',
+            borderTop: '1px solid var(--border-color, var(--border-color))',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -583,7 +583,7 @@ export default function FamilyDisintegrationReportModal({
               type="button"
               className="btn btn-s"
               onClick={handleSendWhatsApp}
-              style={{ fontWeight: 700, fontSize: '.85rem', background: '#25D366', color: '#fff' }}
+              style={{ fontWeight: 700, fontSize: '.85rem', background: '#25D366', color: 'var(--bg-card)' }}
             >
               💬 إرسال التقرير عبر واتساب
             </button>

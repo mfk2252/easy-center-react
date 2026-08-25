@@ -665,7 +665,7 @@ export default function AbuHasibaAssessmentModal({
             </div>
 
             {/* Bottom Actions Bar */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 20px', background: 'var(--g0)', borderTop: '1px solid var(--border-color)' }}>
+            <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'space-between', padding: '16px 20px', background: 'var(--g0)', borderTop: '1px solid var(--border-color)' }}>
               <div>
                 <button
                   type="button"

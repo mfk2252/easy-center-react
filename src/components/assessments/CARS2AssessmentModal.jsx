@@ -317,7 +317,7 @@ export default function CARS2AssessmentModal({
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="modal-body-scroll" style={{ padding: '18px 22px' }}>
+        <div className="modal-body-scroll" style={{ padding: '18px 22px', flex: 1, overflowY: 'auto' }}>
           {/* Student Picker & Diagnostic Meta Info */}
           <div
             style={{

@@ -84,7 +84,7 @@ export default function AbuHasibaReportModal({
         </div>
 
         {/* Print Content Area */}
-        <div id={`abuhasiba-official-print-pane-${assessment.id}`} style={{ padding: '35px 45px', background: '#fff', color: '#1f2937', direction: 'rtl', textAlign: 'right', overflowY: 'auto', maxHeight: '75vh' }}>
+        <div id={`abuhasiba-official-print-pane-${assessment.id}`} style={{ padding: '35px 45px', background: '#fff', color: '#1f2937', direction: 'rtl', textAlign: 'right', overflowY: 'auto', flex: 1 }}>
           
           {/* Official Letterhead */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #0369a1', paddingBottom: 16, marginBottom: 20 }}>

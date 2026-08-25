@@ -271,7 +271,7 @@ export default function SRS2ReportModal({
         </div>
 
         {/* CONTENT */}
-        <div className="modal-body-scroll" style={{ padding: '18px 22px' }}>
+        <div className="modal-body-scroll" style={{ padding: '18px 22px', flex: 1, overflowY: 'auto' }}>
           
           {/* TOP METADATA TABLE */}
           <div

@@ -965,7 +965,7 @@ ${conceptRecommendations}
         </div>
 
         {/* Modal Footer Controls */}
-        <div style={{ padding: '12px 20px', background: 'var(--g0)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ flexShrink: 0, padding: '12px 20px', background: 'var(--g0)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontSize: '0.76rem', color: 'var(--text-sub)' }}>
             {validateStudentPick(form) ? `الطالب المحدد: ${form.studentName}` : '⚠️ يرجى اختيار طالب أولاً'}
           </div>

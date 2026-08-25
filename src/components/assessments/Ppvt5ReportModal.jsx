@@ -68,7 +68,7 @@ export default function Ppvt5ReportModal({
         </div>
 
         {/* Print Content Area */}
-        <div id={`ppvt5-official-print-pane-${assessment.id}`} style={{ padding: '30px 40px', background: '#fff', color: '#1f2937', direction: 'rtl', textAlign: 'right', overflowY: 'auto', maxHeight: '75vh' }}>
+        <div id={`ppvt5-official-print-pane-${assessment.id}`} style={{ padding: '30px 40px', background: '#fff', color: '#1f2937', direction: 'rtl', textAlign: 'right', overflowY: 'auto', flex: 1 }}>
           
           {/* Institutional Official Letterhead */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #0f766e', paddingBottom: 16, marginBottom: 20 }}>

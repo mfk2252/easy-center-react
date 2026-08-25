@@ -258,7 +258,7 @@ export default function CARS2ReportModal({
         </div>
 
         {/* Scrollable Report Content */}
-        <div className="modal-body-scroll" style={{ padding: '20px 24px' }}>
+        <div className="modal-body-scroll" style={{ padding: '20px 24px', flex: 1, overflowY: 'auto' }}>
           {/* Demographic Box */}
           <div
             style={{

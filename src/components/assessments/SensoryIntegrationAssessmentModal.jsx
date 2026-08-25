@@ -162,14 +162,14 @@ export default function SensoryIntegrationAssessmentModal({
       <div className="mb mb-xl">
         
         {/* HEADER */}
-        <div style={{ padding: '16px 22px', background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ padding: '16px 22px', background: 'linear-gradient(135deg, var(--text-main) 0%, #1e1b4b 100%)', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(99, 102, 241, 0.2)', border: '1px solid rgba(165, 180, 252, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
               🎯
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#f8fafc' }}>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)' }}>
                   مقياس التكامل الحسي للأطفال (90 مهمة أدائية)
                 </h3>
                 <span className="bdg" style={{ background: '#312e81', color: '#c7d2fe', fontSize: '.72rem', border: '1px solid #4338ca' }}>
@@ -185,14 +185,14 @@ export default function SensoryIntegrationAssessmentModal({
             type="button"
             className="btn btn-sm btn-g"
             onClick={onClose}
-            style={{ color: '#cbd5e1', borderColor: 'rgba(255,255,255,0.2)', width: 34, height: 34, padding: 0 }}
+            style={{ color: 'var(--border-color)', borderColor: 'rgba(255,255,255,0.2)', width: 34, height: 34, padding: 0 }}
           >
             ✕
           </button>
         </div>
 
         {/* TOP CONTROLS & STATS BAR */}
-        <div style={{ padding: '12px 20px', background: 'var(--bg-card, #f8fafc)', borderBottom: '1px solid var(--border-color, #e2e8f0)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, alignItems: 'center' }}>
+        <div style={{ padding: '12px 20px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color, var(--border-color))', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, alignItems: 'center' }}>
           <div>
             <label style={{ display: 'block', fontSize: '.75rem', fontWeight: 700, color: 'var(--text-sub)', marginBottom: 4 }}>
               👤 الطالب المفحوص:
@@ -240,13 +240,13 @@ export default function SensoryIntegrationAssessmentModal({
           </div>
 
           {/* LIVE METRIC WIDGET */}
-          <div style={{ background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1.5px solid var(--border-color)', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
             <div>
-              <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>
+              <div style={{ fontSize: '.72rem', color: 'var(--text-sub)', fontWeight: 700 }}>
                 المجموع الكلي ({scoreResult.answeredCount}/90)
               </div>
               <div style={{ fontSize: '1.25rem', fontWeight: 900, color: scoreResult.severityColor }}>
-                {scoreResult.totalRawScore} <span style={{ fontSize: '.85rem', color: '#64748b' }}>/ 90</span>
+                {scoreResult.totalRawScore} <span style={{ fontSize: '.85rem', color: 'var(--text-sub)' }}>/ 90</span>
                 <span style={{ fontSize: '.78rem', marginRight: 6, fontWeight: 700 }}>({scoreResult.percentage}%)</span>
               </div>
             </div>
@@ -254,7 +254,7 @@ export default function SensoryIntegrationAssessmentModal({
               <span className="bdg" style={{ background: `${scoreResult.severityColor}18`, color: scoreResult.severityColor, border: `1px solid ${scoreResult.severityColor}40`, fontSize: '.72rem', fontWeight: 800 }}>
                 {scoreResult.statusBadge}
               </span>
-              <div style={{ fontSize: '.68rem', color: '#64748b', marginTop: 2 }}>
+              <div style={{ fontSize: '.68rem', color: 'var(--text-sub)', marginTop: 2 }}>
                 محك القطع: 45 درجة
               </div>
             </div>
@@ -262,7 +262,7 @@ export default function SensoryIntegrationAssessmentModal({
         </div>
 
         {/* DOMAIN NAVIGATION TABS */}
-        <div style={{ display: 'flex', gap: 6, padding: '8px 16px', overflowX: 'auto', background: 'var(--bg-main, #f1f5f9)', borderBottom: '1px solid var(--border-color, #e2e8f0)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 6, padding: '8px 16px', overflowX: 'auto', background: 'var(--bg-main, #f1f5f9)', borderBottom: '1px solid var(--border-color, var(--border-color))', flexShrink: 0 }}>
           <button
             type="button"
             onClick={() => setActiveDomainTab('all')}
@@ -273,9 +273,9 @@ export default function SensoryIntegrationAssessmentModal({
               fontWeight: 800,
               whiteSpace: 'nowrap',
               cursor: 'pointer',
-              border: activeDomainTab === 'all' ? '1.5px solid #3b82f6' : '1px solid var(--border-color, #cbd5e1)',
-              background: activeDomainTab === 'all' ? '#2563eb' : '#ffffff',
-              color: activeDomainTab === 'all' ? '#ffffff' : 'var(--text-main, #334155)',
+              border: activeDomainTab === 'all' ? '1.5px solid #3b82f6' : '1px solid var(--border-color, var(--border-color))',
+              background: activeDomainTab === 'all' ? '#2563eb' : 'var(--bg-card)',
+              color: activeDomainTab === 'all' ? 'var(--bg-card)' : 'var(--text-main, var(--text-main))',
             }}
           >
             📋 جميع المحاور (90 مهمة)
@@ -296,9 +296,9 @@ export default function SensoryIntegrationAssessmentModal({
                   fontWeight: 800,
                   whiteSpace: 'nowrap',
                   cursor: 'pointer',
-                  border: isSelected ? `1.5px solid ${dom.color}` : '1px solid var(--border-color, #cbd5e1)',
-                  background: isSelected ? dom.color : '#ffffff',
-                  color: isSelected ? '#ffffff' : 'var(--text-main, #334155)',
+                  border: isSelected ? `1.5px solid ${dom.color}` : '1px solid var(--border-color, var(--border-color))',
+                  background: isSelected ? dom.color : 'var(--bg-card)',
+                  color: isSelected ? 'var(--bg-card)' : 'var(--text-main, var(--text-main))',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
@@ -308,7 +308,7 @@ export default function SensoryIntegrationAssessmentModal({
                 <span
                   style={{
                     background: isSelected ? 'rgba(255,255,255,0.25)' : dom.bgLight,
-                    color: isSelected ? '#ffffff' : dom.color,
+                    color: isSelected ? 'var(--bg-card)' : dom.color,
                     padding: '1px 6px',
                     borderRadius: 6,
                     fontSize: '.7rem',
@@ -323,7 +323,7 @@ export default function SensoryIntegrationAssessmentModal({
         </div>
 
         {/* BODY ITEMS & SCORING */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', background: 'var(--bg-main, #f8fafc)' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', background: 'var(--bg)' }}>
           
           {/* VESTIBULAR BALANCE TIMER HELPER (Visible if balance domain is selected or all) */}
           {(activeDomainTab === 'vestibular_balance' || activeDomainTab === 'all') && (
@@ -346,7 +346,7 @@ export default function SensoryIntegrationAssessmentModal({
                   <button
                     type="button"
                     className="btn btn-sm"
-                    style={{ background: '#ffffff', color: '#065f46', fontWeight: 800, border: 'none' }}
+                    style={{ background: 'var(--bg-card)', color: '#065f46', fontWeight: 800, border: 'none' }}
                     onClick={() => {
                       if (timerSeconds === 0) setTimerSeconds(60);
                       setTimerRunning(true);
@@ -358,7 +358,7 @@ export default function SensoryIntegrationAssessmentModal({
                   <button
                     type="button"
                     className="btn btn-sm"
-                    style={{ background: '#f87171', color: '#ffffff', fontWeight: 800, border: 'none' }}
+                    style={{ background: '#f87171', color: 'var(--bg-card)', fontWeight: 800, border: 'none' }}
                     onClick={() => setTimerRunning(false)}
                   >
                     ⏸ إيقاف مؤقت
@@ -367,7 +367,7 @@ export default function SensoryIntegrationAssessmentModal({
                 <button
                   type="button"
                   className="btn btn-sm"
-                  style={{ background: 'rgba(255,255,255,0.2)', color: '#ffffff', fontWeight: 700, border: 'none' }}
+                  style={{ background: 'rgba(255,255,255,0.2)', color: 'var(--bg-card)', fontWeight: 700, border: 'none' }}
                   onClick={() => {
                     setTimerRunning(false);
                     setTimerSeconds(60);
@@ -381,7 +381,7 @@ export default function SensoryIntegrationAssessmentModal({
 
           {/* ACTIVE DOMAIN TITLE & QUICK ACTIONS */}
           {activeDomainTab !== 'all' && (
-            <div style={{ background: '#ffffff', border: '1px solid var(--border-color, #cbd5e1)', borderRadius: 12, padding: '12px 16px', marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '12px 16px', marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
               <div>
                 <h4 style={{ margin: 0, fontSize: '.95rem', fontWeight: 800, color: 'var(--text-main)' }}>
                   {SENSORY_INTEGRATION_DOMAINS.find(d => d.id === activeDomainTab)?.num}. {SENSORY_INTEGRATION_DOMAINS.find(d => d.id === activeDomainTab)?.name}
@@ -423,8 +423,8 @@ export default function SensoryIntegrationAssessmentModal({
                   key={item.id}
                   id={`item-card-${item.id}`}
                   style={{
-                    background: '#ffffff',
-                    border: isAnswered ? (Number(currentVal) === 1 ? '1.5px solid #86efac' : '1.5px solid #fca5a5') : '1px solid var(--border-color, #e2e8f0)',
+                    background: 'var(--bg-card)',
+                    border: isAnswered ? (Number(currentVal) === 1 ? '1.5px solid #86efac' : '1.5px solid #fca5a5') : '1px solid var(--border-color, var(--border-color))',
                     borderRadius: 12,
                     padding: '12px 16px',
                     display: 'flex',
@@ -440,28 +440,28 @@ export default function SensoryIntegrationAssessmentModal({
                         <span
                           style={{
                             background: domObj?.bgLight || '#f1f5f9',
-                            color: domObj?.color || '#334155',
+                            color: domObj?.color || 'var(--text-main)',
                             fontSize: '.72rem',
                             fontWeight: 900,
                             padding: '2px 8px',
                             borderRadius: 6,
-                            border: `1px solid ${domObj?.borderColor || '#cbd5e1'}`
+                            border: `1px solid ${domObj?.borderColor || 'var(--border-color)'}`
                           }}
                         >
                           مهمة #{item.num} · {domObj?.name}
                         </span>
-                        <span style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>
+                        <span style={{ fontSize: '.72rem', color: 'var(--text-sub)', fontWeight: 700 }}>
                           [{item.target}]
                         </span>
                       </div>
                       <div style={{ fontSize: '.92rem', fontWeight: 800, color: 'var(--text-main)' }}>
                         {item.title}
                       </div>
-                      <div style={{ fontSize: '.8rem', color: '#475569', marginTop: 4, lineHeight: 1.5, background: '#f8fafc', padding: '6px 10px', borderRadius: 6, border: '1px dashed #cbd5e1' }}>
-                        🗣️ <strong style={{ color: '#1e293b' }}>تعليمات الفاحص:</strong> {item.instruction}
+                      <div style={{ fontSize: '.8rem', color: 'var(--text-sub)', marginTop: 4, lineHeight: 1.5, background: 'var(--bg-input)', padding: '6px 10px', borderRadius: 6, border: '1px dashed var(--border-color)' }}>
+                        🗣️ <strong style={{ color: 'var(--text-main)' }}>تعليمات الفاحص:</strong> {item.instruction}
                       </div>
-                      <div style={{ fontSize: '.72rem', color: '#64748b', marginTop: 4 }}>
-                        📏 <strong style={{ color: '#475569' }}>معيار التصحيح:</strong> {item.scoringGuide}
+                      <div style={{ fontSize: '.72rem', color: 'var(--text-sub)', marginTop: 4 }}>
+                        📏 <strong style={{ color: 'var(--text-sub)' }}>معيار التصحيح:</strong> {item.scoringGuide}
                       </div>
                     </div>
 
@@ -482,9 +482,9 @@ export default function SensoryIntegrationAssessmentModal({
                           justifyContent: 'center',
                           gap: 4,
                           transition: 'all 0.15s ease',
-                          border: currentVal === 1 || currentVal === '1' ? '2px solid #059669' : '1px solid #cbd5e1',
+                          border: currentVal === 1 || currentVal === '1' ? '2px solid #059669' : '1px solid var(--border-color)',
                           background: currentVal === 1 || currentVal === '1' ? '#059669' : '#f0fdf4',
-                          color: currentVal === 1 || currentVal === '1' ? '#ffffff' : '#166534',
+                          color: currentVal === 1 || currentVal === '1' ? 'var(--bg-card)' : '#166534',
                           boxShadow: currentVal === 1 || currentVal === '1' ? '0 2px 6px rgba(5,150,105,0.3)' : 'none',
                         }}
                       >
@@ -506,9 +506,9 @@ export default function SensoryIntegrationAssessmentModal({
                           justifyContent: 'center',
                           gap: 4,
                           transition: 'all 0.15s ease',
-                          border: currentVal === 0 || currentVal === '0' ? '2px solid #dc2626' : '1px solid #cbd5e1',
+                          border: currentVal === 0 || currentVal === '0' ? '2px solid #dc2626' : '1px solid var(--border-color)',
                           background: currentVal === 0 || currentVal === '0' ? '#dc2626' : '#fef2f2',
-                          color: currentVal === 0 || currentVal === '0' ? '#ffffff' : '#991b1b',
+                          color: currentVal === 0 || currentVal === '0' ? 'var(--bg-card)' : '#991b1b',
                           boxShadow: currentVal === 0 || currentVal === '0' ? '0 2px 6px rgba(220,38,38,0.3)' : 'none',
                         }}
                       >
@@ -522,7 +522,7 @@ export default function SensoryIntegrationAssessmentModal({
           </div>
 
           {/* CLINICAL OBSERVATIONS & NOTES */}
-          <div style={{ marginTop: 20, background: '#ffffff', border: '1px solid var(--border-color, #cbd5e1)', borderRadius: 12, padding: 16 }}>
+          <div style={{ marginTop: 20, background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 12, padding: 16 }}>
             <label style={{ display: 'block', fontSize: '.84rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 6 }}>
               📝 الملاحظات الإكلينيكية والسلوكية أثناء تطبيق المهام:
             </label>
@@ -537,8 +537,8 @@ export default function SensoryIntegrationAssessmentModal({
         </div>
 
         {/* FOOTER ACTIONS */}
-        <div style={{ padding: '14px 20px', background: '#ffffff', borderTop: '1px solid var(--border-color, #e2e8f0)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <div style={{ fontSize: '.8rem', color: '#64748b' }}>
+        <div style={{ flexShrink: 0, padding: '14px 20px', background: 'var(--bg-card)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ fontSize: '.8rem', color: 'var(--text-sub)' }}>
             تم تقييم <strong>{scoreResult.answeredCount}</strong> من أصل <strong>90 مهمة</strong>
             {scoreResult.answeredCount < 90 && (
               <span style={{ color: '#d97706', marginRight: 6 }}>
