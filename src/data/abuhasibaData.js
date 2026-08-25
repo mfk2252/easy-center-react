@@ -4,6 +4,20 @@
  * تصميم سيكومتري وأكاديمي متكامل يدعم قواعد الخط القاعدي (Basal) وحد التوقف (Ceiling) وحساب الفجوات اللغوية ومؤشرات التأخر.
  */
 
+export const ABUHASIBA_COPYRIGHT_INFO = {
+  measureNameAr: "مقياس د. أحمد أبو حسيبة للغة المعرب (المستند لـ PLS)",
+  measureNameEn: "Abu-Hassiba Arabic Preschool Language Scale (PLS Adaptation)",
+  authorAr: "د. أحمد أبو حسيبة (استشاري وأستاذ أمراض التخاطب واللغة)",
+  authorEn: "Dr. Ahmed Abu-Hassiba (Ph.D., Speech-Language Consultant)",
+  publisher: "دار النشر والتوزيع للأدوات الإكلينيكية / حقوق الطبع والنشر محفوظة للمؤلف",
+  adaptation: "النسخة العربية المقننة للأطفال والبيئة الإكلينيكية العربية لمقياس لغة الأطفال (PLS)",
+  ageRange: "من شهرين وحتى 7 سنوات و5 أشهر (2 - 89 شهراً)",
+  normSamples: "معايير سيكومترية مقننة (درجات معيارية، رتب مئينية، أعمار لغوية مكافئة LAE ونقاط حد فاصل)",
+  structure: "133 بنداً تشخيصياً (62 بنداً استقبالياً + 71 بنداً تعبيرياً عبر 17 مرحلة عمرية)",
+  scoringSystem: "سلم ثنائي (1 = متقن/صحيح، 0 = غير متقن/خاطئ)",
+  basalCeilingRules: "الخط القاعدي (Basal): 3 بنود متتالية صحيحة (1) · سقف التوقف (Ceiling): 5 بنود متتالية خاطئة (0)",
+};
+
 export const ABUHASIBA_AGE_STAGES = [
   { label: "الولادة - شهرين (0 - 2 شهر)", value: "الولادة - شهرين", minM: 0, maxM: 2 },
   { label: "3 - 5 شهور", value: "3 - 5 شهور", minM: 3, maxM: 5 },
