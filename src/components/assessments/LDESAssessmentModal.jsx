@@ -266,8 +266,12 @@ export default function LDESAssessmentModal({
 
   return (
     <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="mb mb-xl"
-        
+      <div
+        className="mb"
+        style={{
+          maxWidth: 'min(1360px, calc(100vw - 24px))',
+          width: '100%',
+        }}
       >
         {/* Modal Main Header */}
         <div
@@ -581,7 +585,7 @@ export default function LDESAssessmentModal({
                       <option value="">— اختر من الطلاب المسجلين بالمركز —</option>
                       {students.map(s => (
                         <option key={s.id} value={s.id}>
-                          {s.name}{s.className ? ` · [${s.className}]` : ''}
+                          {s.name}
                         </option>
                       ))}
                       <option value="__other__">➕ مستفيد خارجي (غير مسجل)</option>
@@ -673,17 +677,13 @@ export default function LDESAssessmentModal({
                   {/* 4. Relationship / Role */}
                   <div className="fl" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>صلة القرابة / الصفة</label>
-                    <select
-                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      type="text"
+                      placeholder="مثال: معلم التربية الخاصة، معلم الصف، ولي الأمر..."
                       value={form.raterRelation || ''}
                       onChange={e => setForm(f => ({ ...f, raterRelation: e.target.value }))}
-                    >
-                      <option value="معلم التربية الخاصة / صعوبات التعلم">معلم التربية الخاصة / صعوبات التعلم</option>
-                      <option value="معلم التعليم العام (معلم الصف)">معلم التعليم العام (معلم الصف)</option>
-                      <option value="الأم">الأم</option>
-                      <option value="الأب">الأب</option>
-                      <option value="أخصائي نفسي / تشخيص">أخصائي نفسي / تشخيص</option>
-                    </select>
+                    />
                   </div>
                 </div>
               </div>
@@ -769,9 +769,26 @@ export default function LDESAssessmentModal({
                         <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.4 }}>
                           {item.text}
                         </div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)', marginTop: 2 }}>
-                          المجال: {domain.name} ({domain.categoryName})
-                        </div>
+                        {item.example && (
+                          <div
+                            style={{
+                              fontSize: '0.78rem',
+                              color: 'var(--text-sub)',
+                              marginTop: 4,
+                              display: 'flex',
+                              alignItems: 'baseline',
+                              gap: 6,
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            <span style={{ color: '#d97706', fontWeight: 800, flexShrink: 0, fontSize: '0.74rem' }}>
+                              💡 مثال توضيحي:
+                            </span>
+                            <span style={{ color: 'var(--text-sub)' }}>
+                              {item.example}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
