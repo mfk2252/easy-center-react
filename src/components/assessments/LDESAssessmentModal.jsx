@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
-import { uid, todayStr } from '../../utils/dateHelpers';
+import { uid, todayStr, calcAge } from '../../utils/dateHelpers';
 import { lsAdd, lsUpd } from '../../hooks/useStorage';
 import {
   LDES_ITEMS,
@@ -9,21 +9,20 @@ import {
   LDES_COPYRIGHT_INFO,
   calculateLDESPsychometrics,
 } from '../../data/ldesData';
-import { StudentPicker, validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
+import { validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
 
 const EMPTY_LDES_FORM = {
-  mode: 'select',
+  mode: 'registered',
   stuId: '',
   studentName: '',
   dob: '',
   age: '',
+  diagnosis: '',
   grade: '',
   school: '',
   raterName: '',
   raterRelation: 'معلم التربية الخاصة / صعوبات التعلم',
-  relationshipDuration: 'فصل دراسي كامل',
   examinerName: '',
-  examinerRole: 'أخصائي صعوبات تعلم وتشخيص تربوي',
   date: todayStr(),
   notes: '',
   itemNotes: {},
@@ -60,6 +59,44 @@ export default function LDESAssessmentModal({
 
   const [activeDomainFilter, setActiveDomainFilter] = useState('all');
   const [showCopyrightDetails, setShowCopyrightDetails] = useState(false);
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
+  const [isManualEdit, setIsManualEdit] = useState(false);
+
+  function handleSelectStudent(e) {
+    const val = e.target.value;
+    if (val === '__other__') {
+      setForm(f => ({
+        ...f,
+        mode: 'other',
+        stuId: '',
+        studentName: '',
+        dob: '',
+        age: '',
+        diagnosis: '',
+        grade: '',
+        school: '',
+      }));
+      return;
+    }
+    const stu = students.find(s => s.id === val);
+    if (!stu) {
+      setForm(f => ({ ...f, mode: 'registered', stuId: '', studentName: '' }));
+      return;
+    }
+
+    const calculatedAge = stu.dob ? calcAge(stu.dob) : '';
+    setForm(f => ({
+      ...f,
+      mode: 'registered',
+      stuId: stu.id,
+      studentName: stu.name || '',
+      dob: stu.dob || '',
+      diagnosis: stu.diagnosis || '',
+      age: calculatedAge || stu.age || '',
+      grade: stu.grade || stu.className || '',
+      school: stu.school || stu.schoolName || '',
+    }));
+  }
 
   // Real-time Psychometrics Calculation
   const psychometrics = useMemo(() => {
@@ -461,70 +498,216 @@ export default function LDESAssessmentModal({
         {/* Scrollable Form Body */}
         <div className="modal-body-scroll" style={{ padding: '16px 20px', flex: 1, overflowY: 'auto' }}>
           
-          {/* 1. Student & Assessment Info Card */}
-          <div style={{ background: 'var(--g0)', padding: 14, borderRadius: 12, marginBottom: 16, border: '1px solid var(--border-color)' }}>
-            <div style={{ fontSize: '0.86rem', fontWeight: 800, marginBottom: 10, color: '#b45309', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>👦</span> بيانات الطالب والفحص الإكلينيكي التربوي
-            </div>
-            <div className="fg c3">
-              <StudentPicker form={form} setForm={setForm} students={students} emps={emps} showExtra />
-              <div className="fl">
-                <label>الصف / المستوى الدراسي</label>
-                <input
-                  type="text"
-                  placeholder="مثال: الصف الثالث الابتدائي"
-                  value={form.grade || ''}
-                  onChange={e => setForm(f => ({ ...f, grade: e.target.value }))}
-                />
+          {/* 1. Student & Assessment Info Card - Compact Refactored Header */}
+          <div
+            style={{
+              background: 'var(--g0)',
+              padding: '10px 14px',
+              borderRadius: 10,
+              marginBottom: 14,
+              border: '1px solid var(--border-color)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: isHeaderCollapsed ? 0 : 8,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '0.84rem',
+                  fontWeight: 800,
+                  color: '#b45309',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span>👦</span>
+                <span>بيانات المفحوص والفحص الإكلينيكي</span>
+                {form.studentName && (
+                  <span
+                    style={{
+                      fontSize: '0.76rem',
+                      background: '#ffedd5',
+                      color: '#c2410c',
+                      padding: '2px 8px',
+                      borderRadius: 6,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {form.studentName}
+                  </span>
+                )}
               </div>
-              <div className="fl">
-                <label>المدرسة / الروضة</label>
-                <input
-                  type="text"
-                  placeholder="اسم المدرسة الحالية"
-                  value={form.school || ''}
-                  onChange={e => setForm(f => ({ ...f, school: e.target.value }))}
-                />
-              </div>
-              <div className="fl">
-                <label>اسم الأخصائي الفاحص</label>
-                <input
-                  type="text"
-                  value={form.examinerName || ''}
-                  onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
-                />
-              </div>
-              <div className="fl">
-                <label>المستجيب (معلم الصف / ولي الأمر)</label>
-                <input
-                  type="text"
-                  placeholder="اسم المستجيب على المقياس"
-                  value={form.raterName || ''}
-                  onChange={e => setForm(f => ({ ...f, raterName: e.target.value }))}
-                />
-              </div>
-              <div className="fl">
-                <label>صلة القرابة / الدور</label>
-                <select
-                  value={form.raterRelation || ''}
-                  onChange={e => setForm(f => ({ ...f, raterRelation: e.target.value }))}
+
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsManualEdit(prev => !prev)}
+                  className="btn btn-xs btn-g"
+                  style={{ fontSize: '0.72rem', padding: '3px 8px', height: 24 }}
+                  title="تفعيل التعديل اليدوي على البيانات المجلوبة تلقائياً"
                 >
-                  <option value="معلم التربية الخاصة / صعوبات التعلم">معلم التربية الخاصة / صعوبات التعلم</option>
-                  <option value="معلم التعليم العام (معلم الصف)">معلم التعليم العام (معلم الصف)</option>
-                  <option value="الأم">الأم</option>
-                  <option value="الأب">الأب</option>
-                  <option value="أخصائي نفسي / تشخيص">أخصائي نفسي / تشخيص</option>
-                </select>
-              </div>
-              <div className="fl">
-                <label>تاريخ التقييم</label>
-                <input
-                  type="date"
-                  value={form.date || todayStr()}
-                  onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                />
+                  {isManualEdit ? '🔒 قفل التعديل' : '✏️ تعديل يدوي'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsHeaderCollapsed(prev => !prev)}
+                  className="btn btn-xs btn-g"
+                  style={{ fontSize: '0.72rem', padding: '3px 8px', height: 24, fontWeight: 700 }}
+                >
+                  {isHeaderCollapsed ? '⬇️ إظهار التفاصيل' : '⬆️ إخفاء التفاصيل'}
+                </button>
               </div>
             </div>
+
+            {!isHeaderCollapsed && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                {/* Mode toggle if other */}
+                {form.mode === 'other' && (
+                  <div style={{ marginBottom: 4 }}>
+                    <div className="fl full">
+                      <label style={{ fontSize: '0.76rem', marginBottom: 2 }}>اسم المستفيد الخارجي <span className="req">*</span></label>
+                      <input
+                        style={{ height: 32, fontSize: '0.82rem' }}
+                        value={form.studentName || ''}
+                        onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
+                        placeholder="اكتب اسم الطالب / المستفيد..."
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* ROW 1: Clinical Essentials (4 Columns) */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 8,
+                  }}
+                >
+                  {/* 1. Student Selection */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الطالب المسجل <span className="req">*</span></label>
+                    <select
+                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
+                      value={form.mode === 'other' ? '__other__' : (form.stuId || '')}
+                      onChange={handleSelectStudent}
+                    >
+                      <option value="">— اختر من الطلاب المسجلين بالمركز —</option>
+                      {students.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}{s.className ? ` · [${s.className}]` : ''}
+                        </option>
+                      ))}
+                      <option value="__other__">➕ مستفيد خارجي (غير مسجل)</option>
+                    </select>
+                  </div>
+
+                  {/* 2. Chronological Age */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>العمر الزمني</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.age || (form.dob ? calcAge(form.dob) : '')}
+                      readOnly={!isManualEdit}
+                      onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
+                      placeholder="تلقائي حسب تاريخ الميلاد"
+                    />
+                  </div>
+
+                  {/* 3. Medical / Educational Diagnosis */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>التشخيص الطبي / التربوي</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.diagnosis || ''}
+                      readOnly={!isManualEdit && form.mode !== 'other'}
+                      onChange={e => setForm(f => ({ ...f, diagnosis: e.target.value }))}
+                      placeholder="مثال: صعوبات تعلم، تشتت انتباه..."
+                    />
+                  </div>
+
+                  {/* 4. Assessment Date */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>تاريخ التقييم</label>
+                    <input
+                      type="date"
+                      dir="ltr"
+                      style={{ height: 32, fontSize: '0.82rem', textAlign: 'right', padding: '2px 8px' }}
+                      value={form.date || todayStr()}
+                      onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                {/* ROW 2: Respondent and Testing Details (4 Columns) */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 8,
+                  }}
+                >
+                  {/* 1. Examiner Name */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الأخصائي الفاحص</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      type="text"
+                      placeholder="اسم الأخصائي الفاحص"
+                      value={form.examinerName || ''}
+                      onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* 2. Respondent Name */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>المستجيب (معلم / ولي أمر)</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      type="text"
+                      placeholder="اسم المستجيب على المقياس"
+                      value={form.raterName || ''}
+                      onChange={e => setForm(f => ({ ...f, raterName: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* 3. Grade / Academic Level */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الصف / المستوى الدراسي</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      type="text"
+                      placeholder="مثال: الصف الثالث الابتدائي"
+                      value={form.grade || ''}
+                      readOnly={!isManualEdit && form.mode !== 'other'}
+                      onChange={e => setForm(f => ({ ...f, grade: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* 4. Relationship / Role */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>صلة القرابة / الصفة</label>
+                    <select
+                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
+                      value={form.raterRelation || ''}
+                      onChange={e => setForm(f => ({ ...f, raterRelation: e.target.value }))}
+                    >
+                      <option value="معلم التربية الخاصة / صعوبات التعلم">معلم التربية الخاصة / صعوبات التعلم</option>
+                      <option value="معلم التعليم العام (معلم الصف)">معلم التعليم العام (معلم الصف)</option>
+                      <option value="الأم">الأم</option>
+                      <option value="الأب">الأب</option>
+                      <option value="أخصائي نفسي / تشخيص">أخصائي نفسي / تشخيص</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 2. Subscale Navigation Tabs & Filter */}
