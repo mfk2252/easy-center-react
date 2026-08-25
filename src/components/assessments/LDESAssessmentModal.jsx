@@ -293,13 +293,15 @@ export default function LDESAssessmentModal({
                 <span className="bdg" style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>
                   88 بنداً تشخيصياً · 7 مقاييس فرعية
                 </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 3 }}>
                 <span className="bdg" style={{ background: '#78350f', color: '#fef3c7', fontSize: '0.68rem', fontWeight: 800 }}>
                   © Hawthorne / د. ستيفن ماكارني
                 </span>
+                <span style={{ fontSize: '0.76rem', opacity: 0.95 }}>
+                  Learning Disabilities Evaluation Scale — الأداة المعيارية المعتمدة لتشخيص صعوبات التعلم النمائية والأكاديمية
+                </span>
               </div>
-              <span style={{ fontSize: '0.76rem', opacity: 0.95, display: 'block', marginTop: 2 }}>
-                Learning Disabilities Evaluation Scale — الأداة المعيارية المعتمدة لتشخيص صعوبات التعلم النمائية والأكاديمية
-              </span>
             </div>
           </div>
 
@@ -470,28 +472,6 @@ export default function LDESAssessmentModal({
                 />
               </div>
             </div>
-          </div>
-
-          {/* Quick Actions Strip */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-            <div className="dropdown" style={{ display: 'inline-block' }}>
-              <button
-                type="button"
-                className="btn btn-xs btn-g"
-                onClick={() => autoFillSample('moderate')}
-                title="تعبئة نموذج افتراضي يظهر صعوبات قراءة وحساب متوسطة"
-              >
-                ⚡ تجربة سريعة (صعوبات متوسطة)
-              </button>
-            </div>
-            <button
-              type="button"
-              className="btn btn-xs btn-p"
-              onClick={applyAutoClinicalSummary}
-              style={{ fontWeight: 700 }}
-            >
-              ✨ توليد التقرير والتوصيات آلياً
-            </button>
           </div>
         </div>
 
@@ -892,7 +872,7 @@ export default function LDESAssessmentModal({
         {/* Modal Footer Controls */}
         <div
           style={{
-            padding: '12px 20px',
+            padding: '10px 20px',
             background: 'var(--g0)',
             borderTop: '1px solid var(--border-color)',
             display: 'flex',
@@ -900,15 +880,37 @@ export default function LDESAssessmentModal({
             alignItems: 'center',
             flexShrink: 0,
             gap: 10,
+            flexWrap: 'wrap',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>
               تم الإجابة على <strong>{psychometrics.totalAnswered}</strong> من <strong>{LDES_ITEMS.length}</strong> بنداً
             </span>
             <span className={`bdg ${psychometrics.completionPercentage === 100 ? 'b-gr' : 'b-or'}`} style={{ fontSize: '0.72rem' }}>
               {psychometrics.completionPercentage}% مكتمل
             </span>
+
+            {/* Quick Actions moved to footer */}
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginRight: 6 }}>
+              <button
+                type="button"
+                className="btn btn-xs btn-g"
+                onClick={() => autoFillSample('moderate')}
+                title="تعبئة نموذج افتراضي يظهر صعوبات قراءة وحساب متوسطة"
+                style={{ fontSize: '0.74rem' }}
+              >
+                ⚡ تجربة سريعة (صعوبات متوسطة)
+              </button>
+              <button
+                type="button"
+                className="btn btn-xs btn-p"
+                onClick={applyAutoClinicalSummary}
+                style={{ fontWeight: 700, fontSize: '0.74rem' }}
+              >
+                ✨ توليد التقرير والتوصيات آلياً
+              </button>
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: 10 }}>
