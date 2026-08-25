@@ -98,6 +98,9 @@ export default function MeasurementCenter({ onBack }) {
 
   // Sensory Integration Scale Specific Modals
   const [sensoryModalOpen, setSensoryModalOpen] = useState(false);
+  const [connersParentModalOpen, setConnersParentModalOpen] = useState(false);
+  const [connersParentReportOpen, setConnersParentReportOpen] = useState(false);
+  const [selectedConnersParent, setSelectedConnersParent] = useState(null);
   const [sensoryChecklistModalOpen, setSensoryChecklistModalOpen] = useState(false);
   const [sensoryChecklistReportOpen, setSensoryChecklistReportOpen] = useState(false);
   const [selectedSensoryChecklistAssessment, setSelectedSensoryChecklistAssessment] = useState(null);
@@ -197,6 +200,10 @@ export default function MeasurementCenter({ onBack }) {
     }
     if (scaleId === 'sensory_checklist') {
       setSensoryChecklistModalOpen(true);
+      return;
+    }
+    if (scaleId === 'conners_parent') {
+      setConnersParentModalOpen(true);
       return;
     }
     if (scaleId === 'sensory_integration_scale' || scaleId === 'sensory_integration' || scaleId === 'sensory') {
@@ -359,6 +366,7 @@ export default function MeasurementCenter({ onBack }) {
               const isLddrs = item.measureId === 'lddrs_battery' || item.scaleType === 'lddrs' || item.measureId?.startsWith('lddrs');
               const isFamily = item.measureId === 'family_disintegration' || item.scaleType === 'family_disintegration' || item.isFamilyDisintegration;
               const isSensory = item.measureId === 'sensory_integration_scale' || item.scaleType === 'sensory_integration' || item.isSensoryIntegration;
+              const isConnersParent = item.measureId === 'conners_parent' || item.type === 'conners_parent';
               return (
                 <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: 12, borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap' }}>
                   <div>
@@ -370,6 +378,7 @@ export default function MeasurementCenter({ onBack }) {
                       {isLddrs && <span className="bdg" style={{ background: '#fee2e2', color: '#991b1b', fontSize: '.68rem', fontWeight: 800 }}>بطارية الزيات</span>}
                       {isFamily && <span className="bdg" style={{ background: '#f3e8ff', color: '#7e22ce', fontSize: '.68rem', fontWeight: 800 }}>التفكك الأسري</span>}
                       {isSensory && <span className="bdg" style={{ background: '#e0f2fe', color: '#0369a1', fontSize: '.68rem', fontWeight: 800 }}>التكامل الحسي (90)</span>}
+                      {isConnersParent && <span className="bdg" style={{ background: '#ffedd5', color: '#c2410c', fontSize: '.68rem', fontWeight: 800 }}>كونرز للوالدين</span>}
                     </div>
                     <div style={{ fontSize: '.76rem', color: 'var(--g5)' }}>
                       {item.studentName || 'طالب'} • {item.date} • {item.level || 'نتيجة'} {item.tScore ? `(T: ${item.tScore} | ${item.percentile}%)` : ''} {item.percentage ? `(${item.percentage})` : ''}
@@ -441,6 +450,20 @@ export default function MeasurementCenter({ onBack }) {
                         📄 تقرير التفكك الأسري
                       </button>
                     )}
+                    
+                    {isConnersParent && (
+                      <button
+                        type="button"
+                        className="btn btn-xs"
+                        style={{ background: '#ea580c', color: '#fff', fontWeight: 800 }}
+                        onClick={() => {
+                          setSelectedConnersParent(item);
+                          setConnersParentReportOpen(true);
+                        }}
+                      >
+                        📄 تقرير كونرز (L)
+                      </button>
+                    )}
                     {isSensory && (
                       <button
                         type="button"
@@ -464,6 +487,27 @@ export default function MeasurementCenter({ onBack }) {
       </div>
 
       {/* CARS-2 MODALS */}
+      
+      {connersParentModalOpen && (
+        <ConnersParentAssessmentModal
+          isOpen={connersParentModalOpen}
+          onClose={() => setConnersParentModalOpen(false)}
+          onSaved={() => {
+            reload();
+            setConnersParentModalOpen(false);
+          }}
+          students={students}
+          emps={emps}
+        />
+      )}
+      {connersParentReportOpen && selectedConnersParent && (
+        <ConnersParentReportModal
+          isOpen={connersParentReportOpen}
+          onClose={() => setConnersParentReportOpen(false)}
+          assessment={selectedConnersParent}
+        />
+      )}
+
       {carsModalOpen && (
         <CARS2AssessmentModal
           isOpen={carsModalOpen}
