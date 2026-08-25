@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
-import { uid, todayStr } from '../../utils/dateHelpers';
+import { uid, todayStr, calcAge } from '../../utils/dateHelpers';
 import { lsAdd, lsUpd } from '../../hooks/useStorage';
 import {
   SARTAWI_COPYRIGHT_INFO,
@@ -9,7 +9,7 @@ import {
   SARTAWI_RATING_OPTIONS,
   calculateSartawiPsychometrics,
 } from '../../data/sartawiData';
-import { StudentPicker, validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
+import { validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
 
 const EMPTY_SARTAWI_FORM = {
   mode: 'registered',
@@ -18,16 +18,11 @@ const EMPTY_SARTAWI_FORM = {
   dob: '',
   age: '',
   diagnosis: '',
-  parentName: '',
-  parentPhone: '',
-  parentPhone2: '',
-  fileNo: '',
-  specialistName: '',
-  schoolName: 'المدرسة الابتدائية النموذجية',
-  semester: 'الفصل الدراسي الأول',
-  academicYear: '1445 / 1446 هـ',
-  evaluatorRole: 'معلم صعوبات التعلم / المرشد الطلابي',
-  relationship: 'معلم الفصل / معلم صعوبات التعلم',
+  grade: '',
+  school: '',
+  raterName: '',
+  raterRelation: '',
+  examinerName: '',
   date: todayStr(),
   notes: '',
   itemNotes: {},
@@ -44,7 +39,7 @@ export default function SartawiAssessmentModal({
   emps = [],
   initialData = null,
 }) {
-  const { toast } = useApp?.() || { toast: () => {} };
+  const { toast, currentUser } = useApp?.() || { toast: () => {}, currentUser: null };
 
   const [form, setForm] = useState(() => {
     if (initialData) {
@@ -55,15 +50,62 @@ export default function SartawiAssessmentModal({
         itemNotes: initialData.itemNotes || {},
       };
     }
-    return { ...EMPTY_SARTAWI_FORM };
+    return {
+      ...EMPTY_SARTAWI_FORM,
+      examinerName: currentUser?.name || '',
+      date: todayStr(),
+    };
   });
 
   const [activeTab, setActiveTab] = useState('all');
-  const [expandedNotes, setExpandedNotes] = useState({});
+  const [showCopyrightDetails, setShowCopyrightDetails] = useState(false);
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
+  const [isManualEdit, setIsManualEdit] = useState(false);
+
+  function handleSelectStudent(e) {
+    const val = e.target.value;
+    if (val === '__other__') {
+      setForm(f => ({
+        ...f,
+        mode: 'other',
+        stuId: '',
+        studentName: '',
+        dob: '',
+        age: '',
+        diagnosis: '',
+        grade: '',
+        school: '',
+      }));
+      return;
+    }
+    const stu = students.find(s => s.id === val);
+    if (!stu) {
+      setForm(f => ({ ...f, mode: 'registered', stuId: '', studentName: '' }));
+      return;
+    }
+
+    const calculatedAge = stu.dob ? calcAge(stu.dob) : '';
+    setForm(f => ({
+      ...f,
+      mode: 'registered',
+      stuId: stu.id,
+      studentName: stu.name || '',
+      dob: stu.dob || '',
+      diagnosis: stu.diagnosis || '',
+      age: calculatedAge || stu.age || '',
+      grade: stu.grade || stu.className || '',
+      school: stu.school || stu.schoolName || '',
+    }));
+  }
 
   const psychometrics = useMemo(() => {
     return calculateSartawiPsychometrics(form.scores || {});
   }, [form.scores]);
+
+  const filteredItems = useMemo(() => {
+    if (activeTab === 'all') return SARTAWI_ITEMS;
+    return SARTAWI_ITEMS.filter(it => it.dimensionId === activeTab);
+  }, [activeTab]);
 
   if (!isOpen) return null;
 
@@ -87,26 +129,16 @@ export default function SartawiAssessmentModal({
     }));
   }
 
-  function toggleItemNote(itemId) {
-    setExpandedNotes(prev => ({
-      ...prev,
-      [itemId]: !prev[itemId],
-    }));
-  }
-
   function handleAutoFill(fillLevel = 'normal') {
     const newScores = {};
 
     SARTAWI_ITEMS.forEach(item => {
       if (fillLevel === 'normal') {
-        // Low scores (1 or 2) -> No LD
-        newScores[item.id] = (item.id % 4 === 0) ? 2 : 1;
+        newScores[item.id] = (item.num % 4 === 0) ? 2 : 1;
       } else if (fillLevel === 'borderline') {
-        // Moderate scores (2, 3, 4)
-        newScores[item.id] = (item.id % 3 === 0) ? 4 : (item.id % 2 === 0 ? 3 : 2);
+        newScores[item.id] = (item.num % 3 === 0) ? 4 : (item.num % 2 === 0 ? 3 : 2);
       } else if (fillLevel === 'ld') {
-        // High scores (4 or 5) -> LD confirmed
-        newScores[item.id] = (item.id % 3 === 0) ? 4 : 5;
+        newScores[item.id] = (item.num % 3 === 0) ? 4 : 5;
       }
     });
 
@@ -137,12 +169,12 @@ export default function SartawiAssessmentModal({
       `${dimensionDetails}\n\n` +
       `${deficitsText}\n\n` +
       `الخلاصة:\n` +
-      `استناداً إلى معايير مقياس السرطاوي المقنن للبيئة العربية، ${psychometrics.recommendation}`;
+      `استناداً إلى معايير مقياس السرطاوي المقنن للبيئة العربية، ${psychometrics.conclusionText}`;
 
-    const recs = psychometrics.overallKey === 'ld' || psychometrics.overallKey === 'borderline'
+    const recs = psychometrics.overallKey === 'severe' || psychometrics.overallKey === 'borderline'
       ? `1. تسجيل الطالب في برنامج صعوبات التعلم وغرف المصادر لتلقي التدريس الفردي المباشر.\n` +
         `2. تصميم خطة تربوية فردية (IEP) تركز على مجالات الاحتياج (${psychometrics.deficitDimensions.map(d => d.name).join('، ')}).\n` +
-        `3. استخدام أسلوب التعلم النشط وتدريب الحواس المتعددة على مهارات القراءة والكتابة والعمليات الحسابية.\n` +
+        `3. استخدام أسلوب التعلم النشط وتدريب الحواس المتعددة (VAKT) على مهارات القراءة والكتابة والعمليات الحسابية.\n` +
         `4. تعديل وتكييف أساليب التقييم الصفي والامتحانات المدرسية (زيادة الوقت، تقليل عدد الفقرات، قراءة الأسئلة).\n` +
         `5. تقديم برامج الدعم السلوكي والإرشادي لتعزيز الدافعية وثقة الطالب بنفسه.`
       : `1. استمرار الطالب في بيئة التعليم العام مع المتابعة الصفية الدورية.\n` +
@@ -160,7 +192,7 @@ export default function SartawiAssessmentModal({
 
   function handleSave() {
     if (!validateStudentPick(form)) {
-      toast('⚠️ يرجى اختيار التلميذ أولاً من القائمة', 'er');
+      toast('⚠️ يرجى اختيار الطالب أولاً من القائمة', 'er');
       return;
     }
     if (!form.date) {
@@ -214,538 +246,753 @@ export default function SartawiAssessmentModal({
     onClose();
   }
 
-  const filteredItems = activeTab === 'all'
-    ? SARTAWI_ITEMS
-    : SARTAWI_ITEMS.filter(it => it.dimensionId === activeTab);
+  function handleSafeClose() {
+    const answeredCount = Object.keys(form.scores || {}).length;
+    if (answeredCount > 0) {
+      if (window.confirm(`⚠️ تنبيه: تم رصد إجابات لـ (${answeredCount}) عبارة في مقياس السرطاوي. هل أنت متأكد من رغبتك في الإغلاق دون حفظ التغييرات؟`)) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  }
 
   return (
-    <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()} style={{ zIndex: 1100 }}>
-      <div className="mb mb-xl"
-        
+    <div className="mbg" style={{ zIndex: 1100 }}>
+      <div
+        className="mb"
+        style={{
+          maxWidth: 'min(1360px, calc(100vw - 24px))',
+          width: '100%',
+        }}
       >
-        {/* Header */}
+        {/* Modal Main Header */}
         <div
           className="fhd modal-header-custom"
           style={{
-            padding: '12px 18px',
+            padding: '14px 20px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%)',
             color: '#fff',
             flexShrink: 0,
-            gap: 10,
+            gap: 12,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: '1.6rem' }}>📑</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: '1.8rem' }}>📘</span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#fff' }}>
-                  مقياس صعوبات التعلم المقنن (أ.د. زيدان أحمد السرطاوي)
-                </h3>
-                <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontWeight: 800, fontSize: '.72rem' }}>
-                  50 عبارة تقييمية
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h2 style={{ fontSize: '1.18rem', fontWeight: 800, margin: 0, color: '#fff' }}>
+                  مقياس تشخيص صعوبات التعلم المقنن (أ.د. زيدان أحمد السرطاوي)
+                </h2>
+                <span className="bdg" style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>
+                  50 عبارة تقييمية · 3 أبعاد رئيسية
                 </span>
-                <span className="bdg" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, fontSize: '.7rem' }}>
-                  الأبعاد الأكاديمية والسلوكية والإدراكية
+                <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '0.7rem', fontWeight: 800 }}>
+                  معايير T-Score مقننة
                 </span>
               </div>
-              <p style={{ margin: '3px 0 0', fontSize: '.76rem', opacity: 0.92, fontWeight: 400, lineHeight: 1.35 }}>
-                ملحق رقم (3) · جامعة الملك سعود · تشخيص صعوبات القراءة والكتابة والرياضيات والسلوك والإدراك الحركي
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 3 }}>
+                <span className="bdg" style={{ background: '#172554', color: '#bfdbfe', fontSize: '0.68rem', fontWeight: 800 }}>
+                  © أ.د. زيدان أحمد السرطاوي / جامعة الملك سعود
+                </span>
+                <span style={{ fontSize: '0.76rem', opacity: 0.95 }}>
+                  أداة الفرز والتشخيص المقننة لصعوبات التعلم الأكاديمية والسلوكية والإدراكية الحركية
+                </span>
+              </div>
             </div>
           </div>
 
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={onClose}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={() => setShowCopyrightDetails(s => !s)}
+              style={{
+                background: showCopyrightDetails ? '#fff' : 'rgba(255,255,255,0.2)',
+                color: showCopyrightDetails ? '#1e40af' : '#fff',
+                border: '1px solid rgba(255,255,255,0.35)',
+                fontWeight: 700,
+              }}
+            >
+              📜 {showCopyrightDetails ? 'إخفاء حقوق المقياس' : 'حقوق المقياس والتقنين'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={handleSafeClose}
+              style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', fontWeight: 700 }}
+            >
+              ✖ إغلاق
+            </button>
+          </div>
+        </div>
+
+        {/* EXPANDABLE DETAILED COPYRIGHT NOTICE */}
+        {showCopyrightDetails && (
+          <div
             style={{
-              background: 'rgba(255,255,255,0.2)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 8,
-              padding: '6px 14px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              alignSelf: 'flex-start',
+              background: '#eff6ff',
+              padding: '14px 20px',
+              borderBottom: '2px solid #93c5fd',
+              fontSize: '0.82rem',
+              color: '#1e3a8a',
+              lineHeight: 1.6,
+              flexShrink: 0,
             }}
           >
-            ✕ إغلاق
-          </button>
-        </div>
+            <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>📜</span> إشعار حقوق الملكية الفكرية والاعتماد العلمي لمقياس د. زيدان السرطاوي:
+            </div>
 
-        {/* Live Psychometrics Status Banner */}
+            <div
+              style={{
+                background: '#dbeafe',
+                border: '1px solid #bfdbfe',
+                borderRadius: 8,
+                padding: '8px 12px',
+                marginBottom: 10,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 8,
+                fontSize: '0.8rem',
+                color: '#1e40af',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: '1.2rem' }}>⚖️</span>
+                <div>
+                  <strong>إشعار حقوق الملكية الفكرية والتقنين:</strong> {SARTAWI_COPYRIGHT_INFO.scaleNameAr} — إعداد وتقنين {SARTAWI_COPYRIGHT_INFO.authorAr} ({SARTAWI_COPYRIGHT_INFO.authorTitle}).
+                </div>
+              </div>
+              <span style={{ fontSize: '0.72rem', background: '#eff6ff', padding: '3px 8px', borderRadius: 6, border: '1px solid #93c5fd', fontWeight: 700 }}>
+                مقياس رسمي مقنن لفرز وتشخيص صعوبات التعلم
+              </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, marginBottom: 8 }}>
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #bfdbfe' }}>
+                <strong>المؤلف والمقنن:</strong> {SARTAWI_COPYRIGHT_INFO.authorAr}
+              </div>
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #bfdbfe' }}>
+                <strong>الجهة والاعتماد:</strong> {SARTAWI_COPYRIGHT_INFO.authorTitle}
+              </div>
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #bfdbfe' }}>
+                <strong>الفئة المستهدفة:</strong> {SARTAWI_COPYRIGHT_INFO.targetGroup}
+              </div>
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #bfdbfe' }}>
+                <strong>المعيار والتقنين:</strong> درجات تائية معيارية T-Score (الملحق رقم 2 ورقم 3)
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Real-time Psychometrics & Diagnostic Strip */}
         <div
-          className="assessment-stats-grid"
+          className="modal-subbar"
           style={{
-            background: '#f8fafc',
-            borderBottom: '1.5px solid #e2e8f0',
-            padding: '10px 16px',
-            alignItems: 'center',
-            flexShrink: 0,
-          }}
-        >
-          {/* Total Raw Score */}
-          <div style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: 10, padding: '8px 12px' }}>
-            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>الدرجة الخام الكلية:</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
-              <span style={{ fontSize: '1.3rem', fontWeight: 900, color: psychometrics.overallColor }}>
-                {psychometrics.totalRawScore}
-              </span>
-              <span style={{ fontSize: '.75rem', color: '#94a3b8' }}>/ 250 (الحد الأدنى 50)</span>
-            </div>
-            <div style={{ background: '#e2e8f0', height: 5, borderRadius: 3, marginTop: 4, overflow: 'hidden' }}>
-              <div style={{ width: `${psychometrics.completionPercentage}%`, height: '100%', background: psychometrics.overallColor }} />
-            </div>
-          </div>
-
-          {/* T-Score */}
-          <div style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: 10, padding: '8px 12px' }}>
-            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>الدرجة التائية المعيارية:</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
-              <span style={{ fontSize: '1.3rem', fontWeight: 900, color: '#1e40af' }}>
-                T = {psychometrics.totalTScore}
-              </span>
-              <span style={{ fontSize: '.75rem', color: '#64748b' }}>({psychometrics.percentile}%)</span>
-            </div>
-            <div style={{ fontSize: '.7rem', color: '#64748b', marginTop: 2 }}>
-              الفاصل: T &ge; 60 يشير لصعوبة تعلم
-            </div>
-          </div>
-
-          {/* Deficit Dimensions */}
-          <div style={{ background: '#fff', border: `1px solid ${psychometrics.deficitDimensions.length > 0 ? '#fca5a5' : '#cbd5e1'}`, borderRadius: 10, padding: '8px 12px' }}>
-            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>الأبعاد المتأثرة (العجز):</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
-              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: psychometrics.deficitDimensions.length > 0 ? '#dc2626' : '#16a34a' }}>
-                {psychometrics.deficitDimensions.length} من 3
-              </span>
-              <span style={{ fontSize: '.75rem', color: '#64748b' }}>أبعاد</span>
-            </div>
-            <div style={{ fontSize: '.7rem', color: '#64748b', marginTop: 2 }}>
-              {psychometrics.deficitDimensions.length > 0 ? 'يوجد تأثر دال في أبعاد التقييم' : 'جميع الأبعاد في النطاق الطبيعي'}
-            </div>
-          </div>
-
-          {/* Clinical Classification */}
-          <div style={{ background: '#fff', border: `1.5px solid ${psychometrics.overallColor}`, borderRadius: 10, padding: '8px 12px' }}>
-            <div style={{ fontSize: '.72rem', color: '#64748b', fontWeight: 700 }}>التصنيف التشخيصي المعتمد:</div>
-            <div style={{ fontSize: '.92rem', fontWeight: 900, color: psychometrics.overallColor, marginTop: 2 }}>
-              {psychometrics.overallStatus}
-            </div>
-            <div style={{ fontSize: '.7rem', color: '#64748b', marginTop: 2 }}>
-              تم تقييم: {psychometrics.totalAnswered} من {SARTAWI_ITEMS.length} عبارة
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Action & Testing Bar */}
-        <div
-          style={{
-            background: '#eff6ff',
-            borderBottom: '1px solid #dbeafe',
-            padding: '8px 20px',
+            background: 'var(--g0)',
+            padding: '10px 18px',
+            borderBottom: '1px solid var(--border-color)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            gap: 12,
             flexWrap: 'wrap',
-            gap: 8,
             flexShrink: 0,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '.75rem', fontWeight: 800, color: '#1e40af' }}>تعبئة سريعة للتجربة:</span>
-            <button
-              type="button"
-              className="btn btn-xs"
-              onClick={() => handleAutoFill('normal')}
-              style={{ background: '#dcfce7', color: '#15803d', fontWeight: 700 }}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* Total Raw Score */}
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                padding: '6px 12px',
+                borderRadius: 8,
+                border: '1.5px solid #2563eb',
+                textAlign: 'center',
+              }}
             >
-              ⚡ أداء طبيعي (درجات منخفضة)
-            </button>
-            <button
-              type="button"
-              className="btn btn-xs"
-              onClick={() => handleAutoFill('borderline')}
-              style={{ background: '#fef3c7', color: '#b45309', fontWeight: 700 }}
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>الدرجة الخام الكلية:</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: psychometrics.overallColor }}>
+                {psychometrics.totalRawScore}
+              </span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-sub)', marginRight: 4 }}>
+                / 250 (الفاصل 150)
+              </span>
+            </div>
+
+            {/* T-Score */}
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                padding: '6px 12px',
+                borderRadius: 8,
+                border: `1.5px solid ${psychometrics.totalTScore >= 60 ? '#fca5a5' : '#cbd5e1'}`,
+                textAlign: 'center',
+              }}
             >
-              ⚡ فئة حدية (درجات متوسطة)
-            </button>
-            <button
-              type="button"
-              className="btn btn-xs"
-              onClick={() => handleAutoFill('ld')}
-              style={{ background: '#fee2e2', color: '#b91c1c', fontWeight: 700 }}
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>الدرجة التائية المعيارية:</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: psychometrics.totalTScore >= 60 ? '#dc2626' : '#1e40af' }}>
+                T = {psychometrics.totalTScore}
+              </span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-sub)', marginRight: 4, fontWeight: 700 }}>
+                ({psychometrics.percentile}%) {psychometrics.totalTScore >= 60 ? '(⚠️ دال)' : '(طبيعي)'}
+              </span>
+            </div>
+
+            {/* Deficit Dimensions Count */}
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                padding: '6px 12px',
+                borderRadius: 8,
+                border: `1.5px solid ${psychometrics.deficitDimensions.length > 0 ? '#fca5a5' : '#cbd5e1'}`,
+                textAlign: 'center',
+              }}
             >
-              ⚡ صعوبات تعلم مؤكدة (درجات مرتفعة)
-            </button>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>الأبعاد المتأثرة (العجز):</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: psychometrics.deficitDimensions.length > 0 ? '#dc2626' : '#059669' }}>
+                {psychometrics.deficitDimensions.length}
+              </span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-sub)', marginRight: 4 }}>
+                / 3 أبعاد
+              </span>
+            </div>
+
+            {/* Diagnostic Classification Badge */}
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                padding: '6px 12px',
+                borderRadius: 8,
+                border: `1.5px solid ${psychometrics.overallColor}`,
+              }}
+            >
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>القرار التشخيصي الإكلينيكي:</span>
+              <span style={{ fontSize: '0.92rem', fontWeight: 800, color: psychometrics.overallColor }}>
+                {psychometrics.overallStatus}
+              </span>
+            </div>
           </div>
 
-          <button
-            type="button"
-            className="btn btn-xs"
-            onClick={applyAutoClinicalSummary}
-            style={{
-              background: 'linear-gradient(135deg, #1e40af, #2563eb)',
-              color: '#fff',
-              fontWeight: 800,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-            }}
-          >
-            <span>✨</span>
-            <span>توليد التقرير والخلاصة تلقائياً</span>
-          </button>
+          {/* Progress Indicator */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                {psychometrics.totalAnswered} / {SARTAWI_ITEMS.length} عبارة تم تقييمها
+              </div>
+              <div style={{ background: 'var(--border-color)', height: 6, width: 120, borderRadius: 3, marginTop: 3, overflow: 'hidden' }}>
+                <div
+                  style={{
+                    background: psychometrics.completionPercentage === 100 ? '#059669' : '#2563eb',
+                    height: '100%',
+                    width: `${psychometrics.completionPercentage}%`,
+                    transition: 'width 0.3s ease',
+                  }}
+                />
+              </div>
+            </div>
+
+            <span className={`bdg ${psychometrics.completionPercentage === 100 ? 'b-gr' : 'b-or'}`} style={{ fontSize: '0.75rem' }}>
+              {psychometrics.completionPercentage}%
+            </span>
+          </div>
         </div>
 
-        {/* Dimension Filter Tabs */}
+        {/* Modal Scrollable Body */}
         <div
+          className="modal-scrollable-content"
           style={{
-            background: '#fff',
-            borderBottom: '1px solid #e2e8f0',
-            padding: '8px 20px',
+            flex: 1,
+            overflowY: 'auto',
+            padding: '16px 20px',
             display: 'flex',
-            gap: 6,
-            overflowX: 'auto',
-            flexShrink: 0,
+            flexDirection: 'column',
+            gap: 16,
           }}
         >
-          <button
-            type="button"
-            onClick={() => setActiveTab('all')}
-            className={`btn btn-xs ${activeTab === 'all' ? 'btn-p' : 'btn-g'}`}
-            style={{
-              borderRadius: 8,
-              fontWeight: activeTab === 'all' ? 800 : 600,
-              padding: '6px 12px',
-              whiteSpace: 'nowrap',
-              background: activeTab === 'all' ? '#1e40af' : undefined,
-              color: activeTab === 'all' ? '#fff' : undefined,
-            }}
-          >
-            الكل (جميع العبارات الـ 50)
-          </button>
-
-          {SARTAWI_DIMENSIONS.map(dim => {
-            const dimScore = psychometrics.dimensions.find(d => d.id === dim.id);
-            const isDeficit = dimScore?.isDeficit;
-            const countAnswered = SARTAWI_ITEMS.filter(it => it.dimensionId === dim.id && form.scores[it.id] !== undefined).length;
-            const isComplete = countAnswered === dim.itemsCount;
-
-            return (
-              <button
-                key={dim.id}
-                type="button"
-                onClick={() => setActiveTab(dim.id)}
-                className={`btn btn-xs ${activeTab === dim.id ? 'btn-p' : 'btn-g'}`}
-                style={{
-                  borderRadius: 8,
-                  fontWeight: activeTab === dim.id ? 800 : 600,
-                  padding: '6px 12px',
-                  whiteSpace: 'nowrap',
-                  background: activeTab === dim.id ? '#1e40af' : undefined,
-                  color: activeTab === dim.id ? '#fff' : undefined,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                <span>{dim.icon}</span>
-                <span>{dim.name}</span>
-                <span
-                  style={{
-                    background: isDeficit ? '#fee2e2' : isComplete ? '#dcfce7' : '#f1f5f9',
-                    color: isDeficit ? '#b91c1c' : isComplete ? '#15803d' : '#64748b',
-                    fontSize: '.68rem',
-                    padding: '1px 5px',
-                    borderRadius: 4,
-                    fontWeight: 700,
-                  }}
-                >
-                  {dimScore ? `خام: ${dimScore.rawScore} (T=${dimScore.tScore})` : `${countAnswered}/${dim.itemsCount}`}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Scrollable Assessment Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', background: '#f8fafc' }}>
-          {/* Student Picker & Diagnostic Meta Card */}
+          {/* 1. Clinical Meta Header: 2-Row Layout with Collapse & Edit Controls */}
           <div
             style={{
-              background: '#fff',
-              border: '1px solid #e2e8f0',
-              borderRadius: 12,
-              padding: '16px',
-              marginBottom: 16,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 10,
+              padding: '10px 14px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
             }}
           >
-            <div className="fg c2">
-              <StudentPicker
-                form={form}
-                setForm={setForm}
-                students={students}
-                emps={emps}
-                showExtra={true}
-              />
+            {/* Meta Top Header with Collapsible & Manual Edit Buttons */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: isHeaderCollapsed ? 'none' : '1px dashed var(--border-color)', paddingBottom: isHeaderCollapsed ? 0 : 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: '0.9rem' }}>📋</span>
+                <span style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--text-main)' }}>
+                  بيانات المفحوص وبيئة التطبيق الإكلينيكي
+                </span>
+                {form.studentName && (
+                  <span className="bdg b-bl" style={{ fontSize: '0.74rem', fontWeight: 800 }}>
+                    الطالب: {form.studentName}
+                  </span>
+                )}
+                {form.age && (
+                  <span className="bdg b-gr" style={{ fontSize: '0.72rem' }}>
+                    العمر: {form.age}
+                  </span>
+                )}
+                {form.diagnosis && (
+                  <span className="bdg b-or" style={{ fontSize: '0.72rem' }}>
+                    التشخيص: {form.diagnosis}
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => setIsManualEdit(prev => !prev)}
+                  className={`btn btn-xs ${isManualEdit ? 'btn-or' : 'btn-g'}`}
+                  style={{ fontSize: '0.72rem', padding: '3px 8px', height: 24, fontWeight: 700 }}
+                  title="تفعيل/قفل التعديل اليدوي المباشر على الحقول المستوردة"
+                >
+                  {isManualEdit ? '🔒 قفل التعديل' : '✏️ تعديل يدوي'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsHeaderCollapsed(prev => !prev)}
+                  className="btn btn-xs btn-g"
+                  style={{ fontSize: '0.72rem', padding: '3px 8px', height: 24, fontWeight: 700 }}
+                >
+                  {isHeaderCollapsed ? '⬇️ إظهار التفاصيل' : '⬆️ إخفاء التفاصيل'}
+                </button>
+              </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginTop: 14, paddingTop: 14, borderTop: '1px dashed #e2e8f0' }}>
-              <div>
-                <label className="lbl" style={{ fontSize: '.78rem' }}>المدرسة / المؤسسة التعليمية:</label>
-                <input
-                  type="text"
-                  className="inp"
-                  value={form.schoolName || ''}
-                  onChange={e => setForm(f => ({ ...f, schoolName: e.target.value }))}
-                  placeholder="المدرسة الابتدائية النموذجية"
-                />
-              </div>
+            {!isHeaderCollapsed && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                {/* Mode toggle if other */}
+                {form.mode === 'other' && (
+                  <div style={{ marginBottom: 4 }}>
+                    <div className="fl full">
+                      <label style={{ fontSize: '0.76rem', marginBottom: 2 }}>اسم المستفيد الخارجي <span className="req">*</span></label>
+                      <input
+                        style={{ height: 32, fontSize: '0.82rem' }}
+                        value={form.studentName || ''}
+                        onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
+                        placeholder="اكتب اسم الطالب / المستفيد..."
+                      />
+                    </div>
+                  </div>
+                )}
 
-              <div>
-                <label className="lbl" style={{ fontSize: '.78rem' }}>الفصل الدراسي:</label>
-                <select
-                  className="inp"
-                  value={form.semester || 'الفصل الدراسي الأول'}
-                  onChange={e => setForm(f => ({ ...f, semester: e.target.value }))}
+                {/* ROW 1: Clinical Essentials (4 Columns) */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 8,
+                  }}
                 >
-                  <option value="الفصل الدراسي الأول">الفصل الدراسي الأول</option>
-                  <option value="الفصل الدراسي الثاني">الفصل الدراسي الثاني</option>
-                  <option value="الفصل الدراسي الثالث">الفصل الدراسي الثالث</option>
-                </select>
-              </div>
+                  {/* 1. Student Selection */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الطالب المسجل <span className="req">*</span></label>
+                    <select
+                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
+                      value={form.mode === 'other' ? '__other__' : (form.stuId || '')}
+                      onChange={handleSelectStudent}
+                    >
+                      <option value="">— اختر من الطلاب المسجلين بالمركز —</option>
+                      {students.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                      <option value="__other__">➕ مستفيد خارجي (غير مسجل)</option>
+                    </select>
+                  </div>
 
-              <div>
-                <label className="lbl" style={{ fontSize: '.78rem' }}>العام الدراسي:</label>
-                <input
-                  type="text"
-                  className="inp"
-                  value={form.academicYear || ''}
-                  onChange={e => setForm(f => ({ ...f, academicYear: e.target.value }))}
-                  placeholder="1445 / 1446 هـ"
-                />
+                  {/* 2. Chronological Age */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>العمر الزمني</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.age || (form.dob ? calcAge(form.dob) : '')}
+                      readOnly={!isManualEdit}
+                      onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
+                      placeholder="تلقائي حسب تاريخ الميلاد"
+                    />
+                  </div>
+
+                  {/* 3. Medical / Educational Diagnosis */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>التشخيص الطبي / التربوي</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.diagnosis || ''}
+                      readOnly={!isManualEdit && form.mode !== 'other'}
+                      onChange={e => setForm(f => ({ ...f, diagnosis: e.target.value }))}
+                      placeholder="مثال: صعوبات تعلم، تشتت انتباه..."
+                    />
+                  </div>
+
+                  {/* 4. Assessment Date */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>تاريخ التقييم</label>
+                    <input
+                      type="date"
+                      dir="ltr"
+                      style={{ height: 32, fontSize: '0.82rem', textAlign: 'right', padding: '2px 8px' }}
+                      value={form.date || todayStr()}
+                      onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                {/* ROW 2: Respondent and Testing Details (4 Columns) */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 8,
+                  }}
+                >
+                  {/* 1. Examiner Name */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الأخصائي الفاحص</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      type="text"
+                      placeholder="اسم الأخصائي الفاحص"
+                      value={form.examinerName || ''}
+                      onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* 2. Respondent Name */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>المستجيب (معلم / ولي أمر)</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      type="text"
+                      placeholder="اسم المستجيب على المقياس"
+                      value={form.raterName || ''}
+                      onChange={e => setForm(f => ({ ...f, raterName: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* 3. Grade / Academic Level */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الصف / المستوى الدراسي</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      type="text"
+                      placeholder="مثال: الصف الرابع الابتدائي"
+                      value={form.grade || ''}
+                      readOnly={!isManualEdit && form.mode !== 'other'}
+                      onChange={e => setForm(f => ({ ...f, grade: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* 4. Relationship / Role */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>صلة القرابة / الصفة</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      type="text"
+                      placeholder="مثال: معلم التربية الخاصة، معلم الفصل، ولي الأمر..."
+                      value={form.raterRelation || ''}
+                      onChange={e => setForm(f => ({ ...f, raterRelation: e.target.value }))}
+                    />
+                  </div>
+                </div>
               </div>
+            )}
+          </div>
+
+          {/* 2. Subscale Navigation Tabs & Filter */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
+              <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                📑 أبعاد مقياس د. زيدان السرطاوي:
+              </div>
+              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                اختر 1 لمنخفضة جداً، 2 لمنخفضة، 3 لمتوسطة، 4 لعالية، 5 لعالية جداً (درجات أعلى = صعوبة أشد)
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 6 }}>
+              <button
+                type="button"
+                className={`tab ${activeTab === 'all' ? 'on' : ''}`}
+                onClick={() => setActiveTab('all')}
+                style={{ fontSize: '0.78rem', padding: '6px 12px', whiteSpace: 'nowrap' }}
+              >
+                🌐 جميع العبارات ({SARTAWI_ITEMS.length})
+              </button>
+              {SARTAWI_DIMENSIONS.map(dom => {
+                const domStat = psychometrics.dimensions.find(d => d.id === dom.id);
+                const countAnswered = SARTAWI_ITEMS.filter(it => it.dimensionId === dom.id && form.scores[it.id] !== undefined).length;
+                return (
+                  <button
+                    key={dom.id}
+                    type="button"
+                    className={`tab ${activeTab === dom.id ? 'on' : ''}`}
+                    onClick={() => setActiveTab(dom.id)}
+                    style={{
+                      fontSize: '0.78rem',
+                      padding: '6px 12px',
+                      whiteSpace: 'nowrap',
+                      borderRight: `3px solid ${dom.color}`,
+                    }}
+                  >
+                    {dom.icon} {dom.name.split(':')[1] || dom.name} ({countAnswered}/{dom.itemsCount})
+                    {domStat?.isDeficit && <span style={{ color: '#dc2626', fontWeight: 900, marginRight: 4 }}>⚠️</span>}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Assessment Items List */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {filteredItems.map(it => {
-              const currentScore = form.scores[it.id];
-              const isAnswered = currentScore !== undefined && currentScore !== null;
-              const hasNote = Boolean(form.itemNotes[it.id]);
-              const isNoteOpen = expandedNotes[it.id] || hasNote;
-              const dim = SARTAWI_DIMENSIONS.find(d => d.id === it.dimensionId);
+          {/* 3. Items Evaluation Grid */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+            {filteredItems.map(item => {
+              const domain = SARTAWI_DIMENSIONS.find(d => d.id === item.dimensionId);
+              const currentScore = form.scores[item.id];
+              const currentNote = form.itemNotes[item.id] || '';
 
               return (
                 <div
-                  key={it.id}
+                  key={item.id}
                   style={{
-                    background: '#fff',
-                    border: `1.5px solid ${isAnswered ? (currentScore >= 4 ? '#fca5a5' : '#93c5fd') : '#e2e8f0'}`,
-                    borderRadius: 12,
-                    padding: '14px 16px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-                    transition: 'all 0.15s ease',
+                    background: 'var(--bg-card)',
+                    border: currentScore !== undefined ? `1.5px solid ${domain?.color || '#2563eb'}` : '1px solid var(--border-color)',
+                    borderRadius: 10,
+                    padding: '12px 16px',
+                    transition: 'all 0.2s ease',
                   }}
                 >
-                  {/* Item Header */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1, minWidth: '260px' }}>
                       <span
                         style={{
-                          background: '#1e40af',
+                          background: domain?.color || '#2563eb',
                           color: '#fff',
-                          fontWeight: 900,
-                          fontSize: '.76rem',
-                          padding: '2px 8px',
+                          fontWeight: 800,
+                          fontSize: '0.74rem',
+                          padding: '3px 8px',
                           borderRadius: 6,
+                          flexShrink: 0,
                         }}
                       >
-                        عبارة {it.id}
+                        #{item.num} · {domain?.name?.split(':')[1] || domain?.name}
                       </span>
-                      <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.72rem', fontWeight: 700 }}>
-                        {dim?.name}
-                      </span>
-                      <h4 style={{ margin: 0, fontSize: '.95rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                        {it.text}
-                      </h4>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.4 }}>
+                          {item.text}
+                        </div>
+                      </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => toggleItemNote(it.id)}
-                      className="btn btn-xs"
+                    {/* Rating Scale Buttons (1 to 5) */}
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                      {SARTAWI_RATING_OPTIONS.map(opt => {
+                        const scoreVal = opt.score || opt.value;
+                        const isSelected = currentScore === scoreVal;
+                        return (
+                          <button
+                            key={scoreVal}
+                            type="button"
+                            onClick={() => handleScoreChange(item.id, scoreVal)}
+                            className={`btn btn-xs ${isSelected ? 'btn-p' : 'btn-g'}`}
+                            style={{
+                              padding: '5px 10px',
+                              fontSize: '0.75rem',
+                              fontWeight: isSelected ? 800 : 500,
+                              background: isSelected
+                                ? (scoreVal >= 4 ? '#dc2626' : scoreVal === 3 ? '#d97706' : '#2563eb')
+                                : undefined,
+                              color: isSelected ? '#fff' : undefined,
+                              border: isSelected ? 'none' : undefined,
+                            }}
+                            title={opt.desc}
+                          >
+                            {scoreVal} - {opt.label.replace('ينطبق بدرجة ', '')} {isSelected && '✓'}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Selected Option Description Banner */}
+                  {currentScore !== undefined && (
+                    <div
                       style={{
-                        background: hasNote ? '#fef3c7' : '#f1f5f9',
-                        color: hasNote ? '#b45309' : '#64748b',
-                        fontWeight: 600,
-                        padding: '3px 8px',
+                        fontSize: '0.75rem',
+                        color: currentScore >= 4 ? '#b91c1c' : '#1e40af',
+                        background: currentScore >= 4 ? '#fee2e2' : '#eff6ff',
+                        padding: '4px 10px',
                         borderRadius: 6,
+                        marginBottom: 6,
+                        border: `1px solid ${currentScore >= 4 ? '#fca5a5' : '#bfdbfe'}`,
                       }}
                     >
-                      💬 {hasNote ? 'تعديل الملاحظة' : '+ ملاحظة سلوكية'}
-                    </button>
-                  </div>
-
-                  {/* 5 Rating Options */}
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-                      gap: 8,
-                      marginTop: 10,
-                    }}
-                  >
-                    {SARTAWI_RATING_OPTIONS.map(opt => {
-                      const isSelected = currentScore === opt.score;
-                      const isHighRisk = opt.score >= 4;
-
-                      return (
-                        <button
-                          key={opt.score}
-                          type="button"
-                          onClick={() => handleScoreChange(it.id, opt.score)}
-                          style={{
-                            background: isSelected ? (isHighRisk ? '#fee2e2' : '#dbeafe') : '#fafafa',
-                            border: `2px solid ${isSelected ? (isHighRisk ? '#dc2626' : '#1e40af') : '#e2e8f0'}`,
-                            borderRadius: 8,
-                            padding: '8px 10px',
-                            textAlign: 'center',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: 4,
-                            transition: 'all 0.15s ease',
-                          }}
-                        >
-                          <span style={{ fontWeight: 800, fontSize: '.84rem', color: isSelected ? (isHighRisk ? '#b91c1c' : '#1e40af') : '#334155' }}>
-                            ({opt.score}) {opt.label}
-                          </span>
-                          <span style={{ fontSize: '.68rem', color: '#64748b' }}>
-                            {opt.desc}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Expandable Note */}
-                  {isNoteOpen && (
-                    <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px dashed #e2e8f0' }}>
-                      <input
-                        type="text"
-                        className="inp"
-                        value={form.itemNotes[it.id] || ''}
-                        onChange={e => handleNoteChange(it.id, e.target.value)}
-                        placeholder={`أدخل ملاحظاتك الإكلينيكية حول استجابة الطالب للعبارة [${it.id}]...`}
-                        style={{ fontSize: '.8rem', padding: '6px 10px' }}
-                      />
+                      <strong>التقدير المختار ({currentScore} درجات): </strong>
+                      {SARTAWI_RATING_OPTIONS.find(o => o.score === currentScore)?.label} — {SARTAWI_RATING_OPTIONS.find(o => o.score === currentScore)?.desc}
                     </div>
                   )}
+
+                  {/* Optional Item Observation Note */}
+                  <div style={{ marginTop: 6 }}>
+                    <input
+                      type="text"
+                      placeholder="ملاحظات سلوكية أو تفاصيل إضافية لهذا البند (اختياري)..."
+                      value={currentNote}
+                      onChange={e => handleNoteChange(item.id, e.target.value)}
+                      style={{
+                        fontSize: '0.76rem',
+                        padding: '4px 8px',
+                        borderRadius: 6,
+                        border: '1px dashed var(--border-color)',
+                        width: '100%',
+                        background: 'var(--g0)',
+                      }}
+                    />
+                  </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Clinical Impression & Recommendations */}
-          <div
-            style={{
-              background: '#fff',
-              border: '1px solid #e2e8f0',
-              borderRadius: 12,
-              padding: '16px',
-              marginTop: 20,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                📝 الخلاصة التشخيصية والتوصيات التربوية
-              </h3>
+          {/* 4. Diagnostic Interpretation & Recommendations Section */}
+          <div style={{ background: 'var(--g0)', padding: 16, borderRadius: 12, border: '1px solid var(--border-color)', marginTop: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+              <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#1e40af', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>📝</span> الخلاصة التشخيصية والتوصيات التربوية المعتمدة
+              </div>
               <button
                 type="button"
-                className="btn btn-xs"
+                className="btn btn-xs btn-p"
                 onClick={applyAutoClinicalSummary}
-                style={{ background: '#dbeafe', color: '#1e40af', fontWeight: 700 }}
+                style={{ fontWeight: 700, background: '#1e40af', border: 'none' }}
               >
-                ✨ إعادة توليد النص
+                ✨ إعادة توليد الخلاصة بناءً على الدرجات
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 14 }}>
-              <div>
-                <label className="lbl" style={{ fontSize: '.8rem' }}>التقرير الإكلينيكي وتفسير الدرجات التائية:</label>
+            <div className="fg c1">
+              <div className="fl">
+                <label style={{ fontWeight: 700, fontSize: '0.8rem' }}>التقرير السيكومتري وتفسير الدرجات التائية (T-Score)</label>
                 <textarea
-                  className="inp"
                   rows={6}
+                  placeholder="الخلاصة التشخيصية والوصف النفسي التربوي وفق معايير مقياس السرطاوي..."
                   value={form.clinicalSummary || ''}
                   onChange={e => setForm(f => ({ ...f, clinicalSummary: e.target.value }))}
-                  placeholder="اضغط على زر (توليد التقرير والخلاصة تلقائياً) أو اكتب التقرير التشخيصي هنا..."
-                  style={{ fontSize: '.82rem', lineHeight: 1.5 }}
+                  style={{ fontSize: '0.82rem', lineHeight: 1.5 }}
                 />
               </div>
 
-              <div>
-                <label className="lbl" style={{ fontSize: '.8rem' }}>توصيات الخطة الفردية (IEP) والتدخل العلاجي:</label>
+              <div className="fl">
+                <label style={{ fontWeight: 700, fontSize: '0.8rem' }}>توصيات الخطة التربوية الفردية (IEP) وغرفة المصادر</label>
                 <textarea
-                  className="inp"
-                  rows={6}
+                  rows={5}
+                  placeholder="التوصيات العلاجية، التعديلات الصفية، وأساليب التدخل الفردي..."
                   value={form.recommendations || ''}
                   onChange={e => setForm(f => ({ ...f, recommendations: e.target.value }))}
-                  placeholder="أدخل التوصيات الأكاديمية والتربوية والتعديلات الصفية المقترحة..."
-                  style={{ fontSize: '.82rem', lineHeight: 1.5 }}
+                  style={{ fontSize: '0.82rem', lineHeight: 1.5 }}
                 />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Modal Footer */}
+        {/* Modal Footer Controls */}
         <div
           style={{
-            padding: '12px 20px',
-            background: '#fff',
-            borderTop: '1px solid #e2e8f0',
+            padding: '10px 20px',
+            background: 'var(--g0)',
+            borderTop: '1px solid var(--border-color)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexShrink: 0,
+            gap: 10,
+            flexWrap: 'wrap',
           }}
         >
-          <div style={{ fontSize: '.82rem', color: '#64748b' }}>
-            تم تقييم <strong style={{ color: '#1e40af' }}>{psychometrics.totalAnswered}</strong> من أصل {SARTAWI_ITEMS.length} عبارة · المجموع الخام: <strong style={{ color: psychometrics.overallColor }}>{psychometrics.totalRawScore}/250</strong> (T = {psychometrics.totalTScore})
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>
+              تم الإجابة على <strong>{psychometrics.totalAnswered}</strong> من <strong>{SARTAWI_ITEMS.length}</strong> عبارة
+            </span>
+            <span className={`bdg ${psychometrics.completionPercentage === 100 ? 'b-gr' : 'b-or'}`} style={{ fontSize: '0.72rem' }}>
+              {psychometrics.completionPercentage}% مكتمل
+            </span>
+
+            {/* Quick Actions moved to footer */}
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginRight: 6 }}>
+              <button
+                type="button"
+                className="btn btn-xs btn-g"
+                onClick={() => handleAutoFill('normal')}
+                title="تعبئة نموذج افتراضي يظهر أداء طبيعي"
+                style={{ fontSize: '0.74rem' }}
+              >
+                ⚡ تجربة (أداء طبيعي)
+              </button>
+              <button
+                type="button"
+                className="btn btn-xs btn-g"
+                onClick={() => handleAutoFill('borderline')}
+                title="تعبئة نموذج افتراضي يظهر فئة حدية"
+                style={{ fontSize: '0.74rem' }}
+              >
+                ⚡ تجربة (فئة حدية)
+              </button>
+              <button
+                type="button"
+                className="btn btn-xs btn-g"
+                onClick={() => handleAutoFill('ld')}
+                title="تعبئة نموذج افتراضي يظهر صعوبات تعلم مؤكدة"
+                style={{ fontSize: '0.74rem' }}
+              >
+                ⚡ تجربة (صعوبات تعلم)
+              </button>
+              <button
+                type="button"
+                className="btn btn-xs btn-p"
+                onClick={applyAutoClinicalSummary}
+                style={{ fontWeight: 700, fontSize: '0.74rem', background: '#1e40af', border: 'none' }}
+              >
+                ✨ توليد التقرير والتوصيات آلياً
+              </button>
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: 10 }}>
             <button
               type="button"
               className="btn btn-g"
-              onClick={onClose}
-              style={{ padding: '8px 16px', fontWeight: 700 }}
+              onClick={handleSafeClose}
             >
               إلغاء
             </button>
-
             <button
               type="button"
               className="btn btn-p"
               onClick={handleSave}
               style={{
-                background: 'linear-gradient(135deg, #1e3a8a, #1e40af)',
+                background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)',
                 color: '#fff',
-                padding: '8px 24px',
                 fontWeight: 800,
-                boxShadow: '0 4px 12px rgba(30, 64, 175, 0.25)',
+                border: 'none',
+                padding: '8px 20px',
               }}
             >
-              💾 حفظ وحساب نتيجة مقياس السرطاوي
+              💾 حفظ وحساب تقييم مقياس السرطاوي
             </button>
           </div>
         </div>
