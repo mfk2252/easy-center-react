@@ -21,7 +21,7 @@ const EMPTY_LDES_FORM = {
   grade: '',
   school: '',
   raterName: '',
-  raterRelation: 'معلم التربية الخاصة / صعوبات التعلم',
+  raterRelation: '',
   examinerName: '',
   date: todayStr(),
   notes: '',
@@ -264,8 +264,19 @@ export default function LDESAssessmentModal({
     onClose();
   }
 
+  function handleSafeClose() {
+    const answeredCount = Object.keys(form.scores || {}).length;
+    if (answeredCount > 0) {
+      if (window.confirm(`⚠️ تنبيه: تم رصد إجابات لـ (${answeredCount}) بنداً في المقياس. هل أنت متأكد من رغبتك في الإغلاق دون حفظ التغييرات؟`)) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  }
+
   return (
-    <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="mbg">
       <div
         className="mb"
         style={{
@@ -326,7 +337,7 @@ export default function LDESAssessmentModal({
             <button
               type="button"
               className="btn btn-xs"
-              onClick={onClose}
+              onClick={handleSafeClose}
               style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', fontWeight: 700 }}
             >
               ✖ إغلاق
@@ -696,7 +707,7 @@ export default function LDESAssessmentModal({
               <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main)' }}>
                 📑 بنود المقاييس الفرعية السبعة (LDES Subscales):
               </div>
-              <div style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)' }}>
                 اختر 0 للأداء الطبيعي، 1 لصعوبة نادرة، 2 لصعوبة متكررة، 3 لصعوبة شديدة دائمة
               </div>
             </div>
@@ -934,7 +945,7 @@ export default function LDESAssessmentModal({
             <button
               type="button"
               className="btn btn-g"
-              onClick={onClose}
+              onClick={handleSafeClose}
             >
               إلغاء
             </button>
