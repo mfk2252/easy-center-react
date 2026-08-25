@@ -4,7 +4,7 @@
 .nav-brand img{height:36px;border-radius:8px;object-fit:cover;flex-shrink:0}
 .nav-brand-ph{width:36px;height:36px;border-radius:8px;background:var(--pr);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
 .nav-cname{font-size:.82rem;font-weight:700;color:white;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}
-.nav-uname{font-size:.68rem;font-weight:400;color:var(--g4);white-space:nowrap}
+.nav-uname{font-size:.68rem;font-weight: var(--fw);color:var(--g4);white-space:nowrap}
 .nb{display:flex;align-items:center;gap:5px;padding:9px 12px;border:none;background:transparent;color:var(--g4);border-radius:7px;cursor:pointer;font-family:var(--font-main);font-size:.8rem;font-weight:600;white-space:nowrap;transition:all .15s;flex-shrink:0}
 .nb:hover{background:rgba(255,255,255,.08);color:white}
 .nb.on{background:var(--pr);color:white;font-weight:700}
@@ -28,7 +28,7 @@
 .mb > div:not(.fhd):not(.fa):not(.modal-body-scroll):not(.modal-banner):not(.modal-header-custom):not(.modal-subbar){overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
 .mb .modal-banner, .mb .modal-header-custom, .mb .fhd, .mb .modal-subbar {flex-shrink:0!important;flex-grow:0!important;overflow:hidden;max-width:100%}
 .mb .modal-header-custom h2, .mb .modal-header-custom h3, .mb .fhd h2, .mb .fhd h3{margin:0;line-height:1.35;word-break:break-word;font-weight:700}
-.mb .modal-header-custom p, .mb .modal-header-custom span, .mb .fhd p, .mb .fhd span{font-weight:400}
+.mb .modal-header-custom p, .mb .modal-header-custom span, .mb .fhd p, .mb .fhd span{font-weight:var(--fw)}
 .mb .fa{flex-shrink:0;padding:12px 18px;border-top:1px solid var(--border-color);display:flex;gap:10px;flex-wrap:wrap;background:var(--bg-card);align-items:center}
 .mb .fhd{flex-shrink:0}
 @media(max-width:600px){
@@ -89,7 +89,7 @@
 .sw-hd{background:linear-gradient(135deg,var(--pr),#6366f1);color:white;padding:28px 32px;border-radius:20px 20px 0 0;text-align:center}
 .sw-hd .icon{font-size:2.8rem;margin-bottom:10px}
 .sw-hd h1{font-size:1.5rem;font-weight:800;margin-bottom:5px}
-.sw-hd p{font-size:.85rem;font-weight:400;opacity:.85}
+.sw-hd p{font-size:.85rem;font-weight: var(--fw);opacity:.85}
 .sw-body{padding:26px 30px}
 .sw-steps{display:flex;justify-content:center;gap:6px;margin-bottom:22px}
 .sw-dot{width:8px;height:8px;border-radius:50%;background:var(--g2);transition:all .3s}
@@ -101,10 +101,10 @@
 @media(max-width:540px){.sw-g{grid-template-columns:1fr}}
 .sw-f{display:flex;flex-direction:column;gap:5px}
 .sw-f label{font-size:.75rem;font-weight:600;color:var(--g6);display:flex;align-items:center;gap:4px}
-.sw-f input,.sw-f select,.sw-f textarea{padding:10px 13px;border:1.5px solid var(--border-color);border-radius:9px;font-family:var(--font-main);font-size:.9rem;font-weight:400;background:var(--bg-card);color:var(--text-main);outline:none;transition:border .15s}
+.sw-f input,.sw-f select,.sw-f textarea{padding:10px 13px;border:1.5px solid var(--border-color);border-radius:9px;font-family:var(--font-main);font-size:.9rem;font-weight: var(--fw);background:var(--bg-card);color:var(--text-main);outline:none;transition:border .15s}
 .sw-f input:focus,.sw-f select:focus{border-color:var(--pr);box-shadow:0 0 0 3px var(--pr-l)}
 .sw-f.full{grid-column:1/-1}
-.sw-note{background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:12px 16px;font-size:.81rem;font-weight:400;color:#1e40af;margin-bottom:14px;line-height:1.8}
+.sw-note{background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:12px 16px;font-size:.81rem;font-weight: var(--fw);color:#1e40af;margin-bottom:14px;line-height:1.8}
 .sw-colors{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
 .sw-chip{width:30px;height:30px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:transform .15s,border-color .15s;flex-shrink:0}
 .sw-chip:hover{transform:scale(1.15)}
@@ -122,7 +122,7 @@
 .login-hero{flex:1 1 320px;min-height:220px;padding:clamp(20px,4vw,40px);display:flex;flex-direction:column;justify-content:center;gap:16px;color:#fff;box-sizing:border-box}
 .login-hero-badge{display:inline-flex;align-items:center;gap:8px;font-size:.75rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;opacity:.9;background:rgba(255,255,255,.12);padding:6px 12px;border-radius:999px;width:fit-content}
 .login-hero h1{font-size:clamp(1.35rem,3.5vw,1.85rem);font-weight:800;line-height:1.35;margin:0;text-shadow:0 2px 24px rgba(0,0,0,.25)}
-.login-hero p{font-size:.88rem;font-weight:400;line-height:1.75;opacity:.88;margin:0;max-width:36ch}
+.login-hero p{font-size:.88rem;font-weight: var(--fw);line-height:1.75;opacity:.88;margin:0;max-width:36ch}
 .login-hero-dots{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 .login-hero-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.35)}
 .login-panel{flex:1 1 360px;max-width:100%;display:flex;align-items:center;justify-content:center;padding:clamp(16px,3vw,28px);box-sizing:border-box}
@@ -132,11 +132,11 @@
 .login-logo{width:68px;height:68px;border-radius:16px;border:3px solid rgba(255,255,255,.3);object-fit:cover;margin:0 auto 12px;display:block}
 .login-logo-ph{width:68px;height:68px;border-radius:16px;border:3px solid rgba(255,255,255,.3);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:2rem}
 .login-hd h2{font-size:1.2rem;font-weight:800;margin-bottom:4px}
-.login-hd p{font-size:.8rem;font-weight:400;opacity:.8}
+.login-hd p{font-size:.8rem;font-weight: var(--fw);opacity:.8}
 .login-body{padding:24px;background:var(--bg-card)}
 .lf{margin-bottom:12px}
 .lf label{display:block;font-size:.76rem;font-weight:600;color:var(--text-sub);margin-bottom:5px}
-.lf input{width:100%;padding:10px 13px;border:1.5px solid var(--border-color);border-radius:9px;font-family:var(--font-main);font-size:.9rem;font-weight:400;outline:none;transition:border .15s;background:var(--bg-input);color:var(--text-main)}
+.lf input{width:100%;padding:10px 13px;border:1.5px solid var(--border-color);border-radius:9px;font-family:var(--font-main);font-size:.9rem;font-weight: var(--fw);outline:none;transition:border .15s;background:var(--bg-input);color:var(--text-main)}
 .lf input:focus{border-color:var(--pr);box-shadow:0 0 0 3px var(--pr-l)}
 .login-btn{width:100%;padding:12px;background:var(--pr);color:white;border:none;border-radius:10px;font-family:var(--font-main);font-size:1rem;font-weight:700;cursor:pointer;transition:background .15s}
 .login-btn:hover{background:var(--pr-d)}

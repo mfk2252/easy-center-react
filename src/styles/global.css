@@ -41,9 +41,9 @@ h1 { font-size: 1.4rem; font-weight: 800; }
 h2 { font-size: 1.15rem; font-weight: 700; }
 h3 { font-size: 0.98rem; font-weight: 700; }
 h4 { font-size: 0.88rem; font-weight: 600; }
-p, li, dd, dt, span:not(.bdg):not(.badge):not(.vl), td, input, select, textarea, button, a { font-family: var(--font-main); font-weight: 400; line-height: 1.6; }
+p, li, dd, dt, span:not(.bdg):not(.badge):not(.vl), td, input, select, textarea, button, a { font-family: var(--font-main); font-weight: var(--fw); line-height: 1.6; }
 strong, b { font-weight: 700; }
-small, .text-sm, .text-xs, .sub-text, .desc { font-weight: 400; }
+small, .text-sm, .text-xs, .sub-text, .desc { font-weight: var(--fw); }
 body.dark .card{background:var(--bg-card);border-color:var(--border-color);}
 body.dark .wg{background:var(--bg-card);border-color:var(--border-color);}
 body.dark .sc{background:var(--bg-card);border-color:var(--border-color);}

@@ -72,7 +72,7 @@
 .prog-card-subtitle {
   margin: 0;
   font-size: 0.84rem;
-  font-weight: 400;
+  font-weight: var(--fw);
   color: var(--text-sub);
   line-height: 1.55;
   display: -webkit-box;
@@ -152,7 +152,7 @@
 .prog-page-subtitle {
   margin: 3px 0 0;
   font-size: 0.82rem;
-  font-weight: 400;
+  font-weight: var(--fw);
   color: var(--text-sub);
 }
 
