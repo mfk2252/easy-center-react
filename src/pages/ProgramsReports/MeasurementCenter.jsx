@@ -22,6 +22,8 @@ import FamilyDisintegrationAssessmentModal from '../../components/assessments/Fa
 import FamilyDisintegrationReportModal from '../../components/assessments/FamilyDisintegrationReportModal';
 import SensoryIntegrationAssessmentModal from '../../components/assessments/SensoryIntegrationAssessmentModal';
 import SensoryIntegrationReportModal from '../../components/assessments/SensoryIntegrationReportModal';
+import SensoryChecklistAssessmentModal from '../../components/assessments/SensoryChecklistAssessmentModal';
+import SensoryChecklistReportModal from '../../components/assessments/SensoryChecklistReportModal';
 
 const EMPTY_MEASURE = {
   id: '',
@@ -94,6 +96,9 @@ export default function MeasurementCenter({ onBack }) {
 
   // Sensory Integration Scale Specific Modals
   const [sensoryModalOpen, setSensoryModalOpen] = useState(false);
+  const [sensoryChecklistModalOpen, setSensoryChecklistModalOpen] = useState(false);
+  const [sensoryChecklistReportOpen, setSensoryChecklistReportOpen] = useState(false);
+  const [selectedSensoryChecklistAssessment, setSelectedSensoryChecklistAssessment] = useState(null);
   const [sensoryReportOpen, setSensoryReportOpen] = useState(false);
   const [selectedSensoryAssessment, setSelectedSensoryAssessment] = useState(null);
 
@@ -186,6 +191,10 @@ export default function MeasurementCenter({ onBack }) {
     }
     if (scaleId === 'family_disintegration' || scaleId === 'family') {
       setFamilyModalOpen(true);
+      return;
+    }
+    if (scaleId === 'sensory_checklist') {
+      setSensoryChecklistModalOpen(true);
       return;
     }
     if (scaleId === 'sensory_integration_scale' || scaleId === 'sensory_integration' || scaleId === 'sensory') {
@@ -548,6 +557,22 @@ export default function MeasurementCenter({ onBack }) {
       )}
 
       {/* SENSORY INTEGRATION MODALS */}
+      {sensoryChecklistModalOpen && (
+        <SensoryChecklistAssessmentModal
+          isOpen={sensoryChecklistModalOpen}
+          onClose={() => setSensoryChecklistModalOpen(false)}
+          onSaved={() => reload()}
+          students={students}
+          emps={[]}
+        />
+      )}
+      {sensoryChecklistReportOpen && selectedSensoryChecklistAssessment && (
+        <SensoryChecklistReportModal
+          isOpen={sensoryChecklistReportOpen}
+          onClose={() => setSensoryChecklistReportOpen(false)}
+          assessment={selectedSensoryChecklistAssessment}
+        />
+      )}
       {sensoryModalOpen && (
         <SensoryIntegrationAssessmentModal
           isOpen={sensoryModalOpen}

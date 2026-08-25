@@ -6,6 +6,7 @@ import { SARTAWI_ITEMS } from '../data/sartawiData';
 import { MYKLEBUST_ITEMS } from '../data/myklebustData';
 import { FAMILY_DISINTEGRATION_ITEMS, calculateFamilyDisintegrationScore } from '../data/familyDisintegrationData';
 import { SENSORY_INTEGRATION_ITEMS, calculateSensoryIntegrationScore } from '../data/sensoryIntegrationData';
+import { SENSORY_CHECKLIST_ITEMS, calculateSensoryChecklistScore } from '../data/sensoryChecklistData';
 
 export const MEASUREMENT_CATEGORIES = [
   {
@@ -1060,6 +1061,27 @@ const DEFAULT_SCALE_LIBRARY = [
     thresholdText: 'المتوسط الفرضي 78 درجة. الدرجات الأعلى تشير إلى تفكك وتصدع أسري أكبر يتطلب تدخلاً إرشادياً ونفسياً.',
     isDefault: true,
   },
+  {
+    id: "sensory_checklist",
+    name: "القائمة الحسية (Sue Larkey)",
+    nameEn: "The Sensory Checklist",
+    category: "sensory_motor",
+    description: "قائمة لتقييم اضطرابات المعالجة الحسية (117 فقرة)",
+    icon: "🧠",
+    color: "#1e40af",
+    scoreMode: "sum",
+    responseType: "scale",
+    minValue: 1,
+    maxValue: 3,
+    maxScore: 351,
+    items: SENSORY_CHECKLIST_ITEMS.map(it => ({
+      id: it.id,
+      text: it.text,
+      domain: it.domainId,
+    })),
+    thresholdText: "المتوسط الفرضي لتقييم الاضطراب الحسي.",
+    isDefault: true,
+  },
 ];
 
 export function getScaleById(scaleId) {
@@ -1113,6 +1135,22 @@ function getScaleMax(scale) {
 }
 
 export function buildAssessmentResult(scale, answers = {}) {
+  if (scale?.id === "sensory_checklist") {
+    const scResult = calculateSensoryChecklistScore(answers);
+    return {
+      total: scResult.totalRawScore,
+      score: scResult.totalRawScore,
+      maxScore: scResult.maxPossible,
+      percentage: `%`,
+      percentageNum: scResult.percentage,
+      level: scResult.level,
+      color: scResult.severityColor,
+      severityColor: scResult.severityColor,
+      note: scResult.interpretation,
+      subscales: scResult.subscales,
+      isSensoryChecklist: true,
+    };
+  }
   if (scale?.id === 'sensory_integration_scale' || scale?.id === 'sensory_integration') {
     const siResult = calculateSensoryIntegrationScore(answers);
     return {

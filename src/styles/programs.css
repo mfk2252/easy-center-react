@@ -72,7 +72,7 @@
 .prog-card-subtitle {
   margin: 0;
   font-size: 0.84rem;
-  font-weight: var(--fw);
+  
   color: var(--text-sub);
   line-height: 1.55;
   display: -webkit-box;
@@ -152,7 +152,7 @@
 .prog-page-subtitle {
   margin: 3px 0 0;
   font-size: 0.82rem;
-  font-weight: var(--fw);
+  
   color: var(--text-sub);
 }
 
@@ -188,7 +188,7 @@
   border-radius: var(--r2);
   font-family: var(--font-main);
   font-size: var(--fs);
-  font-weight: var(--fw);
+  
   background: var(--bg-input, var(--bg-card));
   color: var(--text-main);
   outline: none;
@@ -208,7 +208,7 @@
   border-radius: var(--r2);
   font-family: var(--font-main);
   font-size: var(--fs);
-  font-weight: var(--fw);
+  
   background: var(--bg-input, var(--bg-card));
   color: var(--text-main);
   outline: none;
