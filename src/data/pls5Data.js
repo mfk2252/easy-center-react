@@ -6,6 +6,19 @@
  * and automated translation of failed items to measurable IEP goals.
  */
 
+export const PLS5_COPYRIGHT_INFO = {
+  measureNameAr: "مقياس لغة الأطفال - الإصدار الخامس (PLS-5)",
+  measureNameEn: "Preschool Language Scale - Fifth Edition (PLS-5)",
+  authorsAr: "د. إيرلا لي زيمرمان، د. فيوليت شتاينر، د. روبرتا إيفات بوند",
+  authorsEn: "Irla Lee Zimmerman, Ph.D., Violette G. Steiner, B.S., Roberta Evatt Pond, M.A.",
+  publisher: "Pearson Clinical Assessment / PsychCorp",
+  adaptation: "النسخة العربية المقننة للأطفال والبيئة الإكلينيكية العربية",
+  ageRange: "من الولادة حتى 7 سنوات و11 شهراً (0:0 - 7:11)",
+  normSamples: "معايير سيكومترية مشتقة (الدرجات المعيارية بمتوسط 100 وانحراف معياري 15، الرتب المئينية، الأعمار اللغوية المكافئة LAE)",
+  scoringSystem: "سلم ثنائي (1 = متقن/صحيح، 0 = مخفق/غير متقن)",
+  basalCeilingRules: "الخط القاعدي (Basal): 3 بنود متتالية صحيحة (1) · سقف التوقف (Ceiling): 6 بنود متتالية خاطئة (0)",
+};
+
 // 40 items representing key developmental milestones for Auditory Comprehension (Receptive)
 export const PLS5_RECEPTIVE_ITEMS = [
   // Birth - 11 months (من الولادة إلى 11 شهر)
