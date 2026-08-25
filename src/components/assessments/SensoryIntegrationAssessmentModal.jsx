@@ -162,7 +162,7 @@ export default function SensoryIntegrationAssessmentModal({
       <div className="mb mb-xl">
         
         {/* HEADER */}
-        <div style={{ padding: '16px 22px', background: 'linear-gradient(135deg, var(--text-main) 0%, #1e1b4b 100%)', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ flexShrink: 0, padding: '16px 22px', background: 'linear-gradient(135deg, var(--text-main) 0%, #1e1b4b 100%)', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(99, 102, 241, 0.2)', border: '1px solid rgba(165, 180, 252, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
               🎯
@@ -192,7 +192,7 @@ export default function SensoryIntegrationAssessmentModal({
         </div>
 
         {/* TOP CONTROLS & STATS BAR */}
-        <div style={{ padding: '12px 20px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color, var(--border-color))', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, alignItems: 'center' }}>
+        <div style={{ flexShrink: 0, padding: '12px 20px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color, var(--border-color))', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, alignItems: 'center' }}>
           <div>
             <label style={{ display: 'block', fontSize: '.75rem', fontWeight: 700, color: 'var(--text-sub)', marginBottom: 4 }}>
               👤 الطالب المفحوص:

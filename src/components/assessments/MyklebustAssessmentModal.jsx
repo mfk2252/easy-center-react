@@ -520,13 +520,15 @@ export default function MyklebustAssessmentModal({
               boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
             }}
           >
-            <StudentPicker
-              form={form}
-              setForm={setForm}
-              students={students}
-              emps={emps}
-              showExtra={true}
-            />
+            <div className="fg c2">
+              <StudentPicker
+                form={form}
+                setForm={setForm}
+                students={students}
+                emps={emps}
+                showExtra={true}
+              />
+            </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginTop: 14, paddingTop: 14, borderTop: '1px dashed #e2e8f0' }}>
               <div>

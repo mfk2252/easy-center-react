@@ -153,7 +153,7 @@ export default function FamilyDisintegrationAssessmentModal({
         {/* Header */}
         <div
           style={{
-            padding: '16px 22px',
+            flexShrink: 0, padding: '16px 22px',
             background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
             color: '#fff',
             display: 'flex',
@@ -196,7 +196,7 @@ export default function FamilyDisintegrationAssessmentModal({
         {/* Live Status Bar */}
         <div
           style={{
-            padding: '10px 20px',
+            flexShrink: 0, padding: '10px 20px',
             background: 'var(--g0)',
             borderBottom: '1px solid var(--border-color)',
             display: 'flex',
@@ -266,13 +266,15 @@ export default function FamilyDisintegrationAssessmentModal({
             <h4 style={{ margin: '0 0 12px 0', fontSize: '.95rem', fontWeight: 700, color: 'var(--text-main)' }}>
               📋 بيانات المفحوص والتطبيق الإرشادي
             </h4>
-            <StudentPicker
-              form={form}
-              setForm={setForm}
-              students={students}
-              emps={emps}
-              showExtra={true}
-            />
+            <div className="fg c2">
+              <StudentPicker
+                form={form}
+                setForm={setForm}
+                students={students}
+                emps={emps}
+                showExtra={true}
+              />
+            </div>
 
             <div className="fg c3" style={{ marginTop: 12 }}>
               <div className="fl">
