@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import ConnersParentAssessmentModal from '../../components/assessments/ConnersParentAssessmentModal';
 import ConnersParentReportModal from '../../components/assessments/ConnersParentReportModal';
 import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
@@ -62,6 +62,7 @@ function getAvailableScales() {
 
 export default function MeasurementCenter({ onBack }) {
   const [students, setStudents] = useState([]);
+  const [emps, setEmps] = useState([]);
   const [scales, setScales] = useState([]);
   const [measureForm, setMeasureForm] = useState(EMPTY_MEASURE);
   const [assessmentForm, setAssessmentForm] = useState(EMPTY_ASSESSMENT);
@@ -108,7 +109,8 @@ export default function MeasurementCenter({ onBack }) {
   const [selectedSensoryAssessment, setSelectedSensoryAssessment] = useState(null);
 
   function reload() {
-    setStudents(lsGet('students'));
+    setStudents(lsGet('students') || []);
+    setEmps(lsGet('employees') || []);
     setScales(getAvailableScales());
     setAssessments(lsGet('studentAssessments') || []);
   }

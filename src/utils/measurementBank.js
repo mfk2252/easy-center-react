@@ -856,13 +856,36 @@ const DEFAULT_SCALE_LIBRARY = [
 
   // 8. ADHD Scales (فرط الحركة وتشتت الانتباه)
   {
-    id: 'conners_3',
-    name: 'مقياس كونرز لفرط الحركة وتشتت الانتباه (Conners-3)',
-    nameEn: 'Conners-3 ADHD Rating Scale',
+    id: 'conners_parent',
+    name: 'مقياس كونرز لفرط الحركة وتشتت الانتباه — نسخة الوالدين المطولة (CPRS-R L)',
+    nameEn: 'Conners Parent Rating Scale - Revised Long (CPRS-R L)',
     category: 'adhd',
-    description: 'تقييم أعراض نقص الانتباه، فرط النشاط الحركي، الاندفاعية، والمشكلات التنفيذية',
+    description: 'المعيار السيكومتري الشامل لتقييم أعراض فرط الحركة، تشتت الانتباه، المشكلات المعرفية والسلوكية وفق DSM-IV — 80 فقرة مقننة مع الدرجات المعيارية T ومؤشر ADHD',
     icon: '⚡',
     color: '#ea580c',
+    scoreMode: 'subscale',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 240,
+    items: CONNERS_PARENT_ITEMS.map((item, idx) => ({
+      id: `q${idx + 1}`,
+      text: `${idx + 1}. ${item.text || item}`,
+      number: idx + 1,
+      domain: 'adhd_parent',
+    })),
+    thresholdText: 'درجة معيارية تائية (T-Score) أعلى من 65 تشير إلى دلالة إكلينيكية مرتفعة تستدعي خطة تدخل',
+    isDefault: true,
+  },
+  {
+    id: 'conners_3',
+    alias: 'adhd_screening_9',
+    name: 'قائمة الفرز السريع لفرط الحركة وتشتت الانتباه (Screening Checklist)',
+    nameEn: 'ADHD Quick Screening Checklist (9 Items)',
+    category: 'adhd',
+    description: 'استمارة مسح وفرز سريعة لأعراض نقص الانتباه وفرط الحركة والاندفاعية (9 بنود استرشادية مبدئية)',
+    icon: '📋',
+    color: '#f97316',
     scoreMode: 'sum',
     responseType: 'scale',
     minValue: 0,
@@ -1186,6 +1209,23 @@ export function buildAssessmentResult(scale, answers = {}) {
       subscales: famResult.subscales,
       isFamilyDisintegration: true,
       theoreticalMean: famResult.theoreticalMean,
+    };
+  }
+
+  if (scale?.id === 'conners_parent') {
+    const cpResult = calculateConnersParentScore(answers);
+    return {
+      total: cpResult.totalRawScore,
+      score: cpResult.totalRawScore,
+      maxScore: cpResult.maxPossible,
+      percentage: `${Math.round((cpResult.totalRawScore / cpResult.maxPossible) * 100)}%`,
+      percentageNum: Math.round((cpResult.totalRawScore / cpResult.maxPossible) * 100),
+      level: cpResult.level,
+      color: cpResult.severityColor,
+      severityColor: cpResult.severityColor,
+      note: 'مقياس كونرز لفرط الحركة وتشتت الانتباه (نسخة الوالدين المطولة 80 فقرة)',
+      subscales: cpResult.subscales,
+      isConnersParent: true,
     };
   }
 

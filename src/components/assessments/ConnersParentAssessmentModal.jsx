@@ -334,7 +334,6 @@ export default function ConnersParentAssessmentModal({
                       style={{
                         padding: '8px 14px',
                         borderRadius: 20,
-                        border: 'none',
                         background: isActive ? dom.color : (isDone ? `${dom.color}15` : 'var(--g0)'),
                         color: isActive ? '#fff' : (isDone ? dom.color : 'var(--text-sub)'),
                         border: isDone && !isActive ? `1px solid ${dom.color}40` : (isActive ? `1px solid ${dom.color}` : '1px solid var(--border-color)'),

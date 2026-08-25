@@ -738,6 +738,7 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
   else if (rawId.includes('srs')) lookupKey = 'srs';
   else if (rawId.includes('vineland')) lookupKey = 'vineland_3';
   else if (rawId.includes('portage')) lookupKey = 'portage_early';
+  else if (rawId === 'conners_parent' || rawId.includes('conners_parent')) lookupKey = 'conners_parent';
   else if (rawId.includes('conners')) lookupKey = 'conners_3';
   else if (rawId.includes('speech') || rawId.includes('artic')) lookupKey = 'speech_screening';
   else if (rawId.includes('beh')) lookupKey = 'behavior_adjustment';
@@ -987,6 +988,38 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
             durationWeeks: 8,
           }));
         }
+      }
+    });
+  } else if (lookupKey === 'conners_parent') {
+    Object.entries(responses).forEach(([itemId, score]) => {
+      const numScore = Number(score);
+      const targetItem = items.find(it => String(it.id) === String(itemId) || String(it.num) === String(itemId));
+      if (targetItem && (numScore === 2 || numScore === 3)) {
+        const priorityRank = numScore === 3 ? 1 : 2;
+        const priority = numScore === 3 ? 'critical' : 'high';
+        const itemTitle = targetItem.text || `بند ${itemId}`;
+        const cleanTitle = itemTitle.replace(/^\d+\.\s*/, '');
+        
+        const baseline = generatePlepBaseline(
+          cleanTitle,
+          numScore,
+          3,
+          `أعراضاً سلوكية متكررة ملحوظة (${cleanTitle}) بدرجة (${numScore}/3 - ${numScore === 3 ? 'دائماً' : 'غالباً'})`,
+          'برنامج تعديل سلوك، وفنيات ضبط المثيرات، وتعزيز فترات الانتباه والتركيز'
+        );
+
+        recommended.push(buildGoalItem({
+          code: `CON-P-${itemId.toUpperCase()}`,
+          domain: 'adhd_behavior',
+          title: `تعديل وضبط: ${cleanTitle.slice(0, 35)}`,
+          text: `أن يقلل التلميذ من ظهور سلوك (${cleanTitle}) بنسبة تحسن لا تقل عن 70% عبر استخدام المؤقتات البصرية وجداول التعزيز الإيجابي.`,
+          mastery: 'انخفاض وتيرة السلوك بنسبة 70% خلال 6 أسابيع',
+          reason: `مشتق من مقياس كونرز للوالدين (بند ${targetItem.num || itemId}) بدرجة (${numScore}/3 - ${numScore === 3 ? 'شديد/دائم' : 'مرتفع/غالب'})`,
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: numScore === 3 ? 10 : 8,
+        }));
       }
     });
   } else {

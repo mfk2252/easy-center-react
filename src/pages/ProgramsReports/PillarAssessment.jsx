@@ -36,6 +36,8 @@ import FamilyDisintegrationAssessmentModal from '../../components/assessments/Fa
 import FamilyDisintegrationReportModal from '../../components/assessments/FamilyDisintegrationReportModal';
 import SensoryIntegrationAssessmentModal from '../../components/assessments/SensoryIntegrationAssessmentModal';
 import SensoryIntegrationReportModal from '../../components/assessments/SensoryIntegrationReportModal';
+import ConnersParentAssessmentModal from '../../components/assessments/ConnersParentAssessmentModal';
+import ConnersParentReportModal from '../../components/assessments/ConnersParentReportModal';
 import { PEP3_ITEMS } from '../../data/pep3Data';
 import { LDES_ITEMS } from '../../data/ldesData';
 import { DEV_LD_ITEMS } from '../../data/devLdData';
@@ -44,6 +46,7 @@ import { SARTAWI_ITEMS } from '../../data/sartawiData';
 import { MYKLEBUST_ITEMS } from '../../data/myklebustData';
 import { FAMILY_DISINTEGRATION_ITEMS } from '../../data/familyDisintegrationData';
 import { SENSORY_INTEGRATION_ITEMS } from '../../data/sensoryIntegrationData';
+import { CONNERS_PARENT_ITEMS } from '../../data/connersParentData';
 import IepBridgeModal from './IepBridgeModal';
 import { extractRecommendedGoals } from '../../utils/iepBridge';
 import {
@@ -214,6 +217,12 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
   const [sensoryReportOpen, setSensoryReportOpen] = useState(false);
   const [selectedSensoryAssessment, setSelectedSensoryAssessment] = useState(null);
 
+  // Conners Parent Rating Scale (CPRS-R L) States
+  const [connersParentModalOpen, setConnersParentModalOpen] = useState(false);
+  const [connersParentEditData, setConnersParentEditData] = useState(null);
+  const [connersParentReportOpen, setConnersParentReportOpen] = useState(false);
+  const [selectedConnersParentAssessment, setSelectedConnersParentAssessment] = useState(null);
+
   // IEP Bridge State
   const [bridgeOpen, setBridgeOpen] = useState(false);
   const [bridgeAssessment, setBridgeAssessment] = useState(null);
@@ -366,6 +375,11 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     if (scaleId === 'sensory_integration_scale' || scaleId === 'sensory_integration' || scaleId === 'sensory') {
       setSensoryEditData(null);
       setSensoryModalOpen(true);
+      return;
+    }
+    if (scaleId === 'conners_parent' || scaleId === 'conners' || scaleId === 'conners_parent_scale') {
+      setConnersParentEditData(null);
+      setConnersParentModalOpen(true);
       return;
     }
     const scale = allScales.find(s => s.id === scaleId) || activeScale;
@@ -529,6 +543,16 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     setSensoryReportOpen(true);
   }
 
+  function openEditConnersParentAssessment(item) {
+    setConnersParentEditData(item);
+    setConnersParentModalOpen(true);
+  }
+
+  function openViewConnersParentReport(item) {
+    setSelectedConnersParentAssessment(item);
+    setConnersParentReportOpen(true);
+  }
+
   function handleScaleOptionChange(itemId, value) {
     setScaleResponses(prev => ({
       ...prev,
@@ -588,6 +612,8 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
       setBridgeScaleItems(FAMILY_DISINTEGRATION_ITEMS);
     } else if (item.measureId === 'sensory_integration_scale' || item.scaleType === 'sensory_integration') {
       setBridgeScaleItems(SENSORY_INTEGRATION_ITEMS);
+    } else if (item.measureId === 'conners_parent' || item.scaleType === 'conners_parent' || item.type === 'conners_parent') {
+      setBridgeScaleItems(CONNERS_PARENT_ITEMS);
     } else {
       const scale = allScales.find(s => s.id === item.measureId) || null;
       setBridgeScaleItems(scale?.items || []);
@@ -1530,10 +1556,58 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                 </div>
               )}
 
+              {/* Featured ADHD Scale Card (Conners Parent CPRS-R L) if ADHD or All is active */}
+              {(selectedCategoryFilter === 'all' || selectedCategoryFilter === 'adhd') && !searchTerm && (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                    gap: 14,
+                    marginBottom: 20,
+                  }}
+                >
+                  {/* Conners Parent CPRS-R L Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(234, 88, 12, 0.08), rgba(249, 115, 22, 0.04))',
+                      border: '1.5px solid #ea580c',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#ffedd5', color: '#c2410c', fontWeight: 600, fontSize: '.72rem' }}>مقياس كونرز المقنن الشامل</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>CPRS-R L (80 بنداً)</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        ⚡ مقياس كونرز لفرط الحركة وتشتت الانتباه — نسخة الوالدين المطولة
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        80 بنداً سيكومترياً معتمداً · 14 بعداً تشخيصياً شاملاً (المعارضة، تشتت الانتباه، النشاط الزائد، القلق، المثالية، المشكلات الاجتماعية، مؤشر ADHD، ومؤشرات DSM-IV) مع حساب الدرجات المعيارية التائية T
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setConnersParentEditData(null); setConnersParentModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: 'linear-gradient(135deg, #ea580c, #c2410c)', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص مقياس كونرز (CPRS-R L)
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* SCALES GRID */}
               {filteredScales.length === 0 ? (
-                // Only show EmptyState if we are NOT already showing featured cards inside autism or speech or LD categories
-                !((selectedCategoryFilter === 'autism' || selectedCategoryFilter === 'speech_language' || selectedCategoryFilter === 'learning_academic') && !searchTerm) && (
+                // Only show EmptyState if we are NOT already showing featured cards inside autism or speech or LD or ADHD categories
+                !((selectedCategoryFilter === 'autism' || selectedCategoryFilter === 'speech_language' || selectedCategoryFilter === 'learning_academic' || selectedCategoryFilter === 'adhd') && !searchTerm) && (
                   <EmptyState
                     icon="🔍"
                     title="لم يتم العثور على مقاييس تطابق البحث أو الفئة المختارة"
@@ -1545,6 +1619,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                   {filteredScales.map(scale => {
                     const isCars = scale.id === 'cars';
                     const isGars = scale.id === 'gars' || scale.id === 'gars3';
+                    const isConnersParent = scale.id === 'conners_parent';
                     const normCat = normalizeCategoryId(scale.category);
                     const catMeta = categoryMap[normCat] || { name: 'مقياس مقنن', icon: '📝', color: '#1a56db' };
 
@@ -1553,20 +1628,20 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                         key={scale.id}
                         className="prog-scale-card"
                         style={{
-                          border: isCars ? '2px solid var(--pr)' : isGars ? '2px solid #0d9488' : selectedScaleId === scale.id ? '2px solid var(--pr)' : '1px solid var(--border-color)',
-                          background: isCars ? 'var(--pr-l)' : isGars ? 'rgba(13, 148, 136, 0.05)' : selectedScaleId === scale.id ? 'var(--pr-l)' : 'var(--bg-card)',
+                          border: isConnersParent ? '2px solid #ea580c' : isCars ? '2px solid var(--pr)' : isGars ? '2px solid #0d9488' : selectedScaleId === scale.id ? '2px solid var(--pr)' : '1px solid var(--border-color)',
+                          background: isConnersParent ? 'rgba(234, 88, 12, 0.05)' : isCars ? 'var(--pr-l)' : isGars ? 'rgba(13, 148, 136, 0.05)' : selectedScaleId === scale.id ? 'var(--pr-l)' : 'var(--bg-card)',
                           display: 'flex',
                           flexDirection: 'column',
                           borderRadius: 14,
                         }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, gap: 6 }}>
-                          <span className="bdg b-bl" style={{ fontSize: '.72rem', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span className="bdg b-bl" style={{ fontSize: '.72rem', display: 'flex', alignItems: 'center', gap: 4, background: isConnersParent ? '#ffedd5' : undefined, color: isConnersParent ? '#c2410c' : undefined }}>
                             <span>{catMeta.icon}</span>
                             <span>{catMeta.name}</span>
                           </span>
-                          <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)', fontWeight: 600 }}>
-                            {scale.items?.length || 15} بنداً
+                          <span style={{ fontSize: '0.78rem', color: isConnersParent ? '#ea580c' : 'var(--text-sub)', fontWeight: 700 }}>
+                            {scale.items?.length || 80} بنداً
                           </span>
                         </div>
 
@@ -1590,12 +1665,12 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                             style={{
                               flex: 1,
                               fontWeight: 700,
-                              background: isGars ? '#0d9488' : undefined,
-                              borderColor: isGars ? '#0d9488' : undefined,
+                              background: isConnersParent ? '#ea580c' : isGars ? '#0d9488' : undefined,
+                              borderColor: isConnersParent ? '#ea580c' : isGars ? '#0d9488' : undefined,
                             }}
                             onClick={() => openNewScaleAssessment(scale.id)}
                           >
-                            {isCars ? '🧩 تطبيق CARS-2 الآن' : isGars ? '📊 تطبيق GARS-3 الآن' : '📝 تطبيق المقياس الآن'}
+                            {isConnersParent ? '⚡ تطبيق مقياس كونرز (CPRS-R L) الآن' : isCars ? '🧩 تطبيق CARS-2 الآن' : isGars ? '📊 تطبيق GARS-3 الآن' : '📝 تطبيق المقياس الآن'}
                           </button>
                         </div>
                       </div>
@@ -1679,19 +1754,21 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                 const isMyklebust = item.measureId === 'myklebust_scale' || item.scaleType === 'myklebust' || item.measureId === 'myklebust';
                 const isFamily = item.measureId === 'family_disintegration' || item.scaleType === 'family_disintegration';
                 const isSensory = item.measureId === 'sensory_integration_scale' || item.scaleType === 'sensory_integration' || item.isSensoryIntegration;
+                const isConnersParent = item.measureId === 'conners_parent' || item.scaleType === 'conners_parent' || item.type === 'conners_parent' || item.isConnersParent;
                 return (
                   <div
                     key={item.id}
                     className="prog-item-card"
                     style={{
-                      border: isSensory ? '1.5px solid #0284c7' : isFamily ? '1.5px solid #7c3aed' : isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
-                      boxShadow: isSensory ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isFamily ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
+                      border: isConnersParent ? '1.5px solid #ea580c' : isSensory ? '1.5px solid #0284c7' : isFamily ? '1.5px solid #7c3aed' : isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
+                      boxShadow: isConnersParent ? '0 4px 12px rgba(234, 88, 12, 0.08)' : isSensory ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isFamily ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
                       <div>
                         <div className="prog-student-name" style={{ fontSize: '1.02rem', display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span>{item.studentName}</span>
+                          {isConnersParent && <span className="bdg" style={{ background: '#ffedd5', color: '#c2410c', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>كونرز للوالدين (80)</span>}
                           {isCars && <span className="bdg b-bl" style={{ fontSize: '.68rem', padding: '1px 6px' }}>CARS-2</span>}
                           {isGars && <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>GARS-3</span>}
                           {isSrs && <span className="bdg" style={{ background: '#d1fae5', color: '#047857', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>SRS-2</span>}
@@ -1711,9 +1788,17 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                         <div className="prog-student-meta">{item.measureName} · {item.date}</div>
                       </div>
                       <span className="bdg b-gr" style={{ fontSize: '0.82rem', fontWeight: 800, flexShrink: 0 }}>
-                        {isSensory ? `الخام: ${item.score || 0} / 90` : isFamily ? `الخام: ${item.score || 0} / 130` : isMyklebust ? `الخام: ${item.score || 0} / 120 (LQ=${item.lq || item.psychometrics?.learningQuotient || '—'})` : isSartawi ? `الخام: ${item.score || 0} / 250 (T=${item.tScore || item.psychometrics?.totalTScore || '—'})` : isLddrs ? `الدرجة الكلية: ${item.score || 0}` : isDevLd ? `الخام: ${item.score} / ${item.maxScore || 160}` : isLdes ? `معامل LDEQ: ${item.ldeq || item.score}` : isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
+                        {isConnersParent ? `الخام: ${item.score || 0} / 240` : isSensory ? `الخام: ${item.score || 0} / 90` : isFamily ? `الخام: ${item.score || 0} / 130` : isMyklebust ? `الخام: ${item.score || 0} / 120 (LQ=${item.lq || item.psychometrics?.learningQuotient || '—'})` : isSartawi ? `الخام: ${item.score || 0} / 250 (T=${item.tScore || item.psychometrics?.totalTScore || '—'})` : isLddrs ? `الدرجة الكلية: ${item.score || 0}` : isDevLd ? `الخام: ${item.score} / ${item.maxScore || 160}` : isLdes ? `معامل LDEQ: ${item.ldeq || item.score}` : isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
                       </span>
                     </div>
+
+                    {isConnersParent && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>مؤشر ADHD: <strong style={{ color: '#ea580c' }}>{item.psychometrics?.subscales?.find(s => s.id === 'H')?.tScore ? `T = ${item.psychometrics.subscales.find(s => s.id === 'H').tScore}` : item.level || '—'}</strong></span>
+                        <span>التصنيف: <strong style={{ color: item.severityColor || '#ea580c' }}>{item.level || '—'}</strong></span>
+                        <span>الفقرات المكتملة: <strong style={{ color: '#ea580c' }}>{item.psychometrics?.answeredCount || 80} من 80</strong></span>
+                      </div>
+                    )}
 
                     {isSensory && (
                       <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
@@ -1863,6 +1948,27 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                           <span>🎓</span>
                           <span>اشتقاق خطة فردية (IEP)</span>
                         </button>
+
+                        {isConnersParent && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewConnersParentReport(item)}
+                            style={{ fontWeight: 800, background: '#ea580c', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isConnersParent && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditConnersParentAssessment(item)}
+                            title="تعديل درجات مقياس كونرز للوالدين"
+                          >
+                            ✏️
+                          </button>
+                        )}
 
                         {isSartawi && (
                           <button
@@ -2711,6 +2817,34 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
           onClose={() => setSensoryReportOpen(false)}
           assessment={selectedSensoryAssessment}
           onEdit={(item) => openEditSensoryAssessment(item)}
+        />
+      )}
+
+      {/* MODAL: CONNERS PARENT RATING SCALE (CPRS-R L) WORKSTATION */}
+      {connersParentModalOpen && (
+        <ConnersParentAssessmentModal
+          isOpen={connersParentModalOpen}
+          onClose={() => {
+            setConnersParentModalOpen(false);
+            setConnersParentEditData(null);
+          }}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={connersParentEditData}
+        />
+      )}
+
+      {/* MODAL: CONNERS PARENT DIAGNOSTIC REPORT */}
+      {connersParentReportOpen && selectedConnersParentAssessment && (
+        <ConnersParentReportModal
+          isOpen={connersParentReportOpen}
+          onClose={() => setConnersParentReportOpen(false)}
+          assessment={selectedConnersParentAssessment}
+          onEdit={(item) => openEditConnersParentAssessment(item)}
         />
       )}
 
