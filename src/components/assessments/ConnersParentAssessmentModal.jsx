@@ -361,7 +361,33 @@ export default function ConnersParentAssessmentModal({
                 })}
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {/* Legend bar */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: 'var(--g0)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 8,
+                  padding: '6px 12px',
+                  marginBottom: 10,
+                  fontSize: '.75rem',
+                  color: 'var(--text-sub)',
+                  flexWrap: 'wrap',
+                  gap: 6,
+                }}
+              >
+                <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>مفتاح التقدير:</span>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <span><strong style={{ color: '#ea580c' }}>0:</strong> أبداً / نادراً</span>
+                  <span><strong style={{ color: '#ea580c' }}>1:</strong> أحياناً (قليلاً)</span>
+                  <span><strong style={{ color: '#ea580c' }}>2:</strong> غالباً (إلى حد ما)</span>
+                  <span><strong style={{ color: '#ea580c' }}>3:</strong> دائماً (بشكل كبير)</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {filteredItems.map(item => {
                   const val = form.scores[item.id] !== undefined ? form.scores[item.id] : null;
                   const isAnswered = val !== null;
@@ -369,56 +395,79 @@ export default function ConnersParentAssessmentModal({
                     <div
                       key={item.id}
                       style={{
-                        background: isAnswered ? '#fffbeb' : 'var(--bg-card)',
-                        border: isAnswered ? '1.5px solid #f59e0b' : '1px solid var(--border-color)',
-                        borderRadius: 12,
-                        padding: 14,
-                        transition: 'all 0.2s',
+                        background: isAnswered ? 'var(--bg-card)' : 'var(--bg-card)',
+                        border: isAnswered ? '1.5px solid #ea580c' : '1px solid var(--border-color)',
+                        borderRadius: 8,
+                        padding: '8px 12px',
+                        transition: 'all 0.15s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 10,
+                        flexWrap: 'wrap',
                       }}
                     >
-                      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flex: '1 1 240px' }}>
                         <div
                           style={{
-                            width: 28, height: 28, borderRadius: '50%',
-                            background: isAnswered ? '#f59e0b' : 'var(--g2)',
+                            width: 24,
+                            height: 24,
+                            borderRadius: '50%',
+                            background: isAnswered ? '#ea580c' : 'var(--g2)',
                             color: isAnswered ? '#fff' : 'var(--text-sub)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '.85rem', fontWeight: 800, flexShrink: 0
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '.75rem',
+                            fontWeight: 800,
+                            flexShrink: 0,
                           }}
                         >
                           {item.num}
                         </div>
-                        <div style={{ flex: 1 }}>
-                          <h4 style={{ margin: '0 0 10px 0', fontSize: '.92rem', color: isAnswered ? '#d97706' : 'var(--text-main)', lineHeight: 1.5 }}>
-                            {item.text}
-                          </h4>
-                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            {CONNERS_PARENT_OPTIONS.map(opt => {
-                              const isSelected = val === opt.value;
-                              return (
-                                <button
-                                  key={opt.value}
-                                  type="button"
-                                  onClick={() => handleScoreChange(item.id, opt.value)}
-                                  style={{
-                                    flex: 1, minWidth: 100,
-                                    padding: '8px 4px',
-                                    borderRadius: 8,
-                                    border: isSelected ? '2px solid #ea580c' : '1.5px solid var(--border-color)',
-                                    background: isSelected ? '#ffedd5' : 'var(--bg-input)',
-                                    color: isSelected ? '#ea580c' : 'var(--text-sub)',
-                                    fontWeight: isSelected ? 800 : 600,
-                                    fontSize: '.8rem',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.15s',
-                                  }}
-                                >
-                                  {opt.value} - {opt.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
+                        <h4
+                          style={{
+                            margin: 0,
+                            fontSize: '.86rem',
+                            fontWeight: 600,
+                            color: 'var(--text-main)',
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {item.text}
+                        </h4>
+                      </div>
+
+                      {/* Compact 4-choice button group */}
+                      <div style={{ display: 'inline-flex', gap: 4, flexShrink: 0 }}>
+                        {CONNERS_PARENT_OPTIONS.map(opt => {
+                          const isSelected = val === opt.value;
+                          const shortLabels = ['0 · أبداً', '1 · أحياناً', '2 · غالباً', '3 · دائماً'];
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => handleScoreChange(item.id, opt.value)}
+                              title={`${opt.value} - ${opt.label}`}
+                              style={{
+                                padding: '4px 8px',
+                                minWidth: 56,
+                                height: 28,
+                                borderRadius: 6,
+                                border: isSelected ? '1.5px solid #ea580c' : '1px solid var(--border-color)',
+                                background: isSelected ? '#ea580c' : 'var(--bg-input)',
+                                color: isSelected ? '#fff' : 'var(--text-main)',
+                                fontWeight: isSelected ? 800 : 500,
+                                fontSize: '.74rem',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {shortLabels[opt.value] || opt.label}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   );

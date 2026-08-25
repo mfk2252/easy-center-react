@@ -341,67 +341,86 @@ export default function SensoryChecklistAssessmentModal({
                 })}
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {filteredItems.map(item => {
                   const domMeta = SENSORY_CHECKLIST_DOMAINS.find(d => d.id === item.domainId);
-                  const val = form.scores[item.id] || null;
+                  const val = form.scores[item.id] !== undefined ? form.scores[item.id] : null;
                   const isAnswered = val !== null;
                   return (
                     <div
                       key={item.id}
                       style={{
-                        background: isAnswered ? domMeta?.bgLight || 'var(--bg-card)' : 'var(--bg-card)',
-                        border: isAnswered ? `1.5px solid ${domMeta?.color || 'var(--border-color)'}` : '1px solid var(--border-color)',
-                        borderRadius: 12,
-                        padding: 14,
-                        transition: 'all 0.2s',
-                        boxShadow: isAnswered ? '0 2px 8px rgba(0,0,0,0.02)' : 'none',
+                        background: 'var(--bg-card)',
+                        border: isAnswered ? `1.5px solid ${domMeta?.color || '#0284c7'}` : '1px solid var(--border-color)',
+                        borderRadius: 8,
+                        padding: '8px 12px',
+                        transition: 'all 0.15s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 10,
+                        flexWrap: 'wrap',
                       }}
                     >
-                      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flex: '1 1 240px' }}>
                         <div
                           style={{
-                            width: 28, height: 28, borderRadius: '50%',
+                            width: 24,
+                            height: 24,
+                            borderRadius: '50%',
                             background: isAnswered ? domMeta?.color : 'var(--g2)',
                             color: isAnswered ? '#fff' : 'var(--text-sub)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '.85rem', fontWeight: 800, flexShrink: 0
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '.75rem',
+                            fontWeight: 800,
+                            flexShrink: 0,
                           }}
                         >
                           {item.num}
                         </div>
-                        <div style={{ flex: 1 }}>
-                          <h4 style={{ margin: '0 0 10px 0', fontSize: '.92rem', color: isAnswered ? domMeta?.color : 'var(--text-main)', lineHeight: 1.5 }}>
-                            {item.text}
-                          </h4>
-                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            {SENSORY_CHECKLIST_OPTIONS.map(opt => {
-                              const isSelected = val === opt.value;
-                              return (
-                                <button
-                                  key={opt.value}
-                                  type="button"
-                                  onClick={() => handleScoreChange(item.id, opt.value)}
-                                  style={{
-                                    flex: 1, minWidth: 90,
-                                    padding: '8px 4px',
-                                    borderRadius: 8,
-                                    border: isSelected ? `2px solid ${opt.color}` : '1.5px solid var(--border-color)',
-                                    background: isSelected ? `${opt.color}15` : 'var(--bg-input)',
-                                    color: isSelected ? opt.color : 'var(--text-sub)',
-                                    fontWeight: isSelected ? 800 : 600,
-                                    fontSize: '.8rem',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.15s',
-                                  }}
-                                  title={opt.desc}
-                                >
-                                  {opt.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
+                        <h4
+                          style={{
+                            margin: 0,
+                            fontSize: '.86rem',
+                            fontWeight: 600,
+                            color: 'var(--text-main)',
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {item.text}
+                        </h4>
+                      </div>
+
+                      <div style={{ display: 'inline-flex', gap: 4, flexShrink: 0 }}>
+                        {SENSORY_CHECKLIST_OPTIONS.map(opt => {
+                          const isSelected = val === opt.value;
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => handleScoreChange(item.id, opt.value)}
+                              title={`${opt.label} - ${opt.desc}`}
+                              style={{
+                                padding: '4px 8px',
+                                minWidth: 52,
+                                height: 28,
+                                borderRadius: 6,
+                                border: isSelected ? `1.5px solid ${opt.color}` : '1px solid var(--border-color)',
+                                background: isSelected ? opt.color : 'var(--bg-input)',
+                                color: isSelected ? '#fff' : 'var(--text-main)',
+                                fontWeight: isSelected ? 800 : 500,
+                                fontSize: '.74rem',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {opt.label}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   );
