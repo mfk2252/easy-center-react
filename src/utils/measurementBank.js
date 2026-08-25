@@ -8,6 +8,8 @@ import { FAMILY_DISINTEGRATION_ITEMS, calculateFamilyDisintegrationScore } from 
 import { SENSORY_INTEGRATION_ITEMS, calculateSensoryIntegrationScore } from '../data/sensoryIntegrationData';
 import { SENSORY_CHECKLIST_ITEMS, calculateSensoryChecklistScore } from '../data/sensoryChecklistData';
 
+import { CONNERS_PARENT_ITEMS, calculateConnersParentScore } from "../data/connersParentData";
+
 export const MEASUREMENT_CATEGORIES = [
   {
     id: 'autism',
