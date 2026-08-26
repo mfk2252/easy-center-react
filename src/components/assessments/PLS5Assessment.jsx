@@ -585,11 +585,11 @@ export default function PLS5Assessment({
         {showCopyrightDetails && (
           <div
             style={{
-              background: '#f0f9ff',
+              background: 'var(--g0)',
               padding: '14px 20px',
-              borderBottom: '2px solid #bae6fd',
+              borderBottom: '2px solid var(--border-color)',
               fontSize: '0.82rem',
-              color: '#075985',
+              color: 'var(--text-main)',
               lineHeight: 1.6,
               flexShrink: 0,
             }}
@@ -600,8 +600,8 @@ export default function PLS5Assessment({
 
             <div
               style={{
-                background: '#e0f2fe',
-                border: '1px solid #bae6fd',
+                background: 'rgba(2, 132, 199, 0.12)',
+                border: '1px solid rgba(2, 132, 199, 0.3)',
                 borderRadius: 8,
                 padding: '8px 12px',
                 marginBottom: 10,
@@ -611,7 +611,7 @@ export default function PLS5Assessment({
                 flexWrap: 'wrap',
                 gap: 8,
                 fontSize: '0.8rem',
-                color: '#0369a1',
+                color: 'var(--text-main)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -620,22 +620,22 @@ export default function PLS5Assessment({
                   <strong>حقوق النشر والملكية الفكرية:</strong> {PLS5_COPYRIGHT_INFO.measureNameAr} ({PLS5_COPYRIGHT_INFO.measureNameEn}) — إعداد {PLS5_COPYRIGHT_INFO.authorsAr}.
                 </div>
               </div>
-              <span style={{ fontSize: '0.72rem', background: '#fff', padding: '3px 8px', borderRadius: 6, border: '1px solid #7dd3fc', fontWeight: 700 }}>
+              <span style={{ fontSize: '0.72rem', background: 'var(--card-bg, #ffffff)', padding: '3px 8px', borderRadius: 6, border: '1px solid var(--border-color)', fontWeight: 700, color: 'var(--text-main)' }}>
                 {PLS5_COPYRIGHT_INFO.publisher}
               </span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, marginBottom: 8 }}>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #bae6fd' }}>
+              <div style={{ background: 'var(--card-bg, #ffffff)', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-color)', color: 'var(--text-main)' }}>
                 <strong>المؤلفون والباحثون:</strong> {PLS5_COPYRIGHT_INFO.authorsAr} ({PLS5_COPYRIGHT_INFO.authorsEn})
               </div>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #bae6fd' }}>
+              <div style={{ background: 'var(--card-bg, #ffffff)', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-color)', color: 'var(--text-main)' }}>
                 <strong>المدى العمري المستهدف:</strong> {PLS5_COPYRIGHT_INFO.ageRange}
               </div>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #bae6fd' }}>
+              <div style={{ background: 'var(--card-bg, #ffffff)', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-color)', color: 'var(--text-main)' }}>
                 <strong>المعايير السيكومترية:</strong> {PLS5_COPYRIGHT_INFO.normSamples}
               </div>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #bae6fd' }}>
+              <div style={{ background: 'var(--card-bg, #ffffff)', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-color)', color: 'var(--text-main)' }}>
                 <strong>قواعد الخط القاعدي والسقف:</strong> {PLS5_COPYRIGHT_INFO.basalCeilingRules}
               </div>
             </div>
@@ -1099,10 +1099,10 @@ export default function PLS5Assessment({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Basal & Ceiling Quick Action Panel */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
-                <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '10px 14px', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ background: 'rgba(22, 163, 74, 0.12)', border: '1px solid rgba(22, 163, 74, 0.3)', padding: '10px 14px', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <span style={{ fontSize: '0.74rem', color: '#166534', display: 'block', fontWeight: 700 }}>مستوى القاعدة (Basal Rule - 3 بنود متتالية صحيحة):</span>
-                    <strong style={{ fontSize: '0.86rem', color: '#14532d' }}>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', display: 'block', fontWeight: 700 }}>مستوى القاعدة (Basal Rule - 3 بنود متتالية صحيحة):</span>
+                    <strong style={{ fontSize: '0.86rem', color: '#16a34a' }}>
                       {activeTab === 'receptive'
                         ? (scoring.receptiveBasalIndex !== -1 ? `مؤسس عند البند #${scoring.receptiveBasalIndex + 1}` : 'غير مؤسس بعد ⚠️')
                         : (scoring.expressiveBasalIndex !== -1 ? `مؤسس عند البند #${scoring.expressiveBasalIndex + 1}` : 'غير مؤسس بعد ⚠️')
@@ -1119,10 +1119,10 @@ export default function PLS5Assessment({
                   </button>
                 </div>
 
-                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '10px 14px', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '10px 14px', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <span style={{ fontSize: '0.74rem', color: '#991b1b', display: 'block', fontWeight: 700 }}>سقف التوقف (Ceiling Rule - 6 إخفاقات متتالية):</span>
-                    <strong style={{ fontSize: '0.86rem', color: '#7f1d1d' }}>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', display: 'block', fontWeight: 700 }}>سقف التوقف (Ceiling Rule - 6 إخفاقات متتالية):</span>
+                    <strong style={{ fontSize: '0.86rem', color: '#ef4444' }}>
                       {activeTab === 'receptive'
                         ? (scoring.receptiveCeilingIndex !== -1 ? `متحقق عند البند #${scoring.receptiveCeilingIndex + 6}` : 'غير متحقق بعد')
                         : (scoring.expressiveCeilingIndex !== -1 ? `متحقق عند البند #${scoring.expressiveCeilingIndex + 6}` : 'غير متحقق بعد')
@@ -1291,7 +1291,7 @@ export default function PLS5Assessment({
           {/* Tab 3: Diagnostic Report, Scoring Summary & IEP Integration */}
           {activeTab === 'report' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div className="print-report-sheet" style={{ border: '1px solid var(--border-color)', borderRadius: 12, padding: 20, background: '#fff' }}>
+              <div className="print-report-sheet" style={{ border: '1px solid var(--border-color)', borderRadius: 12, padding: 20, background: 'var(--card-bg, #ffffff)', color: 'var(--text-main)' }}>
                 {/* Official Report Header */}
                 <div style={{ borderBottom: '2px solid #0369a1', paddingBottom: 12, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
@@ -1303,13 +1303,13 @@ export default function PLS5Assessment({
                     </span>
                   </div>
                   <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: '0.78rem', fontWeight: 700 }}>مركز الرعاية المتخصصة للتأهيل والدمج</div>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)' }}>مركز الرعاية المتخصصة للتأهيل والدمج</div>
                     <div style={{ fontSize: '0.7rem', color: 'var(--text-sub)' }}>تاريخ التقييم: {form.date}</div>
                   </div>
                 </div>
 
                 {/* Patient/Student Demographics Table */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, padding: 12, background: 'var(--g0)', borderRadius: 8, marginBottom: 16, fontSize: '0.8rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, padding: 12, background: 'var(--g0)', borderRadius: 8, marginBottom: 16, fontSize: '0.8rem', color: 'var(--text-main)' }}>
                   <div>🔹 <strong>اسم الطفل:</strong> {form.studentName || '—'}</div>
                   <div>🔹 <strong>تاريخ الميلاد:</strong> {form.dob || '—'}</div>
                   <div>🔹 <strong>العمر الزمني:</strong> {form.age || `${Math.floor(studentAgeMonths / 12)} سنوات`} ({studentAgeMonths} شهراً)</div>
@@ -1325,7 +1325,7 @@ export default function PLS5Assessment({
                 <div style={{ overflowX: 'auto', marginBottom: 20 }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'center' }}>
                     <thead>
-                      <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
+                      <tr style={{ background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', color: 'var(--text-main)' }}>
                         <th style={{ padding: 8, textAlign: 'right' }}>المقياس الفرعي اللغوي</th>
                         <th style={{ padding: 8 }}>الدرجة الخام</th>
                         <th style={{ padding: 8 }}>الدرجة المعيارية (SS)</th>
@@ -1335,7 +1335,7 @@ export default function PLS5Assessment({
                       </tr>
                     </thead>
                     <tbody>
-                      <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-main)' }}>
                         <td style={{ padding: 8, fontWeight: 700, textAlign: 'right', color: '#0369a1' }}>اللغة الاستقبالية (Auditory Comprehension)</td>
                         <td style={{ padding: 8 }}>{scoring.receptiveRawScore} / 40</td>
                         <td style={{ padding: 8, fontWeight: 700 }}>{scoring.receptiveSS}</td>
@@ -1343,7 +1343,7 @@ export default function PLS5Assessment({
                         <td style={{ padding: 8, color: '#0284c7', fontWeight: 700 }}>{Math.floor(scoring.receptiveLAEMonths / 12)}س و {scoring.receptiveLAEMonths % 12}ش</td>
                         <td style={{ padding: 8, color: '#dc2626', fontWeight: 700 }}>{Math.floor(scoring.receptiveDelayGapMonths / 12)}س و {scoring.receptiveDelayGapMonths % 12}ش</td>
                       </tr>
-                      <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-main)' }}>
                         <td style={{ padding: 8, fontWeight: 700, textAlign: 'right', color: '#0f766e' }}>اللغة التعبيرية (Expressive Communication)</td>
                         <td style={{ padding: 8 }}>{scoring.expressiveRawScore} / 40</td>
                         <td style={{ padding: 8, fontWeight: 700 }}>{scoring.expressiveSS}</td>
@@ -1351,8 +1351,8 @@ export default function PLS5Assessment({
                         <td style={{ padding: 8, color: '#0f766e', fontWeight: 700 }}>{Math.floor(scoring.expressiveLAEMonths / 12)}س و {scoring.expressiveLAEMonths % 12}ش</td>
                         <td style={{ padding: 8, color: '#dc2626', fontWeight: 700 }}>{Math.floor(scoring.expressiveDelayGapMonths / 12)}س و {scoring.expressiveDelayGapMonths % 12}ش</td>
                       </tr>
-                      <tr style={{ background: '#f8fafc', fontWeight: 800, borderBottom: '2px solid #cbd5e1' }}>
-                        <td style={{ padding: 10, textAlign: 'right', color: '#0f172a' }}>المؤشر الكلي للغة (Total Language Score)</td>
+                      <tr style={{ background: 'var(--g0)', fontWeight: 800, borderBottom: '2px solid var(--border-color)', color: 'var(--text-main)' }}>
+                        <td style={{ padding: 10, textAlign: 'right', color: 'var(--text-main)' }}>المؤشر الكلي للغة (Total Language Score)</td>
                         <td style={{ padding: 10 }}>{scoring.totalRawScore} / 80</td>
                         <td style={{ padding: 10, color: scoring.severityColor, fontSize: '0.92rem' }}>{scoring.totalSS}</td>
                         <td style={{ padding: 10 }}>%{scoring.totalPR}</td>
@@ -1390,7 +1390,7 @@ export default function PLS5Assessment({
                 </div>
 
                 {/* Automated IEP Goal Generator */}
-                <div style={{ background: '#f8fafc', padding: 14, borderRadius: 10, border: '1px solid #e2e8f0', marginBottom: 16 }} className="no-print">
+                <div style={{ background: 'var(--g0)', padding: 14, borderRadius: 10, border: '1px solid var(--border-color)', marginBottom: 16 }} className="no-print">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
                     <div>
                       <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: '#0f766e' }}>
@@ -1420,7 +1420,7 @@ export default function PLS5Assessment({
                       {scoring.receptiveWeaknesses.map(w => (
                         <label
                           key={`r_${w.id}`}
-                          style={{ display: 'flex', gap: 8, alignItems: 'flex-start', background: '#fff', padding: '6px 10px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: '0.76rem', cursor: 'pointer' }}
+                          style={{ display: 'flex', gap: 8, alignItems: 'flex-start', background: 'var(--card-bg, #ffffff)', padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border-color)', fontSize: '0.76rem', cursor: 'pointer', color: 'var(--text-main)' }}
                         >
                           <input
                             type="checkbox"
@@ -1430,8 +1430,8 @@ export default function PLS5Assessment({
                           />
                           <div>
                             <span style={{ color: '#0369a1', fontWeight: 800 }}>[استقبالي - بند #{w.id}]: </span>
-                            <strong style={{ color: '#1e293b' }}>{w.text}</strong>
-                            <span style={{ display: 'block', fontSize: '0.7rem', color: '#0f766e', marginTop: 2 }}>🎯 الهدف المقترح: {w.goal}</span>
+                            <strong style={{ color: 'var(--text-main)' }}>{w.text}</strong>
+                            <span style={{ display: 'block', fontSize: '0.7rem', color: '#0284c7', marginTop: 2 }}>🎯 الهدف المقترح: {w.goal}</span>
                           </div>
                         </label>
                       ))}
@@ -1440,7 +1440,7 @@ export default function PLS5Assessment({
                       {scoring.expressiveWeaknesses.map(w => (
                         <label
                           key={`e_${w.id}`}
-                          style={{ display: 'flex', gap: 8, alignItems: 'flex-start', background: '#fff', padding: '6px 10px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: '0.76rem', cursor: 'pointer' }}
+                          style={{ display: 'flex', gap: 8, alignItems: 'flex-start', background: 'var(--card-bg, #ffffff)', padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border-color)', fontSize: '0.76rem', cursor: 'pointer', color: 'var(--text-main)' }}
                         >
                           <input
                             type="checkbox"
@@ -1450,8 +1450,8 @@ export default function PLS5Assessment({
                           />
                           <div>
                             <span style={{ color: '#0f766e', fontWeight: 800 }}>[تعبيري - بند #{w.id}]: </span>
-                            <strong style={{ color: '#1e293b' }}>{w.text}</strong>
-                            <span style={{ display: 'block', fontSize: '0.7rem', color: '#0f766e', marginTop: 2 }}>🎯 الهدف المقترح: {w.goal}</span>
+                            <strong style={{ color: 'var(--text-main)' }}>{w.text}</strong>
+                            <span style={{ display: 'block', fontSize: '0.7rem', color: '#0d9488', marginTop: 2 }}>🎯 الهدف المقترح: {w.goal}</span>
                           </div>
                         </label>
                       ))}
@@ -1460,7 +1460,7 @@ export default function PLS5Assessment({
                 </div>
 
                 {/* Print Signatures */}
-                <div className="only-print" style={{ display: 'none', gridTemplateColumns: '1fr 1fr', gap: 40, marginTop: 30, borderTop: '1px dashed #cbd5e1', paddingTop: 16, fontSize: '0.8rem' }}>
+                <div className="only-print" style={{ display: 'none', gridTemplateColumns: '1fr 1fr', gap: 40, marginTop: 30, borderTop: '1px dashed var(--border-color)', paddingTop: 16, fontSize: '0.8rem', color: 'var(--text-main)' }}>
                   <div style={{ textAlign: 'center' }}>
                     <span>توقيع أخصائي التخاطب واللغة:</span>
                     <div style={{ height: 40 }} />
@@ -1521,7 +1521,7 @@ export default function PLS5Assessment({
               type="button"
               className="btn btn-xs"
               onClick={() => handleAutoFill('normal')}
-              style={{ fontSize: '0.7rem', padding: '3px 7px', background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', fontWeight: 700 }}
+              style={{ fontSize: '0.7rem', padding: '3px 7px', background: 'rgba(22, 163, 74, 0.15)', color: '#22c55e', border: '1px solid rgba(22, 163, 74, 0.3)', fontWeight: 700 }}
               title="تعبئة درجات تمثل نمواً لغوياً طبيعياً متزناً"
             >
               ⚡ تجربة (طبيعي)
@@ -1530,7 +1530,7 @@ export default function PLS5Assessment({
               type="button"
               className="btn btn-xs"
               onClick={() => handleAutoFill('mild')}
-              style={{ fontSize: '0.7rem', padding: '3px 7px', background: '#fef9c3', color: '#854d0e', border: '1px solid #fde047', fontWeight: 700 }}
+              style={{ fontSize: '0.7rem', padding: '3px 7px', background: 'rgba(234, 179, 8, 0.15)', color: '#eab308', border: '1px solid rgba(234, 179, 8, 0.3)', fontWeight: 700 }}
               title="تعبئة درجات تمثل تأخراً لغوياً بسيطاً"
             >
               ⚡ تجربة (تأخر بسيط)
@@ -1539,7 +1539,7 @@ export default function PLS5Assessment({
               type="button"
               className="btn btn-xs"
               onClick={() => handleAutoFill('moderate')}
-              style={{ fontSize: '0.7rem', padding: '3px 7px', background: '#ffedd5', color: '#9a3412', border: '1px solid #fdba74', fontWeight: 700 }}
+              style={{ fontSize: '0.7rem', padding: '3px 7px', background: 'rgba(249, 115, 22, 0.15)', color: '#f97316', border: '1px solid rgba(249, 115, 22, 0.3)', fontWeight: 700 }}
               title="تعبئة درجات تمثل تأخراً لغوياً متوسطاً"
             >
               ⚡ تجربة (تأخر متوسط)
@@ -1548,7 +1548,7 @@ export default function PLS5Assessment({
               type="button"
               className="btn btn-xs"
               onClick={() => handleAutoFill('severe')}
-              style={{ fontSize: '0.7rem', padding: '3px 7px', background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5', fontWeight: 700 }}
+              style={{ fontSize: '0.7rem', padding: '3px 7px', background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 700 }}
               title="تعبئة درجات تمثل تأخراً لغوياً شديداً"
             >
               ⚡ تجربة (تأخر شديد)
@@ -1557,7 +1557,7 @@ export default function PLS5Assessment({
               type="button"
               className="btn btn-xs"
               onClick={applyAutoClinicalSummary}
-              style={{ fontSize: '0.7rem', padding: '3px 8px', background: '#ede9fe', color: '#6d28d9', border: '1px solid #c4b5fd', fontWeight: 800 }}
+              style={{ fontSize: '0.7rem', padding: '3px 8px', background: 'rgba(147, 51, 234, 0.15)', color: '#a855f7', border: '1px solid rgba(147, 51, 234, 0.3)', fontWeight: 800 }}
               title="توليد الخلاصة والتشخيص والتوصيات آلياً بناءً على النتائج"
             >
               ✨ توليد التقرير والتوصيات آلياً
