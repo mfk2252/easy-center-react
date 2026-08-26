@@ -4,6 +4,19 @@
  * Highly detailed academic & psychometric structure for clinical Arabic speech-language pathology.
  */
 
+export const PPVT5_COPYRIGHT_INFO = {
+  measureNameAr: 'مقياس بيبودي للمفردات اللغوية المصورة - الإصدار الخامس (PPVT-5)',
+  measureNameEn: 'Peabody Picture Vocabulary Test - Fifth Edition (PPVT™-5)',
+  authorAr: 'د. دوغلاس إم. دان & د. لويد إم. دان (إعداد وتقنين عينة عربية إكلينيكية)',
+  authorEn: 'Douglas M. Dunn, Ph.D. & Lloyd M. Dunn, Ph.D. (Pearson Clinical Assessment)',
+  publisher: 'بيرسون للتقييم الإكلينيكي Pearson Clinical / الأساليب التشخيصية المعتمدة',
+  adaptation: 'النسخة المعربة والمقننة لإدراك الفهم اللغوي والمفردات الاستقبالية للأطفال والناطقين بالعربية',
+  ageRange: 'من عامين و 6 أشهر وحتى 90 سنة (الأعمار النمائية والتأهيلية من 2.5 سنة فما فوق)',
+  normSamples: 'معايير سيكومترية مقننة (الدرجات المعيارية SS = 100 ± 15، الرتب المئينية PR، العمر اللغوي AE)',
+  structure: '8 مجموعات نمائية متدرجة الصعوبة (تضم 96 بنداً مصوراً تتدرج من الأسماء إلى الأفعال والصفات والمفاهيم التجريدية)',
+  scoringSystem: 'نظام الخط القاعدي (Basal Rule: خطأ 0-1) وحد التوقف الإكلينيكي (Ceiling Rule: 6 أخطاء في المجموع) بحساب أوتوماتيكي دقيق',
+};
+
 export const PPVT5_SETS = [
   {
     setId: 1,
