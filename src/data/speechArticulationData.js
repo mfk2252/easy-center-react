@@ -3,6 +3,19 @@
  * Clinical Speech, Language, Oral-Motor & Communication Diagnostic Datasets and Calculation Engine.
  */
 
+export const SPEECH_ARTICULATION_COPYRIGHT_INFO = {
+  measureNameAr: "سجل فحص وتقييم النطق واللغة والتواصل وعضلات الفم الشامل",
+  measureNameEn: "Comprehensive Speech, Language, Oral-Motor & Communication Protocol",
+  authorAr: "فريق استشاريي أمراض التخاطب واللغة وعضلات الفم الإكلينيكي",
+  authorEn: "Clinical Speech & Language Pathology Committee",
+  publisher: "إصدارات الأساليب الإكلينيكية والتشخيص التخاطبي المعتمد / حقوق الطبع والنشر محفوظة",
+  adaptation: "البروتوكول الشامل المقنن لفحص مخارج الحروف، آلية الفم، البلع، الطلاقة، الصوت، واللغة الاجتماعية",
+  ageRange: "من سنتين وحتى 18 سنة (ولكافة الفئات العمرية النمائية)",
+  normSamples: "معايير تشخيصية إكلينيكية (نسب إتقان مهارات الفم، مؤشرات أخطاء النطق الفونيمية، وتوليد أهداف الـ IEP)",
+  structure: "9 بروتوكولات تشخيصية شاملة (آلية الفم OME، البلع، مخارج الأصوات الـ 28، العمليات الفونولوجية، التلعثم، الرنين، الصوت CAPE-V، البراجماتية، وجاهزية AAC)",
+  scoringSystem: "سلم تشخيصي مقنن (سليم، قصور بسيط، قصور متوسط، قصور شديد / تصنيف النطق: سليم، حذف، إبدال، تشويه)",
+};
+
 // 1. بروتوكول فحص آلية الفم والنطق (Oral Mechanism Examination - OME)
 export const SPEECH_ORAL_MOTOR_ITEMS = [
   {
