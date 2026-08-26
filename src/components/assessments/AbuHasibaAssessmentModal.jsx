@@ -1222,8 +1222,8 @@ export default function AbuHasibaAssessmentModal({
               {/* Age Stage Filter Control Bar */}
               <div
                 style={{
-                  background: '#f0f9ff',
-                  border: '1px solid #bae6fd',
+                  background: 'var(--g0)',
+                  border: '1px solid var(--border-color)',
                   borderRadius: 10,
                   padding: '10px 14px',
                   display: 'flex',
@@ -1246,8 +1246,8 @@ export default function AbuHasibaAssessmentModal({
                       padding: '5px 10px',
                       borderRadius: 6,
                       border: '1px solid #0284c7',
-                      background: '#fff',
-                      color: '#0369a1',
+                      background: 'var(--card-bg, #ffffff)',
+                      color: 'var(--text-main)',
                       cursor: 'pointer',
                     }}
                   >
@@ -1309,7 +1309,13 @@ export default function AbuHasibaAssessmentModal({
                       <div
                         key={item.id}
                         style={{
-                          background: isAssumedCorrect ? '#f0fdf4' : isAssumedFailed ? '#fef2f2' : isRecommendedStart ? '#f0f9ff' : 'var(--bg-card)',
+                          background: isAssumedCorrect
+                            ? 'rgba(22, 163, 74, 0.12)'
+                            : isAssumedFailed
+                            ? 'rgba(239, 68, 68, 0.12)'
+                            : isRecommendedStart
+                            ? 'rgba(2, 132, 199, 0.12)'
+                            : 'var(--bg-card, #ffffff)',
                           border: isRecommendedStart ? '2px solid #0284c7' : '1px solid var(--border-color)',
                           borderRadius: 8,
                           padding: '10px 14px',

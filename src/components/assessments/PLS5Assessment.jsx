@@ -1162,7 +1162,13 @@ export default function PLS5Assessment({
                     <div
                       key={item.id}
                       style={{
-                        background: isAssumedCorrect ? '#f0fdf4' : isAssumedFailed ? '#fef2f2' : isRecommendedStart ? '#f0f9ff' : '#fff',
+                        background: isAssumedCorrect
+                          ? 'rgba(22, 163, 74, 0.12)'
+                          : isAssumedFailed
+                          ? 'rgba(239, 68, 68, 0.12)'
+                          : isRecommendedStart
+                          ? 'rgba(2, 132, 199, 0.12)'
+                          : 'var(--card-bg, #ffffff)',
                         border: isRecommendedStart ? '2px solid #0284c7' : '1px solid var(--border-color)',
                         borderRadius: 10,
                         padding: '12px 16px',
@@ -1192,10 +1198,10 @@ export default function PLS5Assessment({
                               {item.text}
                             </strong>
                             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginTop: 4 }}>
-                              <span className="bdg" style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.72rem', fontWeight: 700 }}>
+                              <span className="bdg" style={{ background: 'var(--g0)', color: 'var(--text-sub)', fontSize: '0.72rem', fontWeight: 700 }}>
                                 الفئة: {item.ageGroup}
                               </span>
-                              <span className="bdg" style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.72rem', fontWeight: 700 }}>
+                              <span className="bdg" style={{ background: 'var(--g0)', color: 'var(--text-sub)', fontSize: '0.72rem', fontWeight: 700 }}>
                                 المجال: {item.domain}
                               </span>
                               {isRecommendedStart && <span className="bdg b-bl" style={{ fontSize: '0.72rem', fontWeight: 800 }}>⭐ البداية المقترحة لسنّه</span>}
@@ -1217,7 +1223,7 @@ export default function PLS5Assessment({
                               fontSize: '0.82rem',
                               fontWeight: 800,
                               cursor: 'pointer',
-                              background: currentScore === 1 ? '#16a34a' : '#fff',
+                              background: currentScore === 1 ? '#16a34a' : 'var(--card-bg, #ffffff)',
                               color: currentScore === 1 ? '#fff' : 'var(--text-main)',
                               boxShadow: currentScore === 1 ? '0 2px 4px rgba(22,163,74,0.2)' : 'none',
                               transition: 'all 0.1s',
@@ -1235,7 +1241,7 @@ export default function PLS5Assessment({
                               fontSize: '0.82rem',
                               fontWeight: 800,
                               cursor: 'pointer',
-                              background: currentScore === 0 ? '#ef4444' : '#fff',
+                              background: currentScore === 0 ? '#ef4444' : 'var(--card-bg, #ffffff)',
                               color: currentScore === 0 ? '#fff' : 'var(--text-main)',
                               boxShadow: currentScore === 0 ? '0 2px 4px rgba(239,68,68,0.2)' : 'none',
                               transition: 'all 0.1s',
@@ -1253,8 +1259,8 @@ export default function PLS5Assessment({
                               fontSize: '0.82rem',
                               fontWeight: 800,
                               cursor: 'pointer',
-                              background: currentScore === undefined ? '#e2e8f0' : '#fff',
-                              color: '#64748b',
+                              background: currentScore === undefined ? 'var(--g0)' : 'var(--card-bg, #ffffff)',
+                              color: 'var(--text-sub)',
                             }}
                             title="مسح الإجابة"
                           >
