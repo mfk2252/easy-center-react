@@ -741,6 +741,7 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
   else if (rawId === 'conners_parent' || rawId.includes('conners_parent')) lookupKey = 'conners_parent';
   else if (rawId.includes('conners')) lookupKey = 'conners_3';
   else if (rawId.includes('speech') || rawId.includes('artic')) lookupKey = 'speech_screening';
+  else if (rawId.includes('ppvt') || rawId.includes('peabody')) lookupKey = 'ppvt5';
   else if (rawId.includes('beh')) lookupKey = 'behavior_adjustment';
   else if (SCALE_GOAL_TEMPLATES[measureId]) lookupKey = measureId;
 
@@ -988,6 +989,46 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
             durationWeeks: 8,
           }));
         }
+      }
+    });
+  } else if (lookupKey === 'ppvt5') {
+    Object.entries(responses).forEach(([itemId, score]) => {
+      // For PPVT-5, false or 0 means incorrect response / deficit
+      const isFailed = score === false || score === 0 || score === '0';
+      const targetItem = items.find(it => String(it.id) === String(itemId));
+      if (targetItem && isFailed) {
+        const itemType = targetItem.type || 'مفردات';
+        const priorityRank = (itemType === 'أسماء' || itemType === 'أفعال') ? 1 : 2;
+        const priority = priorityRank === 1 ? 'critical' : 'high';
+        const wordName = targetItem.word || `بند ${itemId}`;
+
+        let goalText = `أن يحدد الطالب الصورة الدالة على كلمة (${wordName}) من بين 4 خيارات مصورة بنسبة دقة لا تقل عن 85%.`;
+        if (itemType === 'أفعال') {
+          goalText = `أن يشير الطالب إلى المثير البصري المعبر عن الفعل الحركي (${wordName}) بدقة 80% عبر 3 جلسات تخاطب متتالية.`;
+        } else if (itemType === 'صفات' || itemType === 'مفاهيم') {
+          goalText = `أن يطابق الطالب المفهوم اللفظي والتجريدي الدال على (${wordName}) بالرمز أو الصورة المعبرة عنه بنسبة نجاح 80%.`;
+        }
+
+        const baseline = generatePlepBaseline(
+          `المفردة الاستقبالية (${wordName} - ${itemType})`,
+          0,
+          1,
+          `عجزاً عن التعرف البصري والاستقبالي على كلمة (${wordName}) من تصنيف (${itemType})`,
+          'تدريباً دلالياً مكثفاً، والربط بين المثير السمعي والصورة الواقعية والمجسمات'
+        );
+
+        recommended.push(buildGoalItem({
+          code: `PPVT-${itemType === 'أسماء' ? 'NOUN' : itemType === 'أفعال' ? 'VERB' : 'CONC'}-${itemId}`,
+          domain: 'speech_language',
+          title: `تنمية مفردة: ${wordName} (${itemType})`,
+          text: goalText,
+          mastery: 'إتقان استيعابي بنسبة 85% في 4 من أصل 5 محاولات',
+          reason: `مشتق من مقياس بيبودي للمفردات المصورة PPVT-5 (بند ${itemId} - ${itemType}) - استجابة غير صحيحة`,
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: 6,
+        }));
       }
     });
   } else if (lookupKey === 'conners_parent') {

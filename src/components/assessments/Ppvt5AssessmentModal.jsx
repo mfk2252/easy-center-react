@@ -2,12 +2,16 @@ import { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { uid, todayStr, calcAge } from '../../utils/dateHelpers';
 import { lsAdd, lsUpd } from '../../hooks/useStorage';
-import { StudentPicker, validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
+import { validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
 import {
   PPVT5_SETS,
+  PPVT5_ITEMS,
+  PPVT5_SET_METADATA,
+  PPVT5_WORD_TYPES,
+  PPVT5_RESPONSE_OPTIONS,
   PPVT5_COPYRIGHT_INFO,
   getPPVT5StartSetByAge,
-  calculatePPVT5Psychometrics
+  calculatePPVT5Psychometrics,
 } from '../../data/ppvt5Data';
 
 const EMPTY_PPVT_FORM = {
@@ -17,11 +21,16 @@ const EMPTY_PPVT_FORM = {
   dob: '',
   age: '',
   diagnosis: '',
+  examinerName: '',
   specialistName: '',
+  raterName: '',
   informantName: '',
+  raterRelation: '',
+  grade: '',
   date: todayStr(),
   notes: '',
-  results: {}, // Map of item_id -> boolean (true for correct, false for incorrect)
+  scores: {}, // Map of item_id -> 1 | 0
+  itemNotes: {},
   clinicalSummary: '',
   recommendations: '',
   customStartSet: null,
@@ -39,1168 +48,1081 @@ export default function Ppvt5AssessmentModal({
 
   const [form, setForm] = useState(() => {
     if (initialData) {
+      const existingScores = initialData.scores || initialData.results || {};
+      // Normalize true/false to 1/0
+      const normalizedScores = {};
+      Object.entries(existingScores).forEach(([k, v]) => {
+        normalizedScores[k] = v === true || v === 1 || v === '1' ? 1 : 0;
+      });
+
       return {
         ...EMPTY_PPVT_FORM,
         ...initialData,
-        results: initialData.results || {},
+        examinerName: initialData.examinerName || initialData.specialistName || currentUser?.name || '',
+        raterName: initialData.raterName || initialData.informantName || '',
+        scores: normalizedScores,
+        itemNotes: initialData.itemNotes || {},
       };
     }
     return {
       ...EMPTY_PPVT_FORM,
-      specialistName: currentUser?.name || '',
+      examinerName: currentUser?.name || '',
       date: todayStr(),
     };
   });
 
-  const [activeTab, setActiveTab] = useState('administration'); // 'administration' | 'interactive' | 'matrix' | 'results'
-  const [activeSetId, setActiveSetId] = useState(1);
-  const [activeItemIndex, setActiveItemIndex] = useState(0);
-  const [showDemographics, setShowDemographics] = useState(true);
-  const [showCopyrightModal, setShowCopyrightModal] = useState(false);
-  const [itemFilter, setItemFilter] = useState('all'); // 'all' | 'correct' | 'incorrect' | 'unanswered'
+  const [activeSetFilter, setActiveSetFilter] = useState('all'); // 'all' | 1 | 2 | ... | 8
+  const [activeTypeFilter, setActiveTypeFilter] = useState('all'); // 'all' | 'أسماء' | 'أفعال' | 'صفات' | 'مفاهيم'
+  const [showCopyrightDetails, setShowCopyrightDetails] = useState(false);
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
+  const [isManualEdit, setIsManualEdit] = useState(false);
 
-  // Auto calculate student's chronological age in months
+  // Auto calculate chronological age in months
   const studentAgeMonths = useMemo(() => {
     if (!form.dob) return 72; // default 6 years
     const ageObj = calcAge(form.dob);
     return Math.max(30, ageObj.years * 12 + ageObj.months);
   }, [form.dob]);
 
-  // Dynamically set active set based on age once student is selected
+  // Set recommended starting set once student is selected
   useEffect(() => {
     if (form.stuId && !form.customStartSet && !initialData) {
       const recommendedSet = getPPVT5StartSetByAge(studentAgeMonths);
-      setActiveSetId(recommendedSet);
-      setActiveItemIndex(0);
+      setActiveSetFilter(recommendedSet);
     }
   }, [form.stuId, studentAgeMonths, form.customStartSet, initialData]);
 
-  // Current active set items
-  const currentSet = useMemo(() => {
-    return PPVT5_SETS.find(s => s.setId === activeSetId) || PPVT5_SETS[0];
-  }, [activeSetId]);
-
-  const currentItem = useMemo(() => {
-    return currentSet.items[activeItemIndex] || currentSet.items[0];
-  }, [currentSet, activeItemIndex]);
-
-  // Total answered count
-  const totalAnswered = useMemo(() => {
-    return Object.keys(form.results).length;
-  }, [form.results]);
-
-  // Calculate live psychometrics based on current results
-  const scoring = useMemo(() => {
-    const answeredItems = Object.keys(form.results).map(Number);
-    if (answeredItems.length === 0) {
-      return {
-        rawScore: 0,
-        standardScore: 100,
-        percentile: 50,
-        ageEquivalentLabel: '—',
-        level: 'لم يتم البدء بالتقييم',
-        severityColor: '#9ca3af',
-        severityKey: 'none',
-        clinicalImpression: '',
-        errorsCount: 0,
-        ceilingItem: 0,
-        basalSetId: 1,
-        ceilingSetId: 1,
-        testedSetIds: [],
-        errorCategories: { 'أسماء': 0, 'أفعال': 0, 'صفات': 0, 'مفاهيم': 0 },
-        correctCategories: { 'أسماء': 0, 'أفعال': 0, 'صفات': 0, 'مفاهيم': 0 },
-        ageLabel: 'غير محدد',
-      };
-    }
-
-    const testedSets = PPVT5_SETS.filter(set => {
-      return set.items.some(item => form.results[item.id] !== undefined);
-    });
-
-    const testedSetIds = testedSets.map(s => s.setId);
-    const minTestedSetId = Math.min(...testedSetIds, 1);
-    const maxTestedSetId = Math.max(...testedSetIds, 1);
-
-    let basalSetId = minTestedSetId;
-    for (let sId = minTestedSetId; sId <= maxTestedSetId; sId++) {
-      const set = PPVT5_SETS.find(s => s.setId === sId);
-      const errorsInSet = set.items.filter(item => form.results[item.id] === false).length;
-      if (errorsInSet <= 1) {
-        basalSetId = sId;
-        break;
-      }
-    }
-
-    let ceilingSetId = maxTestedSetId;
-    for (let sId = maxTestedSetId; sId >= minTestedSetId; sId--) {
-      const set = PPVT5_SETS.find(s => s.setId === sId);
-      const errorsInSet = set.items.filter(item => form.results[item.id] === false).length;
-      if (errorsInSet >= 6) {
-        ceilingSetId = sId;
-        break;
-      }
-    }
-
-    const ceilingItemNumber = ceilingSetId * 12;
-
-    let totalErrorsCount = 0;
-    for (let sId = basalSetId; sId <= ceilingSetId; sId++) {
-      const set = PPVT5_SETS.find(s => s.setId === sId);
-      if (set) {
-        set.items.forEach(item => {
-          if (form.results[item.id] === false) {
-            totalErrorsCount++;
-          }
-        });
-      }
-    }
-
-    const rawScore = Math.max(0, ceilingItemNumber - totalErrorsCount);
-    const psych = calculatePPVT5Psychometrics(rawScore, studentAgeMonths);
-
-    const errorCategories = { 'أسماء': 0, 'أفعال': 0, 'صفات': 0, 'مفاهيم': 0 };
-    const correctCategories = { 'أسماء': 0, 'أفعال': 0, 'صفات': 0, 'مفاهيم': 0 };
-    
-    PPVT5_SETS.forEach(set => {
-      set.items.forEach(item => {
-        if (form.results[item.id] === false) {
-          errorCategories[item.type] = (errorCategories[item.type] || 0) + 1;
-        } else if (form.results[item.id] === true) {
-          correctCategories[item.type] = (correctCategories[item.type] || 0) + 1;
-        }
-      });
-    });
-
-    return {
-      rawScore,
-      ...psych,
-      errorsCount: totalErrorsCount,
-      ceilingItem: ceilingItemNumber,
-      basalSetId,
-      ceilingSetId,
-      testedSetIds,
-      errorCategories,
-      correctCategories,
-    };
-  }, [form, studentAgeMonths]);
-
-  if (!isOpen) return null;
-
-  function handleResultChange(itemId, isCorrect) {
-    setForm(prev => ({
-      ...prev,
-      results: {
-        ...prev.results,
-        [itemId]: isCorrect
-      }
-    }));
-  }
-
-  function handleNextItem() {
-    if (activeItemIndex < currentSet.items.length - 1) {
-      setActiveItemIndex(prev => prev + 1);
-    } else if (activeSetId < PPVT5_SETS.length) {
-      setActiveSetId(prev => prev + 1);
-      setActiveItemIndex(0);
-      toast(`📂 الانتقال إلى: ${PPVT5_SETS.find(s => s.setId === activeSetId + 1)?.name}`, 'ok');
-    } else {
-      toast('🏁 تم التوصل لبداية/نهاية بنود مقياس بيبودي', 'info');
-    }
-  }
-
-  function handlePrevItem() {
-    if (activeItemIndex > 0) {
-      setActiveItemIndex(prev => prev - 1);
-    } else if (activeSetId > 1) {
-      setActiveSetId(prev => prev - 1);
-      setActiveItemIndex(11);
-    }
-  }
-
-  // Auto Generate Clinical Report & IEP goals
-  function generateNarrative() {
-    if (Object.keys(form.results).length === 0) {
-      toast('⚠️ يرجى تقييم بعض البنود لتوليد التقرير السيكومتري', 'er');
+  // Handle student selection from dropdown
+  function handleSelectStudent(e) {
+    const val = e.target.value;
+    if (val === '__other__') {
+      setForm(f => ({
+        ...f,
+        mode: 'other',
+        stuId: '',
+        studentName: '',
+        dob: '',
+        age: '',
+        diagnosis: '',
+        grade: '',
+      }));
+      setIsManualEdit(true);
       return;
     }
 
-    const failedNouns = PPVT5_SETS.flatMap(s => s.items)
-      .filter(it => form.results[it.id] === false && it.type === 'أسماء')
-      .map(it => it.word);
-    
-    const failedVerbs = PPVT5_SETS.flatMap(s => s.items)
-      .filter(it => form.results[it.id] === false && it.type === 'أفعال')
-      .map(it => it.word);
-
-    const failedConcepts = PPVT5_SETS.flatMap(s => s.items)
-      .filter(it => form.results[it.id] === false && (it.type === 'صفات' || it.type === 'مفاهيم'))
-      .map(it => it.word);
-
-    const nounRecommendations = failedNouns.length > 0 
-      ? `• تدريب الطالب على أسماء ومسميات الأشياء التي عجز عن تحديدها مثل: [ ${failedNouns.slice(0, 5).join('، ')} ].`
-      : '';
-    const verbRecommendations = failedVerbs.length > 0
-      ? `• تدريب الطالب على تسمية وفهم الأفعال الحركية والوظيفية التي أخطأ فيها مثل: [ ${failedVerbs.slice(0, 5).join('، ')} ].`
-      : '';
-    const conceptRecommendations = failedConcepts.length > 0
-      ? `• تطوير إدراك المفاهيم المجردة والصفات والمقارنات اللفظية في اللغة العربية مثل: [ ${failedConcepts.slice(0, 5).join('، ')} ].`
-      : '';
-
-    const summaryReport = `📝 التقرير السيكومتري والأكاديمي الرسمي لمقياس بيبودي للمفردات اللغوية المصورة (PPVT-5)
-----------------------------------------------------------------------
-• الطالب المفحوص: ${form.studentName || '—'}
-• تاريخ التقييم: ${form.date}
-• الأخصائي الفاحص: ${form.specialistName || '—'}
-• ولي الأمر / مجيب التقييم: ${form.informantName || 'أحد الوالدين'}
-• السن الزمني الفعلي: ${scoring.ageLabel}
-
-📊 أولاً: النتائج الرقمية والدلالات الإحصائية:
----------------------------------------------
-1. المجموعة القاعدة (Basal Set): المجموعة ${scoring.basalSetId}
-2. البند والمجموعة السقف (Ceiling): البند ${scoring.ceilingItem} (المجموعة ${scoring.ceilingSetId})
-3. إجمالي الأخطاء المرصودة (Errors): ${scoring.errorsCount} خطأ
-4. الدرجة الخام (Raw Score): ${scoring.rawScore} من أصل 96
-5. الدرجة المعيارية (Standard Score): [ ${scoring.standardScore} ] (المتوسط = 100، الانحراف المعياري = 15)
-6. الرتبة المئينية (Percentile Rank): [ ${scoring.percentile}% ]
-7. العمر اللغوي المكافئ (Age Equivalent): [ ${scoring.ageEquivalentLabel} ]
-8. مستوى الأداء اللفظي الاستقبالي: [ ${scoring.level} ]
-
-🔍 ثانياً: التقييم الإكلينيكي والملاحظات:
----------------------------------------------
-${scoring.clinicalImpression}
-
-🛠️ ثالثاً: التوصيات العلاجية والخطط التأهيلية المقترحة:
----------------------------------------------
-1. إلحاق الطالب ببرنامج فردي لتعزيز الحصيلة الدلالية الاستقبالية (Receptive Vocabulary Intervention) بمعدل جلستين أسبوعياً.
-${nounRecommendations}
-${verbRecommendations}
-${conceptRecommendations}
-2. دمج الألعاب البصرية وأنشطة الفرز والتصنيف (المجموعات الضمنية: فواكه، حيوانات، أدوات منزلية، أفعال يومية) لترسيخ المدلولات.
-3. التوجيه الأسري بضرورة تفعيل "الحديث الذاتي ووصف الأحداث اليومية" للطفل لزيادة المثيرات اللفظية بالمنزل والمدرسة.`;
-
-    const iepGoalsText = `🎯 الأهداف السلوكية التربوية المقترحة لبرنامج (IEP):
----------------------------------------------------
-1. أن يشير الطالب إلى المثير البصري الصحيح الدال على الاسم (من المجموعات الضمنية) عند سماع الكلمة الممثلة من بين 4 خيارات بنسبة نجاح لا تقل عن 85%.
-2. أن يحدد الطالب الصورة المعبرة عن الفعل الحركي الوظيفي المطلوب (مثل: يركض، يغوص، يسبح) بدقة 80% خلال 3 جلسات متتالية.
-3. أن يطابق الطالب المفردات المعبرة عن الصفات والمفاهيم اللغوية (مثل: بارد، دافئ، توازن، وعي) بالرسم أو الرمز الدال عليها بنسبة نجاح 80% في التقييم الختامي.`;
-
-    setForm(prev => ({
-      ...prev,
-      clinicalSummary: summaryReport,
-      recommendations: iepGoalsText
-    }));
-
-    toast('✨ تم توليد التقرير السيكومتري والتوصيات التربوية الفردية بدقة أكاديمية', 'ok');
-  }
-
-  // Export Goals to IEP Storage (progPrograms)
-  function exportGoalsToIEP() {
-    if (!form.stuId) {
-      toast('⚠️ يرجى اختيار طالب أولاً لتصدير الأهداف', 'er');
+    if (!val) {
+      setForm(f => ({
+        ...f,
+        mode: 'select',
+        stuId: '',
+        studentName: '',
+        dob: '',
+        age: '',
+        diagnosis: '',
+        grade: '',
+      }));
       return;
     }
 
-    const failedItems = PPVT5_SETS.flatMap(s => s.items).filter(it => form.results[it.id] === false);
-
-    const goalsToExport = [];
-    
-    const failedNouns = failedItems.filter(it => it.type === 'أسماء').map(it => it.word);
-    if (failedNouns.length > 0) {
-      goalsToExport.push({
-        id: uid(),
-        domain: 'التخاطب واللغة والاستقبال',
-        text: `أن يحدد الطالب الكلمة والاسم المطلوب بصرياً من بين 4 خيارات (مثل: ${failedNouns.slice(0, 4).join('، ')}) بنسبة نجاح 85%.`,
-        status: 'unmastered',
-        targetDate: '',
-        evaluationMethod: 'الملاحظة والبطاقات المصورة',
-      });
+    const st = students.find(s => s.id === val);
+    if (st) {
+      const ageStr = st.dob ? calcAge(st.dob).formatted : (st.age || '');
+      setForm(f => ({
+        ...f,
+        mode: 'select',
+        stuId: st.id,
+        studentName: st.name,
+        dob: st.dob || '',
+        age: ageStr,
+        diagnosis: st.diagnosis || '',
+        grade: st.grade || '',
+      }));
+      setIsManualEdit(false);
     }
-
-    const failedVerbs = failedItems.filter(it => it.type === 'أفعال').map(it => it.word);
-    if (failedVerbs.length > 0) {
-      goalsToExport.push({
-        id: uid(),
-        domain: 'التخاطب واللغة والاستقبال',
-        text: `أن يشير الطالب إلى الصورة الدالة على الفعل الحركي المطلوب (مثل: ${failedVerbs.slice(0, 4).join('، ')}) بنسبة نجاح 80%.`,
-        status: 'unmastered',
-        targetDate: '',
-        evaluationMethod: 'الاختيار من متعدد للمثيرات البصرية',
-      });
-    }
-
-    const failedConcepts = failedItems.filter(it => it.type === 'صفات' || it.type === 'مفاهيم').map(it => it.word);
-    if (failedConcepts.length > 0) {
-      goalsToExport.push({
-        id: uid(),
-        domain: 'التخاطب واللغة والاستقبال',
-        text: `أن يطابق الطالب المفاهيم والصفات اللغوية التجريدية (مثل: ${failedConcepts.slice(0, 4).join('، ')}) بالرموز البصرية المعبرة عنها بنسبة 80%.`,
-        status: 'unmastered',
-        targetDate: '',
-        evaluationMethod: 'بطاقات التقييم السيكومتري',
-      });
-    }
-
-    if (goalsToExport.length === 0) {
-      goalsToExport.push({
-        id: uid(),
-        domain: 'التخاطب واللغة والاستقبال',
-        text: 'أن يحافظ الطالب على حصيلته اللفظية الاستقبالية المتقدمة ويرتقي بالمفردات اللغوية في البيئة الصفية والمنزلية بنسبة 90%.',
-        status: 'in_progress',
-        targetDate: '',
-        evaluationMethod: 'مقياس بيبودي PPVT-5',
-      });
-    }
-
-    const savedProgPrograms = JSON.parse(localStorage.getItem('progPrograms') || '[]');
-    const activeStudentProgIndex = savedProgPrograms.findIndex(p => p.stuId === form.stuId && p.status !== 'archived');
-
-    if (activeStudentProgIndex >= 0) {
-      const existingProg = savedProgPrograms[activeStudentProgIndex];
-      existingProg.goals = [...(existingProg.goals || []), ...goalsToExport];
-      existingProg.updatedAt = new Date().toISOString();
-      savedProgPrograms[activeStudentProgIndex] = existingProg;
-      localStorage.setItem('progPrograms', JSON.stringify(savedProgPrograms));
-    } else {
-      const newProgram = {
-        id: uid(),
-        stuId: form.stuId,
-        studentName: form.studentName,
-        dob: form.dob,
-        age: form.age,
-        diagnosis: form.diagnosis,
-        title: 'برنامج تنمية الحصيلة اللفظية والمفردات الاستقبالية (PPVT-5)',
-        duration: 'فصل دراسي (3 أشهر)',
-        startDate: form.date || todayStr(),
-        reviewDate: '',
-        specialistName: form.specialistName || '',
-        status: 'active',
-        goals: goalsToExport,
-        notes: 'تم تصدير أهداف هذا البرنامج أوتوماتيكياً من مقياس بيبودي للمفردات المصورة PPVT-5.',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      savedProgPrograms.push(newProgram);
-      localStorage.setItem('progPrograms', JSON.stringify(savedProgPrograms));
-    }
-
-    toast(`📥 تم تصدير (${goalsToExport.length}) أهداف سلوكية مباشرة إلى برنامج الخطة التربوية الفردية (IEP) للطالب`, 'ok');
   }
 
-  // Auto populate presets
-  function autoFillPPVT(preset = 'normal') {
-    const results = {};
-    if (preset === 'normal') {
-      PPVT5_SETS.forEach(set => {
-        set.items.forEach(it => {
-          if (set.setId <= 3) {
-            results[it.id] = Math.random() > 0.08;
-          } else if (set.setId === 4) {
-            results[it.id] = Math.random() > 0.35;
-          } else if (set.setId === 5) {
-            results[it.id] = Math.random() > 0.65;
-          } else {
-            results[it.id] = false;
-          }
-        });
-      });
-    } else if (preset === 'delay') {
-      PPVT5_SETS.forEach(set => {
-        set.items.forEach(it => {
-          if (set.setId === 1) {
-            results[it.id] = Math.random() > 0.15;
-          } else if (set.setId === 2) {
-            results[it.id] = Math.random() > 0.5;
-          } else {
-            results[it.id] = false;
-          }
-        });
-      });
-    } else if (preset === 'severe') {
-      PPVT5_SETS.forEach(set => {
-        set.items.forEach(it => {
-          if (set.setId === 1) {
-            results[it.id] = Math.random() > 0.55;
-          } else {
-            results[it.id] = false;
-          }
-        });
-      });
-    } else {
-      // Clear
-    }
+  // Real-time Psychometrics calculation
+  const psychometrics = useMemo(() => {
+    return calculatePPVT5Psychometrics(form.scores, studentAgeMonths);
+  }, [form.scores, studentAgeMonths]);
 
-    setForm(prev => ({ ...prev, results }));
-    toast(`⚡ تم تعبئة درجات بيبودي بنمط: ${preset === 'normal' ? 'مستوى طبيعي' : preset === 'delay' ? 'تأخر بسيط' : preset === 'severe' ? 'تأخر شديد' : 'تفريغ 🧹'}`, 'ok');
+  // Filter items based on activeSetFilter and activeTypeFilter
+  const filteredItems = useMemo(() => {
+    return PPVT5_ITEMS.filter(it => {
+      if (activeSetFilter !== 'all' && it.setId !== Number(activeSetFilter)) return false;
+      if (activeTypeFilter !== 'all' && it.type !== activeTypeFilter) return false;
+      return true;
+    });
+  }, [activeSetFilter, activeTypeFilter]);
+
+  // Handle score change
+  function handleScoreSelect(itemId, scoreValue) {
+    setForm(f => {
+      const nextScores = { ...f.scores };
+      if (nextScores[itemId] === scoreValue) {
+        delete nextScores[itemId];
+      } else {
+        nextScores[itemId] = scoreValue;
+      }
+      return { ...f, scores: nextScores };
+    });
   }
 
+  // Handle picture card selection
+  function handlePictureSelect(item, picIndex1Based) {
+    const isCorrect = picIndex1Based === item.targetPic;
+    handleScoreSelect(item.id, isCorrect ? 1 : 0);
+  }
+
+  // Handle item note change
+  function handleItemNoteChange(itemId, noteText) {
+    setForm(f => ({
+      ...f,
+      itemNotes: {
+        ...f.itemNotes,
+        [itemId]: noteText,
+      },
+    }));
+  }
+
+  // Auto fill sample assessment
+  function autoFillSample(levelType = 'normal') {
+    const newScores = {};
+    PPVT5_ITEMS.forEach(it => {
+      if (levelType === 'normal') {
+        // High success rate in sets 1-4, moderate in 5-6
+        if (it.setId <= 3) newScores[it.id] = 1;
+        else if (it.setId <= 5) newScores[it.id] = Math.random() > 0.15 ? 1 : 0;
+        else newScores[it.id] = Math.random() > 0.4 ? 1 : 0;
+      } else if (levelType === 'moderate') {
+        // Moderate delay
+        if (it.setId <= 2) newScores[it.id] = 1;
+        else if (it.setId <= 4) newScores[it.id] = Math.random() > 0.45 ? 1 : 0;
+        else newScores[it.id] = Math.random() > 0.75 ? 1 : 0;
+      } else {
+        // Severe delay
+        if (it.setId === 1) newScores[it.id] = Math.random() > 0.3 ? 1 : 0;
+        else newScores[it.id] = 0;
+      }
+    });
+
+    setForm(f => ({ ...f, scores: newScores }));
+    toast('⚡ تم توليد نموذج إجابات افتراضي متقن للاختبار والتجربة السريعة', 'ok');
+  }
+
+  // Auto generate clinical summary
+  function applyAutoClinicalSummary() {
+    if (psychometrics.totalAnswered < 10) {
+      toast('⚠️ يرجى تقييم عدد كافٍ من المفردات (10 بنود على الأقل) لتوليد الخلاصة التشخيصية', 'er');
+      return;
+    }
+
+    const setDetails = psychometrics.setResults
+      .filter(s => s.answeredCount > 0)
+      .map(s => `• ${s.name}: إتقان (${s.correctCount}/${s.answeredCount}) بنسبة (${s.percentage}%) ${s.isBasal ? ' [قاعدي ✓]' : ''} ${s.isCeiling ? ' [سقف ⚠️]' : ''}`)
+      .join('\n');
+
+    const catDetails = psychometrics.categoryResults
+      .map(c => `• ${c.name}: (${c.correctCount}/${c.answeredCount || c.totalItems}) إتقان ${c.percentage}% - [${c.status}]`)
+      .join('\n');
+
+    const suggestedSummary = `تقرير التقييم السيكومتري للحصيلة اللفظية المصورة بمقياس بيبودي (PPVT-5) - إعداد د. دوغلاس دان & د. لويد دان:\n\n` +
+      `- الدرجة المعيارية (Standard Score): (${psychometrics.standardScore}) بالرتبة المئينية (${psychometrics.percentile}%).\n` +
+      `- الدرجة الخام المحققة: (${psychometrics.rawScore}/96) بنداً مصوراً.\n` +
+      `- العمر اللغوي المكافئ (Age Equivalent): (${psychometrics.ageEquivalentLabel}) مقارنة بالعمر الزمني الفعلي (${psychometrics.ageLabel}).\n` +
+      `- الفارق النمائي المعجمي: (${psychometrics.ageDiffMonths > 0 ? `تأخر قدره ${psychometrics.ageDiffMonths} شهراً` : 'متطابق/متقدم عن السن الزمني'}).\n\n` +
+      `التشخيص الإكلينيكي:\n` +
+      `التصنيف التشخيصي: [${psychometrics.level}]\n\n` +
+      `الأداء على المجموعات النمائية المتدرجة:\n${setDetails}\n\n` +
+      `التحليل الدلالي لمجموعات المفردات:\n${catDetails}\n\n` +
+      `الخلاصة:\n${psychometrics.clinicalImpression}`;
+
+    setForm(f => ({
+      ...f,
+      clinicalSummary: suggestedSummary,
+      recommendations: psychometrics.recommendations,
+    }));
+
+    toast('✨ تم توليد الخلاصة التشخيصية والتوصيات التربوية بدقة فائقة', 'ok');
+  }
+
+  // Handle Save
   function handleSave() {
     if (!validateStudentPick(form)) {
       toast('⚠️ يرجى اختيار الطالب أولاً', 'er');
       return;
     }
 
-    if (totalAnswered === 0) {
-      toast('⚠️ يجب تقييم مفردا واحدة على الأقل لحفظ المقياس', 'er');
+    if (!form.date) {
+      toast('⚠️ يرجى إدخال تاريخ التقييم', 'er');
       return;
+    }
+
+    if (psychometrics.totalAnswered < 12) {
+      if (!window.confirm(`⚠️ تم تقييم ${psychometrics.totalAnswered} من أصل 96 مفردة. هل تود حفظ المقياس كمسودة؟`)) {
+        return;
+      }
     }
 
     const payload = {
       ...form,
-      measureId: 'ppvt5',
-      measureName: 'مقياس بيبودي للمفردات اللغوية المصورة - الإصدار الخامس (PPVT-5)',
-      scaleType: 'ppvt5',
+      measureId: 'ppvt_5',
+      scaleId: 'ppvt_5',
+      measureName: 'مقياس بيبودي للمفردات اللغوية المصورة (PPVT-5)',
+      scaleName: 'مقياس بيبودي للمفردات اللغوية المصورة (PPVT-5)',
+      category: 'speech_language',
+      categoryName: 'النطق والتخاطب والنمو اللغوي',
+      score: psychometrics.standardScore,
+      standardScore: psychometrics.standardScore,
+      rawScore: psychometrics.rawScore,
+      percentile: psychometrics.percentile,
+      ageEquivalent: psychometrics.ageEquivalentLabel,
+      percentage: psychometrics.completionPercentage,
+      level: psychometrics.level,
+      severityLevel: psychometrics.level,
+      severityKey: psychometrics.severityKey,
+      color: psychometrics.severityColor,
+      results: form.scores,
+      scores: form.scores,
+      itemNotes: form.itemNotes,
+      psychometrics,
       author: PPVT5_COPYRIGHT_INFO.authorAr,
-      score: scoring.rawScore,
-      maxScore: 96,
-      percentage: `${Math.round((scoring.rawScore / 96) * 100)}%`,
-      level: scoring.level,
-      severityColor: scoring.severityColor,
-      results: form.results,
-      standardScore: scoring.standardScore,
-      percentile: scoring.percentile,
-      ageEquivalent: scoring.ageEquivalentLabel,
-      psychometrics: scoring,
+      publisher: PPVT5_COPYRIGHT_INFO.publisherAr,
       updatedAt: new Date().toISOString(),
-      createdAt: initialData?.createdAt || new Date().toISOString(),
     };
 
     if (initialData?.id) {
       lsUpd('studentAssessments', initialData.id, payload);
-      toast('✅ تم تحديث تقييم بيبودي PPVT-5 بنجاح', 'ok');
+      toast('✅ تم تحديث تقييم بيبودي (PPVT-5) بنجاح', 'ok');
     } else {
-      lsAdd('studentAssessments', { ...payload, id: uid() });
-      toast('✅ تم حفظ تقييم بيبودي PPVT-5 بنجاح', 'ok');
+      const newId = uid();
+      lsAdd('studentAssessments', {
+        ...payload,
+        id: newId,
+        createdAt: new Date().toISOString(),
+      });
+      toast('✅ تم حفظ تطبيق مقياس بيبودي (PPVT-5) بنجاح', 'ok');
     }
 
-    onSaved();
+    if (onSaved) onSaved();
     onClose();
   }
 
+  // Safe close with confirmation
+  function handleSafeClose() {
+    const answeredCount = Object.keys(form.scores || {}).length;
+    if (answeredCount > 0) {
+      if (window.confirm(`⚠️ تنبيه: تم رصد إجابات لـ (${answeredCount}) مفردة في المقياس. هل أنت متأكد من رغبتك في الإغلاق دون حفظ التغييرات؟`)) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  }
+
+  if (!isOpen) return null;
+
   return (
-    <div className="mbg" style={{ zIndex: 1100 }}>
-      <div className="mb mb-xl" style={{ background: 'var(--card-bg, #fff)', color: 'var(--text-main, #111827)', border: '1px solid var(--border-color, #e5e7eb)', borderRadius: 16, overflow: 'hidden' }}>
-        
-        {/* Modal Header */}
-        <div className="fhd" style={{ padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)', color: '#fff' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#fff' }}>
-                📚 مقياس بيبودي للمفردات اللغوية المصورة (PPVT-5)
-              </h2>
-              <button
-                type="button"
-                onClick={() => setShowCopyrightModal(true)}
-                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', fontSize: '0.74rem', padding: '3px 9px', borderRadius: 20, cursor: 'pointer', fontWeight: 700 }}
-              >
-                📜 حقوق الملكية الفكرية
-              </button>
+    <div className="mbg">
+      <div
+        className="mb"
+        style={{
+          maxWidth: 'min(1360px, calc(100vw - 24px))',
+          width: '100%',
+        }}
+      >
+        {/* Modal Main Header */}
+        <div
+          className="fhd modal-header-custom"
+          style={{
+            padding: '14px 20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #14b8a6 100%)',
+            color: '#fff',
+            flexShrink: 0,
+            gap: 12,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: '1.8rem' }}>📚</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h2 style={{ fontSize: '1.18rem', fontWeight: 800, margin: 0, color: '#fff' }}>
+                  مقياس بيبودي للمفردات اللغوية المصورة (PPVT-5)
+                </h2>
+                <span className="bdg" style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>
+                  96 مفردة مصورة · 8 مجموعات متدرجة
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 3 }}>
+                <span className="bdg" style={{ background: '#134e4a', color: '#ccfbf1', fontSize: '0.68rem', fontWeight: 800 }}>
+                  © Pearson / د. دوغلاس دان & د. لويد دان
+                </span>
+                <span style={{ fontSize: '0.76rem', opacity: 0.95 }}>
+                  Peabody Picture Vocabulary Test (5th Ed) — الأداة المعيارية المعتمدة لتقييم الحصيلة اللفظية والمفردات الاستقبالية
+                </span>
+              </div>
             </div>
-            <p style={{ fontSize: '0.8rem', opacity: 0.9, margin: '2px 0 0 0', fontWeight: 400 }}>
-              أداة سيكومترية مقننة لتقييم الحصيلة اللفظية الاستقبالية للأطفال والناطقين بالعربية (Peabody Picture Vocabulary Test - 5th Ed)
-            </p>
-          </div>
-          <button type="button" className="btn-close-modal" onClick={onClose} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', padding: '6px 14px', borderRadius: 8, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}>إغلاق ✖</button>
-        </div>
-
-        {/* Live Psychometrics Stat Ribbon Bar */}
-        <div style={{ background: 'var(--g0, #f9fafb)', borderBottom: '1px solid var(--border-color, #e5e7eb)', padding: '10px 16px', display: 'flex', gap: 12, overflowX: 'auto', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{ background: 'var(--card-bg, #fff)', padding: '4px 10px', borderRadius: 8, border: '1px solid var(--border-color)', display: 'flex', gap: 6, alignItems: 'center', fontSize: '0.78rem' }}>
-              <span style={{ color: 'var(--text-sub)' }}>الخام:</span>
-              <strong style={{ color: '#0f766e', fontSize: '0.95rem' }}>{scoring.rawScore} / 96</strong>
-            </div>
-            <div style={{ background: 'var(--card-bg, #fff)', padding: '4px 10px', borderRadius: 8, border: '1px solid var(--border-color)', display: 'flex', gap: 6, alignItems: 'center', fontSize: '0.78rem' }}>
-              <span style={{ color: 'var(--text-sub)' }}>المعيارية (SS):</span>
-              <strong style={{ color: '#2563eb', fontSize: '0.95rem' }}>{scoring.standardScore}</strong>
-            </div>
-            <div style={{ background: 'var(--card-bg, #fff)', padding: '4px 10px', borderRadius: 8, border: '1px solid var(--border-color)', display: 'flex', gap: 6, alignItems: 'center', fontSize: '0.78rem' }}>
-              <span style={{ color: 'var(--text-sub)' }}>المئينية (PR):</span>
-              <strong style={{ color: '#059669', fontSize: '0.95rem' }}>{scoring.percentile}%</strong>
-            </div>
-            <div style={{ background: 'var(--card-bg, #fff)', padding: '4px 10px', borderRadius: 8, border: '1px solid var(--border-color)', display: 'flex', gap: 6, alignItems: 'center', fontSize: '0.78rem' }}>
-              <span style={{ color: 'var(--text-sub)' }}>العمر المكافئ:</span>
-              <strong style={{ color: '#d97706', fontSize: '0.88rem' }}>{scoring.ageEquivalentLabel}</strong>
-            </div>
-            <span className="bdg" style={{ background: `${scoring.severityColor}20`, color: scoring.severityColor, fontWeight: 800, fontSize: '0.74rem', border: `1px solid ${scoring.severityColor}40` }}>
-              {scoring.level}
-            </span>
           </div>
 
-          {/* Quick Simulation Presets */}
-          <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-            <button type="button" className="btn btn-xs" onClick={() => autoFillPPVT('normal')} style={{ background: '#0f766e', color: '#fff', fontSize: '0.72rem', padding: '4px 8px' }}>سليم كلياً ✓</button>
-            <button type="button" className="btn btn-xs" onClick={() => autoFillPPVT('delay')} style={{ background: '#d97706', color: '#fff', fontSize: '0.72rem', padding: '4px 8px' }}>تأخر بسيط 🟡</button>
-            <button type="button" className="btn btn-xs" onClick={() => autoFillPPVT('severe')} style={{ background: '#dc2626', color: '#fff', fontSize: '0.72rem', padding: '4px 8px' }}>تأخر شديد 🔴</button>
-            <button type="button" className="btn btn-xs" onClick={() => autoFillPPVT('clear')} style={{ background: 'var(--g1)', color: 'var(--text-main)', fontSize: '0.72rem', padding: '4px 8px', border: '1px solid var(--border-color)' }}>تفريغ 🧹</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={() => setShowCopyrightDetails(s => !s)}
+              style={{
+                background: showCopyrightDetails ? '#fff' : 'rgba(255,255,255,0.2)',
+                color: showCopyrightDetails ? '#0f766e' : '#fff',
+                border: '1px solid rgba(255,255,255,0.35)',
+                fontWeight: 700,
+              }}
+            >
+              📜 {showCopyrightDetails ? 'إخفاء حقوق الملكية' : 'حقوق الملكية الفكرية'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={handleSafeClose}
+              style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', fontWeight: 700 }}
+            >
+              ✖ إغلاق
+            </button>
           </div>
         </div>
 
-        {/* Modal Subtabs Navbar */}
-        <div style={{ display: 'flex', background: 'var(--card-bg, #fff)', borderBottom: '1px solid var(--border-color)', padding: '0 10px', overflowX: 'auto' }}>
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === 'administration' ? 'active' : ''}`}
-            onClick={() => setActiveTab('administration')}
-            style={{ padding: '12px 18px', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 800, fontSize: '0.86rem', borderBottom: activeTab === 'administration' ? '3px solid #0f766e' : 'none', color: activeTab === 'administration' ? '#0f766e' : 'var(--text-sub)', whiteSpace: 'nowrap' }}
-          >
-            📋 بيانات التأسيس والتعليمات
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === 'interactive' ? 'active' : ''}`}
-            onClick={() => {
-              if (!validateStudentPick(form)) {
-                toast('⚠️ يرجى اختيار الطالب أولاً لبدء الفحص', 'er');
-                return;
-              }
-              setActiveTab('interactive');
+        {/* EXPANDABLE DETAILED COPYRIGHT NOTICE */}
+        {showCopyrightDetails && (
+          <div
+            style={{
+              background: '#f0fdfa',
+              padding: '14px 20px',
+              borderBottom: '2px solid #99f6e4',
+              fontSize: '0.82rem',
+              color: '#134e4a',
+              lineHeight: 1.6,
+              flexShrink: 0,
             }}
-            style={{ padding: '12px 18px', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 800, fontSize: '0.86rem', borderBottom: activeTab === 'interactive' ? '3px solid #0f766e' : 'none', color: activeTab === 'interactive' ? '#0f766e' : 'var(--text-sub)', whiteSpace: 'nowrap' }}
           >
-            🧩 محاكاة التطبيق التفاعلي ({totalAnswered}/96)
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === 'matrix' ? 'active' : ''}`}
-            onClick={() => {
-              if (!validateStudentPick(form)) {
-                toast('⚠️ يرجى اختيار الطالب أولاً', 'er');
-                return;
-              }
-              setActiveTab('matrix');
-            }}
-            style={{ padding: '12px 18px', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 800, fontSize: '0.86rem', borderBottom: activeTab === 'matrix' ? '3px solid #0f766e' : 'none', color: activeTab === 'matrix' ? '#0f766e' : 'var(--text-sub)', whiteSpace: 'nowrap' }}
-          >
-            📊 تحليل المجموعات الضمنية والبنود
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === 'results' ? 'active' : ''}`}
-            onClick={() => {
-              if (!validateStudentPick(form)) {
-                toast('⚠️ يرجى اختيار الطالب أولاً', 'er');
-                return;
-              }
-              setActiveTab('results');
-            }}
-            style={{ padding: '12px 18px', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 800, fontSize: '0.86rem', borderBottom: activeTab === 'results' ? '3px solid #0f766e' : 'none', color: activeTab === 'results' ? '#0f766e' : 'var(--text-sub)', whiteSpace: 'nowrap' }}
-          >
-            📄 التقرير الأكاديمي والأهداف (IEP)
-          </button>
-        </div>
+            <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>📜</span> إشعار حقوق الملكية الفكرية والاعتماد العلمي لمقياس PPVT-5:
+            </div>
 
-        {/* Modal Body Container */}
-        <div style={{ height: 'calc(80vh - 160px)', overflowY: 'auto', padding: 20 }}>
-          
-          {/* TAB 1: ADMINISTRATION */}
-          {activeTab === 'administration' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              
-              {/* Demographics Collapsible Card */}
-              <div className="card" style={{ padding: 18, border: '1px solid var(--border-color)', borderRadius: 12, background: 'var(--card-bg)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#0f766e', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>👤</span> اختيار الطالب والبيانات الديموغرافية
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => setShowDemographics(!showDemographics)}
-                    style={{ background: 'var(--g0)', border: '1px solid var(--border-color)', color: 'var(--text-main)', fontSize: '0.78rem', padding: '4px 10px', borderRadius: 6, cursor: 'pointer', fontWeight: 700 }}
-                  >
-                    {showDemographics ? '🔼 طي البيانات' : '🔽 عرض البيانات'}
-                  </button>
+            <div
+              style={{
+                background: '#ccfbf1',
+                border: '1px solid #5eead4',
+                borderRadius: 8,
+                padding: '8px 12px',
+                marginBottom: 10,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 8,
+                fontSize: '0.8rem',
+                color: '#115e59',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: '1.2rem' }}>⚖️</span>
+                <div>
+                  <strong>إشعار حقوق الملكية الفكرية والاعتماد العلمي:</strong> مقياس بيبودي للمفردات اللغوية المصورة (الإصدار الخامس) — تأليف: د. دوغلاس إم. دان & د. لويد إم. دان (Douglas M. Dunn & Lloyd M. Dunn) · بيرسون للتقييم الإكلينيكي (Pearson Clinical).
                 </div>
+              </div>
+              <span style={{ fontSize: '0.72rem', background: '#f0fdfa', padding: '3px 8px', borderRadius: 6, border: '1px solid #99f6e4', fontWeight: 700 }}>
+                مخصص للتشخيص الإكلينيكي والتخاطبي المرخص
+              </span>
+            </div>
 
-                {showDemographics && (
-                  <>
-                    <StudentPicker
-                      form={form}
-                      setForm={setForm}
-                      students={students}
-                      emps={emps}
-                      showExtra={false}
-                    />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, marginBottom: 8 }}>
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #99f6e4' }}>
+                <strong>المؤلف الأصلي:</strong> {PPVT5_COPYRIGHT_INFO.authorAr} ({PPVT5_COPYRIGHT_INFO.authorEn})
+              </div>
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #99f6e4' }}>
+                <strong>جهة النشر الأصلية:</strong> {PPVT5_COPYRIGHT_INFO.publisherAr}
+              </div>
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #99f6e4' }}>
+                <strong>الفئة المستهدفة:</strong> {PPVT5_COPYRIGHT_INFO.targetAge}
+              </div>
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #99f6e4' }}>
+                <strong>المرجعية السيكومترية:</strong> {PPVT5_COPYRIGHT_INFO.standardsReference}
+              </div>
+            </div>
+            <div style={{ fontSize: '0.78rem', color: '#115e59', background: '#ccfbf1', padding: '8px 12px', borderRadius: 8 }}>
+              {PPVT5_COPYRIGHT_INFO.notice}
+              <br />
+              <strong>{PPVT5_COPYRIGHT_INFO.disclaimer}</strong>
+            </div>
+          </div>
+        )}
 
-                    {form.stuId && (
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginTop: 16, background: 'var(--g0)', padding: 12, borderRadius: 10, border: '1px solid var(--border-color)' }}>
-                        <div>
-                          <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)' }}>تاريخ الميلاد:</span>
-                          <input
-                            type="date"
-                            value={form.dob || ''}
-                            disabled={!!initialData}
-                            onChange={(e) => {
-                              const dobVal = e.target.value;
-                              setForm(prev => ({
-                                ...prev,
-                                dob: dobVal,
-                                age: dobVal ? calcAge(dobVal) : '',
-                              }));
-                            }}
-                            style={{ fontSize: '0.8rem', padding: '4px 6px', width: '100%', border: '1px solid var(--border-color)', borderRadius: 6, background: 'var(--card-bg)', color: 'var(--text-main)', marginTop: 4 }}
-                          />
-                        </div>
-                        <div>
-                          <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)' }}>السن الزمني الفعلي:</span>
-                          <div style={{ fontWeight: 800, fontSize: '0.9rem', marginTop: 6, color: 'var(--text-main)' }}>{scoring.ageLabel} ({studentAgeMonths} شهراً)</div>
-                        </div>
-                        <div>
-                          <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)' }}>المجموعة الإرشادية للبدء:</span>
-                          <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#0f766e', marginTop: 6 }}>المجموعة {getPPVT5StartSetByAge(studentAgeMonths)}</div>
-                        </div>
-                        <div>
-                          <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)' }}>التشخيص الطبي الأولي:</span>
-                          <div style={{ fontWeight: 700, fontSize: '0.9rem', marginTop: 6, color: 'var(--text-main)' }}>{form.diagnosis || 'غير محدد'}</div>
-                        </div>
-                      </div>
-                    )}
-                  </>
+        {/* Real-time Psychometrics & Diagnostic Strip */}
+        <div
+          className="modal-subbar"
+          style={{
+            background: 'var(--g0)',
+            padding: '10px 18px',
+            borderBottom: '1px solid var(--border-color)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
+            flexWrap: 'wrap',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* Standard Score (SS) */}
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                padding: '6px 12px',
+                borderRadius: 8,
+                border: '1.5px solid #0d9488',
+                textAlign: 'center',
+              }}
+            >
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>الدرجة المعيارية (SS):</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: psychometrics.severityColor }}>
+                {psychometrics.standardScore}
+              </span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-sub)', marginRight: 4 }}>
+                (مئيني: {psychometrics.percentile}%)
+              </span>
+            </div>
+
+            {/* Raw Score */}
+            <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-color)', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>الدرجة الخام (Raw):</span>
+              <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f766e' }}>
+                {psychometrics.rawScore} <small style={{ fontSize: '0.7rem', color: 'var(--text-sub)' }}>/ 96</small>
+              </span>
+            </div>
+
+            {/* Age Equivalent */}
+            <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-color)', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>العمر اللغوي المكافئ (AE):</span>
+              <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                <b style={{ color: '#0284c7' }}>{psychometrics.ageEquivalentLabel}</b>
+              </span>
+            </div>
+
+            {/* Basal & Ceiling Sets */}
+            <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-color)', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>القاعدة / السقف:</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                قاعدة: <b style={{ color: '#059669' }}>مجموعة {psychometrics.basalSetId}</b> | سقف: <b style={{ color: '#d97706' }}>مجموعة {psychometrics.ceilingSetId}</b>
+              </span>
+            </div>
+
+            {/* Diagnosis Result Badge */}
+            <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>التصنيف:</span>
+              <span className={`bdg ${psychometrics.severityClass}`} style={{ fontWeight: 800, fontSize: '0.78rem' }}>
+                {psychometrics.level.split(' (')[0]}
+              </span>
+            </div>
+
+            {/* Progress */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>
+                {psychometrics.totalAnswered} / {psychometrics.totalItems} مفردة
+              </span>
+              <div style={{ width: 60, height: 8, background: 'var(--border-color)', borderRadius: 4, overflow: 'hidden' }}>
+                <div
+                  style={{
+                    width: `${psychometrics.completionPercentage}%`,
+                    height: '100%',
+                    background: psychometrics.completionPercentage === 100 ? 'var(--ok)' : '#0d9488',
+                    transition: 'width 0.3s',
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Scrollable Form Body */}
+        <div className="modal-body-scroll" style={{ padding: '16px 20px', flex: 1, overflowY: 'auto' }}>
+          
+          {/* 1. Student & Assessment Info Card - Compact Refactored Header */}
+          <div
+            style={{
+              background: 'var(--g0)',
+              padding: '10px 14px',
+              borderRadius: 10,
+              marginBottom: 14,
+              border: '1px solid var(--border-color)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: isHeaderCollapsed ? 0 : 8,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '0.84rem',
+                  fontWeight: 800,
+                  color: '#0f766e',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span>👦</span>
+                <span>بيانات المفحوص والفحص اللغوي والإكلينيكي</span>
+                {form.studentName && (
+                  <span
+                    style={{
+                      fontSize: '0.76rem',
+                      background: '#ccfbf1',
+                      color: '#0f766e',
+                      padding: '2px 8px',
+                      borderRadius: 6,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {form.studentName}
+                  </span>
                 )}
               </div>
 
-              {/* Psychometric Rules Guidelines Panel */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
-                
-                {/* Rules Checklist */}
-                <div className="card" style={{ padding: 18, border: '1px solid var(--border-color)', borderRadius: 12, background: 'var(--card-bg)' }}>
-                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)' }}>⚖️ ضوابط وقواعد الفحص السيكومتري (PPVT-5)</h4>
-                  <ul style={{ fontSize: '0.8rem', paddingRight: 20, margin: 0, display: 'flex', flexDirection: 'column', gap: 8, color: 'var(--text-sub)' }}>
-                    <li>
-                      <strong style={{ color: 'var(--text-main)' }}>قاعدة البدء (Start Point):</strong> يبدأ الفاحص بالمجموعة المناسبة للسن الزمني للطفل من 1 إلى 8.
-                    </li>
-                    <li>
-                      <strong style={{ color: 'var(--text-main)' }}>قاعدة القاعدة (Basal Rule):</strong> تتحقق عندما يرتكب الطفل <strong style={{ color: '#059669' }}>0 أو 1 خطأ</strong> فقط في مجموعة كاملة (12 بند).
-                    </li>
-                    <li>
-                      <strong style={{ color: 'var(--text-main)' }}>قاعدة السقف (Ceiling Rule):</strong> يتم التوقف الفوري عن التقييم إذا ارتكب الطفل <strong style={{ color: '#dc2626' }}>6 أخطاء أو أكثر</strong> في مجموعة واحدة مكونة من 12 بنداً.
-                    </li>
-                    <li>
-                      <strong style={{ color: 'var(--text-main)' }}>حساب الدرجة الخام:</strong> البند السقف (أعلى بند بالمجموعة الأخيرة المطبقة) مطروحاً منه إجمالي الأخطاء المرصودة.
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Metadata & Informant */}
-                <div className="card" style={{ padding: 18, border: '1px solid var(--border-color)', borderRadius: 12, background: 'var(--card-bg)' }}>
-                  <h4 style={{ margin: '0 0 12px 0', fontSize: '0.92rem', fontWeight: 800, color: '#0f766e' }}>🖋️ ترويسة الجلسة والبيانات الإدارية</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div>
-                      <label style={{ fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: 4, color: 'var(--text-sub)' }}>تاريخ الفحص:</label>
-                      <input
-                        type="date"
-                        className="form-control"
-                        value={form.date}
-                        onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                        style={{ fontSize: '0.82rem', background: 'var(--g0)', color: 'var(--text-main)', border: '1px solid var(--border-color)' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: 4, color: 'var(--text-sub)' }}>الأخصائي الفاحص:</label>
-                      <select
-                        className="form-control"
-                        value={form.specialistName}
-                        onChange={e => setForm(f => ({ ...f, specialistName: e.target.value }))}
-                        style={{ fontSize: '0.82rem', background: 'var(--g0)', color: 'var(--text-main)', border: '1px solid var(--border-color)' }}
-                      >
-                        <option value="">-- اختر الأخصائي --</option>
-                        {emps.map(em => (
-                          <option key={em.id} value={em.name}>{em.name} ({em.role || 'أخصائي'})</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: 4, color: 'var(--text-sub)' }}>ولي الأمر / مجيب التقييم:</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="مثال: الأب / الأم / المعلم المساند"
-                        value={form.informantName || ''}
-                        onChange={e => setForm(f => ({ ...f, informantName: e.target.value }))}
-                        style={{ fontSize: '0.82rem', background: 'var(--g0)', color: 'var(--text-main)', border: '1px solid var(--border-color)' }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsManualEdit(prev => !prev)}
+                  className="btn btn-xs btn-g"
+                  style={{ fontSize: '0.72rem', padding: '3px 8px', height: 24 }}
+                  title="تفعيل التعديل اليدوي على البيانات المجلوبة تلقائياً"
+                >
+                  {isManualEdit ? '🔒 قفل التعديل' : '✏️ تعديل يدوي'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsHeaderCollapsed(prev => !prev)}
+                  className="btn btn-xs btn-g"
+                  style={{ fontSize: '0.72rem', padding: '3px 8px', height: 24, fontWeight: 700 }}
+                >
+                  {isHeaderCollapsed ? '⬇️ إظهار التفاصيل' : '⬆️ إخفاء التفاصيل'}
+                </button>
               </div>
-
             </div>
-          )}
 
-          {/* TAB 2: INTERACTIVE EXAM */}
-          {activeTab === 'interactive' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              
-              {/* Top Navigation Ribbon for Sets */}
-              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 10, borderBottom: '1px solid var(--border-color)' }}>
-                {PPVT5_SETS.map(set => {
-                  const itemsInSet = set.items;
-                  const totalAns = itemsInSet.filter(it => form.results[it.id] !== undefined).length;
-                  const errorsInSet = itemsInSet.filter(it => form.results[it.id] === false).length;
-                  
-                  let setBadgeColor = 'var(--text-sub)';
-                  let setBg = 'var(--g0)';
-                  if (set.setId === activeSetId) {
-                    setBg = '#0f766e20';
-                    setBadgeColor = '#0f766e';
-                  } else if (errorsInSet >= 6) {
-                    setBg = '#dc262620';
-                    setBadgeColor = '#dc2626'; // Ceiling
-                  } else if (totalAns === 12 && errorsInSet <= 1) {
-                    setBg = '#05966920';
-                    setBadgeColor = '#059669'; // Basal Reached
-                  }
-
-                  return (
-                    <button
-                      key={set.setId}
-                      type="button"
-                      onClick={() => {
-                        setActiveSetId(set.setId);
-                        setActiveItemIndex(0);
-                      }}
-                      style={{
-                        padding: '8px 12px',
-                        borderRadius: 10,
-                        border: set.setId === activeSetId ? '2px solid #0f766e' : '1px solid var(--border-color)',
-                        background: setBg,
-                        color: setBadgeColor,
-                        fontWeight: 700,
-                        fontSize: '0.78rem',
-                        whiteSpace: 'nowrap',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: 4
-                      }}
-                    >
-                      <span>المجموعة {set.setId}</span>
-                      <span style={{ fontSize: '0.68rem', opacity: 0.9 }}>({totalAns}/12) {errorsInSet > 0 ? `· ❌ ${errorsInSet}` : ''}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Set Info Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--g0)', padding: '10px 16px', borderRadius: 10, border: '1px solid var(--border-color)' }}>
-                <span style={{ fontWeight: 800, color: '#0f766e', fontSize: '0.9rem' }}>📁 {currentSet.name}</span>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>
-                  البند الحالي: <strong style={{ color: 'var(--text-main)' }}>{currentItem.id}</strong> من أصل 96 بنداً
-                </span>
-              </div>
-
-              {/* Interactive Presentation Box */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16 }}>
-                
-                {/* Left: Huge Picture Card View */}
-                <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '380px', border: '1px solid var(--border-color)', borderRadius: 16, position: 'relative', background: 'var(--card-bg)' }}>
-                  
-                  {/* Top indicators */}
-                  <div style={{ position: 'absolute', top: 12, right: 16, display: 'flex', gap: 8 }}>
-                    <span className="bdg b-bl" style={{ fontSize: '0.74rem' }}>{currentItem.type}</span>
-                    <span className="bdg" style={{ background: '#fef3c7', color: '#d97706', fontSize: '0.74rem' }}>صورة الهدف رقم: {currentItem.targetPic}</span>
-                  </div>
-
-                  {/* Stimulus Word Header */}
-                  <div style={{ textAlign: 'center', marginBottom: 24, marginTop: 12 }}>
-                    <span style={{ fontSize: '0.84rem', color: 'var(--text-sub)', display: 'block', marginBottom: 4 }}>الكلمة المثيرة (استجابة الطفل):</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
-                      <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#0f766e' }}>{currentItem.word}</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const synth = window.speechSynthesis;
-                          if (synth) {
-                            const utterance = new SpeechSynthesisUtterance(`أشِر إلى صورة ${currentItem.word}`);
-                            utterance.lang = 'ar';
-                            synth.speak(utterance);
-                          }
-                        }}
-                        style={{ background: '#0f766e15', border: '1px solid #0f766e40', color: '#0f766e', width: 44, height: 44, borderRadius: '50%', cursor: 'pointer', fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        title="نطق الكلمة إرشادياً"
-                      >
-                        🔊
-                      </button>
+            {!isHeaderCollapsed && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                {/* Mode toggle if other */}
+                {form.mode === 'other' && (
+                  <div style={{ marginBottom: 4 }}>
+                    <div className="fl full">
+                      <label style={{ fontSize: '0.76rem', marginBottom: 2 }}>اسم المستفيد الخارجي <span className="req">*</span></label>
+                      <input
+                        style={{ height: 32, fontSize: '0.82rem' }}
+                        value={form.studentName || ''}
+                        onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
+                        placeholder="اكتب اسم الطالب / المفحوص..."
+                      />
                     </div>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-sub)', margin: '6px 0 0 0' }}>تعليمات الفاحص: "أشِر إلى صورة [ {currentItem.word} ]"</p>
+                  </div>
+                )}
+
+                {/* ROW 1: Clinical Essentials (4 Columns) */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 8,
+                  }}
+                >
+                  {/* 1. Student Selection */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الطالب المسجل <span className="req">*</span></label>
+                    <select
+                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
+                      value={form.mode === 'other' ? '__other__' : (form.stuId || '')}
+                      onChange={handleSelectStudent}
+                    >
+                      <option value="">— اختر من الطلاب المسجلين بالمركز —</option>
+                      {students.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                      <option value="__other__">➕ مستفيد خارجي (غير مسجل)</option>
+                    </select>
                   </div>
 
-                  {/* Visual Choices (Four Pictures) */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, width: '100%', maxWidth: '600px', marginBottom: 24 }}>
-                    {currentItem.pics.map((pic, idx) => {
+                  {/* 2. Chronological Age */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>العمر الزمني</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.age || (form.dob ? calcAge(form.dob).formatted : '')}
+                      readOnly={!isManualEdit}
+                      onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
+                      placeholder="تلقائي حسب تاريخ الميلاد"
+                    />
+                  </div>
+
+                  {/* 3. Medical / Language Diagnosis */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>التشخيص الطبي / اللغوي</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.diagnosis || ''}
+                      readOnly={!isManualEdit && form.mode !== 'other'}
+                      onChange={e => setForm(f => ({ ...f, diagnosis: e.target.value }))}
+                      placeholder="مثال: تأخر نمو لغوي، اضطراب طيف التوحد..."
+                    />
+                  </div>
+
+                  {/* 4. Assessment Date */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>تاريخ التقييم</label>
+                    <input
+                      type="date"
+                      dir="ltr"
+                      style={{ height: 32, fontSize: '0.82rem', textAlign: 'right', padding: '2px 8px' }}
+                      value={form.date || todayStr()}
+                      onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                {/* ROW 2: Respondent and Testing Details (4 Columns) */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 8,
+                  }}
+                >
+                  {/* 1. Examiner / SLP Name */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>أخصائي التخاطب / الفاحص</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      type="text"
+                      placeholder="اسم أخصائي النطق والتخاطب"
+                      value={form.examinerName || ''}
+                      onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* 2. Respondent Name */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>المرافق / المستجيب</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      type="text"
+                      placeholder="اسم ولي الأمر / المعلم المصاحب"
+                      value={form.raterName || ''}
+                      onChange={e => setForm(f => ({ ...f, raterName: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* 3. Grade / Classroom */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الصف / المستوى التعليمي</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      type="text"
+                      placeholder="مثال: الروضة، الصف الأول..."
+                      value={form.grade || ''}
+                      readOnly={!isManualEdit && form.mode !== 'other'}
+                      onChange={e => setForm(f => ({ ...f, grade: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* 4. Relationship / Role */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>صلة القرابة / الصفة</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      type="text"
+                      placeholder="مثال: الأم، الأب، معلم الدمج..."
+                      value={form.raterRelation || ''}
+                      onChange={e => setForm(f => ({ ...f, raterRelation: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 2. Subscale / Set Navigation Tabs & Word Type Filter */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
+              <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                📑 مجموعات المفردات النمائية المتدرجة (PPVT-5 Sets):
+              </div>
+              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                اختر 1 للإشارة الصحيحة للصورة المستهدفة، أو 0 للاستجابة الخاطئة
+              </div>
+            </div>
+
+            {/* Set Tabs */}
+            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 6, marginBottom: 8 }}>
+              <button
+                type="button"
+                className={`tab ${activeSetFilter === 'all' ? 'on' : ''}`}
+                onClick={() => setActiveSetFilter('all')}
+                style={{ fontSize: '0.78rem', padding: '6px 12px', whiteSpace: 'nowrap' }}
+              >
+                🌐 جميع المجموعات (96)
+              </button>
+              {PPVT5_SET_METADATA.map(setMeta => {
+                const setStat = psychometrics.setResults.find(s => s.id === setMeta.id);
+                return (
+                  <button
+                    key={setMeta.id}
+                    type="button"
+                    className={`tab ${activeSetFilter === setMeta.id ? 'on' : ''}`}
+                    onClick={() => setActiveSetFilter(setMeta.id)}
+                    style={{
+                      fontSize: '0.78rem',
+                      padding: '6px 12px',
+                      whiteSpace: 'nowrap',
+                      borderRight: `3px solid ${setMeta.color}`,
+                    }}
+                  >
+                    {setMeta.icon} {setMeta.name.split(' ')[0]} {setMeta.id} ({setStat?.correctCount || 0}/{setMeta.itemsCount})
+                    {setStat?.isBasal && <span style={{ marginRight: 4, color: '#059669', fontWeight: 900 }}>✓</span>}
+                    {setStat?.isCeiling && <span style={{ marginRight: 4, color: '#dc2626', fontWeight: 900 }}>⚠️</span>}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Word Types Filter Pills */}
+            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+              {PPVT5_WORD_TYPES.map(wType => (
+                <button
+                  key={wType.id}
+                  type="button"
+                  onClick={() => setActiveTypeFilter(wType.id)}
+                  className={`btn btn-xs ${activeTypeFilter === wType.id ? 'btn-p' : 'btn-g'}`}
+                  style={{
+                    fontSize: '0.74rem',
+                    padding: '3px 10px',
+                    borderRadius: 20,
+                    fontWeight: activeTypeFilter === wType.id ? 800 : 500,
+                  }}
+                >
+                  {wType.icon} {wType.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 3. Items Evaluation Grid */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+            {filteredItems.map(item => {
+              const currentScore = form.scores[item.id];
+              const currentNote = form.itemNotes[item.id] || '';
+              const setMeta = PPVT5_SET_METADATA.find(s => s.id === item.setId);
+
+              return (
+                <div
+                  key={item.id}
+                  style={{
+                    background: 'var(--bg-card)',
+                    border: currentScore !== undefined
+                      ? (currentScore === 1 ? '1.5px solid #0d9488' : '1.5px solid #ef4444')
+                      : '1px solid var(--border-color)',
+                    borderRadius: 10,
+                    padding: '12px 16px',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
+                    
+                    {/* Item Info & Target Word */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1, minWidth: '260px' }}>
+                      <span
+                        style={{
+                          background: setMeta?.color || '#0d9488',
+                          color: '#fff',
+                          fontWeight: 800,
+                          fontSize: '0.74rem',
+                          padding: '3px 8px',
+                          borderRadius: 6,
+                          flexShrink: 0,
+                        }}
+                      >
+                        #{item.id} · {setMeta?.code} · {item.type}
+                      </span>
+
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                            {item.word}
+                          </span>
+                          <span className="bdg b-gr" style={{ fontSize: '0.7rem' }}>
+                            الصورة المستهدفة: رقم {item.targetPic} ({item.pics[item.targetPic - 1]})
+                          </span>
+                        </div>
+
+                        {item.example && (
+                          <div
+                            style={{
+                              fontSize: '0.78rem',
+                              color: 'var(--text-sub)',
+                              marginTop: 4,
+                              display: 'flex',
+                              alignItems: 'baseline',
+                              gap: 6,
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            <span style={{ color: '#0d9488', fontWeight: 800, flexShrink: 0, fontSize: '0.74rem' }}>
+                              💡 الوصف والمثير:
+                            </span>
+                            <span style={{ color: 'var(--text-sub)' }}>
+                              {item.example}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Quick 1 / 0 Score Buttons */}
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                      {PPVT5_RESPONSE_OPTIONS.map(opt => {
+                        const isSelected = currentScore === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => handleScoreSelect(item.id, opt.value)}
+                            className={`btn btn-xs ${isSelected ? 'btn-p' : 'btn-g'}`}
+                            style={{
+                              padding: '5px 12px',
+                              fontSize: '0.78rem',
+                              fontWeight: isSelected ? 800 : 500,
+                              background: isSelected
+                                ? (opt.value === 1 ? '#059669' : '#dc2626')
+                                : undefined,
+                              color: isSelected ? '#fff' : undefined,
+                              border: isSelected ? 'none' : undefined,
+                            }}
+                            title={opt.description}
+                          >
+                            {opt.label.split(' - ')[0]} {isSelected && '✓'}
+                          </button>
+                        );
+                      })}
+                      {currentScore !== undefined && (
+                        <button
+                          type="button"
+                          onClick={() => handleScoreSelect(item.id, currentScore)}
+                          className="btn btn-xs btn-g"
+                          style={{ fontSize: '0.7rem', padding: '4px 8px' }}
+                          title="مسح الإجابة"
+                        >
+                          مسح
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 4 Picture Choice Cards for Interactive Clinical Administration */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(4, 1fr)',
+                      gap: 8,
+                      marginTop: 8,
+                      marginBottom: 8,
+                    }}
+                  >
+                    {item.pics.map((picEmoji, idx) => {
                       const picNum = idx + 1;
-                      const isTarget = picNum === currentItem.targetPic;
+                      const isTarget = picNum === item.targetPic;
+                      const isChosen = currentScore === 1 ? isTarget : false;
+
                       return (
-                        <div
+                        <button
                           key={idx}
+                          type="button"
+                          onClick={() => handlePictureSelect(item, picNum)}
                           style={{
-                            border: isTarget ? '3px dashed #0f766e' : '1px solid var(--border-color)',
-                            background: isTarget ? '#0f766e10' : 'var(--g0)',
-                            borderRadius: 12,
-                            padding: 16,
-                            textAlign: 'center',
-                            position: 'relative',
+                            background: isTarget && currentScore === 1
+                              ? '#d1fae5'
+                              : isTarget
+                              ? 'var(--g0)'
+                              : 'var(--bg-card)',
+                            border: isTarget && currentScore === 1
+                              ? '2px solid #059669'
+                              : '1px solid var(--border-color)',
+                            borderRadius: 8,
+                            padding: '8px 4px',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            minHeight: '110px'
-                          }}
-                        >
-                          <span style={{ position: 'absolute', top: 6, left: 8, fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-sub)' }}>{picNum}</span>
-                          <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: 6 }}>{pic}</span>
-                          {isTarget && <span style={{ fontSize: '0.64rem', color: '#0f766e', fontWeight: 800 }}>الصورة الهدف</span>}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Score Selector */}
-                  <div style={{ display: 'flex', gap: 12, width: '100%', maxWidth: '400px', background: 'var(--g0)', padding: 12, borderRadius: 12, border: '1px solid var(--border-color)' }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleResultChange(currentItem.id, true);
-                        handleNextItem();
-                      }}
-                      className="btn"
-                      style={{
-                        flex: 1,
-                        background: form.results[currentItem.id] === true ? '#059669' : 'var(--card-bg)',
-                        color: form.results[currentItem.id] === true ? '#fff' : 'var(--text-main)',
-                        borderColor: '#059669',
-                        fontWeight: 800,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6
-                      }}
-                    >
-                      <span>🟢</span>
-                      <span>سليم (1)</span>
-                    </button>
-                    
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleResultChange(currentItem.id, false);
-                        handleNextItem();
-                      }}
-                      className="btn"
-                      style={{
-                        flex: 1,
-                        background: form.results[currentItem.id] === false ? '#dc2626' : 'var(--card-bg)',
-                        color: form.results[currentItem.id] === false ? '#fff' : 'var(--text-main)',
-                        borderColor: '#dc2626',
-                        fontWeight: 800,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6
-                      }}
-                    >
-                      <span>🔴</span>
-                      <span>خطأ (0)</span>
-                    </button>
-                  </div>
-
-                  {/* Prev/Next buttons */}
-                  <div style={{ display: 'flex', gap: 16, marginTop: 18, width: '100%', maxWidth: '400px', justifyContent: 'space-between' }}>
-                    <button
-                      type="button"
-                      onClick={handlePrevItem}
-                      className="btn btn-g btn-sm"
-                      disabled={activeSetId === 1 && activeItemIndex === 0}
-                      style={{ fontWeight: 800 }}
-                    >
-                      ⬅️ البند السابق
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleNextItem}
-                      className="btn btn-g btn-sm"
-                      disabled={activeSetId === PPVT5_SETS.length && activeItemIndex === 11}
-                      style={{ fontWeight: 800 }}
-                    >
-                      البند اللاحق ➡️
-                    </button>
-                  </div>
-
-                </div>
-
-                {/* Right: Quick List of current set items */}
-                <div className="card" style={{ padding: 14, overflowY: 'auto', maxHeight: '420px', border: '1px solid var(--border-color)', borderRadius: 16, background: 'var(--card-bg)' }}>
-                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.86rem', color: '#0f766e', fontWeight: 800, borderBottom: '1px solid var(--border-color)', paddingBottom: 6 }}>📋 بنود المجموعة الحالية</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {currentSet.items.map((item, idx) => {
-                      const res = form.results[item.id];
-                      let itemBg = 'var(--g0)';
-                      let borderC = 'transparent';
-                      let statusText = '⏳ غير مطبق';
-                      let statusCol = 'var(--text-sub)';
-
-                      if (idx === activeItemIndex) {
-                        itemBg = '#0f766e15';
-                        borderC = '#0f766e';
-                      }
-
-                      if (res === true) {
-                        statusText = '🟢 صحيح (1)';
-                        statusCol = '#059669';
-                      } else if (res === false) {
-                        statusText = '🔴 خطأ (0)';
-                        statusCol = '#dc2626';
-                      }
-
-                      return (
-                        <div
-                          key={item.id}
-                          onClick={() => setActiveItemIndex(idx)}
-                          style={{
-                            padding: '8px 10px',
-                            borderRadius: 8,
-                            background: itemBg,
-                            border: `1px solid ${borderC}`,
                             cursor: 'pointer',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            fontSize: '0.78rem'
+                            transition: 'all 0.15s ease',
                           }}
+                          title={`الخيار ${picNum} (${picEmoji}) ${isTarget ? '— الصورة المستهدفة الصحيحة' : ''}`}
                         >
-                          <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>
-                            <span style={{ color: 'var(--text-sub)', marginLeft: 4 }}>{item.id}.</span>
-                            <span>{item.word}</span>
-                          </div>
-                          <span style={{ fontSize: '0.72rem', color: statusCol, fontWeight: 800 }}>{statusText}</span>
-                        </div>
+                          <span style={{ fontSize: '1.6rem', marginBottom: 2 }}>{picEmoji}</span>
+                          <span style={{ fontSize: '0.72rem', color: isTarget ? '#059669' : 'var(--text-sub)', fontWeight: isTarget ? 800 : 500 }}>
+                            صورة {picNum} {isTarget && '★'}
+                          </span>
+                        </button>
                       );
                     })}
                   </div>
-                </div>
 
-              </div>
-
-            </div>
-          )}
-
-          {/* TAB 3: MATRIX & CATEGORIES ANALYSIS */}
-          {activeTab === 'matrix' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              
-              {/* Category Breakdown Progress */}
-              <div className="card" style={{ padding: 18, border: '1px solid var(--border-color)', borderRadius: 12, background: 'var(--card-bg)' }}>
-                <h4 style={{ margin: '0 0 14px 0', fontSize: '0.94rem', fontWeight: 800, color: '#0f766e' }}>📊 تحليل دقة الأداء بحسب الفئة اللغوية للمفردات</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
-                  {Object.entries(scoring.errorCategories || {}).map(([cat, errors]) => {
-                    const corrects = scoring.correctCategories[cat] || 0;
-                    const total = corrects + errors;
-                    const pct = total > 0 ? Math.round((corrects / total) * 100) : 100;
-                    return (
-                      <div key={cat} style={{ background: 'var(--g0)', padding: 12, borderRadius: 10, border: '1px solid var(--border-color)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: 6 }}>
-                          <strong style={{ color: '#0f766e' }}>{cat}</strong>
-                          <span style={{ fontSize: '0.76rem', color: 'var(--text-sub)' }}>{corrects} صحيح | {errors} خطأ ({pct}%)</span>
-                        </div>
-                        <div style={{ background: 'var(--g1)', height: 8, borderRadius: 4, overflow: 'hidden' }}>
-                          <div style={{ width: `${pct}%`, background: '#0f766e', height: '100%', transition: 'width 0.3s ease' }} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Items Filtering Matrix */}
-              <div className="card" style={{ padding: 18, border: '1px solid var(--border-color)', borderRadius: 12, background: 'var(--card-bg)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
-                  <h4 style={{ margin: 0, fontSize: '0.94rem', fontWeight: 800, color: 'var(--text-main)' }}>📋 مصفوفة جميع بنود المقياس الـ 96</h4>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button type="button" className={`btn btn-xs ${itemFilter === 'all' ? 'btn-p' : ''}`} onClick={() => setItemFilter('all')} style={{ background: itemFilter === 'all' ? '#0f766e' : 'var(--g0)', color: itemFilter === 'all' ? '#fff' : 'var(--text-main)' }}>الكل (96)</button>
-                    <button type="button" className={`btn btn-xs ${itemFilter === 'correct' ? 'btn-p' : ''}`} onClick={() => setItemFilter('correct')} style={{ background: itemFilter === 'correct' ? '#059669' : 'var(--g0)', color: itemFilter === 'correct' ? '#fff' : 'var(--text-main)' }}>سليم 🟢</button>
-                    <button type="button" className={`btn btn-xs ${itemFilter === 'incorrect' ? 'btn-p' : ''}`} onClick={() => setItemFilter('incorrect')} style={{ background: itemFilter === 'incorrect' ? '#dc2626' : 'var(--g0)', color: itemFilter === 'incorrect' ? '#fff' : 'var(--text-main)' }}>أخطاء 🔴</button>
-                    <button type="button" className={`btn btn-xs ${itemFilter === 'unanswered' ? 'btn-p' : ''}`} onClick={() => setItemFilter('unanswered')} style={{ background: itemFilter === 'unanswered' ? '#d97706' : 'var(--g0)', color: itemFilter === 'unanswered' ? '#fff' : 'var(--text-main)' }}>غير مطبق ⏳</button>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10, maxHeight: '360px', overflowY: 'auto' }}>
-                  {PPVT5_SETS.flatMap(s => s.items).filter(item => {
-                    const status = form.results[item.id];
-                    if (itemFilter === 'correct') return status === true;
-                    if (itemFilter === 'incorrect') return status === false;
-                    if (itemFilter === 'unanswered') return status === undefined;
-                    return true;
-                  }).map(item => {
-                    const status = form.results[item.id];
-                    let borderC = 'var(--border-color)';
-                    let bg = 'var(--g0)';
-                    let badge = '⏳';
-                    if (status === true) {
-                      borderC = '#059669';
-                      bg = '#05966915';
-                      badge = '🟢';
-                    } else if (status === false) {
-                      borderC = '#dc2626';
-                      bg = '#dc262615';
-                      badge = '🔴';
-                    }
-
-                    return (
-                      <div
-                        key={item.id}
-                        style={{
-                          padding: 10,
-                          borderRadius: 8,
-                          border: `1px solid ${borderC}`,
-                          background: bg,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 4
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem' }}>
-                          <span style={{ fontWeight: 800, color: 'var(--text-sub)' }}>#{item.id}</span>
-                          <span>{badge}</span>
-                        </div>
-                        <span style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--text-main)' }}>{item.word}</span>
-                        <span style={{ fontSize: '0.68rem', color: 'var(--text-sub)' }}>{item.type}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-            </div>
-          )}
-
-          {/* TAB 4: CLINICAL REPORT & IEP GOALS */}
-          {activeTab === 'results' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              
-              {/* Quick Psychometric Matrix Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
-                <div className="card" style={{ padding: 16, border: '1px solid var(--border-color)', borderRadius: 12, textAlign: 'center', background: 'var(--card-bg)' }}>
-                  <span style={{ fontSize: '0.76rem', color: 'var(--text-sub)' }}>الدرجة المعيارية (SS)</span>
-                  <div style={{ fontSize: '2.2rem', fontWeight: 900, color: '#0f766e', margin: '4px 0' }}>{scoring.standardScore}</div>
-                  <span className="bdg b-gr" style={{ fontSize: '0.7rem' }}>المتوسط = 100</span>
-                </div>
-                <div className="card" style={{ padding: 16, border: '1px solid var(--border-color)', borderRadius: 12, textAlign: 'center', background: 'var(--card-bg)' }}>
-                  <span style={{ fontSize: '0.76rem', color: 'var(--text-sub)' }}>الرتبة المئينية (PR)</span>
-                  <div style={{ fontSize: '2.2rem', fontWeight: 900, color: '#2563eb', margin: '4px 0' }}>{scoring.percentile}%</div>
-                  <span className="bdg b-bl" style={{ fontSize: '0.7rem' }}>يتفوق على {scoring.percentile}% من أقرانه</span>
-                </div>
-                <div className="card" style={{ padding: 16, border: '1px solid var(--border-color)', borderRadius: 12, textAlign: 'center', background: 'var(--card-bg)' }}>
-                  <span style={{ fontSize: '0.76rem', color: 'var(--text-sub)' }}>العمر اللغوي الاستقبالي</span>
-                  <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#059669', margin: '14px 0 10px 0' }}>{scoring.ageEquivalentLabel}</div>
-                  <span className="bdg" style={{ fontSize: '0.7rem', background: '#05966920', color: '#059669' }}>السن الزمني: {scoring.ageLabel}</span>
-                </div>
-                <div className="card" style={{ padding: 16, border: '1px solid var(--border-color)', borderRadius: 12, textAlign: 'center', background: 'var(--card-bg)' }}>
-                  <span style={{ fontSize: '0.76rem', color: 'var(--text-sub)' }}>مستوى الأداء والاستجابة</span>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: scoring.severityColor, margin: '16px 0 12px 0' }}>{scoring.level}</div>
-                  <span className="bdg" style={{ fontSize: '0.7rem', background: `${scoring.severityColor}20`, color: scoring.severityColor }}>تصنيف سيكومتري</span>
-                </div>
-              </div>
-
-              {/* Narrative Report & IEP Goals Generator */}
-              <div className="card" style={{ padding: 18, border: '1px solid var(--border-color)', borderRadius: 12, background: 'var(--card-bg)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 10 }}>
-                  <h4 style={{ margin: 0, fontSize: '0.96rem', fontWeight: 800, color: '#0f766e' }}>📄 التقرير السيكومتري وتوليد أهداف الخطة الفردية (IEP)</h4>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button type="button" className="btn btn-sm btn-p" onClick={generateNarrative} style={{ background: '#0f766e', borderColor: '#0f766e', color: '#fff', fontWeight: 700 }}>
-                      🔄 توليد التقرير آلياً
-                    </button>
-                    <button type="button" className="btn btn-sm btn-g" onClick={exportGoalsToIEP} style={{ background: '#2563eb', borderColor: '#2563eb', color: '#fff', fontWeight: 700 }}>
-                      📥 تصدير للـ IEP
-                    </button>
-                  </div>
-                </div>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 700, display: 'block', marginBottom: 4, color: 'var(--text-main)' }}>مسودة التقرير الرسمي الشامل ومؤشرات الأداء السيكومتري:</label>
-                    <textarea
-                      rows={6}
-                      className="form-control"
-                      style={{ fontSize: '0.82rem', fontFamily: 'monospace', background: 'var(--g0)', color: 'var(--text-main)', border: '1px solid var(--border-color)' }}
-                      value={form.clinicalSummary}
-                      onChange={e => setForm(f => ({ ...f, clinicalSummary: e.target.value }))}
-                      placeholder="اضغط على زر التوليد الآلي بالأعلى لتصميم التقرير الإكلينيكي طبقاً للدرجات المرصودة..."
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 700, display: 'block', marginBottom: 4, color: 'var(--text-main)' }}>الأهداف السلوكية التربوية (تصدير مباشر لبرنامج الطالب):</label>
-                    <textarea
-                      rows={4}
-                      className="form-control"
-                      style={{ fontSize: '0.82rem', fontFamily: 'monospace', background: 'var(--g0)', color: 'var(--text-main)', border: '1px solid var(--border-color)' }}
-                      value={form.recommendations}
-                      onChange={e => setForm(f => ({ ...f, recommendations: e.target.value }))}
-                      placeholder="الأهداف السلوكية التي يمكن ترحيلها مباشرة لخطة الطالب الفردية..."
+                  {/* Optional Item Observation Note */}
+                  <div style={{ marginTop: 6 }}>
+                    <input
+                      type="text"
+                      placeholder="ملاحظات نطقية، محاولات تخمين، أو استجابات نوعية لهذا البند (اختياري)..."
+                      value={currentNote}
+                      onChange={e => handleItemNoteChange(item.id, e.target.value)}
+                      style={{
+                        fontSize: '0.76rem',
+                        padding: '4px 8px',
+                        borderRadius: 6,
+                        border: '1px dashed var(--border-color)',
+                        width: '100%',
+                        background: 'var(--g0)',
+                      }}
                     />
                   </div>
                 </div>
+              );
+            })}
+          </div>
+
+          {/* 4. Diagnostic Interpretation & Recommendations Section */}
+          <div style={{ background: 'var(--g0)', padding: 16, borderRadius: 12, border: '1px solid var(--border-color)', marginTop: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+              <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f766e', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>📝</span> الخلاصة التشخيصية والتقرير السيكومتري المعتمد
+              </div>
+              <button
+                type="button"
+                className="btn btn-xs btn-p"
+                onClick={applyAutoClinicalSummary}
+                style={{ fontWeight: 700 }}
+              >
+                ✨ إعادة توليد الخلاصة بناءً على الدرجات
+              </button>
+            </div>
+
+            <div className="fg c1">
+              <div className="fl">
+                <label style={{ fontWeight: 700, fontSize: '0.8rem' }}>التقرير السيكومتري والتشخيص الإكلينيكي للحصيلة اللفظية</label>
+                <textarea
+                  rows={6}
+                  placeholder="الخلاصة التشخيصية والوصف النفسي اللغوي وفق معايير PPVT-5..."
+                  value={form.clinicalSummary || ''}
+                  onChange={e => setForm(f => ({ ...f, clinicalSummary: e.target.value }))}
+                  style={{ fontSize: '0.82rem', lineHeight: 1.5 }}
+                />
               </div>
 
+              <div className="fl">
+                <label style={{ fontWeight: 700, fontSize: '0.8rem' }}>توصيات الخطة التربوية الفردية (IEP) وجلسات التخاطب</label>
+                <textarea
+                  rows={5}
+                  placeholder="التوصيات العلاجية، استراتيجيات تنمية الحصيلة الاستقبالية، وتصميم أهداف الـ IEP..."
+                  value={form.recommendations || ''}
+                  onChange={e => setForm(f => ({ ...f, recommendations: e.target.value }))}
+                  style={{ fontSize: '0.82rem', lineHeight: 1.5 }}
+                />
+              </div>
             </div>
-          )}
+          </div>
 
         </div>
 
         {/* Modal Footer Controls */}
-        <div style={{ flexShrink: 0, padding: '12px 20px', background: 'var(--g0, #f9fafb)', borderTop: '1px solid var(--border-color, #e5e7eb)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ fontSize: '0.76rem', color: 'var(--text-sub)' }}>
-            {validateStudentPick(form) ? `الطالب المحدد: ${form.studentName}` : '⚠️ يرجى اختيار طالب أولاً'}
+        <div
+          style={{
+            padding: '10px 20px',
+            background: 'var(--g0)',
+            borderTop: '1px solid var(--border-color)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexShrink: 0,
+            gap: 10,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>
+              تم الإجابة على <strong>{psychometrics.totalAnswered}</strong> من <strong>{PPVT5_ITEMS.length}</strong> مفردة
+            </span>
+            <span className={`bdg ${psychometrics.completionPercentage === 100 ? 'b-gr' : 'b-or'}`} style={{ fontSize: '0.72rem' }}>
+              {psychometrics.completionPercentage}% مكتمل
+            </span>
+
+            {/* Quick Actions moved to footer */}
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginRight: 6 }}>
+              <button
+                type="button"
+                className="btn btn-xs btn-g"
+                onClick={() => autoFillSample('normal')}
+                title="تعبئة نموذج افتراضي يظهر أداءً طبيعياً"
+                style={{ fontSize: '0.74rem' }}
+              >
+                ⚡ تجربة (طبيعي)
+              </button>
+              <button
+                type="button"
+                className="btn btn-xs btn-g"
+                onClick={() => autoFillSample('moderate')}
+                title="تعبئة نموذج افتراضي يظهر تأخراً لغوياً متوسطاً"
+                style={{ fontSize: '0.74rem' }}
+              >
+                ⚡ تجربة (تأخر متوسط)
+              </button>
+              <button
+                type="button"
+                className="btn btn-xs btn-p"
+                onClick={applyAutoClinicalSummary}
+                style={{ fontWeight: 700, fontSize: '0.74rem' }}
+              >
+                ✨ توليد التقرير والتوصيات آلياً
+              </button>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button type="button" className="btn btn-g" onClick={onClose} style={{ fontWeight: 800 }}>إلغاء</button>
-            <button type="button" className="btn" onClick={handleSave} style={{ background: '#0f766e', borderColor: '#0f766e', color: '#fff', fontWeight: 800 }}>💾 حفظ وتثبيت النتيجة</button>
+
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              type="button"
+              className="btn btn-g"
+              onClick={handleSafeClose}
+            >
+              إلغاء
+            </button>
+            <button
+              type="button"
+              className="btn btn-p"
+              onClick={handleSave}
+              style={{
+                background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 100%)',
+                color: '#fff',
+                fontWeight: 800,
+                border: 'none',
+                padding: '8px 20px',
+              }}
+            >
+              💾 حفظ تقييم بيبودي (PPVT-5)
+            </button>
           </div>
         </div>
-
       </div>
-
-      {/* Copyright Info Modal */}
-      {showCopyrightModal && (
-        <div className="mbg" style={{ zIndex: 1300 }}>
-          <div className="mb" style={{ maxWidth: '640px', background: 'var(--card-bg, #fff)', color: 'var(--text-main, #111827)', border: '1px solid var(--border-color, #e5e7eb)', borderRadius: 16, padding: 24, direction: 'rtl' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: 12, marginBottom: 16 }}>
-              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f766e', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>📜</span> دليل وحقوق الملكية الفكرية (PPVT™-5)
-              </h3>
-              <button type="button" className="btn-close-modal" onClick={() => setShowCopyrightModal(false)} style={{ background: 'var(--g0)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '4px 10px', borderRadius: 8, cursor: 'pointer' }}>✖</button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: '0.86rem', lineHeight: 1.6 }}>
-              <div style={{ background: 'var(--g0)', padding: 12, borderRadius: 10, border: '1px solid var(--border-color)' }}>
-                <strong style={{ color: '#0f766e', display: 'block', marginBottom: 2 }}>اسم المقياس الرسمي:</strong>
-                <span>{PPVT5_COPYRIGHT_INFO.measureNameAr} ({PPVT5_COPYRIGHT_INFO.measureNameEn})</span>
-              </div>
-              <div>
-                <strong style={{ color: 'var(--text-main)' }}>المؤلفون والجهة الناشرة:</strong>
-                <p style={{ margin: '2px 0 0 0', color: 'var(--text-sub)' }}>{PPVT5_COPYRIGHT_INFO.authorAr} · {PPVT5_COPYRIGHT_INFO.publisher}</p>
-              </div>
-              <div>
-                <strong style={{ color: 'var(--text-main)' }}>الفئة العمرية والتطبيق:</strong>
-                <p style={{ margin: '2px 0 0 0', color: 'var(--text-sub)' }}>{PPVT5_COPYRIGHT_INFO.ageRange}</p>
-              </div>
-              <div>
-                <strong style={{ color: 'var(--text-main)' }}>المعايير السيكومترية:</strong>
-                <p style={{ margin: '2px 0 0 0', color: 'var(--text-sub)' }}>{PPVT5_COPYRIGHT_INFO.normSamples}</p>
-              </div>
-              <div>
-                <strong style={{ color: 'var(--text-main)' }}>بنية المقياس وقواعد التطبيق:</strong>
-                <p style={{ margin: '2px 0 0 0', color: 'var(--text-sub)' }}>{PPVT5_COPYRIGHT_INFO.structure}</p>
-                <p style={{ margin: '4px 0 0 0', color: 'var(--text-sub)' }}>{PPVT5_COPYRIGHT_INFO.scoringSystem}</p>
-              </div>
-            </div>
-            <div style={{ marginTop: 20, textAlign: 'left' }}>
-              <button type="button" className="btn btn-p" onClick={() => setShowCopyrightModal(false)} style={{ background: '#0f766e', borderColor: '#0f766e', color: '#fff' }}>إغلاق</button>
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }
