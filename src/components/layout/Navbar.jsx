@@ -3,6 +3,7 @@ import { useLang } from '../../context/LanguageContext';
 import { canSeeTab } from '../../utils/permissions';
 import { syncFromFirebase, getCenterId } from '../../hooks/useStorage';
 import { isPlatformAdminEmail } from '../../firebase/auth';
+import NotificationsDropdown from './NotificationsDropdown';
 
 const NAV_ITEMS = [
   { id: 'dash', key: 'nav.dash', icon: '📊' },
@@ -82,6 +83,8 @@ export default function Navbar() {
       )}
 
       <div className="spacer"/>
+
+      <NotificationsDropdown />
 
       <button
         type="button"
