@@ -40,7 +40,8 @@ export const FONT_OPTIONS = [
   { id: 'cairo', name: 'خط كايرو (Cairo)', family: "'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
   { id: 'almarai', name: 'خط المراعي (Almarai)', family: "'Almarai', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
   { id: 'alexandria', name: 'خط الإسكندرية (Alexandria)', family: "'Alexandria', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
-  { id: 'system', name: 'خط النظام (San Francisco / Apple)', family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
+  { id: 'calibri', name: 'خط كاليبري (Calibri)', family: "'Calibri', 'Carlito', 'Segoe UI', Arial, sans-serif" },
+  { id: 'system', name: 'خط النظام', family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
 ];
 
 export function applyFontFamily(fontId) {
