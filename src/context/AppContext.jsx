@@ -3,27 +3,14 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { getCenterSettings } from '../firebase/db';
 import { signOutUser, checkSubscriptionStatus, isPlatformAdminEmail } from '../firebase/auth';
-import { syncFromFirebase } from '../hooks/useStorage';
+import { syncFromFirebase, SYSTEM_DATA_KEYS } from '../hooks/useStorage';
 import { getWelcomeMessage } from './LanguageContext';
-import { persistCenterMeta } from '../utils/centerMeta';
+import { persistCenterMeta, getCenterPrintMeta } from '../utils/centerMeta';
 import { updateFavicon, updateManifestIcon } from '../utils/favicon';
 
 const AppContext = createContext(null);
 
-const ALL_KEYS = [
-  'students','employees','sessions','appointments','iepGoals',
-  'attStu','attEmp','income','expenses','salaries','leaves',
-  'calEvents','centerActivities','parentInteractions','consultations',
-  'evaluations','warnings','stuReports','behaviorPlans',
-  'studentFees','payments','notifs','manualAlerts','users',
-  'progEvaluations','progPrograms','progReports',
-  'progWeeklyReports','progMonthlyReports','progParentMeetings',
-  'progSemiAnnualReports','progAnnualReports','progBehaviorReports',
-  'progLearningDifficultyReports',
-  'measurements','measureItems','studentAssessments',
-  'bonuses',
-  'progGoalsBank',
-];
+const ALL_KEYS = SYSTEM_DATA_KEYS;
 
 function applyTheme(color) {
   if (!color) return;
@@ -101,13 +88,33 @@ function buildPlatformAdminUser(fbUser) {
     role: 'manager',
     centerId: fbUser.uid,
     isPlatformAdmin: true,
-    subscription: { allowed: true, reason: 'platform_admin' },
+    subscription: { allowed: true, reason: 'platform_admin', status: 'active', isPermanent: true },
   };
 }
 
 export function AppProvider({ children }) {
   const [screen, setScreen] = useState('loading');
-  const [center, setCenter] = useState({ name:'', logo:'', color:'#1a56db', configured:false });
+  const [center, setCenter] = useState(() => {
+    const localMeta = getCenterPrintMeta();
+    return {
+      name: localMeta.name || localMeta.nameAr || '',
+      nameEn: localMeta.nameEn || '',
+      logo: localMeta.logo || '',
+      color: localStorage.getItem('scs_color') || '#1a56db',
+      type: localMeta.type || '',
+      phone: localMeta.phone || '',
+      phoneCode: localMeta.phoneCode || '+966',
+      email: localMeta.email || '',
+      address: localMeta.address || '',
+      currency: localMeta.currency || 'SAR',
+      website: localMeta.website || '',
+      whatsapp: localMeta.whatsapp || '',
+      instagram: localMeta.instagram || '',
+      barcode: localMeta.barcode || '',
+      shifts: localMeta.shifts || {},
+      configured: Boolean(localMeta.name || localMeta.nameAr),
+    };
+  });
   const [currentUser, setCurrentUser] = useState(null);
   const [activeView, setActiveView] = useState('dash');
   const [darkMode, setDarkMode] = useState(false);
@@ -123,8 +130,10 @@ export function AppProvider({ children }) {
     const fs = localStorage.getItem('scs_fontsize') || '15';
     const fw = localStorage.getItem('scs_fontweight') || '400';
     const ff = localStorage.getItem('scs_fontfamily') || 'arabicui';
+    const col = localStorage.getItem('scs_color') || center.color || '#1a56db';
     applyFontVariables(fs, fw);
     applyFontFamily(ff);
+    applyTheme(col);
   }, []);
 
   // أيقونة تبويب المتصفح (Favicon) تتحدّث تلقائياً حسب شعار المركز الحالي.
@@ -157,7 +166,11 @@ export function AppProvider({ children }) {
           setScreen('subscription');
           return;
         }
-        if (centerData) applyCenter(centerData);
+        if (centerData) {
+          applyCenter(centerData);
+        } else {
+          applyCenter(getCenterPrintMeta());
+        }
         setSyncing(true);
         syncFromFirebase(savedSession.centerId, ALL_KEYS)
           .finally(() => { setSyncing(false); setScreen('app'); });
@@ -171,10 +184,19 @@ export function AppProvider({ children }) {
         if (isPlatformAdminEmail(fbUser.email)) {
           const adminUser = buildPlatformAdminUser(fbUser);
           localStorage.setItem('scs_current_uid', fbUser.uid);
+          localStorage.setItem('scs_session', JSON.stringify(adminUser));
           setCurrentUser(adminUser);
           setSubscriptionStatus(adminUser.subscription);
-          setScreen('app');
-          setActiveView('admin');
+          
+          const centerData = await getCenterSettings(fbUser.uid);
+          if (centerData) {
+            applyCenter(centerData);
+          } else {
+            applyCenter(getCenterPrintMeta());
+          }
+          setSyncing(true);
+          syncFromFirebase(fbUser.uid, ALL_KEYS)
+            .finally(() => { setSyncing(false); setScreen('app'); setActiveView('admin'); });
           return;
         }
 
@@ -192,7 +214,7 @@ export function AppProvider({ children }) {
           centerId: fbUser.uid,
           subscription: subStatus
         };
-
+        localStorage.setItem('scs_session', JSON.stringify(user));
         setCurrentUser(user);
         setSubscriptionStatus(subStatus);
 
@@ -207,7 +229,7 @@ export function AppProvider({ children }) {
           syncFromFirebase(fbUser.uid, ALL_KEYS)
             .finally(() => { setSyncing(false); setScreen('app'); });
         } else {
-          applyCenter(centerData || {});
+          applyCenter(centerData || getCenterPrintMeta());
           setScreen('setup');
         }
       } else {
@@ -259,26 +281,34 @@ export function AppProvider({ children }) {
   }
 
   function applyCenter(data) {
+    if (!data) return;
     const social = data.socialLinks || data.social || {};
+    const localSocial = (() => {
+      try { return JSON.parse(localStorage.getItem('scs_center_social') || '{}'); } catch(e) { return {}; }
+    })();
+    const localShifts = (() => {
+      try { return JSON.parse(localStorage.getItem('scs_center_shifts') || '{}'); } catch(e) { return {}; }
+    })();
+
     const c = {
-      name: data.centerName || data.name || '',
-      nameEn: data.nameEn || data.centerNameEn || '',
-      logo: data.logoUrl || data.logo || '',
-      color: data.color || '#1a56db',
-      type: data.type || '',
-      phone: data.phone || '',
-      phoneCode: data.phoneCode || '+966',
-      email: data.email || data.ownerEmail || '',
-      address: data.address || '',
-      currency: data.currency || 'SAR',
-      website: social.website || data.website || '',
-      whatsapp: social.whatsapp || data.whatsapp || '',
-      instagram: social.instagram || data.instagram || '',
-      barcode: data.barcode || '',
-      shifts: data.shifts || {},
+      name: data.centerName || data.name || data.nameAr || localStorage.getItem('scs_center_name') || '',
+      nameEn: data.nameEn || data.centerNameEn || localStorage.getItem('scs_center_name_en') || '',
+      logo: data.logoUrl || data.logo || localStorage.getItem('scs_center_logo') || '',
+      color: data.color || localStorage.getItem('scs_color') || '#1a56db',
+      type: data.type || localStorage.getItem('scs_center_type') || '',
+      phone: data.phone || localStorage.getItem('scs_center_phone') || '',
+      phoneCode: data.phoneCode || localStorage.getItem('scs_center_phone_code') || '+966',
+      email: data.email || data.ownerEmail || localStorage.getItem('scs_center_email') || '',
+      address: data.address || localStorage.getItem('scs_center_address') || '',
+      currency: data.currency || localStorage.getItem('scs_center_currency') || 'SAR',
+      website: social.website || data.website || localSocial.website || localStorage.getItem('scs_center_website') || '',
+      whatsapp: social.whatsapp || data.whatsapp || localSocial.whatsapp || localStorage.getItem('scs_center_whatsapp') || '',
+      instagram: social.instagram || data.instagram || localSocial.instagram || localStorage.getItem('scs_center_instagram') || '',
+      barcode: data.barcode || localStorage.getItem('scs_center_barcode') || '',
+      shifts: data.shifts || localShifts || {},
       status: data.status || 'active',
-      setupCompleted: !!data.setupCompleted,
-      configured: data.setupCompleted || data.isSetup || false,
+      setupCompleted: data.setupCompleted ?? (data.isSetup ?? true),
+      configured: Boolean(data.centerName || data.name || data.nameAr || localStorage.getItem('scs_center_name')),
       subscription: data.subscription || null,
       createdAt: data.createdAt || null,
     };
@@ -287,6 +317,7 @@ export function AppProvider({ children }) {
       name: c.name,
       nameEn: c.nameEn,
       logo: c.logo,
+      type: c.type,
       address: c.address,
       phone: c.phone,
       phoneCode: c.phoneCode,
@@ -296,6 +327,7 @@ export function AppProvider({ children }) {
       socialLinks: { website: c.website, whatsapp: c.whatsapp, instagram: c.instagram },
       shifts: c.shifts,
     });
+    if (c.color) localStorage.setItem('scs_color', c.color);
     const centerFs = data.fontSize || localStorage.getItem('scs_fontsize') || '15';
     const centerFw = data.fontWeight || localStorage.getItem('scs_fontweight') || '400';
     const centerFf = data.fontFamily || localStorage.getItem('scs_fontfamily') || 'arabicui';
@@ -310,6 +342,7 @@ export function AppProvider({ children }) {
   async function loadCenterData(centerId) {
     const data = await getCenterSettings(centerId);
     if (data) applyCenter(data);
+    else applyCenter(getCenterPrintMeta());
   }
 
   useEffect(() => {
@@ -340,21 +373,20 @@ export function AppProvider({ children }) {
   }, []);
 
   const login = useCallback(async (user) => {
-    if (user.isPlatformAdmin) {
-      localStorage.setItem('scs_current_uid', user.centerId);
-      setCurrentUser(user);
-      setSubscriptionStatus(user.subscription);
-      setScreen('app');
-      setActiveView('admin');
-      return;
-    }
-
-    if (user.role !== 'manager') {
-      localStorage.setItem('scs_session', JSON.stringify(user));
-    }
-    localStorage.setItem('scs_current_uid', user.centerId);
+    localStorage.setItem('scs_session', JSON.stringify(user));
+    localStorage.setItem('scs_current_uid', user.centerId || user.uid);
     setCurrentUser(user);
     setSubscriptionStatus(user.subscription);
+
+    if (user.isPlatformAdmin) {
+      const centerData = await getCenterSettings(user.centerId || user.uid);
+      if (centerData) applyCenter(centerData);
+      else applyCenter(getCenterPrintMeta());
+      setSyncing(true);
+      syncFromFirebase(user.centerId || user.uid, ALL_KEYS)
+        .finally(() => { setSyncing(false); setScreen('app'); setActiveView('admin'); });
+      return;
+    }
 
     if (user.subscription && !user.subscription.allowed) {
       setScreen('subscription');
@@ -362,7 +394,7 @@ export function AppProvider({ children }) {
     }
 
     const centerData = await getCenterSettings(user.centerId);
-    applyCenter(centerData || {});
+    applyCenter(centerData || getCenterPrintMeta());
 
     if (user.needsSetup || user.isNewCenter || (user.role === 'manager' && needsCenterSetup(centerData))) {
       setScreen('setup');
@@ -394,12 +426,30 @@ export function AppProvider({ children }) {
 
   const updateCenterData = useCallback((c) => {
     setCenter(c);
-    applyTheme(c.color);
-    document.title = c.name || 'نظام إدارة المركز';
+    if (c.color) {
+      applyTheme(c.color);
+      localStorage.setItem('scs_color', c.color);
+    }
+    if (c.name) document.title = c.name;
+    persistCenterMeta({
+      name: c.name,
+      nameEn: c.nameEn,
+      logo: c.logo,
+      type: c.type,
+      address: c.address,
+      phone: c.phone,
+      phoneCode: c.phoneCode,
+      email: c.email,
+      currency: c.currency,
+      barcode: c.barcode,
+      socialLinks: { website: c.website, whatsapp: c.whatsapp, instagram: c.instagram },
+      shifts: c.shifts,
+    });
   }, []);
 
   const updateCenterColor = useCallback((color) => {
     applyTheme(color);
+    localStorage.setItem('scs_color', color);
     setCenter(prev=>({...prev,color}));
   }, []);
 
@@ -415,7 +465,7 @@ export function AppProvider({ children }) {
       <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',background:'var(--bg)',flexDirection:'column',gap:16}}>
         <div style={{fontSize:'3rem'}}>☁️</div>
         <div style={{fontWeight:700,fontSize:'1.1rem'}}>جارٍ مزامنة البيانات...</div>
-        <div style={{color:'var(--g5)',fontSize:'.85rem'}}>يتم جلب بياناتك من Firebase</div>
+        <div style={{color:'var(--g5)',fontSize:'.85rem'}}>يتم جلب وحفظ بياناتك السحابية بأمان</div>
       </div>
     );
   }

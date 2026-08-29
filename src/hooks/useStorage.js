@@ -9,6 +9,7 @@ export function getCenterId() {
   try {
     const session = JSON.parse(localStorage.getItem('scs_session') || 'null');
     if (session?.centerId) return session.centerId;
+    if (session?.uid) return session.uid;
     return localStorage.getItem('scs_current_uid') || null;
   } catch(e) { return null; }
 }
@@ -21,12 +22,32 @@ function cKey(key) {
 export function lsGet(key) {
   try {
     const r = localStorage.getItem(cKey(key));
-    return r ? JSON.parse(r) : [];
+    if (r) return JSON.parse(r);
+    const cId = getCenterId();
+    if (cId) {
+      const fallback = localStorage.getItem(`local_${key}`) || localStorage.getItem(key);
+      if (fallback) {
+        try {
+          const parsed = JSON.parse(fallback);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            localStorage.setItem(`${cId}_${key}`, fallback);
+            return parsed;
+          }
+        } catch(_) {}
+      }
+    }
+    return [];
   } catch(e) { return []; }
 }
 
 function lsWrite(key, data) {
-  try { localStorage.setItem(cKey(key), JSON.stringify(data)); } catch(e) {}
+  try {
+    localStorage.setItem(cKey(key), JSON.stringify(data));
+    const cId = getCenterId();
+    if (cId) {
+      localStorage.setItem(`local_${key}`, JSON.stringify(data));
+    }
+  } catch(e) {}
 }
 
 export function lsAdd(key, item) {
@@ -53,7 +74,7 @@ export function lsUpd(key, id, data) {
     lsWrite(key, list);
   }
   if (cId) {
-    fbUpdate(cId, key, id, { ...data, updatedAt: new Date().toISOString() }).catch(e => console.warn(`fbUpd ${key}:`, e));
+    fbSet(cId, key, id, { ...data, updatedAt: new Date().toISOString() }).catch(e => console.warn(`fbUpd ${key}:`, e));
   }
 }
 
@@ -80,6 +101,7 @@ export const SYSTEM_DATA_KEYS = [
   'bonuses',
   'progGoalsBank',
   'partners', 'custody', 'centerVisits', 'buses', 'centerDocs',
+  'invoices', 'financialAccounts',
 ];
 
 /** تحديث شامل: جلب كل البيانات من Firestore + إعدادات المركز */
@@ -96,8 +118,23 @@ export async function syncFromFirebase(centerId, keys) {
   await Promise.all(keys.map(async (key) => {
     try {
       const data = await fbGetAll(centerId, key);
-      if (data.length > 0) {
+      if (Array.isArray(data) && data.length > 0) {
         localStorage.setItem(`${centerId}_${key}`, JSON.stringify(data));
+      } else {
+        const localRaw = localStorage.getItem(`${centerId}_${key}`) || localStorage.getItem(`local_${key}`) || localStorage.getItem(key);
+        if (localRaw) {
+          try {
+            const parsed = JSON.parse(localRaw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              localStorage.setItem(`${centerId}_${key}`, JSON.stringify(parsed));
+              for (const itm of parsed) {
+                if (itm && itm.id) {
+                  fbSet(centerId, key, itm.id, itm).catch(() => {});
+                }
+              }
+            }
+          } catch (_) {}
+        }
       }
     } catch(e) { console.warn(`sync ${key}:`, e); }
   }));

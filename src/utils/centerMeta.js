@@ -10,9 +10,11 @@ export function getCenterPrintMeta(extra = {}) {
   })();
 
   return {
-    nameAr: extra.name || localStorage.getItem('scs_center_name') || '',
+    name: extra.name || extra.nameAr || localStorage.getItem('scs_center_name') || '',
+    nameAr: extra.name || extra.nameAr || localStorage.getItem('scs_center_name') || '',
     nameEn: extra.nameEn || localStorage.getItem('scs_center_name_en') || '',
     logo: extra.logo || localStorage.getItem('scs_center_logo') || '',
+    type: extra.type || localStorage.getItem('scs_center_type') || '',
     address: extra.address || localStorage.getItem('scs_center_address') || '',
     phone: extra.phone || localStorage.getItem('scs_center_phone') || '',
     phoneCode: extra.phoneCode || localStorage.getItem('scs_center_phone_code') || '+966',
@@ -28,8 +30,11 @@ export function getCenterPrintMeta(extra = {}) {
 }
 
 export function persistCenterMeta(data) {
+  if (!data) return;
   if (data.name != null) localStorage.setItem('scs_center_name', data.name);
+  if (data.nameAr != null) localStorage.setItem('scs_center_name', data.nameAr);
   if (data.nameEn != null) localStorage.setItem('scs_center_name_en', data.nameEn);
+  if (data.type != null) localStorage.setItem('scs_center_type', data.type);
   if (data.logo != null) localStorage.setItem('scs_center_logo', data.logo);
   if (data.address != null) localStorage.setItem('scs_center_address', data.address);
   if (data.phone != null) localStorage.setItem('scs_center_phone', data.phone);

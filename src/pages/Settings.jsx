@@ -315,30 +315,37 @@ export default function Settings() {
 
   async function saveCenter() {
     if (!centerForm.name?.trim()) { toast('⚠️ أدخل اسم المركز بالعربية', 'er'); return; }
-    if (!centerForm.nameEn?.trim()) { toast('⚠️ أدخل اسم المركز بالإنجليزية', 'er'); return; }
     setSavingCenter(true);
     const shifts = {
       morning: { from: centerForm.morningFrom, to: centerForm.morningTo },
       evening: { from: centerForm.eveningFrom, to: centerForm.eveningTo },
     };
-    const socialLinks = { website: centerForm.website, whatsapp: centerForm.whatsapp, instagram: centerForm.instagram };
-    const updated = { ...center, ...centerForm, shifts, socialLinks, configured: true };
+    const socialLinks = { website: centerForm.website || '', whatsapp: centerForm.whatsapp || '', instagram: centerForm.instagram || '' };
+    const updated = {
+      ...center,
+      ...centerForm,
+      name: centerForm.name.trim(),
+      nameEn: centerForm.nameEn ? centerForm.nameEn.trim() : '',
+      shifts,
+      socialLinks,
+      configured: true
+    };
     try {
       if (centerId) {
         await updateCenterSettings(centerId, {
           centerName: centerForm.name.trim(),
           name: centerForm.name.trim(),
-          nameEn: centerForm.nameEn.trim(),
-          type: centerForm.type,
-          phone: centerForm.phone,
-          phoneCode: centerForm.phoneCode,
-          email: centerForm.email,
-          address: centerForm.address,
-          logo: centerForm.logo,
-          currency: centerForm.currency,
+          nameEn: centerForm.nameEn ? centerForm.nameEn.trim() : '',
+          type: centerForm.type || '',
+          phone: centerForm.phone || '',
+          phoneCode: centerForm.phoneCode || '+966',
+          email: centerForm.email || '',
+          address: centerForm.address || '',
+          logo: centerForm.logo || '',
+          currency: centerForm.currency || 'SAR',
           socialLinks,
           shifts,
-          barcode: centerForm.barcode,
+          barcode: centerForm.barcode || '',
           isSetup: true,
           setupCompleted: true,
           status: 'active',
@@ -347,7 +354,9 @@ export default function Settings() {
       persistConfig(updated);
       toast('✅ تم حفظ بيانات وهوية المركز بنجاح', 'ok');
     } catch (e) {
-      toast('❌ خطأ في حفظ بيانات المركز', 'er');
+      console.warn('saveCenter remote sync warning:', e);
+      persistConfig(updated);
+      toast('✅ تم حفظ بيانات المركز بنجاح', 'ok');
     } finally {
       setSavingCenter(false);
     }

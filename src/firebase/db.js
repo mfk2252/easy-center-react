@@ -53,19 +53,21 @@ export async function getCenterSettings(centerId) {
 }
 
 export async function updateCenterSettings(centerId, data) {
-  await updateDoc(doc(db, 'centers', centerId), { ...data, updatedAt: serverTimestamp() });
+  if (!centerId) return;
+  await setDoc(doc(db, 'centers', centerId), { ...data, updatedAt: serverTimestamp() }, { merge: true });
 }
 
 export async function createUser(centerId, userData) {
   const userId = `${centerId}_${userData.username}`;
   await setDoc(doc(db, 'users', userId), {
     ...userData, centerId, active: true, createdAt: serverTimestamp()
-  });
+  }, { merge: true });
   return userId;
 }
 
 export async function updateUser(userId, data) {
-  await updateDoc(doc(db, 'users', userId), { ...data, updatedAt: serverTimestamp() });
+  if (!userId) return;
+  await setDoc(doc(db, 'users', userId), { ...data, updatedAt: serverTimestamp() }, { merge: true });
 }
 
 export async function deleteUser(userId) {
