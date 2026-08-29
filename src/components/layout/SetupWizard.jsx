@@ -5,9 +5,11 @@ import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { handleFileInputChange, FILE_ACCEPT_IMAGE } from '../../utils/fileUpload';
 import { ARAB_CURRENCIES } from '../../utils/constants';
+import CountrySelector from '../ui/CountrySelector';
+import { GLOBAL_CURRENCIES } from '../../data/countriesData';
 
 const PRESET_COLORS = ['#1a56db','#7c3aed','#059669','#dc2626','#d97706','#0891b2','#db2777','#0f172a'];
-const CURRENCIES = ARAB_CURRENCIES.map(c => ({ v: c.code, l: c.label }));
+const CURRENCIES = GLOBAL_CURRENCIES.map(c => ({ v: c.code, l: c.label }));
 const CENTER_TYPES_AR = ['تربية خاصة','تأهيل','تخاطب','توحد','صعوبات تعلم','متعدد التخصصات'];
 const CENTER_TYPES_EN = ['Special education','Rehabilitation','Speech','Autism','Learning difficulties','Multi-specialty'];
 
@@ -171,6 +173,24 @@ export default function SetupWizard() {
         <div className="modal-body-scroll setup-form-scroll">
           {step === 1 && (
             <div className="fg" style={{ gap: 12 }}>
+              <div className="fl full">
+                <CountrySelector
+                  value={form.countryCode || form.country || 'SA'}
+                  onChange={countryObj => {
+                    setForm(f => ({
+                      ...f,
+                      country: countryObj.code,
+                      countryCode: countryObj.code,
+                      countryNameAr: countryObj.nameAr,
+                      countryNameEn: countryObj.nameEn,
+                      phoneCode: countryObj.phoneCode,
+                      currency: countryObj.currency,
+                      address: f.address ? f.address : `${countryObj.nameAr} - ${countryObj.defaultCity}`,
+                    }));
+                  }}
+                  label="دولة / بلد المركز المعتمد"
+                />
+              </div>
               <div className="fl full">
                 <label>{t('setup.lang')}</label>
                 <select value={form.platformLang} onChange={e => { setForm(f => ({ ...f, platformLang: e.target.value })); setLangCtx(e.target.value); }}>

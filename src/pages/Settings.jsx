@@ -3,6 +3,8 @@ import { useApp, FONT_OPTIONS, applyFontFamily, applyFontVariables, applyFontSet
 import { lsGet, lsAdd, lsUpd, lsDel, refreshAllSystemData, getCenterId } from '../hooks/useStorage';
 import { uid, todayStr } from '../utils/dateHelpers';
 import { ROLES, ARAB_CURRENCIES } from '../utils/constants';
+import CountrySelector from '../components/ui/CountrySelector';
+import { GLOBAL_CURRENCIES, getCountryPresets } from '../data/countriesData';
 import { updateCenterSettings, getCenterUsers, getCenterSettings } from '../firebase/db';
 import { createStaffAccount, checkSubscriptionStatus, isPlatformAdminEmail } from '../firebase/auth';
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
@@ -95,6 +97,10 @@ export default function Settings() {
   const [centerForm, setCenterForm] = useState({
     name: center.name || '',
     nameEn: center.nameEn || localStorage.getItem('scs_center_name_en') || '',
+    country: center.country || center.countryCode || localStorage.getItem('scs_center_country') || 'SA',
+    countryCode: center.countryCode || center.country || localStorage.getItem('scs_center_country_code') || 'SA',
+    countryNameAr: center.countryNameAr || localStorage.getItem('scs_center_country_name_ar') || 'المملكة العربية السعودية',
+    countryNameEn: center.countryNameEn || localStorage.getItem('scs_center_country_name_en') || 'Saudi Arabia',
     type: center.type || '',
     phone: center.phone || '',
     phoneCode: center.phoneCode || localStorage.getItem('scs_center_phone_code') || '+966',
@@ -111,6 +117,20 @@ export default function Settings() {
     eveningFrom: center.shifts?.evening?.from || '16:00',
     eveningTo: center.shifts?.evening?.to || '20:00',
   });
+
+  const handleCountryChange = (countryObj) => {
+    setCenterForm(f => ({
+      ...f,
+      country: countryObj.code,
+      countryCode: countryObj.code,
+      countryNameAr: countryObj.nameAr,
+      countryNameEn: countryObj.nameEn,
+      phoneCode: countryObj.phoneCode,
+      currency: countryObj.currency,
+      address: f.address ? f.address : `${countryObj.nameAr} - ${countryObj.defaultCity}`,
+    }));
+    toast(`🌐 تم اختيار ${countryObj.nameAr}: تم ضبط مفتاح الاتصال (${countryObj.phoneCode}) والعملة (${countryObj.currency}) تلقائياً`, 'ok');
+  };
 
   const [selColor, setSelColor] = useState(center.color || '#1a56db');
   const [refreshLoading, setRefreshLoading] = useState(false);
@@ -336,6 +356,10 @@ export default function Settings() {
           centerName: centerForm.name.trim(),
           name: centerForm.name.trim(),
           nameEn: centerForm.nameEn ? centerForm.nameEn.trim() : '',
+          country: centerForm.country || 'SA',
+          countryCode: centerForm.countryCode || 'SA',
+          countryNameAr: centerForm.countryNameAr || 'المملكة العربية السعودية',
+          countryNameEn: centerForm.countryNameEn || 'Saudi Arabia',
           type: centerForm.type || '',
           phone: centerForm.phone || '',
           phoneCode: centerForm.phoneCode || '+966',
@@ -740,12 +764,20 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* المعلومات الأساسية والترخيص */}
+          {/* المعلومات الأساسية والترخيص والدولة */}
           <div className="wg" style={{ margin: 0 }}>
             <div className="wg-h">
-              <h3>📋 البيانات الأساسية للمركز</h3>
+              <h3>📋 البيانات الأساسية للمركز والدولة المعتمدة</h3>
             </div>
             <div className="wg-b" style={{ padding: '20px' }}>
+              <div style={{ marginBottom: 20 }}>
+                <CountrySelector
+                  value={centerForm.countryCode || centerForm.country || 'SA'}
+                  onChange={handleCountryChange}
+                  label="الدولة / البلد المعتمد للمركز"
+                />
+              </div>
+
               <div className="fg c2">
                 <div className="fl">
                   <label>اسم المركز (باللغة العربية) <span className="req">*</span></label>
@@ -785,7 +817,7 @@ export default function Settings() {
                     value={centerForm.currency}
                     onChange={e => setCenterForm(f => ({ ...f, currency: e.target.value }))}
                   >
-                    {ARAB_CURRENCIES.map(c => (
+                    {GLOBAL_CURRENCIES.map(c => (
                       <option key={c.code} value={c.code}>{c.label}</option>
                     ))}
                   </select>

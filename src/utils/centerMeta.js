@@ -13,6 +13,10 @@ export function getCenterPrintMeta(extra = {}) {
     name: extra.name || extra.nameAr || localStorage.getItem('scs_center_name') || '',
     nameAr: extra.name || extra.nameAr || localStorage.getItem('scs_center_name') || '',
     nameEn: extra.nameEn || localStorage.getItem('scs_center_name_en') || '',
+    country: extra.country || extra.countryCode || localStorage.getItem('scs_center_country') || 'SA',
+    countryCode: extra.countryCode || extra.country || localStorage.getItem('scs_center_country_code') || 'SA',
+    countryNameAr: extra.countryNameAr || localStorage.getItem('scs_center_country_name_ar') || 'المملكة العربية السعودية',
+    countryNameEn: extra.countryNameEn || localStorage.getItem('scs_center_country_name_en') || 'Saudi Arabia',
     logo: extra.logo || localStorage.getItem('scs_center_logo') || '',
     type: extra.type || localStorage.getItem('scs_center_type') || '',
     address: extra.address || localStorage.getItem('scs_center_address') || '',
@@ -34,6 +38,10 @@ export function persistCenterMeta(data) {
   if (data.name != null) localStorage.setItem('scs_center_name', data.name);
   if (data.nameAr != null) localStorage.setItem('scs_center_name', data.nameAr);
   if (data.nameEn != null) localStorage.setItem('scs_center_name_en', data.nameEn);
+  if (data.country != null) localStorage.setItem('scs_center_country', data.country);
+  if (data.countryCode != null) localStorage.setItem('scs_center_country_code', data.countryCode);
+  if (data.countryNameAr != null) localStorage.setItem('scs_center_country_name_ar', data.countryNameAr);
+  if (data.countryNameEn != null) localStorage.setItem('scs_center_country_name_en', data.countryNameEn);
   if (data.type != null) localStorage.setItem('scs_center_type', data.type);
   if (data.logo != null) localStorage.setItem('scs_center_logo', data.logo);
   if (data.address != null) localStorage.setItem('scs_center_address', data.address);

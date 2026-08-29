@@ -293,6 +293,10 @@ export function AppProvider({ children }) {
     const c = {
       name: data.centerName || data.name || data.nameAr || localStorage.getItem('scs_center_name') || '',
       nameEn: data.nameEn || data.centerNameEn || localStorage.getItem('scs_center_name_en') || '',
+      country: data.country || data.countryCode || localStorage.getItem('scs_center_country') || 'SA',
+      countryCode: data.countryCode || data.country || localStorage.getItem('scs_center_country_code') || 'SA',
+      countryNameAr: data.countryNameAr || localStorage.getItem('scs_center_country_name_ar') || 'المملكة العربية السعودية',
+      countryNameEn: data.countryNameEn || localStorage.getItem('scs_center_country_name_en') || 'Saudi Arabia',
       logo: data.logoUrl || data.logo || localStorage.getItem('scs_center_logo') || '',
       color: data.color || localStorage.getItem('scs_color') || '#1a56db',
       type: data.type || localStorage.getItem('scs_center_type') || '',
@@ -316,6 +320,10 @@ export function AppProvider({ children }) {
     persistCenterMeta({
       name: c.name,
       nameEn: c.nameEn,
+      country: c.country,
+      countryCode: c.countryCode,
+      countryNameAr: c.countryNameAr,
+      countryNameEn: c.countryNameEn,
       logo: c.logo,
       type: c.type,
       address: c.address,
