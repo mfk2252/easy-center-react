@@ -4,7 +4,7 @@ import { useLang } from '../../context/LanguageContext';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { handleFileInputChange, FILE_ACCEPT_IMAGE } from '../../utils/fileUpload';
-import { ARAB_CURRENCIES } from '../../utils/constants';
+import { ARAB_CURRENCIES, CENTER_ACTIVITY_TYPES } from '../../utils/constants';
 import CountrySelector from '../ui/CountrySelector';
 import { GLOBAL_CURRENCIES } from '../../data/countriesData';
 
@@ -207,8 +207,8 @@ export default function SetupWizard() {
               <div className="fl full">
                 <label>{t('setup.centerType')}</label>
                 <select value={form.type} onChange={fld('type')}>
-                  <option value="">{lang === 'en' ? 'Select' : 'اختر'}</option>
-                  {types.map(tp => <option key={tp} value={tp}>{tp}</option>)}
+                  <option value="">{lang === 'en' ? 'Select Center Type / Activity' : '— اختر نوع ونشاط المركز —'}</option>
+                  {CENTER_ACTIVITY_TYPES.map(tp => <option key={tp} value={tp}>{tp}</option>)}
                 </select>
               </div>
               <div className="fl full">

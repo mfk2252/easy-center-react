@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useApp, FONT_OPTIONS, applyFontFamily, applyFontVariables, applyFontSettings } from '../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel, refreshAllSystemData, getCenterId } from '../hooks/useStorage';
 import { uid, todayStr } from '../utils/dateHelpers';
-import { ROLES, ARAB_CURRENCIES } from '../utils/constants';
+import { ROLES, ARAB_CURRENCIES, CENTER_ACTIVITY_TYPES } from '../utils/constants';
 import CountrySelector from '../components/ui/CountrySelector';
 import { GLOBAL_CURRENCIES, getCountryPresets } from '../data/countriesData';
 import { updateCenterSettings, getCenterUsers, getCenterSettings } from '../firebase/db';
@@ -112,6 +112,9 @@ export default function Settings() {
     whatsapp: center.whatsapp || '',
     instagram: center.instagram || '',
     barcode: center.barcode || '',
+    shiftType: center.shifts?.type || center.shifts?.shiftType || (center.shifts?.single?.from ? 'single' : 'double'),
+    singleFrom: center.shifts?.single?.from || center.shifts?.morning?.from || '08:00',
+    singleTo: center.shifts?.single?.to || center.shifts?.morning?.to || '16:00',
     morningFrom: center.shifts?.morning?.from || '07:00',
     morningTo: center.shifts?.morning?.to || '12:00',
     eveningFrom: center.shifts?.evening?.from || '16:00',
@@ -337,8 +340,13 @@ export default function Settings() {
     if (!centerForm.name?.trim()) { toast('⚠️ أدخل اسم المركز بالعربية', 'er'); return; }
     setSavingCenter(true);
     const shifts = {
-      morning: { from: centerForm.morningFrom, to: centerForm.morningTo },
-      evening: { from: centerForm.eveningFrom, to: centerForm.eveningTo },
+      type: centerForm.shiftType || 'double',
+      shiftType: centerForm.shiftType || 'double',
+      single: { from: centerForm.singleFrom || '08:00', to: centerForm.singleTo || '16:00' },
+      morning: { from: centerForm.morningFrom || '07:00', to: centerForm.morningTo || '12:00' },
+      evening: centerForm.shiftType === 'single'
+        ? { from: '', to: '' }
+        : { from: centerForm.eveningFrom || '16:00', to: centerForm.eveningTo || '20:00' },
     };
     const socialLinks = { website: centerForm.website || '', whatsapp: centerForm.whatsapp || '', instagram: centerForm.instagram || '' };
     const updated = {
@@ -799,13 +807,13 @@ export default function Settings() {
                 </div>
 
                 <div className="fl">
-                  <label>نوع ونشاط المركز</label>
+                  <label>نوع ونشاط المركز / التخصص</label>
                   <select
                     value={centerForm.type}
                     onChange={e => setCenterForm(f => ({ ...f, type: e.target.value }))}
                   >
-                    <option value="">— اختر النشاط —</option>
-                    {['تربية خاصة', 'تأهيل', 'تخاطب', 'توحد', 'صعوبات تعلم', 'متعدد التخصصات'].map(tType => (
+                    <option value="">— اختر نوع ونشاط المركز —</option>
+                    {CENTER_ACTIVITY_TYPES.map(tType => (
                       <option key={tType} value={tType}>{tType}</option>
                     ))}
                   </select>
@@ -910,71 +918,125 @@ export default function Settings() {
 
           {/* فترات ومواعيد العمل */}
           <div className="wg" style={{ margin: 0 }}>
-            <div className="wg-h">
+            <div className="wg-h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
               <h3>⏰ مواعيد وفترات الدوام الرسمي</h3>
+              <div style={{ display: 'flex', gap: 8, background: 'var(--g1)', padding: '4px', borderRadius: 8 }}>
+                <button
+                  type="button"
+                  className={`btn ${centerForm.shiftType === 'single' ? 'btn-p' : 'btn-g'}`}
+                  onClick={() => setCenterForm(f => ({ ...f, shiftType: 'single' }))}
+                  style={{ padding: '6px 14px', fontSize: '.8rem' }}
+                >
+                  ☀️ دوام فترة واحدة (من : إلى)
+                </button>
+                <button
+                  type="button"
+                  className={`btn ${centerForm.shiftType === 'double' ? 'btn-p' : 'btn-g'}`}
+                  onClick={() => setCenterForm(f => ({ ...f, shiftType: 'double' }))}
+                  style={{ padding: '6px 14px', fontSize: '.8rem' }}
+                >
+                  🌗 دوام فترتان (صباحي ومسائي)
+                </button>
+              </div>
             </div>
             <div className="wg-b" style={{ padding: '20px' }}>
-              <div className="fg c2">
+              {centerForm.shiftType === 'single' ? (
                 <div style={{
-                  padding: '16px',
+                  padding: '18px 20px',
                   background: 'var(--g0)',
                   borderRadius: 12,
-                  border: '1px solid var(--border-color)'
+                  border: '1px solid var(--border-color)',
+                  maxWidth: 650
                 }}>
-                  <div style={{ fontWeight: 800, fontSize: '.9rem', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-main)' }}>
-                    <span>🌅</span>
-                    <span>الفترة الصباحية</span>
+                  <div style={{ fontWeight: 800, fontSize: '.95rem', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-main)' }}>
+                    <span>☀️</span>
+                    <span>دوام الفترة الواحدة المتواصلة</span>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                     <div className="fl">
-                      <label>من</label>
+                      <label style={{ fontWeight: 700 }}>وقت بدء الدوام (من)</label>
                       <input
                         type="time"
-                        value={centerForm.morningFrom}
-                        onChange={e => setCenterForm(f => ({ ...f, morningFrom: e.target.value }))}
+                        value={centerForm.singleFrom}
+                        onChange={e => setCenterForm(f => ({ ...f, singleFrom: e.target.value }))}
                       />
                     </div>
                     <div className="fl">
-                      <label>إلى</label>
+                      <label style={{ fontWeight: 700 }}>وقت نهاية الدوام (إلى)</label>
                       <input
                         type="time"
-                        value={centerForm.morningTo}
-                        onChange={e => setCenterForm(f => ({ ...f, morningTo: e.target.value }))}
+                        value={centerForm.singleTo}
+                        onChange={e => setCenterForm(f => ({ ...f, singleTo: e.target.value }))}
                       />
                     </div>
+                  </div>
+                  <div style={{ marginTop: 12, fontSize: '.78rem', color: 'var(--g5)', lineHeight: 1.5 }}>
+                    💡 نظام الفترة الواحدة المتواصلة: يبدأ الدوام من الساعة المحددة (مثلاً 08:00 صباحاً) وينتهي عند (16:00 عصراً) دون وجود فترتين منفصلتين.
                   </div>
                 </div>
+              ) : (
+                <div className="fg c2">
+                  <div style={{
+                    padding: '16px',
+                    background: 'var(--g0)',
+                    borderRadius: 12,
+                    border: '1px solid var(--border-color)'
+                  }}>
+                    <div style={{ fontWeight: 800, fontSize: '.9rem', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-main)' }}>
+                      <span>🌅</span>
+                      <span>الفترة الصباحية</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <div className="fl">
+                        <label>من</label>
+                        <input
+                          type="time"
+                          value={centerForm.morningFrom}
+                          onChange={e => setCenterForm(f => ({ ...f, morningFrom: e.target.value }))}
+                        />
+                      </div>
+                      <div className="fl">
+                        <label>إلى</label>
+                        <input
+                          type="time"
+                          value={centerForm.morningTo}
+                          onChange={e => setCenterForm(f => ({ ...f, morningTo: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
 
-                <div style={{
-                  padding: '16px',
-                  background: 'var(--g0)',
-                  borderRadius: 12,
-                  border: '1px solid var(--border-color)'
-                }}>
-                  <div style={{ fontWeight: 800, fontSize: '.9rem', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-main)' }}>
-                    <span>🌆</span>
-                    <span>الفترة المسائية</span>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                    <div className="fl">
-                      <label>من</label>
-                      <input
-                        type="time"
-                        value={centerForm.eveningFrom}
-                        onChange={e => setCenterForm(f => ({ ...f, eveningFrom: e.target.value }))}
-                      />
+                  <div style={{
+                    padding: '16px',
+                    background: 'var(--g0)',
+                    borderRadius: 12,
+                    border: '1px solid var(--border-color)'
+                  }}>
+                    <div style={{ fontWeight: 800, fontSize: '.9rem', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-main)' }}>
+                      <span>🌆</span>
+                      <span>الفترة المسائية</span>
                     </div>
-                    <div className="fl">
-                      <label>إلى</label>
-                      <input
-                        type="time"
-                        value={centerForm.eveningTo}
-                        onChange={e => setCenterForm(f => ({ ...f, eveningTo: e.target.value }))}
-                      />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <div className="fl">
+                        <label>من</label>
+                        <input
+                          type="time"
+                          value={centerForm.eveningFrom}
+                          onChange={e => setCenterForm(f => ({ ...f, eveningFrom: e.target.value }))}
+                        />
+                      </div>
+                      <div className="fl">
+                        <label>إلى</label>
+                        <input
+                          type="time"
+                          value={centerForm.eveningTo}
+                          onChange={e => setCenterForm(f => ({ ...f, eveningTo: e.target.value }))}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 

@@ -75,6 +75,22 @@ export function getCurrencySymbol(code) {
   return resolveCurrencySymbol(code);
 }
 
+export const CENTER_ACTIVITY_TYPES = [
+  'تعديل السلوك / تحليل السلوك التطبيقي (ABA)',
+  'روضة / دمج',
+  'مدرسة خاصة',
+  'مدرسة فكرية',
+  'تأهيل ورعاية نهارية',
+  'تربية خاصة وتأهيل شامل',
+  'علاج واضطرابات النطق والتخاطب',
+  'اضطراب طيف التوحد (Autism Spectrum)',
+  'صعوبات التعلم والفرط الحركي (ADHD)',
+  'علاج طبيعي وعلاج وظيفي',
+  'تدخل مبكر وتنمية مهارات',
+  'استشارات واستشارات نفسية وتربوية',
+  'مركز متعدد التخصصات',
+];
+
 export const CFG_KEY = 'scs_v2_config';
 export const PFX = () => {
   try {

@@ -1,7 +1,6 @@
 import { useApp } from '../../context/AppContext';
 import { useLang } from '../../context/LanguageContext';
 import { canSeeTab } from '../../utils/permissions';
-import { syncFromFirebase, getCenterId } from '../../hooks/useStorage';
 import { isPlatformAdminEmail } from '../../firebase/auth';
 import NotificationsDropdown from './NotificationsDropdown';
 
@@ -17,32 +16,11 @@ const NAV_ITEMS = [
   { id: 'settings', key: 'nav.settings', icon: '⚙️' },
 ];
 
-const ALL_KEYS = [
-  'students', 'employees', 'sessions', 'appointments', 'iepGoals',
-  'attStu', 'attEmp', 'income', 'expenses', 'salaries', 'leaves',
-  'calEvents', 'centerActivities', 'parentInteractions', 'consultations',
-  'evaluations', 'warnings', 'stuReports', 'behaviorPlans',
-  'studentFees', 'payments', 'notifs', 'manualAlerts', 'users',
-];
-
 export default function Navbar() {
   const { center, currentUser, activeView, go, logout, toggleDark, darkMode, setSearchOpen } = useApp();
   const { t, toggleLang, lang } = useLang();
   const role = currentUser?.role || '';
   const isAdmin = isPlatformAdminEmail(currentUser?.email);
-
-  async function handleSync() {
-    const centerId = currentUser?.centerId || getCenterId();
-    if (!centerId) return;
-    
-    try {
-      await syncFromFirebase(centerId, ALL_KEYS);
-      window.location.reload();
-    } catch (e) {
-      console.error("خطأ أثناء المزامنة:", e);
-      alert(t('syncError') || 'حدث خطأ أثناء مزامنة البيانات، يرجى التحقق من الاتصال.');
-    }
-  }
 
   // دالة للتحقق من كون الزر هو النشط حالياً
   const isActive = (itemId) => {
@@ -93,16 +71,6 @@ export default function Navbar() {
         title={t('langSwitch')}
       >
         {lang === 'ar' ? 'EN' : 'ع'}
-      </button>
-
-      <button
-        type="button"
-        className="nav-sync no-print"
-        title={t('sync')}
-        onClick={handleSync}
-        style={{ cursor: 'pointer', background: 'none', border: 'none', padding: '4px 8px', borderRadius: 6, fontSize: '.8rem', color: 'var(--g5)' }}
-      >
-        ☁️ {t('sync')}
       </button>
 
       <button type="button" className="nav-icon-btn no-print" onClick={() => setSearchOpen(true)} title={t('search')}>🔍</button>
