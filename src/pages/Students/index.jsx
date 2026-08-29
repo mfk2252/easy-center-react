@@ -1,33 +1,28 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  Users, Plus, Search, School, Stethoscope, User, 
+  CheckCircle2, AlertCircle, MessageCircle, Edit3, Eye, Trash2, X, Filter
+} from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { DIAGNOSES, SPECIALIST_ROLES } from '../../utils/constants';
 import { calcAge, todayStr, uid, nowTimeStr } from '../../utils/dateHelpers';
-import EmptyState from '../../components/ui/EmptyState';
 import StudentDetail from './StudentDetail';
 import { parentCanViewStudent, centerWhatsAppUrl } from '../../utils/parentAccess';
 
 const STATUSES = {
-  active: '✅ نشط',
-  inactive: '⏸️ منقطع',
-  graduated: '🎓 متخرج',
-  transferred: '🔄 محوّل',
-  waitlist: '⏳ انتظار',
-  rejected: '❌ غير مناسب'
-};
-const STATUS_BADGE = {
-  active: 'b-gr',
-  inactive: 'b-gy',
-  graduated: 'b-cy',
-  transferred: 'b-bl',
-  waitlist: 'b-or',
-  rejected: 'b-rd'
+  active: 'نشط',
+  inactive: 'منقطع',
+  graduated: 'متخرج',
+  transferred: 'محوّل',
+  waitlist: 'قائمة الانتظار',
+  rejected: 'غير مناسب'
 };
 
 const DEFAULT_SECTIONS = [
-  { id: 'sec_autism', name: 'قسم اضطراب طيف التوحد (صف اللؤلؤ)', type: 'قسم متخصص', capacity: 10, supervisorId: '', color: '#1a56db', icon: '🧩', description: 'برامج التأهيل والتدريب لاضطراب طيف التوحد' },
-  { id: 'sec_down', name: 'قسم متلازمة داون (صف المرجان)', type: 'قسم متخصص', capacity: 8, supervisorId: '', color: '#059669', icon: '🌟', description: 'تنمية المهارات الإدراكية والحركية والاجتماعية' },
-  { id: 'sec_early', name: 'قسم التدخل المبكر (صف الزمرد)', type: 'مرحلة تأهيلية', capacity: 12, supervisorId: '', color: '#7c3aed', icon: '🌱', description: 'الرعاية التأهيلية والتدخل المبكر للأطفال' },
+  { id: 'sec_autism', name: 'صف اللؤلؤ', type: 'قسم اضطراب طيف التوحد', capacity: 10, supervisorId: '', color: '#4f46e5', icon: '🦪', description: 'برامج التأهيل والتدريب لاضطراب طيف التوحد' },
+  { id: 'sec_down', name: 'صف المرجان', type: 'قسم متلازمة داون', capacity: 8, supervisorId: '', color: '#059669', icon: '🪸', description: 'تنمية المهارات الإدراكية والحركية والاجتماعية' },
+  { id: 'sec_early', name: 'صف الزمرد', type: 'قسم التدخل المبكر', capacity: 12, supervisorId: '', color: '#7c3aed', icon: '💎', description: 'الرعاية التأهيلية والتدخل المبكر للأطفال' },
 ];
 
 const EMPTY_STU = {
@@ -43,7 +38,7 @@ const EMPTY_STU = {
 
 const EMPTY_QS = { stuId: '', type: 'تخاطب ونطق', date: '', time: '', duration: 45, empId: '', notes: '', attachData: '', attachName: '' };
 const EMPTY_CONSULT = { beneficiaryName: '', parentName: '', date: '', time: '', empId: '', duration: 45, notes: '', attachData: '', attachName: '' };
-const EMPTY_SEC = { name: '', type: 'قسم متخصص', capacity: 10, supervisorId: '', color: '#1a56db', icon: '🧩', description: '' };
+const EMPTY_SEC = { name: '', type: 'قسم متخصص', capacity: 10, supervisorId: '', color: '#4f46e5', icon: '🧩', description: '' };
 
 const ITEMS_PER_PAGE = 12;
 
@@ -56,23 +51,25 @@ export default function StudentsPage() {
   const [sections, setSections] = useState([]);
   const [emps, setEmps] = useState([]);
 
-  // High-Level View Control: 'sections' | 'categories' | 'all'
-  const [viewGroup, setViewGroup] = useState('sections');
-  // Student Render Format: 'grid' | 'list'
-  const [viewMode, setViewMode] = useState('grid');
+  // Segmented View Toggle: 'classes' | 'categories' | 'all'
+  const [filterType, setFilterType] = useState('classes');
+  // Selected Group Name (when clicking a summary card)
+  const [selectedGroup, setSelectedGroup] = useState(null);
 
-  // Filter & Search State
-  const [q, setQ] = useState('');
-  const [filterSec, setFilterSec] = useState('all'); // 'all' | 'none' | sectionId
-  const [filterDiag, setFilterDiag] = useState('all'); // 'all' | diagnosis name
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterShift, setFilterShift] = useState('all');
+  // Search and Filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [filterSec, setFilterSec] = useState('all');
+  const [filterDiag, setFilterDiag] = useState('all');
   const [filterSpec, setFilterSpec] = useState('all');
 
-  // Pagination State
+  // Render Mode: 'grid' | 'list'
+  const [viewMode, setViewMode] = useState('grid');
+
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Modals & Forms State
+  // Modals
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState(EMPTY_STU);
@@ -86,7 +83,6 @@ export default function StudentsPage() {
   const [showConsult, setShowConsult] = useState(false);
   const [consultForm, setConsultForm] = useState(EMPTY_CONSULT);
 
-  // Section Management Modal State
   const [showSecModal, setShowSecModal] = useState(false);
   const [secEditId, setSecEditId] = useState(null);
   const [secForm, setSecForm] = useState(EMPTY_SEC);
@@ -111,19 +107,17 @@ export default function StudentsPage() {
     if (!isParent || detailId) return;
     const mine = lsGet('students').filter(s => parentCanViewStudent(s, currentUser));
     if (mine.length === 1) setDetailId(mine[0].id);
-  }, [isParent, currentUser?.studentId, currentUser?.username, detailId]);
+  }, [isParent, currentUser, detailId]);
 
   function reload() {
     setStudents(lsGet('students'));
     setSections(lsGet('sections') || DEFAULT_SECTIONS);
   }
 
-  // Reset page whenever filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterSec, filterDiag, filterStatus, filterShift, filterSpec, q, viewGroup]);
+  }, [filterType, selectedGroup, searchQuery, statusFilter, filterSec, filterDiag, filterSpec]);
 
-  // Extract all unique Diagnoses / Categories from system data
   const allCategoryOptions = useMemo(() => {
     const list = [...DIAGNOSES];
     students.forEach(s => {
@@ -134,94 +128,77 @@ export default function StudentsPage() {
     return list;
   }, [students]);
 
-  // Combined Filtering Logic
+  // Main Filtered Students
   const filteredStudents = useMemo(() => {
-    return students.filter(s => {
-      if (isParent && !parentCanViewStudent(s, currentUser)) return false;
+    return students.filter(student => {
+      if (isParent && !parentCanViewStudent(student, currentUser)) return false;
 
-      // Filter by Class / Section
+      // Text Search
+      if (searchQuery.trim()) {
+        const ql = searchQuery.toLowerCase().trim();
+        const matchesName = (student.name || '').toLowerCase().includes(ql);
+        const matchesDiag = (student.diagnosis || '').toLowerCase().includes(ql);
+        const matchesClass = (student.className || '').toLowerCase().includes(ql);
+        const matchesParent = (student.parentName || '').toLowerCase().includes(ql);
+        const matchesPhone = (student.parentPhone || '').includes(ql);
+        if (!matchesName && !matchesDiag && !matchesClass && !matchesParent && !matchesPhone) return false;
+      }
+
+      // Status Filter
+      if (statusFilter !== 'all' && student.status !== statusFilter) return false;
+
+      // Specialist Filter
+      if (filterSpec !== 'all' && student.specialistId !== filterSpec) return false;
+
+      // Dropdown Class Filter
       if (filterSec !== 'all') {
         if (filterSec === 'none') {
-          if (s.sectionId || s.className) return false;
+          if (student.sectionId || student.className) return false;
         } else {
-          const matchSec = s.sectionId === filterSec || s.className === filterSec;
+          const matchSec = student.sectionId === filterSec || student.className === filterSec;
           if (!matchSec) return false;
         }
       }
 
-      // Filter by Category / Diagnosis
+      // Dropdown Diagnosis Filter
       if (filterDiag !== 'all') {
-        if ((s.diagnosis || '').trim() !== filterDiag) return false;
+        if ((student.diagnosis || '').trim() !== filterDiag) return false;
       }
 
-      // Filter by Status
-      if (filterStatus !== 'all') {
-        if (s.status !== filterStatus) return false;
-      }
-
-      // Filter by Shift / Program
-      if (filterShift !== 'all') {
-        if (filterShift === 'morning' && !s.progMorning?.enabled) return false;
-        if (filterShift === 'evening' && !s.progEvening?.enabled) return false;
-        if (filterShift === 'sessions' && !s.progSessions?.enabled) return false;
-        if (filterShift === 'online' && !s.progOnline?.enabled) return false;
-      }
-
-      // Filter by Specialist
-      if (filterSpec !== 'all') {
-        if (s.specialistId !== filterSpec) return false;
-      }
-
-      // Search Query
-      if (q.trim()) {
-        const ql = q.toLowerCase().trim();
-        const nameMatch = (s.name || '').toLowerCase().includes(ql);
-        const diagMatch = (s.diagnosis || '').toLowerCase().includes(ql) || (s.diagnosis2 || '').toLowerCase().includes(ql);
-        const parentMatch = (s.parentName || '').toLowerCase().includes(ql);
-        const phoneMatch = (s.parentPhone || '').includes(ql) || (s.parentPhone2 || '').includes(ql);
-        const classMatch = (s.className || '').toLowerCase().includes(ql);
-        if (!nameMatch && !diagMatch && !parentMatch && !phoneMatch && !classMatch) return false;
+      // Card Selection Filter (from Summary Cards)
+      if (selectedGroup) {
+        if (filterType === 'classes') {
+          const matchedClass = sections.find(sec => sec.id === selectedGroup || sec.name === selectedGroup);
+          const classNameToMatch = matchedClass ? matchedClass.name : selectedGroup;
+          if (student.className !== classNameToMatch && student.sectionId !== selectedGroup) return false;
+        } else if (filterType === 'categories') {
+          if ((student.diagnosis || '').trim() !== selectedGroup) return false;
+        }
       }
 
       return true;
     });
-  }, [students, isParent, currentUser, filterSec, filterDiag, filterStatus, filterShift, filterSpec, q]);
+  }, [students, isParent, currentUser, searchQuery, statusFilter, filterSpec, filterSec, filterDiag, selectedGroup, filterType, sections]);
 
-  // Pagination calculation
+  // Pagination
   const totalPages = Math.ceil(filteredStudents.length / ITEMS_PER_PAGE) || 1;
   const paginatedStudents = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredStudents.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredStudents, currentPage]);
 
-  const isFiltered = filterSec !== 'all' || filterDiag !== 'all' || filterStatus !== 'all' || filterShift !== 'all' || filterSpec !== 'all' || q.trim() !== '';
-
-  function resetFilters() {
-    setQ('');
+  const handleFilterTypeChange = (type) => {
+    setFilterType(type);
+    setSelectedGroup(null);
     setFilterSec('all');
     setFilterDiag('all');
-    setFilterStatus('all');
-    setFilterShift('all');
-    setFilterSpec('all');
-  }
+  };
 
-  function handleSelectSection(secId) {
-    if (filterSec === secId) {
-      setFilterSec('all');
-    } else {
-      setFilterSec(secId);
-    }
-  }
+  const handleCardClick = (groupName) => {
+    setSelectedGroup(prev => prev === groupName ? null : groupName);
+  };
 
-  function handleSelectCategory(catName) {
-    if (filterDiag === catName) {
-      setFilterDiag('all');
-    } else {
-      setFilterDiag(catName);
-    }
-  }
-
-  // Form Handlers
+  // Student Form
   const fld = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
   function fldProg(prog, key) { return e => setForm(f => ({ ...f, [prog]: { ...f[prog], [key]: e.target.value } })); }
   function toggleProg(prog) { setForm(f => ({ ...f, [prog]: { ...f[prog], enabled: !f[prog].enabled } })); }
@@ -232,7 +209,13 @@ export default function StudentsPage() {
       setForm({ ...EMPTY_STU, ...stu, attachments: stu.attachments || [] });
       setEditId(stu.id);
     } else {
-      setForm({ ...EMPTY_STU, sectionId: defaultSecId || (filterSec !== 'all' && filterSec !== 'none' ? filterSec : ''), diagnosis: filterDiag !== 'all' ? filterDiag : '', joinDate: todayStr(), attachments: [] });
+      setForm({ 
+        ...EMPTY_STU, 
+        sectionId: defaultSecId || (filterSec !== 'all' && filterSec !== 'none' ? filterSec : ''), 
+        diagnosis: filterDiag !== 'all' ? filterDiag : '', 
+        joinDate: todayStr(), 
+        attachments: [] 
+      });
       setEditId(null);
     }
     setShowForm(true);
@@ -255,21 +238,21 @@ export default function StudentsPage() {
       toast('✅ تم تحديث بيانات الطالب', 'ok');
     } else {
       lsAdd('students', { ...updatedForm, id: uid() });
-      toast('✅ تم إضافة الطالب وتخصيصه لصفه بنجاح', 'ok');
+      toast('✅ تم إضافة الطالب وتخصيصه للصف آلياً', 'ok');
     }
     setShowForm(false);
     reload();
   }
 
   function deleteStu(id) {
-    if (!window.confirm('⚠️ تحذير نهائي: سيتم حذف الطالب وجميع الارتباطات ببياناته.\nهل تريد المتابعة؟')) return;
+    if (!window.confirm('⚠️ هل أنت متأكد من حذف الطالب كلياً؟')) return;
     lsDel('students', id);
-    toast('🗑️ تم الحذف', 'ok');
+    toast('🗑️ تم حذف الطالب', 'ok');
     reload();
     setDetailId(null);
   }
 
-  // Section Handlers
+  // Section Form
   function openSecForm(sec = null) {
     if (sec) { setSecForm({ ...EMPTY_SEC, ...sec }); setSecEditId(sec.id); }
     else { setSecForm(EMPTY_SEC); setSecEditId(null); }
@@ -280,24 +263,12 @@ export default function StudentsPage() {
     if (!secForm.name.trim()) { toast('⚠️ أدخل اسم القسم / الصف', 'er'); return; }
     if (secEditId) {
       lsUpd('sections', secEditId, secForm);
-      toast('✅ تم تحديث بيانات القسم/الصف', 'ok');
+      toast('✅ تم تحديث بيانات الصف', 'ok');
     } else {
       lsAdd('sections', { ...secForm, id: uid() });
-      toast('✅ تم إضافة القسم/الصف الجديد', 'ok');
+      toast('✅ تم إضافة الصف الجديد بنجاح', 'ok');
     }
     setShowSecModal(false);
-    reload();
-  }
-
-  function deleteSec(secId) {
-    if (!window.confirm('⚠️ هل أنت متأكد من حذف هذا القسم؟ سيصبح جميع طلاب هذا القسم غير موزعين.')) return;
-    lsDel('sections', secId);
-    students.forEach(s => {
-      if (s.sectionId === secId) {
-        lsUpd('students', s.id, { ...s, sectionId: '' });
-      }
-    });
-    toast('🗑️ تم حذف القسم', 'ok');
     reload();
   }
 
@@ -327,19 +298,11 @@ export default function StudentsPage() {
     setForm(f => ({ ...f, attachments: (f.attachments || []).filter(a => a.id !== aid) }));
   }
 
-  // Quick Session Handlers
+  // Quick Session
   const fldQs = k => e => setQsForm(f => ({ ...f, [k]: e.target.value }));
   function openQuickSession() {
     setQsForm({ ...EMPTY_QS, date: todayStr(), time: nowTimeStr() });
     setShowQuickSession(true);
-  }
-
-  function qsAttach(e) {
-    const f = e.target.files[0]; if (!f) return;
-    const r = new FileReader();
-    r.onload = ev => setQsForm(fm => ({ ...fm, attachData: ev.target.result, attachName: f.name }));
-    r.readAsDataURL(f);
-    e.target.value = '';
   }
 
   function saveQuickSession() {
@@ -363,19 +326,11 @@ export default function StudentsPage() {
     reload();
   }
 
-  // Consultation Handlers
+  // Consultations
   const fldCo = k => e => setConsultForm(f => ({ ...f, [k]: e.target.value }));
   function openConsult() {
     setConsultForm({ ...EMPTY_CONSULT, date: todayStr(), time: nowTimeStr() });
     setShowConsult(true);
-  }
-
-  function coAttach(e) {
-    const f = e.target.files[0]; if (!f) return;
-    const r = new FileReader();
-    r.onload = ev => setConsultForm(fm => ({ ...fm, attachData: ev.target.result, attachName: f.name }));
-    r.readAsDataURL(f);
-    e.target.value = '';
   }
 
   function saveConsult() {
@@ -400,1126 +355,767 @@ export default function StudentsPage() {
     return <StudentDetail stuId={detailId} onBack={() => { setDetailId(null); reload(); }} onEdit={stu => openForm(stu)} onDelete={deleteStu} />;
   }
 
-  // Statistics calculation
-  const activeCount = students.filter(s => s.status === 'active').length;
-  const waitlistCount = students.filter(s => s.status === 'waitlist').length;
-  const unassignedCount = students.filter(s => !s.sectionId && (!s.className || !sections.some(sec => sec.name === s.className))).length;
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* 1️⃣ Page Header with Centralized Actions */}
-      <div className="ph" style={{ background: 'linear-gradient(135deg, var(--g0) 0%, var(--g1) 100%)', borderRadius: 16, padding: '20px 24px', border: '1px solid var(--border-color)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
-        <div className="ph-t">
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span>👦</span>
-            <span>{isParent ? 'بيانات الطفل والبرامج' : 'إدارة الطلاب والأقسام الدراسية'}</span>
-          </h2>
-          <p style={{ color: 'var(--text-sub)', fontSize: '.88rem', marginTop: 4 }}>
-            {isParent ? 'متابعة الملف الشخصي للطفل والأنشطة والجلسات المسجلة' : 'نظام تنظيمي متكامل لإدارة بيانات الطلاب وتصفيتهم حسب الصفوف والفئات التأهيلية'}
+    <div className="p-4 md:p-6 bg-slate-50 min-h-screen text-slate-800 dir-rtl flex flex-col gap-6">
+      
+      {/* 1️⃣ Top Header with Actions */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2.5">
+            <Users className="w-7 h-7 text-indigo-600" />
+            <span>{isParent ? 'بيانات الطفل والبرامج' : 'إدارة الطلاب'}</span>
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            {isParent ? 'متابعة الملف الشخصي للطفل والأنشطة والجلسات المسجلة' : 'عرض وتصفية ملفات الطلاب وإدارتها بكل سهولة بمرونة تامة'}
           </p>
         </div>
-        {isParent && centerWa && (
-          <a href={centerWa} target="_blank" rel="noreferrer" className="btn btn-bl" style={{ borderRadius: 10, padding: '8px 16px', fontWeight: 700 }}>
-            💬 التواصل مع إدارة المركز
-          </a>
-        )}
-        <div className="ph-a" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+
+        <div className="flex items-center gap-2 flex-wrap">
           {canAdd && (
-            <button type="button" className="btn btn-p" onClick={() => openForm()} style={{ padding: '9px 20px', fontWeight: 800, borderRadius: 10, fontSize: '.95rem', boxShadow: '0 4px 12px rgba(26,86,219,0.2)' }}>
-              ➕ طالب جديد
+            <button 
+              onClick={() => openForm()}
+              className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-sm transition-all text-sm"
+            >
+              <Plus className="w-5 h-5" />
+              <span>طالب جديد</span>
             </button>
           )}
+
           {canAdd && (
-            <button type="button" className="btn btn-g" onClick={() => openSecForm()} style={{ padding: '8px 16px', fontWeight: 700, borderRadius: 10, background: 'var(--g1)', border: '1px solid var(--border-color)' }}>
-              🏫 إضافة قسم / صف
+            <button 
+              onClick={() => openSecForm()}
+              className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-4 py-2.5 rounded-xl transition-all text-sm"
+            >
+              <School className="w-4 h-4 text-slate-600" />
+              <span>إضافة صف / قسم</span>
             </button>
           )}
+
           {canEdit && (
-            <button type="button" className="btn btn-s" onClick={openQuickSession} style={{ padding: '8px 16px', fontWeight: 700, borderRadius: 10 }}>
-              🩺 تسجيل جلسة
+            <button 
+              onClick={openQuickSession}
+              className="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold px-4 py-2.5 rounded-xl border border-emerald-200 transition-all text-sm"
+            >
+              <Stethoscope className="w-4 h-4" />
+              <span>تسجيل جلسة</span>
             </button>
           )}
+
           {canEdit && (
-            <button type="button" className="btn" onClick={openConsult} style={{ padding: '8px 16px', fontWeight: 700, borderRadius: 10, background: 'var(--cyan-l,#ecfeff)', color: 'var(--cyan,#0891b2)', border: '1px solid var(--cyan,#0891b2)' }}>
-              💬 تسجيل استشارة
+            <button 
+              onClick={openConsult}
+              className="flex items-center gap-2 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 font-semibold px-4 py-2.5 rounded-xl border border-cyan-200 transition-all text-sm"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>تسجيل استشارة</span>
             </button>
+          )}
+
+          {isParent && centerWa && (
+            <a href={centerWa} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-emerald-600 text-white font-bold px-4 py-2.5 rounded-xl shadow-sm hover:bg-emerald-700 transition-all text-sm">
+              💬 التواصل مع المركز
+            </a>
           )}
         </div>
       </div>
 
-      {/* Quick Statistics KPI Cards */}
-      <div className="stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
-        <div className="sc g" style={{ padding: '14px 18px', borderRadius: 12 }}>
-          <div className="lb">الطلاب النشطون</div>
-          <div className="vl" style={{ fontSize: '1.6rem', fontWeight: 900 }}>{activeCount}</div>
-        </div>
-        <div className="sc" style={{ padding: '14px 18px', borderRadius: 12 }}>
-          <div className="lb">إجمالي الصفوف والأقسام</div>
-          <div className="vl" style={{ fontSize: '1.6rem', fontWeight: 900 }}>{sections.length}</div>
-        </div>
-        <div className="sc o" style={{ padding: '14px 18px', borderRadius: 12 }}>
-          <div className="lb">قائمة الانتظار</div>
-          <div className="vl" style={{ fontSize: '1.6rem', fontWeight: 900 }}>{waitlistCount}</div>
-        </div>
-        <div className="sc v" style={{ padding: '14px 18px', borderRadius: 12 }}>
-          <div className="lb">غير الموزعين على صفوف</div>
-          <div className="vl" style={{ fontSize: '1.6rem', fontWeight: 900 }}>{unassignedCount}</div>
-        </div>
-        <div className="sc" style={{ padding: '14px 18px', borderRadius: 12, background: 'var(--g0)' }}>
-          <div className="lb">إجمالي المسجلين</div>
-          <div className="vl" style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--pr)' }}>{students.length}</div>
-        </div>
-      </div>
-
-      {/* 2️⃣ Modern Control Panel & Segmented View Switcher */}
-      <div className="wg" style={{ margin: 0, padding: '20px', borderRadius: 16, background: 'var(--bg-card)', border: '1px solid var(--border-color)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-        
-        {/* Top Segmented View & Layout Toggle Bar */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14, marginBottom: 18, paddingBottom: 16, borderBottom: '1px solid var(--border-color)' }}>
-          
-          {/* Segmented Group View Toggle Button */}
-          <div style={{ display: 'flex', gap: 6, background: 'var(--g1)', padding: 5, borderRadius: 12, border: '1px solid var(--border-color)' }}>
-            <button
-              type="button"
-              className={`btn ${viewGroup === 'sections' ? 'btn-p' : 'btn-g'}`}
-              onClick={() => { setViewGroup('sections'); setFilterSec('all'); setFilterDiag('all'); }}
-              style={{ fontSize: '.88rem', padding: '8px 18px', borderRadius: 9, fontWeight: 800, transition: 'all .2s' }}
-            >
-              🏫 حسب الصفوف والأقسام
-            </button>
-            <button
-              type="button"
-              className={`btn ${viewGroup === 'categories' ? 'btn-p' : 'btn-g'}`}
-              onClick={() => { setViewGroup('categories'); setFilterSec('all'); setFilterDiag('all'); }}
-              style={{ fontSize: '.88rem', padding: '8px 18px', borderRadius: 9, fontWeight: 800, transition: 'all .2s' }}
-            >
-              🏷️ حسب الفئات والتشخيصات
-            </button>
-            <button
-              type="button"
-              className={`btn ${viewGroup === 'all' ? 'btn-p' : 'btn-g'}`}
-              onClick={() => { setViewGroup('all'); setFilterSec('all'); setFilterDiag('all'); }}
-              style={{ fontSize: '.88rem', padding: '8px 18px', borderRadius: 9, fontWeight: 800, transition: 'all .2s' }}
-            >
-              👥 عرض جميع الطلاب ({students.length})
-            </button>
-          </div>
-
-          {/* Render Mode Switcher (Grid vs Table) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: '.82rem', color: 'var(--text-sub)', fontWeight: 700 }}>نمط العرض:</span>
-            <div style={{ display: 'flex', gap: 4, background: 'var(--g1)', padding: 4, borderRadius: 10, border: '1px solid var(--border-color)' }}>
-              <button
-                type="button"
-                className={`btn ${viewMode === 'grid' ? 'btn-p' : 'btn-g'}`}
-                onClick={() => setViewMode('grid')}
-                title="عرض الشبكة البصرية"
-                style={{ fontSize: '.82rem', padding: '5px 12px', borderRadius: 7, fontWeight: 700 }}
-              >
-                🎴 شبكة
-              </button>
-              <button
-                type="button"
-                className={`btn ${viewMode === 'list' ? 'btn-p' : 'btn-g'}`}
-                onClick={() => setViewMode('list')}
-                title="عرض الجدول المنظم"
-                style={{ fontSize: '.82rem', padding: '5px 12px', borderRadius: 7, fontWeight: 700 }}
-              >
-                📋 جدول
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Filters Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
-          {/* Search Input */}
-          <div className="fl" style={{ gridColumn: 'span 2' }}>
-            <label style={{ fontSize: '.82rem', fontWeight: 700, color: 'var(--text-sub)' }}>🔎 البحث السريع بالاسم، الهوية، أو ولي الأمر</label>
-            <input
-              className="srch"
-              value={q}
-              onChange={e => setQ(e.target.value)}
-              placeholder="اكتب اسم الطالب، الهوية، رقم الجوال..."
-              style={{ width: '100%', paddingRight: 12, height: 42, borderRadius: 10 }}
-            />
-          </div>
-
-          {/* Select Class Filter */}
-          <div className="fl">
-            <label style={{ fontSize: '.82rem', fontWeight: 700, color: 'var(--pr)' }}>🏫 فلترة بالصف / القسم</label>
-            <select
-              className="fsel"
-              value={filterSec}
-              onChange={e => setFilterSec(e.target.value)}
-              style={{ height: 42, borderRadius: 10, borderColor: filterSec !== 'all' ? 'var(--pr)' : 'var(--border-color)', background: filterSec !== 'all' ? 'var(--pr-l,#eff6ff)' : 'transparent', fontWeight: filterSec !== 'all' ? 800 : 400 }}
-            >
-              <option value="all">-- جميع الصفوف والأقسام --</option>
-              <option value="none">📂 طلاب بدون صف / قسم مخصص</option>
-              {sections.map(sec => (
-                <option key={sec.id} value={sec.id}>
-                  {sec.icon || '🧩'} {sec.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Select Category Filter */}
-          <div className="fl">
-            <label style={{ fontSize: '.82rem', fontWeight: 700, color: 'var(--ok,#059669)' }}>🏷️ فلترة بالفئة / التشخيص</label>
-            <select
-              className="fsel"
-              value={filterDiag}
-              onChange={e => setFilterDiag(e.target.value)}
-              style={{ height: 42, borderRadius: 10, borderColor: filterDiag !== 'all' ? 'var(--ok,#059669)' : 'var(--border-color)', background: filterDiag !== 'all' ? 'var(--ok-l,#ecfdf5)' : 'transparent', fontWeight: filterDiag !== 'all' ? 800 : 400 }}
-            >
-              <option value="all">-- جميع الفئات والتشخيصات --</option>
-              {allCategoryOptions.map(d => (
-                <option key={d} value={d}>
-                  🎯 {d}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Select Status Filter */}
-          <div className="fl">
-            <label style={{ fontSize: '.82rem', fontWeight: 700, color: 'var(--text-sub)' }}>📌 حالة الطالب</label>
-            <select
-              className="fsel"
-              value={filterStatus}
-              onChange={e => setFilterStatus(e.target.value)}
-              style={{ height: 42, borderRadius: 10 }}
-            >
-              <option value="all">جميع الحالات</option>
-              {Object.entries(STATUSES).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Select Specialist Filter */}
-          <div className="fl">
-            <label style={{ fontSize: '.82rem', fontWeight: 700, color: 'var(--text-sub)' }}>👤 الأخصائي المشرف</label>
-            <select
-              className="fsel"
-              value={filterSpec}
-              onChange={e => setFilterSpec(e.target.value)}
-              style={{ height: 42, borderRadius: 10 }}
-            >
-              <option value="all">جميع الأخصائيين</option>
-              {specialists.map(e => (
-                <option key={e.id} value={e.id}>{e.name} ({e.role})</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Filter Reset Button */}
-        {isFiltered && (
-          <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontSize: '.83rem', color: 'var(--text-sub)' }}>
-              ⚡ يتم تصفية قائمة الطلاب حالياً حسب المحددات المختارة أعلاه ({filteredStudents.length} طالباً).
-            </div>
-            <button
-              type="button"
-              className="btn btn-sm btn-d"
-              onClick={resetFilters}
-              style={{ borderRadius: 8, padding: '4px 12px', fontSize: '.8rem' }}
-            >
-              ❌ تفريغ كافة الفلاتر
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* 3️⃣ Compact Summary Cards (Shown when viewGroup === 'sections' or 'categories') */}
-      {viewGroup === 'sections' && (
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>🏫</span>
-              <span>بطاقات ملخص الصفوف والأقسام (انقر لتصفية الطلاب)</span>
-            </h3>
-            <span style={{ fontSize: '.8rem', color: 'var(--text-sub)' }}>انقر على أي صف لمشاهدة طلابه فقط بالشاشات السفلية</span>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
-            {/* Show All Sections Card */}
-            <div
-              className="card clickable"
-              onClick={() => setFilterSec('all')}
-              style={{
-                padding: 16,
-                borderRadius: 14,
-                border: filterSec === 'all' ? '2px solid var(--pr,#1a56db)' : '1px solid var(--border-color)',
-                background: filterSec === 'all' ? 'var(--pr-l,#eff6ff)' : 'var(--bg-card)',
-                boxShadow: filterSec === 'all' ? '0 4px 12px rgba(26,86,219,0.1)' : '0 2px 6px rgba(0,0,0,0.02)',
-                transition: 'all .2s'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--g1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem' }}>
-                  🌐
-                </div>
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: '.95rem', color: 'var(--text-main)' }}>جميع الأقسام والصفوف</div>
-                  <div style={{ fontSize: '.8rem', color: 'var(--text-sub)', marginTop: 2 }}>إجمالي الطلاب: <strong>{students.length}</strong></div>
-                </div>
-              </div>
-            </div>
-
-            {/* Individual Section Summary Cards */}
-            {sections.map(sec => {
-              const secCount = students.filter(s => s.sectionId === sec.id || s.className === sec.name).length;
-              const capacity = Number(sec.capacity) || 10;
-              const fillPercentage = Math.min(100, Math.round((secCount / capacity) * 100));
-              const supervisor = emps.find(e => e.id === sec.supervisorId);
-              const isSelected = filterSec === sec.id;
-
-              return (
-                <div
-                  key={sec.id}
-                  className="card clickable"
-                  onClick={() => handleSelectSection(sec.id)}
-                  style={{
-                    padding: 16,
-                    borderRadius: 14,
-                    border: isSelected ? `2px solid ${sec.color || '#1a56db'}` : '1px solid var(--border-color)',
-                    borderTop: `5px solid ${sec.color || '#1a56db'}`,
-                    background: isSelected ? `${sec.color || '#1a56db'}0d` : 'var(--bg-card)',
-                    boxShadow: isSelected ? `0 4px 12px ${sec.color || '#1a56db'}25` : '0 2px 6px rgba(0,0,0,0.02)',
-                    transition: 'all .2s',
-                    position: 'relative'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: '1.4rem' }}>{sec.icon || '🧩'}</span>
-                      <div>
-                        <h4 style={{ margin: 0, fontSize: '.95rem', fontWeight: 800, color: 'var(--text-main)' }}>{sec.name}</h4>
-                        <div style={{ fontSize: '.76rem', color: 'var(--text-sub)', marginTop: 2 }}>
-                          👤 المشرف: <strong>{supervisor ? supervisor.name : 'غير محدد'}</strong>
-                        </div>
-                      </div>
-                    </div>
-                    {isSelected && (
-                      <span className="bdg b-gr" style={{ fontSize: '.7rem', padding: '2px 6px' }}>محدد</span>
-                    )}
-                  </div>
-
-                  {/* Progress bar */}
-                  <div style={{ marginTop: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.78rem', color: 'var(--text-sub)', marginBottom: 4 }}>
-                      <span>نسبة الاستيعاب</span>
-                      <span><strong>{secCount} / {capacity}</strong> طالباً ({fillPercentage}%)</span>
-                    </div>
-                    <div style={{ height: 6, width: '100%', background: 'var(--g2)', borderRadius: 3, overflow: 'hidden' }}>
-                      <div style={{ width: `${fillPercentage}%`, height: '100%', background: sec.color || '#1a56db', transition: 'width .3s' }} />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Unassigned Students Summary Card */}
-            {unassignedCount > 0 && (
-              <div
-                className="card clickable"
-                onClick={() => setFilterSec('none')}
-                style={{
-                  padding: 16,
-                  borderRadius: 14,
-                  border: filterSec === 'none' ? '2px solid var(--warn,#b45309)' : '1px solid var(--border-color)',
-                  borderTop: '5px solid var(--warn,#b45309)',
-                  background: filterSec === 'none' ? 'var(--warn-l,#fffbeb)' : 'var(--bg-card)',
-                  transition: 'all .2s'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: '1.4rem' }}>📂</span>
-                  <div>
-                    <h4 style={{ margin: 0, fontSize: '.95rem', fontWeight: 800, color: 'var(--warn,#b45309)' }}>غير موزعين على صفوف</h4>
-                    <div style={{ fontSize: '.78rem', color: 'var(--text-sub)', marginTop: 2 }}>العدد: <strong>{unassignedCount} طالباً</strong></div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {viewGroup === 'categories' && (
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>🏷️</span>
-              <span>بطاقات ملخص الفئات والتشخيصات (انقر للتصفية)</span>
-            </h3>
-            <span style={{ fontSize: '.8rem', color: 'var(--text-sub)' }}>انقر على الفئة المحددة لعرض طلابها فقط</span>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
-            {/* Show All Categories */}
-            <div
-              className="card clickable"
-              onClick={() => setFilterDiag('all')}
-              style={{
-                padding: 14,
-                borderRadius: 12,
-                border: filterDiag === 'all' ? '2px solid var(--ok,#059669)' : '1px solid var(--border-color)',
-                background: filterDiag === 'all' ? 'var(--ok-l,#ecfdf5)' : 'var(--bg-card)',
-                transition: 'all .2s'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontWeight: 800, fontSize: '.9rem' }}>🌐 جميع التشخيصات</span>
-                <span className="bdg b-gr" style={{ fontSize: '.75rem' }}>{students.length}</span>
-              </div>
-            </div>
-
-            {/* Diagnosis Summary Cards */}
-            {allCategoryOptions.map(cat => {
-              const catCount = students.filter(s => (s.diagnosis || '').trim() === cat).length;
-              const isSelected = filterDiag === cat;
-
-              return (
-                <div
-                  key={cat}
-                  className="card clickable"
-                  onClick={() => handleSelectCategory(cat)}
-                  style={{
-                    padding: 14,
-                    borderRadius: 12,
-                    border: isSelected ? '2px solid var(--ok,#059669)' : '1px solid var(--border-color)',
-                    background: isSelected ? 'var(--ok-l,#ecfdf5)' : 'var(--bg-card)',
-                    boxShadow: isSelected ? '0 4px 10px rgba(5,150,105,0.12)' : '0 1px 4px rgba(0,0,0,0.02)',
-                    transition: 'all .2s'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span>🎯</span>
-                      <span style={{ fontWeight: 800, fontSize: '.88rem', color: 'var(--text-main)' }}>{cat}</span>
-                    </div>
-                    <span className="bdg b-bl" style={{ fontSize: '.75rem', fontWeight: 800 }}>{catCount} طالباً</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 4️⃣ Unified Student Grid & List Section */}
-      <div style={{ marginTop: 10 }}>
-        {/* Results Bar Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
-              👥 قائمة الطلاب المحددة ({filteredStudents.length})
-            </h3>
-            {filterSec !== 'all' && (
-              <span className="bdg b-bl" style={{ fontSize: '.78rem' }}>
-                الصف: {sections.find(s => s.id === filterSec)?.name || 'غير مخصص'}
-              </span>
-            )}
-            {filterDiag !== 'all' && (
-              <span className="bdg b-gr" style={{ fontSize: '.78rem' }}>
-                الفئة: {filterDiag}
-              </span>
-            )}
-          </div>
-
-          <div style={{ fontSize: '.83rem', color: 'var(--text-sub)' }}>
-            عرض الصفحة {currentPage} من أصل {totalPages} (إجمالي {filteredStudents.length} طالباً)
-          </div>
-        </div>
-
-        {/* Student Grid View */}
-        {filteredStudents.length === 0 ? (
-          <EmptyState
-            icon="👦"
-            title="لا يوجد طلاب مطابقون للتحديد الحالي"
-            sub={canAdd ? 'يمكنك إضافة طالب جديد أو تعديل خيارات التصفية أعلاه' : 'عدل خيارات التصفية'}
+      {/* 2️⃣ Search and Filter Inputs */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+        {/* Search Bar */}
+        <div className="relative md:col-span-2">
+          <Search className="w-5 h-5 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="ابحث باسم الطالب، الهوية، التشخيص أو ولي الأمر..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pr-11 pl-4 h-11 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"
           />
-        ) : viewMode === 'grid' ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-            {paginatedStudents.map(s => {
-              const spec = emps.find(e => e.id === s.specialistId);
-              const sec = sections.find(sec => sec.id === s.sectionId || sec.name === s.className);
-              const progs = [
-                s.progMorning?.enabled && '☀️ صباحي',
-                s.progEvening?.enabled && '🌙 مسائي',
-                s.progSessions?.enabled && '🩺 جلسات',
-                s.progOnline?.enabled && '🌐 أونلاين'
-              ].filter(Boolean);
+        </div>
 
-              return (
-                <div
-                  key={s.id}
-                  className="card clickable"
-                  onClick={() => setDetailId(s.id)}
-                  style={{
-                    padding: 18,
-                    margin: 0,
-                    borderRadius: 14,
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-card)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    gap: 12,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-                    transition: 'transform .15s, box-shadow .15s'
-                  }}
-                >
-                  <div>
-                    {/* Top Header Card Info */}
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                      <div className="av lg" style={{ width: 52, height: 52, borderRadius: '50%', flexShrink: 0, fontSize: '1.2rem', fontWeight: 800 }}>
-                        {s.photo ? <img src={s.photo} alt={s.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (s.name || '?').slice(0, 2)}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</h4>
-                        </div>
-                        <div style={{ fontSize: '.83rem', color: 'var(--ok,#059669)', fontWeight: 800, marginTop: 3 }}>
-                          🎯 {s.diagnosis || 'لم يحدد تشخيص'}
-                        </div>
-                        <div style={{ fontSize: '.8rem', color: 'var(--pr,#1a56db)', fontWeight: 700, marginTop: 2 }}>
-                          🏫 {sec ? sec.name : s.className || 'غير مخصص لصف'}
-                        </div>
-                      </div>
+        {/* Status Dropdown */}
+        <div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl text-sm px-3 focus:outline-none focus:border-indigo-500 focus:bg-white transition-all font-medium text-slate-700"
+          >
+            <option value="all">جميع الحالات بالمركز</option>
+            {Object.entries(STATUSES).map(([k, v]) => (
+              <option key={k} value={k}>{v}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Specialist Dropdown */}
+        <div>
+          <select
+            value={filterSpec}
+            onChange={(e) => setFilterSpec(e.target.value)}
+            className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl text-sm px-3 focus:outline-none focus:border-indigo-500 focus:bg-white transition-all font-medium text-slate-700"
+          >
+            <option value="all">جميع الأخصائيين المشرفين</option>
+            {specialists.map(e => (
+              <option key={e.id} value={e.id}>{e.name} ({e.role})</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* 3️⃣ Segmented View Toggle & Layout Selector */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-200 pb-4 gap-4">
+        <div className="inline-flex p-1 bg-slate-200/70 rounded-xl gap-1 text-sm font-medium flex-wrap">
+          <button
+            onClick={() => handleFilterTypeChange('classes')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+              filterType === 'classes'
+                ? 'bg-white text-indigo-700 shadow-sm font-bold'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <School className="w-4 h-4" />
+            <span>حسب الصفوف والأقسام</span>
+          </button>
+
+          <button
+            onClick={() => handleFilterTypeChange('categories')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+              filterType === 'categories'
+                ? 'bg-white text-indigo-700 shadow-sm font-bold'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Stethoscope className="w-4 h-4" />
+            <span>حسب الفئات والتشخيصات</span>
+          </button>
+
+          <button
+            onClick={() => handleFilterTypeChange('all')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+              filterType === 'all'
+                ? 'bg-white text-indigo-700 shadow-sm font-bold'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>عرض جميع الطلاب ({students.length})</span>
+          </button>
+        </div>
+
+        {/* View Mode & Reset Group Filter */}
+        <div className="flex items-center gap-3">
+          {selectedGroup && (
+            <button
+              onClick={() => setSelectedGroup(null)}
+              className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200 transition-all flex items-center gap-1"
+            >
+              <span>إلغاء تصفية ({selectedGroup})</span>
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          <div className="inline-flex p-1 bg-slate-200/70 rounded-lg text-xs font-medium gap-1">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`px-3 py-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white text-slate-900 font-bold shadow-xs' : 'text-slate-600'}`}
+            >
+              🎴 شبكة
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-3 py-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white text-slate-900 font-bold shadow-xs' : 'text-slate-600'}`}
+            >
+              📋 جدول
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 4️⃣ Summary Cards (Shown based on filterType) */}
+      {filterType === 'classes' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {sections.map((cls) => {
+            const count = students.filter(s => s.sectionId === cls.id || s.className === cls.name).length;
+            const maxCapacity = Number(cls.capacity) || 10;
+            const isSelected = selectedGroup === cls.name || selectedGroup === cls.id;
+            const percentage = Math.round((count / maxCapacity) * 100);
+            const supervisor = emps.find(e => e.id === cls.supervisorId);
+
+            return (
+              <div
+                key={cls.id}
+                onClick={() => handleCardClick(cls.name)}
+                className={`cursor-pointer p-4 rounded-2xl border transition-all duration-200 flex flex-col justify-between ${
+                  isSelected
+                    ? 'bg-indigo-50/60 border-indigo-500 shadow-md ring-2 ring-indigo-200'
+                    : 'bg-white border-slate-200/80 hover:border-indigo-300 hover:shadow-sm'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-2xl">{cls.icon || '🧩'}</span>
+                      <h3 className="font-bold text-slate-800 text-base">{cls.name}</h3>
                     </div>
-
-                    {/* Details Box */}
-                    <div style={{ marginTop: 12, padding: 10, background: 'var(--g0)', borderRadius: 10, fontSize: '.8rem', color: 'var(--text-sub)', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <div>🎂 العمر: <strong>{calcAge(s.dob)}</strong> ({s.gender || 'ذكر'})</div>
-                      <div>👨‍👩‍👦 ولي الأمر: <strong>{s.parentName || '—'}</strong> ({s.parentRelation || 'ولي أمر'})</div>
-                      <div>📞 رقم التواصل: <strong dir="ltr">{s.parentPhone || '—'}</strong></div>
-                      <div>👤 الأخصائي المسؤول: <strong>{spec ? spec.name : 'غير محدد'}</strong></div>
-                    </div>
-
-                    {/* Program badges */}
-                    {progs.length > 0 && (
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
-                        {progs.map((p, idx) => (
-                          <span key={idx} className="bdg b-cy" style={{ fontSize: '.72rem', padding: '2px 8px' }}>{p}</span>
-                        ))}
-                      </div>
-                    )}
+                    <span className="text-xs bg-slate-100 px-2.5 py-1 rounded-full text-slate-700 font-bold border border-slate-200">
+                      {count} / {maxCapacity} طالب
+                    </span>
                   </div>
 
-                  {/* Card Footer Actions */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTop: '1px solid var(--border-color)' }}>
-                    <span className={`bdg ${STATUS_BADGE[s.status] || 'b-gy'}`} style={{ fontSize: '.75rem' }}>
-                      {STATUSES[s.status] || s.status}
-                    </span>
+                  <div className="text-xs text-slate-500 mb-3 flex items-center justify-between">
+                    <span>المشرف: <strong className="text-slate-700">{supervisor ? supervisor.name : 'غير محدد'}</strong></span>
+                    {cls.type && <span className="text-[11px] bg-slate-50 text-slate-500 px-2 py-0.5 rounded">{cls.type}</span>}
+                  </div>
+                </div>
 
-                    <div style={{ display: 'flex', gap: 6 }} onClick={e => e.stopPropagation()}>
-                      {!isParent && s.parentPhone && (
+                {/* Capacity Progress Bar */}
+                <div>
+                  <div className="flex justify-between text-[11px] text-slate-500 mb-1">
+                    <span>مؤشر الاستيعاب</span>
+                    <span className="font-semibold">{percentage}%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full transition-all duration-300 ${percentage >= 100 ? 'bg-amber-500' : 'bg-indigo-600'}`}
+                      style={{ width: `${Math.min(percentage, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {filterType === 'categories' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {allCategoryOptions.map((cat) => {
+            const count = students.filter(s => (s.diagnosis || '').trim() === cat).length;
+            const isSelected = selectedGroup === cat;
+
+            return (
+              <div
+                key={cat}
+                onClick={() => handleCardClick(cat)}
+                className={`cursor-pointer p-4 rounded-2xl border transition-all duration-200 ${
+                  isSelected
+                    ? 'bg-indigo-50/60 border-indigo-500 shadow-md ring-2 ring-indigo-200'
+                    : 'bg-white border-slate-200/80 hover:border-indigo-300 hover:shadow-sm'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl">🎯</span>
+                    <h3 className="font-bold text-slate-800 text-base">{cat}</h3>
+                  </div>
+                  <span className="text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-full font-bold">
+                    {count} طالب
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">فئة ومسار تأهيلي متخصص بالمركز</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* 5️⃣ Unified Student Grid */}
+      <div className="mt-2">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <span>قائمة الطلاب</span>
+            <span className="text-xs font-normal text-slate-500 bg-slate-200/70 px-2.5 py-0.5 rounded-full">
+              {filteredStudents.length} طالب مطبق للتصفية
+            </span>
+          </h2>
+
+          <div className="text-xs text-slate-500">
+            صفحة {currentPage} من {totalPages}
+          </div>
+        </div>
+
+        {filteredStudents.length > 0 ? (
+          viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {paginatedStudents.map((student) => {
+                const spec = emps.find(e => e.id === student.specialistId);
+                const sec = sections.find(sec => sec.id === student.sectionId || sec.name === student.className);
+
+                return (
+                  <div
+                    key={student.id}
+                    className="bg-white p-4 rounded-2xl border border-slate-200/80 hover:shadow-md transition-all duration-200 flex flex-col justify-between"
+                  >
+                    <div>
+                      {/* Top Row */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-full bg-slate-100 text-indigo-600 font-bold flex items-center justify-center text-sm border border-slate-200 overflow-hidden flex-shrink-0">
+                            {student.photo ? (
+                              <img src={student.photo} alt={student.name} className="w-full h-full object-cover" />
+                            ) : (
+                              student.name.substring(0, 2)
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="font-bold text-slate-900 text-base leading-snug truncate">
+                              {student.name}
+                            </h4>
+                            <span className="text-xs text-slate-400">{calcAge(student.dob)}</span>
+                          </div>
+                        </div>
+
+                        <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold ${
+                          student.status === 'active' 
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                            : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {STATUSES[student.status] || student.status}
+                        </span>
+                      </div>
+
+                      {/* Diagnostic & Class Info */}
+                      <div className="space-y-1.5 text-xs text-slate-600 border-t border-slate-100 pt-3 mb-4">
+                        <div className="flex items-center gap-1.5">
+                          <Stethoscope className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" />
+                          <span className="text-slate-400">التشخيص:</span>
+                          <span className="font-semibold text-slate-800 truncate">{student.diagnosis || 'غير محدد'}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <School className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" />
+                          <span className="text-slate-400">الصف:</span>
+                          <span className="font-semibold text-slate-800 truncate">{sec ? sec.name : student.className || 'غير مخصص'}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-slate-400">
+                          <User className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span>المشرف:</span>
+                          <span className="text-slate-700 font-medium truncate">{spec ? spec.name : 'غير محدد'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom Actions */}
+                    <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                      <button
+                        onClick={() => setDetailId(student.id)}
+                        className="flex-1 py-2 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 rounded-xl text-xs font-semibold border border-slate-200/60 hover:border-indigo-200 transition-all text-center flex items-center justify-center gap-1"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>الملف الكامل</span>
+                      </button>
+
+                      {student.parentPhone && (
                         <a
-                          href={`https://wa.me/${s.parentPhone.replace(/[^0-9+]/g, '').replace(/^0/, '966')}`}
+                          href={`https://wa.me/${student.parentPhone.replace(/[^0-9+]/g, '').replace(/^0/, '966')}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="btn btn-xs btn-bl"
-                          title="تواصل عبر الواتساب"
-                          style={{ padding: '4px 8px' }}
+                          className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-xl border border-emerald-200 transition-all"
+                          title="واتساب ولي الأمر"
                         >
-                          💬
+                          <MessageCircle className="w-4 h-4" />
                         </a>
                       )}
+
                       {canEdit && (
-                        <button type="button" className="btn btn-xs btn-g" onClick={() => openForm(s)} title="تعديل البيانات">
-                          ✏️ تعديل
+                        <button
+                          onClick={() => openForm(student)}
+                          className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl border border-slate-200 transition-all"
+                          title="تعديل البيانات"
+                        >
+                          <Edit3 className="w-4 h-4" />
                         </button>
                       )}
-                      <button type="button" className="btn btn-xs btn-p" onClick={() => setDetailId(s.id)}>
-                        👁️ الملف
-                      </button>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          /* Student List / Table View */
-          <div className="card" style={{ padding: 0, overflow: 'hidden', borderRadius: 14, border: '1px solid var(--border-color)' }}>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', fontSize: '.88rem' }}>
-                <thead>
-                  <tr style={{ background: 'var(--g1)', borderBottom: '2px solid var(--border-color)', color: 'var(--text-main)', fontWeight: 800 }}>
-                    <th style={{ padding: '12px 16px' }}>الطالب</th>
-                    <th style={{ padding: '12px 16px' }}>الصف / القسم</th>
-                    <th style={{ padding: '12px 16px' }}>الفئة والتشخيص</th>
-                    <th style={{ padding: '12px 16px' }}>ولي الأمر والتواصل</th>
-                    <th style={{ padding: '12px 16px' }}>الأخصائي</th>
-                    <th style={{ padding: '12px 16px' }}>الحالة</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'center' }}>الإجراءات</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedStudents.map((s, index) => {
-                    const spec = emps.find(e => e.id === s.specialistId);
-                    const sec = sections.find(sec => sec.id === s.sectionId || sec.name === s.className);
-
-                    return (
-                      <tr key={s.id} style={{ borderBottom: '1px solid var(--border-color)', background: index % 2 === 0 ? 'var(--bg-card)' : 'var(--g0)' }}>
-                        <td style={{ padding: '12px 16px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div className="av sm" style={{ width: 36, height: 36, borderRadius: '50%', fontSize: '.9rem' }}>
-                              {s.photo ? <img src={s.photo} alt={s.name} /> : (s.name || '?').slice(0, 2)}
-                            </div>
-                            <div>
-                              <div style={{ fontWeight: 800, color: 'var(--text-main)' }}>{s.name}</div>
-                              <div style={{ fontSize: '.78rem', color: 'var(--text-sub)' }}>العمر: {calcAge(s.dob)}</div>
-                            </div>
-                          </div>
-                        </td>
-
-                        <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--pr)' }}>
-                          {sec ? `${sec.icon || '🧩'} ${sec.name}` : s.className || '— غير مخصص —'}
-                        </td>
-
-                        <td style={{ padding: '12px 16px', color: 'var(--ok,#059669)', fontWeight: 700 }}>
-                          🎯 {s.diagnosis || 'غير محدد'}
-                        </td>
-
-                        <td style={{ padding: '12px 16px' }}>
-                          <div>{s.parentName || '—'} ({s.parentRelation || 'ولي أمر'})</div>
-                          <div style={{ fontSize: '.78rem', color: 'var(--text-sub)' }} dir="ltr">{s.parentPhone || '—'}</div>
-                        </td>
-
-                        <td style={{ padding: '12px 16px' }}>
-                          {spec ? spec.name : '—'}
-                        </td>
-
-                        <td style={{ padding: '12px 16px' }}>
-                          <span className={`bdg ${STATUS_BADGE[s.status] || 'b-gy'}`} style={{ fontSize: '.75rem' }}>
-                            {STATUSES[s.status] || s.status}
-                          </span>
-                        </td>
-
-                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                          <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-                            <button type="button" className="btn btn-xs btn-p" onClick={() => setDetailId(s.id)} title="عرض الملف">
-                              👁️ الملف
-                            </button>
-                            {canEdit && (
-                              <button type="button" className="btn btn-xs btn-g" onClick={() => openForm(s)} title="تعديل">
-                                ✏️
-                              </button>
-                            )}
-                            {!isParent && s.parentPhone && (
-                              <a href={`https://wa.me/${s.parentPhone.replace(/[^0-9+]/g, '').replace(/^0/, '966')}`} target="_blank" rel="noreferrer" className="btn btn-xs btn-bl" title="واتساب">
-                                💬
-                              </a>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                );
+              })}
             </div>
+          ) : (
+            /* List / Table View */
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-right text-sm">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold">
+                      <th className="p-3.5">الطالب</th>
+                      <th className="p-3.5">الصف / القسم</th>
+                      <th className="p-3.5">التشخيص الفئة</th>
+                      <th className="p-3.5">ولي الأمر والتواصل</th>
+                      <th className="p-3.5">الأخصائي المشرف</th>
+                      <th className="p-3.5">الحالة</th>
+                      <th className="p-3.5 text-center">الإجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {paginatedStudents.map((s) => {
+                      const spec = emps.find(e => e.id === s.specialistId);
+                      const sec = sections.find(sec => sec.id === s.sectionId || sec.name === s.className);
+
+                      return (
+                        <tr key={s.id} className="hover:bg-slate-50/80 transition-all">
+                          <td className="p-3.5 font-bold text-slate-900">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-full bg-slate-100 text-indigo-600 font-bold flex items-center justify-center text-xs overflow-hidden flex-shrink-0">
+                                {s.photo ? <img src={s.photo} alt={s.name} className="w-full h-full object-cover" /> : s.name.substring(0, 2)}
+                              </div>
+                              <div>
+                                <div>{s.name}</div>
+                                <div className="text-xs text-slate-400 font-normal">{calcAge(s.dob)}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-3.5 font-medium text-slate-800">{sec ? sec.name : s.className || '—'}</td>
+                          <td className="p-3.5 font-medium text-indigo-600">{s.diagnosis || 'غير محدد'}</td>
+                          <td className="p-3.5 text-xs text-slate-600">
+                            <div>{s.parentName || '—'}</div>
+                            <div dir="ltr" className="text-slate-400">{s.parentPhone || '—'}</div>
+                          </td>
+                          <td className="p-3.5 text-slate-700">{spec ? spec.name : '—'}</td>
+                          <td className="p-3.5">
+                            <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold ${
+                              s.status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600'
+                            }`}>
+                              {STATUSES[s.status] || s.status}
+                            </span>
+                          </td>
+                          <td className="p-3.5 text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              <button onClick={() => setDetailId(s.id)} className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-semibold hover:bg-indigo-100 transition-all">
+                                👁️ الملف
+                              </button>
+                              {canEdit && (
+                                <button onClick={() => openForm(s)} className="p-1 text-slate-500 hover:text-slate-800">
+                                  ✏️
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )
+        ) : (
+          <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center">
+            <AlertCircle className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+            <h3 className="font-bold text-slate-700 text-base mb-1">لا يوجد طلاب مطبقين لمحددات التصفية</h3>
+            <p className="text-xs text-slate-400">جرب تغيير كلمة البحث أو اختيار صف آخر.</p>
           </div>
         )}
 
-        {/* Pagination Controls */}
+        {/* Pagination Bar */}
         {totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 20 }}>
+          <div className="flex items-center justify-center gap-2 mt-6">
             <button
-              type="button"
-              className="btn btn-g"
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              style={{ padding: '6px 14px', borderRadius: 8, fontSize: '.85rem' }}
+              className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40"
             >
-              ◀️ السابق
+              السابق
             </button>
-
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
-              <button
-                key={pageNum}
-                type="button"
-                className={`btn ${currentPage === pageNum ? 'btn-p' : 'btn-g'}`}
-                onClick={() => setCurrentPage(pageNum)}
-                style={{ width: 34, height: 34, padding: 0, borderRadius: 8, fontWeight: 800, fontSize: '.88rem' }}
-              >
-                {pageNum}
-              </button>
-            ))}
-
+            <span className="text-xs font-medium text-slate-600">
+              {currentPage} من {totalPages}
+            </span>
             <button
-              type="button"
-              className="btn btn-g"
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              style={{ padding: '6px 14px', borderRadius: 8, fontSize: '.85rem' }}
+              className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40"
             >
-              التالي ▶️
+              التالي
             </button>
           </div>
         )}
       </div>
 
-      {/* 5️⃣ Student Add/Edit Modal (Tabbed Layout) */}
+      {/* 6️⃣ Student Form Modal */}
       {showForm && (
-        <div className="md-bg" onClick={() => setShowForm(false)}>
-          <div className="md" style={{ maxWidth: 760, width: '95%' }} onClick={e => e.stopPropagation()}>
-            <div className="md-h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontWeight: 800 }}>{editId ? '✏️ تعديل بيانات الطالب' : '➕ إضافة طالب جديد للمركز'}</h3>
-              <button type="button" className="ic-btn" onClick={() => setShowForm(false)}>✕</button>
-            </div>
-
-            {/* Modal Navigation Tabs */}
-            <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', background: 'var(--g0)', padding: '6px 10px', gap: 6 }}>
-              <button
-                type="button"
-                className={`btn ${formTab === 'basic' ? 'btn-p' : 'btn-g'}`}
-                onClick={() => setFormTab('basic')}
-                style={{ fontSize: '.83rem', padding: '6px 14px', borderRadius: 8 }}
-              >
-                👤 البيانات الشخصية والصف
-              </button>
-              <button
-                type="button"
-                className={`btn ${formTab === 'medical' ? 'btn-p' : 'btn-g'}`}
-                onClick={() => setFormTab('medical')}
-                style={{ fontSize: '.83rem', padding: '6px 14px', borderRadius: 8 }}
-              >
-                🩺 التشخيص والملف الطبي
-              </button>
-              <button
-                type="button"
-                className={`btn ${formTab === 'family' ? 'btn-p' : 'btn-g'}`}
-                onClick={() => setFormTab('family')}
-                style={{ fontSize: '.83rem', padding: '6px 14px', borderRadius: 8 }}
-              >
-                👨‍👩‍👦 بيانات ولي الأمر
-              </button>
-              <button
-                type="button"
-                className={`btn ${formTab === 'programs' ? 'btn-p' : 'btn-g'}`}
-                onClick={() => setFormTab('programs')}
-                style={{ fontSize: '.83rem', padding: '6px 14px', borderRadius: 8 }}
-              >
-                ☀️ البرامج والمرفقات
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col dir-rtl">
+            <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                <span>{editId ? '✏️ تعديل بيانات الطالب' : '➕ إضافة طالب جديد'}</span>
+              </h3>
+              <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="md-b" style={{ maxHeight: '65vh', overflowY: 'auto', padding: 20 }}>
-              {/* TAB 1: BASIC DATA & CLASS ASSIGNMENT */}
+            {/* Form Tabs */}
+            <div className="flex border-b border-slate-200 bg-slate-100/60 p-1 text-xs font-bold gap-1">
+              <button onClick={() => setFormTab('basic')} className={`flex-1 py-2 rounded-lg transition-all ${formTab === 'basic' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600'}`}>
+                👤 البيانات الأساسية والصف
+              </button>
+              <button onClick={() => setFormTab('diagnosis')} className={`flex-1 py-2 rounded-lg transition-all ${formTab === 'diagnosis' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600'}`}>
+                🩺 الفئة والتشخيص الطبي
+              </button>
+              <button onClick={() => setFormTab('family')} className={`flex-1 py-2 rounded-lg transition-all ${formTab === 'family' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600'}`}>
+                👨‍👩‍👦 ولي الأمر والتواصل
+              </button>
+              <button onClick={() => setFormTab('programs')} className={`flex-1 py-2 rounded-lg transition-all ${formTab === 'programs' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600'}`}>
+                🗂️ الدوام والمرفقات
+              </button>
+            </div>
+
+            <div className="p-5 overflow-y-auto flex-1 space-y-4 text-sm">
               {formTab === 'basic' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <div className="av xl" style={{ width: 70, height: 70, borderRadius: '50%', background: 'var(--g2)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '2px solid var(--border-color)' }}>
-                      {form.photo ? <img src={form.photo} alt="Student" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '1.8rem' }}>👦</span>}
-                    </div>
-                    <div>
-                      <label className="btn btn-sm btn-g" style={{ cursor: 'pointer', padding: '6px 14px' }}>
-                        📷 تحميل صورة الطالب
-                        <input type="file" accept="image/*" onChange={handlePhoto} style={{ display: 'none' }} />
-                      </label>
-                      {form.photo && (
-                        <button type="button" className="btn btn-xs btn-d" onClick={() => setForm(f => ({ ...f, photo: '' }))} style={{ marginRight: 8 }}>
-                          إزالة الصورة
-                        </button>
-                      )}
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">اسم الطالب رباعياً *</label>
+                    <input type="text" value={form.name} onChange={fld('name')} className="w-full h-10 border border-slate-300 rounded-lg px-3" placeholder="مثال: علي أحمد محمد العلي" />
                   </div>
-
-                  <div className="fl">
-                    <label style={{ fontWeight: 800 }}>اسم الطالب الثلاثي / الرباعي *</label>
-                    <input className="fi" value={form.name} onChange={fld('name')} placeholder="مثال: أحمد عبد الله الغامدي" />
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div className="fl">
-                      <label style={{ fontWeight: 800 }}>تاريخ الميلاد *</label>
-                      <input type="date" className="fi" value={form.dob} onChange={fld('dob')} />
-                      {form.dob && <span style={{ fontSize: '.78rem', color: 'var(--pr)', marginTop: 2 }}>العمر المحسوب: {calcAge(form.dob)}</span>}
-                    </div>
-
-                    <div className="fl">
-                      <label style={{ fontWeight: 800 }}>الجنس</label>
-                      <select className="fi" value={form.gender} onChange={fld('gender')}>
-                        <option value="ذكر">ذكر</option>
-                        <option value="أنثى">أنثى</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Automatic Class & Section Assignment */}
-                  <div style={{ padding: 14, background: 'var(--pr-l,#eff6ff)', borderRadius: 12, border: '1px solid var(--pr,#1a56db)' }}>
-                    <label style={{ fontWeight: 800, color: 'var(--pr,#1a56db)', display: 'block', marginBottom: 6 }}>
-                      🏫 تخصيص الطالب لصف / قسم دراسي آلياً
-                    </label>
-                    <select className="fi" value={form.sectionId} onChange={fld('sectionId')} style={{ fontWeight: 800 }}>
-                      <option value="">-- اختر الصف / القسم المناسب --</option>
-                      {sections.map(s => (
-                        <option key={s.id} value={s.id}>
-                          {s.icon || '🧩'} {s.name} (الاستيعاب المتاح: {s.capacity || 10})
-                        </option>
-                      ))}
-                    </select>
-                    <p style={{ fontSize: '.78rem', color: 'var(--text-sub)', marginTop: 6, margin: 0 }}>
-                      💡 فور تحديد الصف وحفظ البيانات، سيظهر الطالب بشكل آلي ومنظم داخل هذا الصف في التقارير والبطاقات التلخيصية.
-                    </p>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div className="fl">
-                      <label style={{ fontWeight: 800 }}>حالة الطالب بالمركز</label>
-                      <select className="fi" value={form.status} onChange={fld('status')}>
-                        {Object.entries(STATUSES).map(([k, v]) => (
-                          <option key={k} value={k}>{v}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="fl">
-                      <label style={{ fontWeight: 800 }}>الأخصائي المسؤول المشرف</label>
-                      <select className="fi" value={form.specialistId} onChange={fld('specialistId')}>
-                        <option value="">-- غير محدد --</option>
-                        {specialists.map(e => (
-                          <option key={e.id} value={e.id}>{e.name} ({e.role})</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 2: MEDICAL & CATEGORY DIAGNOSIS */}
-              {formTab === 'medical' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <div className="fl">
-                    <label style={{ fontWeight: 800, color: 'var(--ok,#059669)' }}>🎯 الفئة والتتشخيص الرئيسي *</label>
-                    <select className="fi" value={form.diagnosis} onChange={fld('diagnosis')} style={{ fontWeight: 800 }}>
-                      <option value="">-- اختر الفئة / التشخيص --</option>
-                      {allCategoryOptions.map(d => (
-                        <option key={d} value={d}>{d}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="fl">
-                    <label>تشخيص ثانوي / إضافي (إن وجد)</label>
-                    <input className="fi" value={form.diagnosis2} onChange={fld('diagnosis2')} placeholder="مثال: صعوبات بلع، تأخر حركي..." />
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div className="fl">
-                      <label>المستشفى المتابع</label>
-                      <input className="fi" value={form.hospital} onChange={fld('hospital')} placeholder="اسم المستشفى أو المركز الطبي" />
-                    </div>
-                    <div className="fl">
-                      <label>الطبيب المعالج</label>
-                      <input className="fi" value={form.doctor} onChange={fld('doctor')} placeholder="اسم الطبيب" />
-                    </div>
-                  </div>
-
-                  <div className="fl">
-                    <label>الأدوية والعلاجات الحالية</label>
-                    <textarea className="fi" rows={2} value={form.medications} onChange={fld('medications')} placeholder="اكتب أسماء الأدوية ومواعيد الجرعات..." />
-                  </div>
-
-                  <div className="fl">
-                    <label>ملاحظات وطوارئ طبية محددة</label>
-                    <textarea className="fi" rows={2} value={form.medNotes} onChange={fld('medNotes')} placeholder="حساسية، صرع، احتياطات خاصة..." />
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 3: FAMILY & GUARDIAN */}
-              {formTab === 'family' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
-                    <div className="fl">
-                      <label style={{ fontWeight: 800 }}>اسم ولي الأمر *</label>
-                      <input className="fi" value={form.parentName} onChange={fld('parentName')} placeholder="اسم ولي الأمر الكرت" />
-                    </div>
-                    <div className="fl">
-                      <label style={{ fontWeight: 800 }}>صلة القرابة</label>
-                      <select className="fi" value={form.parentRelation} onChange={fld('parentRelation')}>
-                        <option value="الأب">الأب</option>
-                        <option value="الأم">الأم</option>
-                        <option value="الوصي الشرعي">الوصي الشرعي</option>
-                        <option value="الأخ">الأخ</option>
-                        <option value="الأخت">الأخت</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div className="fl">
-                      <label style={{ fontWeight: 800 }}>رقم جوال ولي الأمر (رئيسي) *</label>
-                      <input className="fi" dir="ltr" value={form.parentPhone} onChange={fld('parentPhone')} placeholder="05xxxxxxxx" />
-                    </div>
-                    <div className="fl">
-                      <label>رقم جوال إضافي / طوارئ</label>
-                      <input className="fi" dir="ltr" value={form.parentPhone2} onChange={fld('parentPhone2')} placeholder="05xxxxxxxx" />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div className="fl">
-                      <label>البريد الإلكتروني لولي الأمر</label>
-                      <input type="email" className="fi" value={form.parentEmail} onChange={fld('parentEmail')} placeholder="parent@email.com" />
-                    </div>
-                    <div className="fl">
-                      <label>العنوان والسكن</label>
-                      <input className="fi" value={form.address} onChange={fld('address')} placeholder="المدينة، الحي..." />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 4: PROGRAMS & ATTACHMENTS */}
-              {formTab === 'programs' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <h4 style={{ margin: 0, fontSize: '.95rem', fontWeight: 800 }}>☀️ تفعيل أنواع الدوام والخدمات المسندة:</h4>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 10, background: 'var(--g0)', borderRadius: 10, cursor: 'pointer' }}>
-                      <input type="checkbox" checked={form.progMorning?.enabled || false} onChange={() => toggleProg('progMorning')} />
-                      <span>☀️ دوام صباحي تأحيلي</span>
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 10, background: 'var(--g0)', borderRadius: 10, cursor: 'pointer' }}>
-                      <input type="checkbox" checked={form.progEvening?.enabled || false} onChange={() => toggleProg('progEvening')} />
-                      <span>🌙 دوام مسائي</span>
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 10, background: 'var(--g0)', borderRadius: 10, cursor: 'pointer' }}>
-                      <input type="checkbox" checked={form.progSessions?.enabled || false} onChange={() => toggleProg('progSessions')} />
-                      <span>🩺 جلسات علاجية فردية</span>
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 10, background: 'var(--g0)', borderRadius: 10, cursor: 'pointer' }}>
-                      <input type="checkbox" checked={form.progOnline?.enabled || false} onChange={() => toggleProg('progOnline')} />
-                      <span>🌐 خدمات أونلاين عن بعد</span>
-                    </label>
-                  </div>
-
-                  <hr style={{ borderColor: 'var(--border-color)', margin: '8px 0' }} />
 
                   <div>
-                    <label style={{ fontWeight: 800, display: 'block', marginBottom: 6 }}>📎 المرفقات والمستندات الرسمية</label>
-                    <input type="file" multiple onChange={addAttachments} />
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-                      {(form.attachments || []).map(a => (
-                        <div key={a.id} style={{ padding: '6px 12px', background: 'var(--g1)', borderRadius: 8, fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span>📄 {a.name}</span>
-                          <button type="button" className="ic-btn" onClick={() => removeAttachment(a.id)}>✕</button>
-                        </div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">تاريخ الميلاد *</label>
+                    <input type="date" value={form.dob} onChange={fld('dob')} className="w-full h-10 border border-slate-300 rounded-lg px-3" />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">تخصيص الصف / القسم *</label>
+                    <select value={form.sectionId} onChange={fld('sectionId')} className="w-full h-10 border border-slate-300 rounded-lg px-3 font-medium">
+                      <option value="">-- اختر الصف / القسم --</option>
+                      {sections.map(sec => (
+                        <option key={sec.id} value={sec.id}>{sec.icon || '🧩'} {sec.name}</option>
                       ))}
-                    </div>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">الأخصائي المشرف</label>
+                    <select value={form.specialistId} onChange={fld('specialistId')} className="w-full h-10 border border-slate-300 rounded-lg px-3">
+                      <option value="">-- اختر الأخصائي المشرف --</option>
+                      {specialists.map(e => (
+                        <option key={e.id} value={e.id}>{e.name} ({e.role})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">الجنس</label>
+                    <select value={form.gender} onChange={fld('gender')} className="w-full h-10 border border-slate-300 rounded-lg px-3">
+                      <option value="ذكر">ذكر</option>
+                      <option value="أنثى">أنثى</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">حالة الطالب</label>
+                    <select value={form.status} onChange={fld('status')} className="w-full h-10 border border-slate-300 rounded-lg px-3">
+                      {Object.entries(STATUSES).map(([k, v]) => (
+                        <option key={k} value={k}>{v}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {formTab === 'diagnosis' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-slate-700 mb-1">التشخيص الرئيسي / الفئة *</label>
+                    <select value={form.diagnosis} onChange={fld('diagnosis')} className="w-full h-10 border border-slate-300 rounded-lg px-3 font-medium">
+                      <option value="">-- اختر التشخيص الرئيسي --</option>
+                      {allCategoryOptions.map(d => (
+                        <option key={d} value={d}>🎯 {d}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">التشخيص الثانوي / الإضافي</label>
+                    <input type="text" value={form.diagnosis2} onChange={fld('diagnosis2')} className="w-full h-10 border border-slate-300 rounded-lg px-3" placeholder="مثال: تأخر نطق، صعوبة انتباه..." />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">المستشفى / الجهة المشخصة</label>
+                    <input type="text" value={form.hospital} onChange={fld('hospital')} className="w-full h-10 border border-slate-300 rounded-lg px-3" />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-slate-700 mb-1">الأدوية والتعليمات الطبية الخاصة</label>
+                    <textarea value={form.medications} onChange={fld('medications')} className="w-full h-20 border border-slate-300 rounded-lg p-3" placeholder="اكتب أي ملاحظات أدوية أو حساسية غذائية أو محاذير..." />
+                  </div>
+                </div>
+              )}
+
+              {formTab === 'family' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">اسم ولي الأمر *</label>
+                    <input type="text" value={form.parentName} onChange={fld('parentName')} className="w-full h-10 border border-slate-300 rounded-lg px-3" />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">صلة القرابة</label>
+                    <select value={form.parentRelation} onChange={fld('parentRelation')} className="w-full h-10 border border-slate-300 rounded-lg px-3">
+                      <option value="الأب">الأب</option>
+                      <option value="الأم">الأم</option>
+                      <option value="الأخ/الأخت">الأخ/الأخت</option>
+                      <option value="الوصي الشرعي">الوصي الشرعي</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">رقم الجوال الرئيسي (واتساب) *</label>
+                    <input type="text" dir="ltr" value={form.parentPhone} onChange={fld('parentPhone')} className="w-full h-10 border border-slate-300 rounded-lg px-3" placeholder="05xxxxxxxx" />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">رقم جوال إضافي / طوارئ</label>
+                    <input type="text" dir="ltr" value={form.parentPhone2} onChange={fld('parentPhone2')} className="w-full h-10 border border-slate-300 rounded-lg px-3" />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-slate-700 mb-1">العنوان والحي السكني</label>
+                    <input type="text" value={form.address} onChange={fld('address')} className="w-full h-10 border border-slate-300 rounded-lg px-3" />
+                  </div>
+                </div>
+              )}
+
+              {formTab === 'programs' && (
+                <div className="space-y-4">
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                    <label className="flex items-center gap-2 font-bold text-slate-800">
+                      <input type="checkbox" checked={form.progMorning?.enabled || false} onChange={() => toggleProg('progMorning')} className="w-4 h-4 text-indigo-600 rounded" />
+                      <span>☀️ برنامج الدوام الصباحي</span>
+                    </label>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                    <label className="flex items-center gap-2 font-bold text-slate-800">
+                      <input type="checkbox" checked={form.progSessions?.enabled || false} onChange={() => toggleProg('progSessions')} className="w-4 h-4 text-indigo-600 rounded" />
+                      <span>🩺 برنامج الجلسات العلاجية الفردية</span>
+                    </label>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">رفع صوة الشخصية أو مرفقات</label>
+                    <input type="file" accept="image/*" onChange={handlePhoto} className="block text-xs" />
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="md-f" style={{ display: 'flex', justifyContent: 'space-between', padding: 16, background: 'var(--g0)', borderTop: '1px solid var(--border-color)' }}>
-              <button type="button" className="btn btn-g" onClick={() => setShowForm(false)}>إلغاء</button>
-              <button type="button" className="btn btn-p" onClick={save} style={{ padding: '8px 24px', fontWeight: 800 }}>
-                💾 حفظ بيانات الطالب
-              </button>
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+              <button onClick={() => setShowForm(false)} className="px-4 py-2 bg-slate-200 text-slate-700 rounded-xl font-medium text-xs">إلغاء</button>
+              <button onClick={save} className="px-5 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-700">حفظ الطالب</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Section Add/Edit Modal */}
+      {/* 7️⃣ Add Section / Class Modal */}
       {showSecModal && (
-        <div className="md-bg" onClick={() => setShowSecModal(false)}>
-          <div className="md" style={{ maxWidth: 520, width: '90%' }} onClick={e => e.stopPropagation()}>
-            <div className="md-h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontWeight: 800 }}>{secEditId ? '✏️ تعديل بيانات الصف / القسم' : '🏫 إضافة قسم / صف جديد'}</h3>
-              <button type="button" className="ic-btn" onClick={() => setShowSecModal(false)}>✕</button>
-            </div>
-
-            <div className="md-b" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div className="fl">
-                <label style={{ fontWeight: 800 }}>اسم الصف / القسم *</label>
-                <input className="fi" value={secForm.name} onChange={e => setSecForm(f => ({ ...f, name: e.target.value }))} placeholder="مثال: قسم اضطراب طيف التوحد (صف الياقوت)" />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div className="fl">
-                  <label>رمز الأيقونة</label>
-                  <input className="fi" value={secForm.icon} onChange={e => setSecForm(f => ({ ...f, icon: e.target.value }))} placeholder="🧩، 🌟، 🌱..." />
-                </div>
-                <div className="fl">
-                  <label>لون القسم</label>
-                  <input type="color" className="fi" value={secForm.color} onChange={e => setSecForm(f => ({ ...f, color: e.target.value }))} style={{ height: 40, padding: 2 }} />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div className="fl">
-                  <label style={{ fontWeight: 800 }}>الطاقة الاستيعابية للطلاب</label>
-                  <input type="number" className="fi" value={secForm.capacity} onChange={e => setSecForm(f => ({ ...f, capacity: e.target.value }))} min={1} />
-                </div>
-                <div className="fl">
-                  <label style={{ fontWeight: 800 }}>المشرف الأخصائي</label>
-                  <select className="fi" value={secForm.supervisorId} onChange={e => setSecForm(f => ({ ...f, supervisorId: e.target.value }))}>
-                    <option value="">-- غير محدد --</option>
-                    {specialists.map(e => (
-                      <option key={e.id} value={e.id}>{e.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="fl">
-                <label>وصف وتفاصيل القسم</label>
-                <textarea className="fi" rows={2} value={secForm.description} onChange={e => setSecForm(f => ({ ...f, description: e.target.value }))} placeholder="البرامج والأهداف المخصصة بهذا الصف..." />
-              </div>
-            </div>
-
-            <div className="md-f" style={{ display: 'flex', justifyContent: 'space-between', padding: 16, background: 'var(--g0)', borderTop: '1px solid var(--border-color)' }}>
-              <button type="button" className="btn btn-g" onClick={() => setShowSecModal(false)}>إلغاء</button>
-              <button type="button" className="btn btn-p" onClick={saveSec} style={{ padding: '8px 20px', fontWeight: 800 }}>
-                💾 حفظ القسم
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col dir-rtl">
+            <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="font-bold text-slate-800 text-base">
+                {secEditId ? '✏️ تعديل بيانات الصف' : '🏫 إضافة صف / قسم جديد'}
+              </h3>
+              <button onClick={() => setShowSecModal(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
               </button>
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* Quick Session Modal */}
-      {showQuickSession && (
-        <div className="md-bg" onClick={() => setShowQuickSession(false)}>
-          <div className="md" style={{ maxWidth: 540, width: '90%' }} onClick={e => e.stopPropagation()}>
-            <div className="md-h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontWeight: 800 }}>🩺 تسجيل جلسة تأهيلية سريعة</h3>
-              <button type="button" className="ic-btn" onClick={() => setShowQuickSession(false)}>✕</button>
-            </div>
-            <div className="md-b" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div className="fl">
-                <label style={{ fontWeight: 800 }}>اختر الطالب *</label>
-                <select className="fi" value={qsForm.stuId} onChange={fldQs('stuId')}>
-                  <option value="">-- اختر الطالب --</option>
-                  {students.map(s => (
-                    <option key={s.id} value={s.id}>{s.name} ({s.diagnosis || 'بدون تشخيص'})</option>
+            <div className="p-5 space-y-3 text-sm">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">اسم الصف / القسم *</label>
+                <input type="text" value={secForm.name} onChange={e => setSecForm(f => ({ ...f, name: e.target.value }))} className="w-full h-10 border border-slate-300 rounded-lg px-3" placeholder="مثال: صف اللؤلؤ" />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">الرمز التعبيري (الأيقونة)</label>
+                <input type="text" value={secForm.icon} onChange={e => setSecForm(f => ({ ...f, icon: e.target.value }))} className="w-full h-10 border border-slate-300 rounded-lg px-3" placeholder="مثال: 🦪" />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">الطاقة الاستيعابية القصوى (عدد الطلاب) *</label>
+                <input type="number" value={secForm.capacity} onChange={e => setSecForm(f => ({ ...f, capacity: e.target.value }))} className="w-full h-10 border border-slate-300 rounded-lg px-3" />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">المشرف المسؤول</label>
+                <select value={secForm.supervisorId} onChange={e => setSecForm(f => ({ ...f, supervisorId: e.target.value }))} className="w-full h-10 border border-slate-300 rounded-lg px-3">
+                  <option value="">-- اختر المشرف --</option>
+                  {emps.map(e => (
+                    <option key={e.id} value={e.id}>{e.name} ({e.role})</option>
                   ))}
                 </select>
               </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div className="fl">
-                  <label>نوع الجلسة</label>
-                  <select className="fi" value={qsForm.type} onChange={fldQs('type')}>
-                    {['تخاطب ونطق', 'تعديل سلوك', 'علاج فيزيائي', 'علاج وظيفي', 'تكامل حسي', 'تعليمي وتربوي', 'مهارات اجتماعية'].map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="fl">
-                  <label>الأخصائي المفلّذ</label>
-                  <select className="fi" value={qsForm.empId} onChange={fldQs('empId')}>
-                    <option value="">-- اختر الأخصائي --</option>
-                    {specialists.map(e => (
-                      <option key={e.id} value={e.id}>{e.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-                <div className="fl">
-                  <label>التاريخ *</label>
-                  <input type="date" className="fi" value={qsForm.date} onChange={fldQs('date')} />
-                </div>
-                <div className="fl">
-                  <label>الوقت</label>
-                  <input type="time" className="fi" value={qsForm.time} onChange={fldQs('time')} />
-                </div>
-                <div className="fl">
-                  <label>المدة (دقيقة)</label>
-                  <input type="number" className="fi" value={qsForm.duration} onChange={fldQs('duration')} />
-                </div>
-              </div>
-
-              <div className="fl">
-                <label>ملاحظات وتوصيات الجلسة</label>
-                <textarea className="fi" rows={3} value={qsForm.notes} onChange={fldQs('notes')} placeholder="مدى التجاوب، الأهداف المحققة..." />
-              </div>
-
-              <div className="fl">
-                <label>مرفق أو تقرير للجلسة</label>
-                <input type="file" onChange={qsAttach} />
-                {qsForm.attachName && <span style={{ fontSize: '.8rem', color: 'var(--ok)' }}>📄 {qsForm.attachName}</span>}
-              </div>
             </div>
 
-            <div className="md-f" style={{ display: 'flex', justifyContent: 'space-between', padding: 16, background: 'var(--g0)', borderTop: '1px solid var(--border-color)' }}>
-              <button type="button" className="btn btn-g" onClick={() => setShowQuickSession(false)}>إلغاء</button>
-              <button type="button" className="btn btn-p" onClick={saveQuickSession} style={{ padding: '8px 20px', fontWeight: 800 }}>
-                💾 حفظ الجلسة
-              </button>
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+              <button onClick={() => setShowSecModal(false)} className="px-4 py-2 bg-slate-200 text-slate-700 rounded-xl font-medium text-xs">إلغاء</button>
+              <button onClick={saveSec} className="px-5 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-700">حفظ الصف</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Consultation Modal */}
+      {/* 8️⃣ Quick Session Modal */}
+      {showQuickSession && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl border border-slate-200 p-5 space-y-4 dir-rtl">
+            <h3 className="font-bold text-slate-800 text-base">🩺 تسجيل جلسة علاجية فردية</h3>
+            <div className="space-y-3 text-sm">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">الطالب *</label>
+                <select value={qsForm.stuId} onChange={fldQs('stuId')} className="w-full h-10 border border-slate-300 rounded-lg px-3">
+                  <option value="">-- اختر الطالب --</option>
+                  {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">نوع الجلسة</label>
+                <select value={qsForm.type} onChange={fldQs('type')} className="w-full h-10 border border-slate-300 rounded-lg px-3">
+                  <option value="تخاطب ونطق">تخاطب ونطق</option>
+                  <option value="علاج وظيفي">علاج وظيفي</option>
+                  <option value="علاج طبيعي">علاج طبيعي</option>
+                  <option value="تعديل سلوك">تعديل سلوك</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">التاريخ</label>
+                <input type="date" value={qsForm.date} onChange={fldQs('date')} className="w-full h-10 border border-slate-300 rounded-lg px-3" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button onClick={() => setShowQuickSession(false)} className="px-4 py-2 bg-slate-200 text-slate-700 rounded-xl text-xs">إلغاء</button>
+              <button onClick={saveQuickSession} className="px-5 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold">تسجيل الجلسة</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 9️⃣ Consultation Modal */}
       {showConsult && (
-        <div className="md-bg" onClick={() => setShowConsult(false)}>
-          <div className="md" style={{ maxWidth: 540, width: '90%' }} onClick={e => e.stopPropagation()}>
-            <div className="md-h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontWeight: 800 }}>💬 تسجيل استشارة جديدة</h3>
-              <button type="button" className="ic-btn" onClick={() => setShowConsult(false)}>✕</button>
-            </div>
-            <div className="md-b" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div className="fl">
-                <label style={{ fontWeight: 800 }}>اسم المستفيد / المستشير *</label>
-                <input className="fi" value={consultForm.beneficiaryName} onChange={fldCo('beneficiaryName')} placeholder="اسم الحالة أو صاحب الاستشارة" />
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl border border-slate-200 p-5 space-y-4 dir-rtl">
+            <h3 className="font-bold text-slate-800 text-base">💬 تسجيل استشارة</h3>
+            <div className="space-y-3 text-sm">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">اسم المستفيد / الحالة *</label>
+                <input type="text" value={consultForm.beneficiaryName} onChange={fldCo('beneficiaryName')} className="w-full h-10 border border-slate-300 rounded-lg px-3" />
               </div>
-
-              <div className="fl">
-                <label>اسم ولي الأمر (إذا كان الطفل مستفيداً)</label>
-                <input className="fi" value={consultForm.parentName} onChange={fldCo('parentName')} placeholder="اسم ولي الأمر" />
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">اسم ولي الأمر</label>
+                <input type="text" value={consultForm.parentName} onChange={fldCo('parentName')} className="w-full h-10 border border-slate-300 rounded-lg px-3" />
               </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-                <div className="fl">
-                  <label>التاريخ *</label>
-                  <input type="date" className="fi" value={consultForm.date} onChange={fldCo('date')} />
-                </div>
-                <div className="fl">
-                  <label>الوقت</label>
-                  <input type="time" className="fi" value={consultForm.time} onChange={fldCo('time')} />
-                </div>
-                <div className="fl">
-                  <label>المدة (دقيقة)</label>
-                  <input type="number" className="fi" value={consultForm.duration} onChange={fldCo('duration')} />
-                </div>
-              </div>
-
-              <div className="fl">
-                <label>ملاحظات ونتائج الاستشارة</label>
-                <textarea className="fi" rows={3} value={consultForm.notes} onChange={fldCo('notes')} placeholder="تفاصيل الاستشارة والتوصيات..." />
-              </div>
-
-              <div className="fl">
-                <label>مرفق الاستشارة</label>
-                <input type="file" onChange={coAttach} />
-                {consultForm.attachName && <span style={{ fontSize: '.8rem', color: 'var(--ok)' }}>📄 {consultForm.attachName}</span>}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">التاريخ</label>
+                <input type="date" value={consultForm.date} onChange={fldCo('date')} className="w-full h-10 border border-slate-300 rounded-lg px-3" />
               </div>
             </div>
-
-            <div className="md-f" style={{ display: 'flex', justifyContent: 'space-between', padding: 16, background: 'var(--g0)', borderTop: '1px solid var(--border-color)' }}>
-              <button type="button" className="btn btn-g" onClick={() => setShowConsult(false)}>إلغاء</button>
-              <button type="button" className="btn btn-p" onClick={saveConsult} style={{ padding: '8px 20px', fontWeight: 800 }}>
-                💾 حفظ الاستشارة
-              </button>
+            <div className="flex justify-end gap-2 pt-2">
+              <button onClick={() => setShowConsult(false)} className="px-4 py-2 bg-slate-200 text-slate-700 rounded-xl text-xs">إلغاء</button>
+              <button onClick={saveConsult} className="px-5 py-2 bg-cyan-600 text-white rounded-xl text-xs font-bold">تسجيل الاستشارة</button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }
