@@ -327,33 +327,25 @@ export default function Pls5ReportModal({
   });
 
   return (
-    <div className="mbg" style={{ zIndex: 1060 }}>
+    <div className="mbg">
       <div
         className="mb"
         style={{
-          maxWidth: '1080px',
-          width: '96%',
-          maxHeight: '94vh',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: 0,
-          borderRadius: '16px',
-          overflow: 'hidden',
-          background: 'var(--bg-card)',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+          maxWidth: 'min(1360px, calc(100vw - 24px))',
+          width: '100%',
         }}
       >
-        {/* MODAL HEADER */}
+        {/* MODAL MAIN HEADER */}
         <div
+          className="fhd modal-header-custom"
           style={{
-            background: 'linear-gradient(135deg, #0e7490 0%, #0891b2 50%, #06b6d4 100%)',
-            color: '#ffffff',
-            padding: '16px 22px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
+            padding: '14px 20px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            flexWrap: 'wrap',
+            background: 'linear-gradient(135deg, #0e7490 0%, #0891b2 50%, #06b6d4 100%)',
+            color: '#ffffff',
+            flexShrink: 0,
             gap: 12,
           }}
         >
@@ -1172,6 +1164,7 @@ export default function Pls5ReportModal({
 
         {/* MODAL FOOTER */}
         <div
+          className="fa"
           style={{
             background: 'var(--g0)',
             padding: '12px 20px',
@@ -1181,6 +1174,7 @@ export default function Pls5ReportModal({
             alignItems: 'center',
             flexWrap: 'wrap',
             gap: 10,
+            flexShrink: 0,
           }}
         >
           <div style={{ fontSize: '0.78rem', color: 'var(--text-sub)' }}>

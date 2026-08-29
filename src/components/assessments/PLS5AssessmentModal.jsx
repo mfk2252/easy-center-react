@@ -416,182 +416,137 @@ export default function PLS5AssessmentModal({
   const expressiveAnswered = Object.keys(form.scores).filter(k => k.startsWith('e_')).length;
 
   return (
-    <div className="mbg" style={{ zIndex: 1050 }}>
+    <div className="mbg">
       <div
         className="mb"
         style={{
-          maxWidth: '1180px',
-          width: '96%',
-          maxHeight: '94vh',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: 0,
-          borderRadius: '16px',
-          overflow: 'hidden',
-          background: 'var(--bg-card)',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+          maxWidth: 'min(1360px, calc(100vw - 24px))',
+          width: '100%',
         }}
       >
-        {/* MODAL HEADER */}
+        {/* MODAL MAIN HEADER */}
         <div
+          className="fhd modal-header-custom"
           style={{
+            padding: '14px 20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             background: 'linear-gradient(135deg, #0e7490 0%, #0891b2 50%, #06b6d4 100%)',
             color: '#ffffff',
-            padding: '16px 22px',
-            position: 'relative',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
+            flexShrink: 0,
+            gap: 12,
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 12,
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  backdropFilter: 'blur(8px)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 22,
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                }}
-              >
-                🗣️
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: '1.8rem', flexShrink: 0 }}>🗣️</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h2 style={{ fontSize: '1.18rem', fontWeight: 800, margin: 0, color: '#ffffff' }}>
+                  {PLS5_COPYRIGHT_INFO.measureNameAr}
+                </h2>
+                <span className="bdg" style={{ background: 'rgba(255,255,255,0.25)', color: '#ffffff', fontSize: '0.72rem', fontWeight: 700 }}>
+                  80 بنداً مقنناً · مقياسان فرعيان
+                </span>
+                <span className="bdg" style={{ background: '#cffafe', color: '#0e7490', fontSize: '0.72rem', fontWeight: 800 }}>
+                  الفئة: {PLS5_COPYRIGHT_INFO.ageRange}
+                </span>
               </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#ffffff' }}>
-                    {PLS5_COPYRIGHT_INFO.measureNameAr}
-                  </h2>
-                  <span
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.25)',
-                      color: '#ffffff',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      padding: '2px 8px',
-                      borderRadius: '20px',
-                    }}
-                  >
-                    الإصدار الإكلينيكي المقنن
-                  </span>
-                  <span
-                    style={{
-                      background: '#cffafe',
-                      color: '#0e7490',
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      padding: '2px 8px',
-                      borderRadius: '20px',
-                    }}
-                  >
-                    الفئة: {PLS5_COPYRIGHT_INFO.ageRange}
-                  </span>
-                </div>
-                <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', opacity: 0.92, color: '#ecfeff' }}>
-                  {PLS5_COPYRIGHT_INFO.measureNameEn} — تقييم شامل للفهم السمعي والتواصل اللفظي
-                </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 3 }}>
+                <span className="bdg" style={{ background: '#164e63', color: '#ecfeff', fontSize: '0.68rem', fontWeight: 800 }}>
+                  © Pearson Clinical / {PLS5_COPYRIGHT_INFO.authorsAr}
+                </span>
+                <span style={{ fontSize: '0.76rem', opacity: 0.95, color: '#ecfeff' }}>
+                  {PLS5_COPYRIGHT_INFO.measureNameEn} — التقييم الشامل للنمو والتواصل اللغوي من الولادة حتى 7 سنوات و11 شهراً
+                </span>
               </div>
-            </div>
-
-            {/* Quick Actions & Header Toggle */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button
-                type="button"
-                className="btn btn-sm"
-                onClick={() => setShowCopyrightDetails(!showCopyrightDetails)}
-                style={{
-                  background: showCopyrightDetails ? '#ffffff' : 'rgba(255, 255, 255, 0.2)',
-                  color: showCopyrightDetails ? '#0e7490' : '#ffffff',
-                  border: '1px solid rgba(255, 255, 255, 0.35)',
-                  borderRadius: 8,
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  padding: '6px 12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-              >
-                ⚖️ حقوق المقياس والتقنين
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-sm"
-                onClick={() => setIsHeaderCollapsed(!isHeaderCollapsed)}
-                style={{
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  color: '#ffffff',
-                  borderRadius: 8,
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  padding: '6px 12px',
-                  cursor: 'pointer',
-                }}
-                title={isHeaderCollapsed ? 'إظهار بيانات المفحوص' : 'طي بيانات المفحوص'}
-              >
-                {isHeaderCollapsed ? '🔽 إظهار البيانات' : '🔼 إخفاء البيانات'}
-              </button>
-
-              <button
-                type="button"
-                onClick={onClose}
-                style={{
-                  background: 'rgba(0, 0, 0, 0.25)',
-                  border: 'none',
-                  color: '#ffffff',
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 16,
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                }}
-              >
-                ✕
-              </button>
             </div>
           </div>
 
-          {/* COPYRIGHT ACCORDION PANEL */}
-          {showCopyrightDetails && (
-            <div
+          {/* Quick Actions & Header Toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={() => setShowCopyrightDetails(!showCopyrightDetails)}
               style={{
-                marginTop: 14,
-                padding: '12px 16px',
-                background: 'var(--g0)',
-                color: 'var(--text-main)',
-                borderRadius: 10,
-                border: '1px solid var(--border-color)',
-                fontSize: '0.8rem',
-                lineHeight: 1.6,
-                boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
+                background: showCopyrightDetails ? '#ffffff' : 'rgba(255, 255, 255, 0.2)',
+                color: showCopyrightDetails ? '#0e7490' : '#ffffff',
+                border: '1px solid rgba(255, 255, 255, 0.35)',
+                fontWeight: 700,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#0891b2', fontWeight: 800, marginBottom: 4 }}>
-                <span>📜 بيانات المقياس والاعتماد الأكاديمي:</span>
+              📜 {showCopyrightDetails ? 'إخفاء حقوق المقياس' : 'حقوق المقياس والتقنين'}
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={() => setIsHeaderCollapsed(!isHeaderCollapsed)}
+              style={{
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                color: '#ffffff',
+                fontWeight: 700,
+              }}
+              title={isHeaderCollapsed ? 'إظهار بيانات المفحوص' : 'طي بيانات المفحوص'}
+            >
+              {isHeaderCollapsed ? '🔽 إظهار البيانات' : '🔼 إخفاء البيانات'}
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={onClose}
+              style={{
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                color: '#ffffff',
+                fontWeight: 700,
+              }}
+            >
+              ✖ إغلاق
+            </button>
+          </div>
+        </div>
+
+        {/* EXPANDABLE DETAILED COPYRIGHT NOTICE */}
+        {showCopyrightDetails && (
+          <div
+            className="modal-banner"
+            style={{
+              background: '#ecfeff',
+              padding: '14px 20px',
+              borderBottom: '2px solid #0891b2',
+              fontSize: '0.82rem',
+              color: '#155e75',
+              lineHeight: 1.6,
+              flexShrink: 0,
+            }}
+          >
+            <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6, color: '#0e7490' }}>
+              <span>📜</span> إشعار حقوق الملكية الفكرية والاعتماد العلمي لمقياس PLS-5:
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, marginBottom: 8 }}>
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #a5f3fc' }}>
+                <strong>المؤلفون:</strong> {PLS5_COPYRIGHT_INFO.authorsAr} ({PLS5_COPYRIGHT_INFO.authorsEn})
               </div>
-              <div>
-                <b>المؤلفون:</b> {PLS5_COPYRIGHT_INFO.authorsAr} ({PLS5_COPYRIGHT_INFO.authorsEn}) · <b>الناشر:</b> {PLS5_COPYRIGHT_INFO.publisher}
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #a5f3fc' }}>
+                <strong>جهة النشر الأصلية:</strong> {PLS5_COPYRIGHT_INFO.publisher}
               </div>
-              <div>
-                <b>التقنين:</b> {PLS5_COPYRIGHT_INFO.adaptation} · <b>المعايير:</b> {PLS5_COPYRIGHT_INFO.normSamples}
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #a5f3fc' }}>
+                <strong>التقنين والمعايير:</strong> {PLS5_COPYRIGHT_INFO.adaptation} ({PLS5_COPYRIGHT_INFO.normSamples})
               </div>
-              <div style={{ color: 'var(--text-sub)', marginTop: 4, fontSize: '0.76rem' }}>
-                <b>قواعد الاختبار:</b> {PLS5_COPYRIGHT_INFO.basalCeilingRules}
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #a5f3fc' }}>
+                <strong>قواعد التقييم:</strong> {PLS5_COPYRIGHT_INFO.basalCeilingRules}
               </div>
             </div>
-          )}
-        </div>
+            <div style={{ fontSize: '0.78rem', color: '#0e7490', background: '#cffafe', padding: '8px 12px', borderRadius: 8 }}>
+              {PLS5_COPYRIGHT_INFO.copyrightNotice}
+            </div>
+          </div>
+        )}
 
         {/* LIVE PSYCHOMETRIC SUMMARY STRIP (FIXED) */}
         <div
@@ -1341,9 +1296,10 @@ export default function PLS5AssessmentModal({
 
         {/* MODAL FOOTER (FIXED AT BOTTOM, OUTSIDE SCROLL BODY) */}
         <div
+          className="fa"
           style={{
             background: 'var(--g0)',
-            padding: '10px 20px',
+            padding: '12px 20px',
             borderTop: '1px solid var(--border-color)',
             display: 'flex',
             justifyContent: 'space-between',
