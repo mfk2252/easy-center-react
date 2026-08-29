@@ -19,6 +19,44 @@ export const PLS5_COPYRIGHT_INFO = {
   basalCeilingRules: "الخط القاعدي (Basal): 3 بنود متتالية صحيحة (1) · سقف التوقف (Ceiling): 6 بنود متتالية خاطئة (0)",
 };
 
+export const PLS5_AGE_GROUPS = [
+  { id: "all", label: "جميع الفئات العمرية (40 بنداً)" },
+  { id: "0-11 شهر", label: "من الولادة إلى 11 شهراً (البنود 1-5)", startId: 1, endId: 5 },
+  { id: "12-23 شهر", label: "12 إلى 23 شهراً (البنود 6-10)", startId: 6, endId: 10 },
+  { id: "2-3 سنوات", label: "سنتان إلى سنتين و11 شهراً (البنود 11-15)", startId: 11, endId: 15 },
+  { id: "3-4 سنوات", label: "3 إلى 3 سنوات و11 شهراً (البنود 16-20)", startId: 16, endId: 20 },
+  { id: "4-5 سنوات", label: "4 إلى 4 سنوات و11 شهراً (البنود 21-25)", startId: 21, endId: 25 },
+  { id: "5-6 سنوات", label: "5 إلى 5 سنوات و11 شهراً (البنود 26-30)", startId: 26, endId: 30 },
+  { id: "6-7 سنوات", label: "6 إلى 6 سنوات و11 شهراً (البنود 31-35)", startId: 31, endId: 35 },
+  { id: "7 سنوات فما فوق", label: "7 سنوات فما فوق (البنود 36-40)", startId: 36, endId: 40 },
+];
+
+export const PLS5_RESPONSE_OPTIONS = [
+  { value: 1, label: "1 - متقن / صحيح (Pass)", shortLabel: "1", color: "#059669", bg: "#ecfdf5", border: "#a7f3d0" },
+  { value: 0, label: "0 - غير متقن / خطأ (Fail)", shortLabel: "0", color: "#dc2626", bg: "#fef2f2", border: "#fecaca" },
+];
+
+export const PLS5_SUBTESTS = [
+  {
+    id: "receptive",
+    code: "AC",
+    nameAr: "الفهم السمعي (اللغة الاستقبالية)",
+    nameEn: "Auditory Comprehension (AC)",
+    desc: "يقيس قدرة الطفل على الانتباه، فهم المفردات، اتباع التعليمات، القواعد الصرفية، والعلاقات المنطقية والمكانية.",
+    itemsCount: 40,
+    color: "#0891b2",
+  },
+  {
+    id: "expressive",
+    code: "EC",
+    nameAr: "التواصل اللفظي (اللغة التعبيرية)",
+    nameEn: "Expressive Communication (EC)",
+    desc: "يقيس الإنتاج الصوتي، تسمية المفردات، تكوين الجمل، الضمائر، زمن الأفعال، والسرد اللغوي التعبيري.",
+    itemsCount: 40,
+    color: "#0284c7",
+  },
+];
+
 // 40 items representing key developmental milestones for Auditory Comprehension (Receptive)
 export const PLS5_RECEPTIVE_ITEMS = [
   // Birth - 11 months (من الولادة إلى 11 شهر)
@@ -159,9 +197,29 @@ export function getPLS5StartingPoints(ageInMonths) {
 }
 
 // Full psychometric scoring engine for PLS-5 (Arabic Adaptation)
-export function calculatePLS5Psychometrics(receptiveResponses, expressiveResponses, ageInMonths) {
-  // receptiveResponses: Map of item_id -> 0 or 1
-  // expressiveResponses: Map of item_id -> 0 or 1
+export function calculatePLS5Psychometrics(receptiveResponses = {}, expressiveResponses = {}, ageInMonths = 48) {
+  // If first argument contains combined keys like 'r_1', 'e_1' or results/scores map
+  let recMap = {};
+  let expMap = {};
+  let effectiveAgeMonths = typeof ageInMonths === 'number' ? ageInMonths : 48;
+
+  if (typeof receptiveResponses === 'object' && receptiveResponses !== null) {
+    if (Object.keys(receptiveResponses).some(k => k.startsWith('r_') || k.startsWith('e_'))) {
+      Object.entries(receptiveResponses).forEach(([k, v]) => {
+        if (k.startsWith('r_')) {
+          recMap[parseInt(k.replace('r_', ''), 10)] = Number(v);
+        } else if (k.startsWith('e_')) {
+          expMap[parseInt(k.replace('e_', ''), 10)] = Number(v);
+        }
+      });
+      if (typeof expressiveResponses === 'number') {
+        effectiveAgeMonths = expressiveResponses;
+      }
+    } else {
+      recMap = receptiveResponses || {};
+      expMap = typeof expressiveResponses === 'object' ? (expressiveResponses || {}) : {};
+    }
+  }
 
   const processSubtest = (items, responses) => {
     let basalIndex = -1;
@@ -191,23 +249,35 @@ export function calculatePLS5Psychometrics(receptiveResponses, expressiveRespons
 
     // 3. Calculate Raw Score
     let rawScore = 0;
+    let correctCount = 0;
+    let testedCount = 0;
+
     if (basalIndex !== -1) {
       // Credit all items prior to basal as correct (1)
       rawScore += basalIndex;
+      correctCount += basalIndex;
 
       // Count actual correct responses from basal up to the end or ceiling
       const stopIndex = ceilingIndex !== -1 ? ceilingIndex + 6 : items.length;
       for (let i = basalIndex; i < stopIndex; i++) {
         const id = items[i].id;
+        if (responses[id] !== undefined && responses[id] !== null) {
+          testedCount++;
+        }
         if (responses[id] === 1) {
           rawScore += 1;
+          correctCount++;
         }
       }
     } else {
-      // No basal established - just count all scored 1s
+      // No basal established - count all scored 1s
       items.forEach(item => {
+        if (responses[item.id] !== undefined && responses[item.id] !== null) {
+          testedCount++;
+        }
         if (responses[item.id] === 1) {
           rawScore += 1;
+          correctCount++;
         }
       });
     }
@@ -216,52 +286,56 @@ export function calculatePLS5Psychometrics(receptiveResponses, expressiveRespons
     rawScore = Math.min(rawScore, items.length);
 
     // 4. Identify Weaknesses: Items below the child's developmental group that were failed (0) or unanswered
-    // We also map this to the recommended measurable goals
-    const ageStartPoints = getPLS5StartingPoints(ageInMonths);
+    const ageStartPoints = getPLS5StartingPoints(effectiveAgeMonths);
     const startItemId = items === PLS5_RECEPTIVE_ITEMS ? ageStartPoints.receptiveStart : ageStartPoints.expressiveStart;
     
     const weaknesses = [];
     items.forEach((item) => {
-      // If item is within or below the starting point for their age, and they got 0 or didn't answer
       if (item.id <= startItemId) {
         if (responses[item.id] === 0 || responses[item.id] === undefined) {
           weaknesses.push({
             id: item.id,
             text: item.text,
             domain: item.domain,
+            ageGroup: item.ageGroup,
             goal: item.goal
           });
         }
       } else {
-        // If it was tested and explicitly failed
         if (responses[item.id] === 0) {
           weaknesses.push({
             id: item.id,
             text: item.text,
             domain: item.domain,
+            ageGroup: item.ageGroup,
             goal: item.goal
           });
         }
       }
     });
 
+    const percentage = Math.round((rawScore / items.length) * 100);
+
     return {
       basalIndex,
       ceilingIndex,
       rawScore,
+      correctCount,
+      testedCount,
+      percentage,
       weaknesses
     };
   };
 
-  const acResult = processSubtest(PLS5_RECEPTIVE_ITEMS, receptiveResponses);
-  const ecResult = processSubtest(PLS5_EXPRESSIVE_ITEMS, expressiveResponses);
+  const acResult = processSubtest(PLS5_RECEPTIVE_ITEMS, recMap);
+  const ecResult = processSubtest(PLS5_EXPRESSIVE_ITEMS, expMap);
 
   const totalRawScore = acResult.rawScore + ecResult.rawScore;
   const maxTotalScore = PLS5_RECEPTIVE_ITEMS.length + PLS5_EXPRESSIVE_ITEMS.length;
 
   // Realistically model Standard Scores (SS) & Percentile Ranks (PR) based on age in months
   // Expected raw score increases with chronological age in months
-  const expectedRawScore = Math.min(Math.round(2 + (ageInMonths * 1.05)), maxTotalScore - 5);
+  const expectedRawScore = Math.min(Math.round(2 + (effectiveAgeMonths * 1.05)), maxTotalScore - 5);
   const diff = totalRawScore - expectedRawScore;
 
   // Standard Score: Mean of 100, SD of 15. Standard error calculated on difference.
@@ -308,9 +382,9 @@ export function calculatePLS5Psychometrics(receptiveResponses, expressiveRespons
   const totalLAEMonths = Math.round((receptiveLAEMonths + expressiveLAEMonths) / 2);
 
   // Delay gaps (Months)
-  const totalDelayGapMonths = Math.max(0, Math.round(ageInMonths - totalLAEMonths));
-  const receptiveDelayGapMonths = Math.max(0, Math.round(ageInMonths - receptiveLAEMonths));
-  const expressiveDelayGapMonths = Math.max(0, Math.round(ageInMonths - expressiveLAEMonths));
+  const totalDelayGapMonths = Math.max(0, Math.round(effectiveAgeMonths - totalLAEMonths));
+  const receptiveDelayGapMonths = Math.max(0, Math.round(effectiveAgeMonths - receptiveLAEMonths));
+  const expressiveDelayGapMonths = Math.max(0, Math.round(effectiveAgeMonths - expressiveLAEMonths));
 
   // Clinical Classification based on composite standard score
   let clinicalClassification = "";
@@ -333,13 +407,19 @@ export function calculatePLS5Psychometrics(receptiveResponses, expressiveRespons
   }
 
   // Diagnostic Cutoff text representing standard range boundaries
-  const cutoffText = `درجة معيارية فاصلة لسن ${Math.floor(ageInMonths / 12)}س و ${ageInMonths % 12}ش هي (77) أو أقل لتشخيص التأخر اللغوي الإكلينيكي.`;
+  const cutoffText = `درجة معيارية فاصلة لسن ${Math.floor(effectiveAgeMonths / 12)}س و ${effectiveAgeMonths % 12}ش هي (77) أو أقل لتشخيص التأخر اللغوي الإكلينيكي.`;
 
   return {
     receptiveRawScore: acResult.rawScore,
     expressiveRawScore: ecResult.rawScore,
     totalRawScore,
     maxTotalScore,
+    receptiveCorrectCount: acResult.correctCount,
+    receptiveTestedCount: acResult.testedCount,
+    receptivePercentage: acResult.percentage,
+    expressiveCorrectCount: ecResult.correctCount,
+    expressiveTestedCount: ecResult.testedCount,
+    expressivePercentage: ecResult.percentage,
     receptiveBasalIndex: acResult.basalIndex,
     receptiveCeilingIndex: acResult.ceilingIndex,
     expressiveBasalIndex: ecResult.basalIndex,

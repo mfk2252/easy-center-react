@@ -22,6 +22,7 @@ import Ppvt5ReportModal from '../../components/assessments/Ppvt5ReportModal';
 import AbuHasibaAssessmentModal from '../../components/assessments/AbuHasibaAssessmentModal';
 import AbuHasibaReportModal from '../../components/assessments/AbuHasibaReportModal';
 import PLS5Assessment from '../../components/assessments/PLS5Assessment';
+import Pls5ReportModal from '../../components/assessments/Pls5ReportModal';
 import LDESAssessmentModal from '../../components/assessments/LDESAssessmentModal';
 import LDESReportModal from '../../components/assessments/LDESReportModal';
 import DevLdAssessmentModal from '../../components/assessments/DevLdAssessmentModal';
@@ -174,6 +175,8 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
   // PLS-5 Specific Specialized Modals States
   const [pls5ModalOpen, setPls5ModalOpen] = useState(false);
   const [pls5EditData, setPls5EditData] = useState(null);
+  const [pls5ReportOpen, setPls5ReportOpen] = useState(false);
+  const [selectedPls5Assessment, setSelectedPls5Assessment] = useState(null);
 
   // LDES Specific Specialized Modals States
   const [ldesModalOpen, setLdesModalOpen] = useState(false);
@@ -469,8 +472,8 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
   }
 
   function openViewPls5Report(item) {
-    setPls5EditData(item);
-    setPls5ModalOpen(true);
+    setSelectedPls5Assessment(item);
+    setPls5ReportOpen(true);
   }
 
   function openEditLdesAssessment(item) {
@@ -2863,6 +2866,16 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
           students={students}
           emps={emps}
           initialData={pls5EditData}
+        />
+      )}
+
+      {/* MODAL: PLS-5 OFFICIAL DIAGNOSTIC REPORT & IEP EXPORT */}
+      {pls5ReportOpen && selectedPls5Assessment && (
+        <Pls5ReportModal
+          isOpen={pls5ReportOpen}
+          onClose={() => setPls5ReportOpen(false)}
+          assessment={selectedPls5Assessment}
+          onEdit={(item) => openEditPls5Assessment(item)}
         />
       )}
     </div>

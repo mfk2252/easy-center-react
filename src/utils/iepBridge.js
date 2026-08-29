@@ -742,6 +742,7 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
   else if (rawId.includes('conners')) lookupKey = 'conners_3';
   else if (rawId.includes('speech') || rawId.includes('artic')) lookupKey = 'speech_screening';
   else if (rawId.includes('ppvt') || rawId.includes('peabody')) lookupKey = 'ppvt5';
+  else if (rawId.includes('pls5') || rawId.includes('pls')) lookupKey = 'pls5';
   else if (rawId.includes('beh')) lookupKey = 'behavior_adjustment';
   else if (SCALE_GOAL_TEMPLATES[measureId]) lookupKey = measureId;
 
@@ -1028,6 +1029,43 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
           priority,
           baseline,
           durationWeeks: 6,
+        }));
+      }
+    });
+  } else if (lookupKey === 'pls5') {
+    Object.entries(responses).forEach(([itemId, score]) => {
+      // For PLS-5, 0 or false means failed/unmastered skill
+      const isFailed = score === false || score === 0 || score === '0';
+      const cleanId = String(itemId).replace(/^[re]_/, '');
+      const isReceptive = String(itemId).startsWith('r_');
+      const isExpressive = String(itemId).startsWith('e_');
+      
+      const targetItem = items.find(it => String(it.id) === String(itemId) || String(it.id) === String(cleanId));
+      if (targetItem && isFailed) {
+        const subtestName = isReceptive ? 'الفهم السمعي (الاستقبالي)' : isExpressive ? 'التواصل اللفظي (التعبيري)' : (targetItem.subtest || 'النمو اللغوي');
+        const priorityRank = targetItem.id <= 15 ? 1 : (targetItem.id <= 30 ? 2 : 3);
+        const priority = priorityRank === 1 ? 'critical' : (priorityRank === 2 ? 'high' : 'medium');
+        const goalText = targetItem.goal || `أن يكتسب الطالب مهارة (${targetItem.text}) ويظهر إتقاناً بنسبة 80% في 4 من أصل 5 محاولات.`;
+
+        const baseline = generatePlepBaseline(
+          `مهارة (${targetItem.text})`,
+          0,
+          1,
+          `قصوراً في مهارة (${targetItem.text}) ضمن المدى النمائي (${targetItem.ageGroup || 'النمو اللغوي'})`,
+          'جلسات تدريب تخاطبية فردية واستخدام النمذجة والتعزيز الفوري والمثيرات البيئية'
+        );
+
+        recommended.push(buildGoalItem({
+          code: `PLS5-${isReceptive ? 'AC' : 'EC'}-${cleanId}`,
+          domain: 'speech_language',
+          title: `${subtestName}: ${targetItem.domain || targetItem.text.slice(0, 35)}`,
+          text: goalText,
+          mastery: 'إتقان بنسبة 80% في 4 محاولات متتالية',
+          reason: `مشتق من مقياس لغة الأطفال PLS-5 (${subtestName} - بند ${cleanId}) - استجابة غير متقنة (0)`,
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: priorityRank === 1 ? 10 : 8,
         }));
       }
     });
