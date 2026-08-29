@@ -3,19 +3,19 @@
 .nav-brand{display:flex;align-items:center;gap:9px;padding:9px 14px 9px 6px;border-left:1px solid rgba(255,255,255,.1);margin-left:4px;flex-shrink:0;min-width:0}
 .nav-brand img{height:36px;border-radius:8px;object-fit:cover;flex-shrink:0}
 .nav-brand-ph{width:36px;height:36px;border-radius:8px;background:var(--pr);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
-.nav-cname{font-size:.82rem;font-weight:700;color:white;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}
-.nav-uname{font-size:.68rem;color:var(--g4);white-space:nowrap}
-.nb{display:flex;align-items:center;gap:5px;padding:9px 12px;border:none;background:transparent;color:var(--g4);border-radius:7px;cursor:pointer;font-family:var(--font-main);font-size:.8rem;font-weight:600;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.nav-cname{font-size:.82rem;font-weight:var(--fw-bold, 700);color:white;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}
+.nav-uname{font-size:.68rem;color:var(--g4);white-space:nowrap;font-weight:var(--fw, 400)}
+.nb{display:flex;align-items:center;gap:5px;padding:9px 12px;border:none;background:transparent;color:var(--g4);border-radius:7px;cursor:pointer;font-family:var(--font-main);font-size:.8rem;font-weight:var(--fw-semibold, 600);white-space:nowrap;transition:all .15s;flex-shrink:0}
 .nb:hover{background:rgba(255,255,255,.08);color:white}
-.nb.on{background:var(--pr);color:white;font-weight:700}
+.nb.on{background:var(--pr);color:white;font-weight:var(--fw-bold, 700)}
 .nb .badge{background:rgba(255,255,255,.22);color:white;padding:1px 6px;border-radius:20px;font-size:.66rem;margin-right:2px}
 .spacer{flex:1;min-width:4px}
-.nav-sync{color:var(--g5);font-size:.7rem;font-weight:500;flex-shrink:0;padding:0 6px;white-space:nowrap}
+.nav-sync{color:var(--g5);font-size:.7rem;font-weight:var(--fw-medium, 500);flex-shrink:0;padding:0 6px;white-space:nowrap}
 .nav-icon-btn{background:rgba(255,255,255,.08);color:var(--g4);border:none;width:34px;height:34px;border-radius:7px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .nav-icon-btn:hover{background:rgba(255,255,255,.16);color:white}
 .dark-toggle{background:transparent;border:none;cursor:pointer;color:var(--g4);font-size:1.15rem;width:34px;height:34px;border-radius:7px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .dark-toggle:hover{background:rgba(255,255,255,.12);color:white}
-.nav-logout{background:transparent;color:var(--g5);border:1px solid rgba(255,255,255,.12);padding:6px 12px;border-radius:7px;font-family:var(--font-main);font-size:.76rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.nav-logout{background:transparent;color:var(--g5);border:1px solid rgba(255,255,255,.12);padding:6px 12px;border-radius:7px;font-family:var(--font-main);font-size:.76rem;font-weight:var(--fw-semibold, 600);cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
 .nav-logout:hover{background:var(--err-l);color:var(--err);border-color:var(--err)}
 .page{padding:18px 16px;max-width:1280px;margin:0 auto}
 
@@ -27,7 +27,7 @@
 .modal-body-scroll{overflow-y:auto;max-height:none;flex:1;min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding-bottom:12px}
 .mb > div:not(.fhd):not(.fa):not(.modal-body-scroll):not(.modal-banner):not(.modal-header-custom):not(.modal-subbar){overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
 .mb .modal-banner, .mb .modal-header-custom, .mb .fhd, .mb .modal-subbar {flex-shrink:0!important;flex-grow:0!important;overflow:hidden;max-width:100%}
-.mb .modal-header-custom h2, .mb .modal-header-custom h3, .mb .fhd h2, .mb .fhd h3{margin:0;line-height:1.35;word-break:break-word;font-weight:700}
+.mb .modal-header-custom h2, .mb .modal-header-custom h3, .mb .fhd h2, .mb .fhd h3{margin:0;line-height:1.35;word-break:break-word;font-weight:var(--fw-bold, 700)}
 .mb .modal-header-custom p, .mb .modal-header-custom span, .mb .fhd p, .mb .fhd span{font-weight:var(--fw)}
 .mb .fa{flex-shrink:0;padding:12px 18px;border-top:1px solid var(--border-color);display:flex;gap:10px;flex-wrap:wrap;background:var(--bg-card);align-items:center}
 .mb .fhd{flex-shrink:0}

@@ -44,11 +44,51 @@ export const FONT_OPTIONS = [
   { id: 'system', name: 'خط النظام', family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
 ];
 
+export function applyFontVariables(size, weight) {
+  const s = Math.max(12, Math.min(24, parseInt(size, 10) || 15));
+  const w = String(weight || '400');
+  const wNum = parseInt(w, 10) || 400;
+
+  // Set font size variables and html root font size for relative rem units
+  document.documentElement.style.fontSize = `${s}px`;
+  document.documentElement.style.setProperty('--fs', `${s}px`);
+  document.documentElement.style.setProperty('--app-font-size', `${s}px`);
+
+  // Base font weight variables
+  document.documentElement.style.setProperty('--fw', w);
+  document.documentElement.style.setProperty('--fw-base', w);
+  document.documentElement.style.setProperty('--app-font-weight', w);
+
+  // Dynamic weight scale based on base weight
+  const boldWeight = wNum <= 400 ? '700' : (wNum <= 600 ? '800' : '900');
+  const semiBoldWeight = wNum <= 400 ? '600' : (wNum <= 600 ? '700' : '800');
+  const mediumWeight = wNum <= 400 ? '500' : (wNum <= 600 ? '600' : '700');
+  const blackWeight = wNum <= 400 ? '800' : '900';
+
+  document.documentElement.style.setProperty('--fw-bold', boldWeight);
+  document.documentElement.style.setProperty('--fw-semibold', semiBoldWeight);
+  document.documentElement.style.setProperty('--fw-medium', mediumWeight);
+  document.documentElement.style.setProperty('--fw-black', blackWeight);
+  document.documentElement.style.setProperty('--fw-normal', String(wNum));
+
+  localStorage.setItem('scs_fontsize', String(s));
+  localStorage.setItem('scs_fontweight', w);
+}
+
 export function applyFontFamily(fontId) {
   const selected = FONT_OPTIONS.find(f => f.id === fontId) || FONT_OPTIONS[0];
   document.documentElement.style.setProperty('--font-main', selected.family);
   localStorage.setItem('scs_fontfamily', selected.id);
   return selected.id;
+}
+
+export function applyFontSettings(size, weight, family) {
+  if (size || weight) {
+    applyFontVariables(size || 15, weight || '400');
+  }
+  if (family) {
+    applyFontFamily(family);
+  }
 }
 
 /** كائن currentUser الموحّد لمالك المنصة — نفس الشكل سواء جاء من login() المباشر
@@ -80,11 +120,10 @@ export function AppProvider({ children }) {
   useEffect(() => {
     const dm = localStorage.getItem('darkMode') === '1';
     if (dm) { document.body.classList.add('dark'); setDarkMode(true); }
-    const fs = localStorage.getItem('scs_fontsize');
-    const fw = localStorage.getItem('scs_fontweight');
+    const fs = localStorage.getItem('scs_fontsize') || '15';
+    const fw = localStorage.getItem('scs_fontweight') || '400';
     const ff = localStorage.getItem('scs_fontfamily') || 'arabicui';
-    if (fs) document.documentElement.style.setProperty('--fs', fs+'px');
-    if (fw) document.documentElement.style.setProperty('--fw', fw);
+    applyFontVariables(fs, fw);
     applyFontFamily(ff);
   }, []);
 
@@ -257,13 +296,11 @@ export function AppProvider({ children }) {
       socialLinks: { website: c.website, whatsapp: c.whatsapp, instagram: c.instagram },
       shifts: c.shifts,
     });
-    if (data.fontSize) localStorage.setItem('scs_fontsize', String(data.fontSize));
-    if (data.fontWeight) localStorage.setItem('scs_fontweight', String(data.fontWeight));
-    if (data.fontFamily) applyFontFamily(data.fontFamily);
-    else {
-      const savedFf = localStorage.getItem('scs_fontfamily') || 'arabicui';
-      applyFontFamily(savedFf);
-    }
+    const centerFs = data.fontSize || localStorage.getItem('scs_fontsize') || '15';
+    const centerFw = data.fontWeight || localStorage.getItem('scs_fontweight') || '400';
+    const centerFf = data.fontFamily || localStorage.getItem('scs_fontfamily') || 'arabicui';
+    applyFontVariables(centerFs, centerFw);
+    applyFontFamily(centerFf);
     if (data.platformLang) localStorage.setItem('scs_lang', data.platformLang);
     applyTheme(c.color);
     document.title = c.name || 'نظام إدارة المركز';

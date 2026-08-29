@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useApp, FONT_OPTIONS, applyFontFamily } from '../context/AppContext';
+import { useApp, FONT_OPTIONS, applyFontFamily, applyFontVariables, applyFontSettings } from '../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel, refreshAllSystemData, getCenterId } from '../hooks/useStorage';
 import { uid, todayStr } from '../utils/dateHelpers';
 import { ROLES } from '../utils/constants';
@@ -90,6 +90,8 @@ export default function Settings() {
   });
   const [selColor, setSelColor] = useState(center.color||'#1a56db');
   const [refreshLoading, setRefreshLoading] = useState(false);
+  const [savingCenter, setSavingCenter] = useState(false);
+  const [savingAppearance, setSavingAppearance] = useState(false);
 
   const isManager = currentUser?.role === 'manager';
   const centerId = currentUser?.centerId || currentUser?.uid || getCenterId();
@@ -290,12 +292,13 @@ export default function Settings() {
   async function saveCenter() {
     if (!centerForm.name?.trim()) { toast('⚠️ أدخل اسم المركز بالعربية','er'); return; }
     if (!centerForm.nameEn?.trim()) { toast('⚠️ أدخل اسم المركز بالإنجليزية','er'); return; }
+    setSavingCenter(true);
     const shifts = {
       morning: { from: centerForm.morningFrom, to: centerForm.morningTo },
       evening: { from: centerForm.eveningFrom, to: centerForm.eveningTo },
     };
     const socialLinks = { website: centerForm.website, whatsapp: centerForm.whatsapp, instagram: centerForm.instagram };
-    const updated = { ...center, ...centerForm, shifts, socialLinks, color: selColor, configured: true };
+    const updated = { ...center, ...centerForm, shifts, socialLinks, configured: true };
     try {
       if (centerId) {
         await updateCenterSettings(centerId, {
@@ -312,16 +315,17 @@ export default function Settings() {
           socialLinks,
           shifts,
           barcode: centerForm.barcode,
-          color: selColor,
           isSetup: true,
           setupCompleted: true,
           status: 'active',
         });
       }
       persistConfig(updated);
-      toast('✅ تم حفظ بيانات المركز','ok');
+      toast('✅ تم حفظ بيانات المركز بنجاح','ok');
     } catch(e) {
-      toast('❌ خطأ في الحفظ','er');
+      toast('❌ خطأ في حفظ بيانات المركز','er');
+    } finally {
+      setSavingCenter(false);
     }
   }
 
@@ -343,23 +347,40 @@ export default function Settings() {
     }
   }
 
-  function applyFontSettings(size, weight, family) {
+  function applyActiveFontSettings(size, weight, family) {
     const activeFamily = family || fontFamily;
-    document.documentElement.style.setProperty('--fs', `${size}px`);
-    document.documentElement.style.setProperty('--fw', weight);
-    localStorage.setItem('scs_fontsize', String(size));
-    localStorage.setItem('scs_fontweight', weight);
+    applyFontVariables(size, weight);
     if (activeFamily) {
       applyFontFamily(activeFamily);
     }
-    if (centerId) {
-      updateCenterSettings(centerId, { fontSize: size, fontWeight: weight, fontFamily: activeFamily }).catch(() => {});
-    }
   }
 
-  function saveAppearance() {
-    applyFontSettings(fontSize, fontWeight, fontFamily);
-    saveCenter();
+  async function saveAppearance() {
+    setSavingAppearance(true);
+    try {
+      applyActiveFontSettings(fontSize, fontWeight, fontFamily);
+      updateCenterColor(selColor);
+      localStorage.setItem('scs_fontsize', String(fontSize));
+      localStorage.setItem('scs_fontweight', String(fontWeight));
+      localStorage.setItem('scs_fontfamily', fontFamily);
+      localStorage.setItem('scs_color', selColor);
+
+      if (centerId) {
+        await updateCenterSettings(centerId, {
+          fontSize,
+          fontWeight,
+          fontFamily,
+          color: selColor,
+        }).catch((err) => console.warn('Could not save to remote center settings:', err));
+      }
+      persistConfig({ ...center, color: selColor, fontSize, fontWeight, fontFamily });
+      toast('✅ تم حفظ وتطبيق إعدادات المظهر بنجاح', 'ok');
+    } catch (e) {
+      console.error('Error saving appearance:', e);
+      toast('❌ تعذّر حفظ إعدادات المظهر', 'er');
+    } finally {
+      setSavingAppearance(false);
+    }
   }
 
   const ALL_BACKUP_KEYS = [
@@ -482,7 +503,9 @@ export default function Settings() {
                 </div>
               </div>
             </div>
-            <button className="btn btn-p" style={{marginTop:16}} onClick={saveCenter}>💾 حفظ</button>
+            <button type="button" className="btn btn-p" style={{marginTop:16}} onClick={saveCenter} disabled={savingCenter}>
+              {savingCenter ? '⏳ جارٍ الحفظ...' : '💾 حفظ بيانات المركز'}
+            </button>
           </div>
         </div>
       )}
@@ -509,7 +532,7 @@ export default function Settings() {
                       type="button"
                       onClick={() => {
                         setFontFamily(f.id);
-                        applyFontSettings(fontSize, fontWeight, f.id);
+                        applyActiveFontSettings(fontSize, fontWeight, f.id);
                       }}
                       style={{
                         padding: '12px 14px',
@@ -542,18 +565,18 @@ export default function Settings() {
               <div className="fl">
                 <label>{t('settings.fontSize')}</label>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <button type="button" className="btn btn-g btn-sm" onClick={() => { const n = Math.max(12, fontSize - 1); setFontSize(n); applyFontSettings(n, fontWeight, fontFamily); }}>{t('settings.fontSmaller')}</button>
+                  <button type="button" className="btn btn-g btn-sm" onClick={() => { const n = Math.max(12, fontSize - 1); setFontSize(n); applyActiveFontSettings(n, fontWeight, fontFamily); }}>{t('settings.fontSmaller')}</button>
                   <span style={{ fontWeight: 700, minWidth: 48, textAlign: 'center' }}>{fontSize}px</span>
-                  <button type="button" className="btn btn-g btn-sm" onClick={() => { const n = Math.min(22, fontSize + 1); setFontSize(n); applyFontSettings(n, fontWeight, fontFamily); }}>{t('settings.fontLarger')}</button>
+                  <button type="button" className="btn btn-g btn-sm" onClick={() => { const n = Math.min(22, fontSize + 1); setFontSize(n); applyActiveFontSettings(n, fontWeight, fontFamily); }}>{t('settings.fontLarger')}</button>
                 </div>
               </div>
               <div className="fl">
                 <label>{t('settings.fontWeight')}</label>
-                <select value={fontWeight} onChange={e => { setFontWeight(e.target.value); applyFontSettings(fontSize, e.target.value, fontFamily); }}>
-                  <option value="400">{t('settings.fontNormal')}</option>
-                  <option value="600">600</option>
-                  <option value="700">{t('settings.fontBold')}</option>
-                  <option value="900">900</option>
+                <select value={fontWeight} onChange={e => { setFontWeight(e.target.value); applyActiveFontSettings(fontSize, e.target.value, fontFamily); }}>
+                  <option value="400">{t('settings.fontNormal')} (400)</option>
+                  <option value="600">متوسط (600)</option>
+                  <option value="700">{t('settings.fontBold')} (700)</option>
+                  <option value="900">عريض جداً (900)</option>
                 </select>
               </div>
             </div>
@@ -567,7 +590,9 @@ export default function Settings() {
                 }}/>
               ))}
             </div>
-            <button type="button" className="btn btn-p" onClick={saveAppearance}>💾 {t('save')}</button>
+            <button type="button" className="btn btn-p" onClick={saveAppearance} disabled={savingAppearance}>
+              {savingAppearance ? '⏳ جارٍ الحفظ...' : '💾 حفظ إعدادات المظهر'}
+            </button>
           </div>
         </div>
       )}
