@@ -5,6 +5,7 @@ import { calcAge, formatDate, todayStr, uid, nowTimeStr } from '../../utils/date
 import StudentTimeline from '../../components/students/StudentTimeline';
 import { handleFileInputChange } from '../../utils/fileUpload';
 import { centerWhatsAppUrl, parentCanViewStudent } from '../../utils/parentAccess';
+import { getCurrencySymbol } from '../../utils/constants';
 
 const IEP_DOMAINS = ['التواصل واللغة','المهارات الاجتماعية','السلوك والانتباه','المهارات الحركية','الرعاية الذاتية','الأكاديمي','أخرى'];
 const EMPTY_IEP = { domain:'', goal:'', priority:'medium', start:'', review:'', progress:0, notes:'' };
@@ -578,15 +579,15 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:15 }}>
                   <div style={{ padding:'15px', background:'var(--pr-l)', borderRadius:8, borderRight:'4px solid var(--pr)' }}>
                     <div style={{ fontSize:'.8rem', color:'var(--pr)', marginBottom:5 }}>المبلغ الكلي</div>
-                    <div style={{ fontSize:'1.8rem', fontWeight:900, color:'var(--pr)' }}>{(studentFees.totalAmount || 0).toLocaleString()} ر</div>
+                    <div style={{ fontSize:'1.8rem', fontWeight:900, color:'var(--pr)' }}>{(studentFees.totalAmount || 0).toLocaleString()} {getCurrencySymbol(center?.currency)}</div>
                   </div>
                   <div style={{ padding:'15px', background:'var(--ok-l)', borderRadius:8, borderRight:'4px solid var(--ok)' }}>
                     <div style={{ fontSize:'.8rem', color:'var(--ok)', marginBottom:5 }}>المبلغ المدفوع</div>
-                    <div style={{ fontSize:'1.8rem', fontWeight:900, color:'var(--ok)' }}>{(studentFees.paidAmount || 0).toLocaleString()} ر</div>
+                    <div style={{ fontSize:'1.8rem', fontWeight:900, color:'var(--ok)' }}>{(studentFees.paidAmount || 0).toLocaleString()} {getCurrencySymbol(center?.currency)}</div>
                   </div>
                   <div style={{ padding:'15px', background:'var(--warn-l)', borderRadius:8, borderRight:'4px solid var(--warn)' }}>
                     <div style={{ fontSize:'.8rem', color:'var(--warn)', marginBottom:5 }}>المتبقي</div>
-                    <div style={{ fontSize:'1.8rem', fontWeight:900, color:'var(--warn)' }}>{((studentFees.totalAmount || 0) - (studentFees.paidAmount || 0)).toLocaleString()} ر</div>
+                    <div style={{ fontSize:'1.8rem', fontWeight:900, color:'var(--warn)' }}>{((studentFees.totalAmount || 0) - (studentFees.paidAmount || 0)).toLocaleString()} {getCurrencySymbol(center?.currency)}</div>
                   </div>
                 </div>
 
@@ -649,7 +650,7 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
                         fontWeight:700
                       }}>✓</div>
                       <div style={{ flex:1 }}>
-                        <div style={{ fontWeight:700, fontSize:'.9rem' }}>{p.amount.toLocaleString()} ريال</div>
+                        <div style={{ fontWeight:700, fontSize:'.9rem' }}>{p.amount.toLocaleString()} {getCurrencySymbol(center?.currency)}</div>
                         <div style={{ fontSize:'.75rem', color:'var(--g5)' }}>
                           {p.date} • {p.method} {p.notes && `• ${p.notes}`}
                         </div>
@@ -678,7 +679,7 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
                 <div style={{ padding:'18px 20px' }}>
                   <div className="fg c2">
                     <div className="fl full">
-                      <label>المبلغ الكلي <span className="req">*</span></label>
+                      <label>المبلغ الكلي ({getCurrencySymbol(center?.currency)}) <span className="req">*</span></label>
                       <input 
                         type="number" 
                         value={feeForm.totalAmount} 
@@ -713,7 +714,7 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
                 <div style={{ padding:'18px 20px' }}>
                   <div className="fg c2">
                     <div className="fl full">
-                      <label>المبلغ <span className="req">*</span></label>
+                      <label>المبلغ ({getCurrencySymbol(center?.currency)}) <span className="req">*</span></label>
                       <input 
                         type="number" 
                         value={paymentForm.amount} 

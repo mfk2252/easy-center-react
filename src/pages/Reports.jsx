@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { lsGet } from '../hooks/useStorage';
 import { todayStr } from '../utils/dateHelpers';
-import { ROLES } from '../utils/constants';
+import { ROLES, getCurrencySymbol } from '../utils/constants';
 import { printItem } from '../utils/printUtils';
 
 function roleLabel(r) { return ROLES[r] || r || '—'; }
@@ -35,7 +35,7 @@ function inDateFilter(dateStr, mode, year, month, weekAnchor) {
 }
 
 export default function Reports() {
-  const { currentUser } = useApp();
+  const { currentUser, center } = useApp();
   const [tab, setTab] = useState('overview');
   const [students, setStudents] = useState([]);
   const [emps, setEmps] = useState([]);
@@ -388,19 +388,19 @@ export default function Reports() {
             <div className="sc g">
               <div className="lb">الإيرادات (الفلتر)</div>
               <div className="vl" style={{ fontSize: '1.2rem' }}>
-                {income.toLocaleString()} ر
+                {income.toLocaleString()} {getCurrencySymbol(center?.currency)}
               </div>
             </div>
             <div className="sc r">
               <div className="lb">المصروفات (الفلتر)</div>
               <div className="vl" style={{ fontSize: '1.2rem' }}>
-                {expenses.toLocaleString()} ر
+                {expenses.toLocaleString()} {getCurrencySymbol(center?.currency)}
               </div>
             </div>
             <div className={`sc ${income - expenses >= 0 ? 'g' : 'r'}`}>
               <div className="lb">الصافي</div>
               <div className="vl" style={{ fontSize: '1.2rem' }}>
-                {(income - expenses).toLocaleString()} ر
+                {(income - expenses).toLocaleString()} {getCurrencySymbol(center?.currency)}
               </div>
             </div>
           </div>

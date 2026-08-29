@@ -7,6 +7,7 @@ import EmptyState from '../../components/ui/EmptyState';
 import { handleFileInputChange } from '../../utils/fileUpload';
 import AttachmentField from '../../components/ui/AttachmentField';
 import { CUSTODY_CATEGORIES } from '../../utils/custodyCategories';
+import { getCurrencySymbol } from '../../utils/constants';
 
 const DOC_TYPES = { stats:'إحصائية وزارية', policy:'لائحة / سياسة', report:'تقرير', strategy:'استراتيجية', circular:'تعميم', memo:'📝 مذكرة داخلية', other:'أخرى' };
 const EXPENSE_CATS = { salary:'رواتب', rent:'إيجار', utilities:'فواتير', supplies:'مستلزمات', maintenance:'صيانة', training:'تدريب', other:'أخرى' };
@@ -295,6 +296,7 @@ export default function CenterPage() {
   const totalIncome = income.reduce((s,x)=>s+(Number(x.amount)||0),0);
   const totalExpenses = expenses.reduce((s,x)=>s+(Number(x.amount)||0),0);
   const filteredDocs = docTab==='all' ? docs : docs.filter(d=>d.type===docTab);
+  const currSym = getCurrencySymbol(centerData.currency);
 
   return (
     <div>
@@ -441,9 +443,9 @@ export default function CenterPage() {
                 <button type="button" className="btn btn-g btn-sm no-print" onClick={()=>window.print()} style={{marginRight:'auto'}}>🖨️ طباعة</button>
               </div>
               <div className="stats" style={{gridTemplateColumns:'repeat(3,1fr)'}}>
-                <div className="sc g"><div className="lb">إجمالي الإيرادات</div><div className="vl" style={{fontSize:'1.2rem'}}>{totalIncome.toLocaleString()} ر</div></div>
-                <div className="sc r"><div className="lb">إجمالي المصروفات</div><div className="vl" style={{fontSize:'1.2rem'}}>{totalExpenses.toLocaleString()} ر</div></div>
-                <div className={`sc ${totalIncome-totalExpenses>=0?'g':'r'}`}><div className="lb">الصافي</div><div className="vl" style={{fontSize:'1.2rem'}}>{(totalIncome-totalExpenses).toLocaleString()} ر</div></div>
+                <div className="sc g"><div className="lb">إجمالي الإيرادات</div><div className="vl" style={{fontSize:'1.2rem'}}>{totalIncome.toLocaleString()} {currSym}</div></div>
+                <div className="sc r"><div className="lb">إجمالي المصروفات</div><div className="vl" style={{fontSize:'1.2rem'}}>{totalExpenses.toLocaleString()} {currSym}</div></div>
+                <div className={`sc ${totalIncome-totalExpenses>=0?'g':'r'}`}><div className="lb">الصافي</div><div className="vl" style={{fontSize:'1.2rem'}}>{(totalIncome-totalExpenses).toLocaleString()} {currSym}</div></div>
               </div>
               <div className="g2">
                 <div className="wg">
@@ -455,9 +457,9 @@ export default function CenterPage() {
                           <div style={{fontWeight:700,fontSize:'.88rem'}}>{x.desc}</div>
                           <div style={{fontSize:'.72rem',color:'var(--g5)'}}>{x.categoryLabel || INCOME_CATS[x.cat]||x.cat} · {x.date}</div>
                         </div>
-                        <span style={{fontWeight:900,color:'var(--ok)'}}>{Number(x.amount).toLocaleString()} ر</span>
+                        <span style={{fontWeight:900,color:'var(--ok)'}}>{Number(x.amount).toLocaleString()} {currSym}</span>
                         {x.fileData&&<a href={x.fileData} download={x.fileName||'finance-file'} className="btn btn-xs btn-v">📎</a>}
-                        <button className="btn btn-xs btn-bl" onClick={()=>printItem({ ...x, type:'income' },'finance',centerData.logo,centerData.name)}>🖨️</button>
+                        <button className="btn btn-xs btn-bl" onClick={()=>printItem({ ...x, type:'income', currency: centerData.currency },'finance',centerData.logo,centerData.name)}>🖨️</button>
                         <button className="btn btn-xs btn-g" onClick={()=>editFinanceEntry(x,'income')}>✏️</button>
                         <button className="btn btn-xs btn-d" onClick={()=>{lsDel('income',x.id);reload();}}>🗑️</button>
                       </div>
@@ -473,9 +475,9 @@ export default function CenterPage() {
                           <div style={{fontWeight:700,fontSize:'.88rem'}}>{x.desc}</div>
                           <div style={{fontSize:'.72rem',color:'var(--g5)'}}>{x.categoryLabel || EXPENSE_CATS[x.cat]||x.cat} · {x.date}</div>
                         </div>
-                        <span style={{fontWeight:900,color:'var(--err)'}}>{Number(x.amount).toLocaleString()} ر</span>
+                        <span style={{fontWeight:900,color:'var(--err)'}}>{Number(x.amount).toLocaleString()} {currSym}</span>
                         {x.fileData&&<a href={x.fileData} download={x.fileName||'finance-file'} className="btn btn-xs btn-v">📎</a>}
-                        <button className="btn btn-xs btn-bl" onClick={()=>printItem({ ...x, type:'expense' },'finance',centerData.logo,centerData.name)}>🖨️</button>
+                        <button className="btn btn-xs btn-bl" onClick={()=>printItem({ ...x, type:'expense', currency: centerData.currency },'finance',centerData.logo,centerData.name)}>🖨️</button>
                         <button className="btn btn-xs btn-g" onClick={()=>editFinanceEntry(x,'expense')}>✏️</button>
                         <button className="btn btn-xs btn-d" onClick={()=>{lsDel('expenses',x.id);reload();}}>🗑️</button>
                       </div>
@@ -527,7 +529,7 @@ export default function CenterPage() {
                           </div>
                         )}
                         <div className="fl full"><label>الوصف <span className="req">*</span></label><input value={financeForm.desc} onChange={e=>setFinanceForm(f=>({...f,desc:e.target.value}))} placeholder="يُملأ تلقائيًا من القائمة ويمكن تعديله"/></div>
-                        <div className="fl"><label>المبلغ (ريال) <span className="req">*</span></label><input type="number" value={financeForm.amount} onChange={e=>setFinanceForm(f=>({...f,amount:e.target.value}))} min="0"/></div>
+                        <div className="fl"><label>المبلغ ({currSym}) <span className="req">*</span></label><input type="number" value={financeForm.amount} onChange={e=>setFinanceForm(f=>({...f,amount:e.target.value}))} min="0"/></div>
                         <div className="fl full"><label>التاريخ <span className="req">*</span></label><input type="date" value={financeForm.date} onChange={e=>setFinanceForm(f=>({...f,date:e.target.value}))}/></div>
                         <div className="fl full">
                           <label>رفع صورة / PDF</label>

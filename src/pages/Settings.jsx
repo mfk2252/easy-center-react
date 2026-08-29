@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useApp, FONT_OPTIONS, applyFontFamily, applyFontVariables, applyFontSettings } from '../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel, refreshAllSystemData, getCenterId } from '../hooks/useStorage';
 import { uid, todayStr } from '../utils/dateHelpers';
-import { ROLES } from '../utils/constants';
+import { ROLES, ARAB_CURRENCIES } from '../utils/constants';
 import { updateCenterSettings, getCenterUsers, getCenterSettings } from '../firebase/db';
 import { createStaffAccount, checkSubscriptionStatus, isPlatformAdminEmail } from '../firebase/auth';
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
@@ -463,7 +463,9 @@ export default function Settings() {
               </div>
               <div className="fl"><label>العملة</label>
                 <select value={centerForm.currency} onChange={e=>setCenterForm(f=>({...f,currency:e.target.value}))}>
-                  {['SAR','BHD','AED','KWD','QAR','OMR','USD'].map(c=><option key={c} value={c}>{c}</option>)}
+                  {ARAB_CURRENCIES.map(c=>(
+                    <option key={c.code} value={c.code}>{c.label}</option>
+                  ))}
                 </select>
               </div>
               <div className="fl"><label>كود الدولة</label><input value={centerForm.phoneCode} onChange={e=>setCenterForm(f=>({...f,phoneCode:e.target.value}))} dir="ltr" placeholder="+966"/></div>

@@ -4,17 +4,10 @@ import { useLang } from '../../context/LanguageContext';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { handleFileInputChange, FILE_ACCEPT_IMAGE } from '../../utils/fileUpload';
+import { ARAB_CURRENCIES } from '../../utils/constants';
 
 const PRESET_COLORS = ['#1a56db','#7c3aed','#059669','#dc2626','#d97706','#0891b2','#db2777','#0f172a'];
-const CURRENCIES = [
-  { v: 'SAR', l: 'ريال سعودي (SAR)' },
-  { v: 'BHD', l: 'دينار بحريني (BHD)' },
-  { v: 'AED', l: 'درهم إماراتي (AED)' },
-  { v: 'KWD', l: 'دينار كويتي (KWD)' },
-  { v: 'QAR', l: 'ريال قطري (QAR)' },
-  { v: 'OMR', l: 'ريال عماني (OMR)' },
-  { v: 'USD', l: 'دولار (USD)' },
-];
+const CURRENCIES = ARAB_CURRENCIES.map(c => ({ v: c.code, l: c.label }));
 const CENTER_TYPES_AR = ['تربية خاصة','تأهيل','تخاطب','توحد','صعوبات تعلم','متعدد التخصصات'];
 const CENTER_TYPES_EN = ['Special education','Rehabilitation','Speech','Autism','Learning difficulties','Multi-specialty'];
 
