@@ -593,8 +593,9 @@ export default function PLS5AssessmentModal({
           )}
         </div>
 
-        {/* LIVE PSYCHOMETRIC SUMMARY STRIP */}
+        {/* LIVE PSYCHOMETRIC SUMMARY STRIP (FIXED) */}
         <div
+          className="modal-subbar"
           style={{
             background: 'var(--g0)',
             padding: '10px 18px',
@@ -604,6 +605,7 @@ export default function PLS5AssessmentModal({
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: 10,
+            flexShrink: 0,
           }}
         >
           {/* Key Metric Badges */}
@@ -711,621 +713,659 @@ export default function PLS5AssessmentModal({
             </div>
           </div>
 
-          {/* Clinical Classification Banner */}
-          <div
-            style={{
-              padding: '6px 12px',
-              borderRadius: 8,
-              background: 'var(--bg-card)',
-              border: `1.5px solid ${psychometrics.severityColor}`,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: psychometrics.severityColor }}>
-              {psychometrics.clinicalClassification}
-            </span>
+          {/* Classification & Progress */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div
+              style={{
+                padding: '6px 12px',
+                borderRadius: 8,
+                background: 'var(--bg-card)',
+                border: `1.5px solid ${psychometrics.severityColor}`,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: psychometrics.severityColor }}>
+                {psychometrics.clinicalClassification}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>
+                {answeredCount} / 80 بنداً
+              </span>
+              <div style={{ width: 60, height: 8, background: 'var(--border-color)', borderRadius: 4, overflow: 'hidden' }}>
+                <div
+                  style={{
+                    width: `${Math.round((answeredCount / 80) * 100)}%`,
+                    height: '100%',
+                    background: answeredCount === 80 ? 'var(--ok)' : '#0891b2',
+                    transition: 'width 0.3s',
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* STUDENT & METADATA SECTION (COLLAPSIBLE) */}
-        {!isHeaderCollapsed && (
-          <div
-            style={{
-              padding: '14px 20px',
-              background: 'var(--bg-card)',
-              borderBottom: '1px solid var(--border-color)',
-            }}
-          >
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
-              {/* Student Selector */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-sub)', marginBottom: 4 }}>
-                  اسم المفحوص / الطالب <span style={{ color: '#dc2626' }}>*</span>
-                </label>
-                {!isManualEdit ? (
-                  <select
-                    className="inp"
-                    value={form.stuId || ''}
-                    onChange={handleSelectStudent}
-                    style={{ width: '100%', fontSize: '0.85rem' }}
-                  >
-                    <option value="">-- اختر طالباً من القائمة --</option>
-                    {students.map(s => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} ({s.dob ? calcAge(s.dob).formatted : s.age || '—'})
-                      </option>
-                    ))}
-                    <option value="__other__">✏️ إدخال يدوي لطالب جديد...</option>
-                  </select>
-                ) : (
-                  <div style={{ display: 'flex', gap: 4 }}>
+        {/* SINGLE UNIFIED SCROLLABLE MODAL BODY */}
+        <div className="modal-body-scroll" style={{ padding: '16px 20px', flex: 1, overflowY: 'auto' }}>
+          {/* 1. STUDENT & METADATA SECTION (COLLAPSIBLE) */}
+          {!isHeaderCollapsed && (
+            <div
+              style={{
+                padding: '14px 16px',
+                background: 'var(--g0)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 12,
+                marginBottom: 14,
+              }}
+            >
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+                {/* Student Selector */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-sub)', marginBottom: 4 }}>
+                    اسم المفحوص / الطالب <span style={{ color: '#dc2626' }}>*</span>
+                  </label>
+                  {!isManualEdit ? (
+                    <select
+                      className="inp"
+                      value={form.stuId || ''}
+                      onChange={handleSelectStudent}
+                      style={{ width: '100%', fontSize: '0.85rem' }}
+                    >
+                      <option value="">-- اختر طالباً من القائمة --</option>
+                      {students.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.name} ({s.dob ? calcAge(s.dob).formatted : s.age || '—'})
+                        </option>
+                      ))}
+                      <option value="__other__">✏️ إدخال يدوي لطالب جديد...</option>
+                    </select>
+                  ) : (
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <input
+                        type="text"
+                        className="inp"
+                        placeholder="اسم الطالب..."
+                        value={form.studentName}
+                        onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
+                        style={{ width: '100%', fontSize: '0.85rem' }}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-sm"
+                        onClick={() => setIsManualEdit(false)}
+                        title="العودة للقائمة"
+                        style={{ fontSize: '0.75rem' }}
+                      >
+                        📋
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Date of Birth & Chronological Age */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-sub)', marginBottom: 4 }}>
+                    تاريخ الميلاد والعمر الزمني
+                  </label>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input
+                      type="date"
+                      className="inp"
+                      value={form.dob || ''}
+                      onChange={e => {
+                        const newDob = e.target.value;
+                        const ageCalc = newDob ? calcAge(newDob) : null;
+                        setForm(f => ({
+                          ...f,
+                          dob: newDob,
+                          age: ageCalc ? ageCalc.formatted : f.age,
+                        }));
+                      }}
+                      style={{ width: '55%', fontSize: '0.82rem' }}
+                    />
                     <input
                       type="text"
                       className="inp"
-                      placeholder="اسم الطالب..."
-                      value={form.studentName}
-                      onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
-                      style={{ width: '100%', fontSize: '0.85rem' }}
+                      placeholder="العمر الزمني"
+                      value={form.age || ''}
+                      onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
+                      style={{ width: '45%', fontSize: '0.82rem' }}
                     />
-                    <button
-                      type="button"
-                      className="btn btn-sm"
-                      onClick={() => setIsManualEdit(false)}
-                      title="العودة للقائمة"
-                      style={{ fontSize: '0.75rem' }}
-                    >
-                      📋
-                    </button>
                   </div>
-                )}
-              </div>
+                </div>
 
-              {/* Date of Birth & Chronological Age */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-sub)', marginBottom: 4 }}>
-                  تاريخ الميلاد والعمر الزمني
-                </label>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <input
-                    type="date"
-                    className="inp"
-                    value={form.dob || ''}
-                    onChange={e => {
-                      const newDob = e.target.value;
-                      const ageCalc = newDob ? calcAge(newDob) : null;
-                      setForm(f => ({
-                        ...f,
-                        dob: newDob,
-                        age: ageCalc ? ageCalc.formatted : f.age,
-                      }));
-                    }}
-                    style={{ width: '55%', fontSize: '0.82rem' }}
-                  />
+                {/* Examiner Name */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-sub)', marginBottom: 4 }}>
+                    أخصائي التخاطب والفاحص
+                  </label>
                   <input
                     type="text"
                     className="inp"
-                    placeholder="العمر الزمني"
-                    value={form.age || ''}
-                    onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
-                    style={{ width: '45%', fontSize: '0.82rem' }}
+                    placeholder="اسم الأخصائي..."
+                    value={form.examinerName}
+                    onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
+                    style={{ width: '100%', fontSize: '0.85rem' }}
                   />
                 </div>
-              </div>
 
-              {/* Examiner Name */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-sub)', marginBottom: 4 }}>
-                  أخصائي التخاطب والفاحص
-                </label>
-                <input
-                  type="text"
-                  className="inp"
-                  placeholder="اسم الأخصائي..."
-                  value={form.examinerName}
-                  onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
-                  style={{ width: '100%', fontSize: '0.85rem' }}
-                />
-              </div>
-
-              {/* Assessment Date & Diagnosis */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-sub)', marginBottom: 4 }}>
-                  تاريخ الجلسة والتشخيص
-                </label>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <input
-                    type="date"
-                    className="inp"
-                    value={form.date}
-                    onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                    style={{ width: '50%', fontSize: '0.82rem' }}
-                  />
-                  <input
-                    type="text"
-                    className="inp"
-                    placeholder="التشخيص الأولي"
-                    value={form.diagnosis}
-                    onChange={e => setForm(f => ({ ...f, diagnosis: e.target.value }))}
-                    style={{ width: '50%', fontSize: '0.82rem' }}
-                  />
+                {/* Assessment Date & Diagnosis */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-sub)', marginBottom: 4 }}>
+                    تاريخ الجلسة والتشخيص
+                  </label>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input
+                      type="date"
+                      className="inp"
+                      value={form.date}
+                      onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                      style={{ width: '50%', fontSize: '0.82rem' }}
+                    />
+                    <input
+                      type="text"
+                      className="inp"
+                      placeholder="التشخيص الأولي"
+                      value={form.diagnosis}
+                      onChange={e => setForm(f => ({ ...f, diagnosis: e.target.value }))}
+                      style={{ width: '50%', fontSize: '0.82rem' }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* SUBTEST SELECTOR TABS & AGE MILESTONE BAR */}
-        <div
-          style={{
-            background: 'var(--g0)',
-            padding: '10px 18px',
-            borderBottom: '1px solid var(--border-color)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: 10,
-          }}
-        >
-          {/* Subtest Switcher Tabs */}
-          <div style={{ display: 'flex', gap: 8 }}>
-            {PLS5_SUBTESTS.map(st => {
-              const isActive = activeSubtest === st.id;
-              const subAnswered = st.id === 'receptive' ? receptiveAnswered : expressiveAnswered;
-              const subBasal = st.id === 'receptive' ? psychometrics.receptiveBasalIndex : psychometrics.expressiveBasalIndex;
-              const subCeil = st.id === 'receptive' ? psychometrics.receptiveCeilingIndex : psychometrics.expressiveCeilingIndex;
+          {/* 2. SUBTEST SELECTOR TABS & QUICK SIMULATION ACTIONS */}
+          <div
+            style={{
+              background: 'var(--g0)',
+              padding: '10px 14px',
+              borderRadius: 12,
+              border: '1px solid var(--border-color)',
+              marginBottom: 12,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 10,
+            }}
+          >
+            {/* Subtest Switcher Tabs */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {PLS5_SUBTESTS.map(st => {
+                const isActive = activeSubtest === st.id;
+                const subAnswered = st.id === 'receptive' ? receptiveAnswered : expressiveAnswered;
+                const subBasal = st.id === 'receptive' ? psychometrics.receptiveBasalIndex : psychometrics.expressiveBasalIndex;
+                const subCeil = st.id === 'receptive' ? psychometrics.receptiveCeilingIndex : psychometrics.expressiveCeilingIndex;
 
-              return (
-                <button
-                  key={st.id}
-                  type="button"
-                  onClick={() => setActiveSubtest(st.id)}
-                  style={{
-                    background: isActive ? (st.id === 'receptive' ? '#0891b2' : '#0284c7') : 'var(--bg-card)',
-                    color: isActive ? '#ffffff' : 'var(--text-main)',
-                    border: `1.5px solid ${isActive ? (st.id === 'receptive' ? '#0891b2' : '#0284c7') : 'var(--border-color)'}`,
-                    borderRadius: 10,
-                    padding: '8px 16px',
-                    fontSize: '0.86rem',
-                    fontWeight: 800,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    cursor: 'pointer',
-                    boxShadow: isActive ? '0 4px 10px rgba(0, 0, 0, 0.12)' : 'none',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  <span>{st.id === 'receptive' ? '🎧' : '💬'}</span>
-                  <span>{st.nameAr}</span>
-                  <span
+                return (
+                  <button
+                    key={st.id}
+                    type="button"
+                    onClick={() => setActiveSubtest(st.id)}
                     style={{
-                      background: isActive ? 'rgba(255, 255, 255, 0.25)' : 'var(--g0)',
-                      color: isActive ? '#ffffff' : 'var(--text-sub)',
-                      fontSize: '0.72rem',
-                      padding: '2px 7px',
-                      borderRadius: 12,
-                      fontWeight: 700,
+                      background: isActive ? (st.id === 'receptive' ? '#0891b2' : '#0284c7') : 'var(--bg-card)',
+                      color: isActive ? '#ffffff' : 'var(--text-main)',
+                      border: `1.5px solid ${isActive ? (st.id === 'receptive' ? '#0891b2' : '#0284c7') : 'var(--border-color)'}`,
+                      borderRadius: 10,
+                      padding: '8px 14px',
+                      fontSize: '0.85rem',
+                      fontWeight: 800,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      cursor: 'pointer',
+                      boxShadow: isActive ? '0 4px 10px rgba(0, 0, 0, 0.12)' : 'none',
+                      transition: 'all 0.2s',
                     }}
                   >
-                    {subAnswered} / 40
-                  </span>
-                  {subBasal !== -1 && (
-                    <span style={{ fontSize: '0.7rem', color: isActive ? '#cffafe' : '#059669', fontWeight: 800 }} title="تم تأسيس الخط القاعدي">
-                      ✓ Basal
+                    <span>{st.id === 'receptive' ? '🎧' : '💬'}</span>
+                    <span>{st.nameAr}</span>
+                    <span
+                      style={{
+                        background: isActive ? 'rgba(255, 255, 255, 0.25)' : 'var(--g0)',
+                        color: isActive ? '#ffffff' : 'var(--text-sub)',
+                        fontSize: '0.72rem',
+                        padding: '2px 7px',
+                        borderRadius: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {subAnswered} / 40
                     </span>
-                  )}
-                  {subCeil !== -1 && (
-                    <span style={{ fontSize: '0.7rem', color: isActive ? '#fee2e2' : '#dc2626', fontWeight: 800 }} title="تم الوصول لسقف التوقف">
-                      ⚠️ Ceiling
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+                    {subBasal !== -1 && (
+                      <span style={{ fontSize: '0.7rem', color: isActive ? '#cffafe' : '#059669', fontWeight: 800 }} title="تم تأسيس الخط القاعدي">
+                        ✓ Basal
+                      </span>
+                    )}
+                    {subCeil !== -1 && (
+                      <span style={{ fontSize: '0.7rem', color: isActive ? '#fee2e2' : '#dc2626', fontWeight: 800 }} title="تم الوصول لسقف التوقف">
+                        ⚠️ Ceiling
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Quick Simulation & Helper Buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', fontWeight: 700 }}>نماذج سريعة:</span>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => autoFillSample('normal')}
+                style={{ fontSize: '0.74rem', padding: '4px 8px' }}
+                title="محاكاة أداء لغوي طبيعي"
+              >
+                🟢 طبيعي
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => autoFillSample('mild')}
+                style={{ fontSize: '0.74rem', padding: '4px 8px' }}
+                title="محاكاة تأخر لغوي بسيط"
+              >
+                🟡 بسيط
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => autoFillSample('moderate')}
+                style={{ fontSize: '0.74rem', padding: '4px 8px' }}
+                title="محاكاة تأخر لغوي متوسط"
+              >
+                🟠 متوسط
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => autoFillSample('severe')}
+                style={{ fontSize: '0.74rem', padding: '4px 8px' }}
+                title="محاكاة تأخر لغوي شديد"
+              >
+                🔴 شديد
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={handleResetScores}
+                style={{ fontSize: '0.74rem', padding: '4px 8px', color: '#dc2626' }}
+                title="تصفير الاستجابات"
+              >
+                🔄 تصفير
+              </button>
+            </div>
           </div>
 
-          {/* Quick Simulation & Helper Buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', fontWeight: 700 }}>نماذج سريعة:</span>
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => autoFillSample('normal')}
-              style={{ fontSize: '0.74rem', padding: '4px 8px' }}
-              title="محاكاة أداء لغوي طبيعي"
-            >
-              🟢 طبيعي
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => autoFillSample('mild')}
-              style={{ fontSize: '0.74rem', padding: '4px 8px' }}
-              title="محاكاة تأخر لغوي بسيط"
-            >
-              🟡 بسيط
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => autoFillSample('moderate')}
-              style={{ fontSize: '0.74rem', padding: '4px 8px' }}
-              title="محاكاة تأخر لغوي متوسط"
-            >
-              🟠 متوسط
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => autoFillSample('severe')}
-              style={{ fontSize: '0.74rem', padding: '4px 8px' }}
-              title="محاكاة تأخر لغوي شديد"
-            >
-              🔴 شديد
-            </button>
+          {/* 3. AGE FILTER PILLS & SEARCH / AUTO ACTIONS */}
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              padding: '10px 14px',
+              borderRadius: 12,
+              border: '1px solid var(--border-color)',
+              marginBottom: 14,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 10,
+            }}
+          >
+            {/* Age Milestone Filter Chips */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-sub)' }}>المرحلة النمائية:</span>
+              {PLS5_AGE_GROUPS.map(grp => {
+                const isSelected = activeAgeFilter === grp.id;
+                return (
+                  <button
+                    key={grp.id}
+                    type="button"
+                    onClick={() => setActiveAgeFilter(grp.id)}
+                    style={{
+                      background: isSelected ? '#0e7490' : 'var(--g0)',
+                      color: isSelected ? '#ffffff' : 'var(--text-main)',
+                      border: `1px solid ${isSelected ? '#0e7490' : 'var(--border-color)'}`,
+                      borderRadius: 20,
+                      padding: '4px 10px',
+                      fontSize: '0.74rem',
+                      fontWeight: isSelected ? 800 : 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {grp.id === 'all' ? 'الكل (40)' : grp.id}
+                  </button>
+                );
+              })}
+            </div>
 
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={handleResetScores}
-              style={{ fontSize: '0.74rem', padding: '4px 8px', color: '#dc2626' }}
-              title="تصفير الاستجابات"
-            >
-              🔄 تصفير
-            </button>
+            {/* Quick Basal / Ceiling Credit Actions & Search Input */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={autoCreditBasal}
+                style={{
+                  fontSize: '0.74rem',
+                  padding: '4px 10px',
+                  background: '#ecfdf5',
+                  color: '#065f46',
+                  border: '1px solid #a7f3d0',
+                  fontWeight: 700,
+                }}
+                title="اعتماد جميع البنود السابقة للخط القاعدي كـ 1 صحيح"
+              >
+                ✓ اعتماد ما قبل القاعدي (1)
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={autoZeroCeiling}
+                style={{
+                  fontSize: '0.74rem',
+                  padding: '4px 10px',
+                  background: '#fef2f2',
+                  color: '#991b1b',
+                  border: '1px solid #fecaca',
+                  fontWeight: 700,
+                }}
+                title="تصفير البنود اللاحقة لسقف التوقف كـ 0"
+              >
+                ⛔ تصفير ما بعد السقف (0)
+              </button>
+
+              <input
+                type="text"
+                className="inp"
+                placeholder="🔍 بحث في البنود..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                style={{ fontSize: '0.78rem', padding: '4px 10px', width: 150 }}
+              />
+            </div>
           </div>
-        </div>
 
-        {/* AGE FILTER PILLS & SEARCH / AUTO ACTIONS */}
-        <div
-          style={{
-            background: 'var(--bg-card)',
-            padding: '10px 18px',
-            borderBottom: '1px solid var(--border-color)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: 10,
-          }}
-        >
-          {/* Age Milestone Filter Chips */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-sub)' }}>المرحلة النمائية:</span>
-            {PLS5_AGE_GROUPS.map(grp => {
-              const isSelected = activeAgeFilter === grp.id;
+          {/* 4. ITEMS LIST (FLOWING INSIDE SCROLL BODY, NO NESTED SCROLL) */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+              marginBottom: 16,
+            }}
+          >
+            {filteredItems.map(item => {
+              const scoreKey = `${currentPrefix}${item.id}`;
+              const currentScore = form.scores[scoreKey];
+              const isScoredOne = currentScore === 1;
+              const isScoredZero = currentScore === 0;
+              const note = form.itemNotes[scoreKey] || '';
+
+              // Check if item is starting item for this age
+              const isStartItem = (activeSubtest === 'receptive' && startingPoints.receptiveStart === item.id) ||
+                                  (activeSubtest === 'expressive' && startingPoints.expressiveStart === item.id);
+
               return (
-                <button
-                  key={grp.id}
-                  type="button"
-                  onClick={() => setActiveAgeFilter(grp.id)}
+                <div
+                  key={item.id}
                   style={{
-                    background: isSelected ? '#0e7490' : 'var(--g0)',
-                    color: isSelected ? '#ffffff' : 'var(--text-main)',
-                    border: `1px solid ${isSelected ? '#0e7490' : 'var(--border-color)'}`,
-                    borderRadius: 20,
-                    padding: '4px 10px',
-                    fontSize: '0.74rem',
-                    fontWeight: isSelected ? 800 : 600,
-                    cursor: 'pointer',
+                    background: 'var(--bg-card)',
+                    border: `1.5px solid ${
+                      isScoredOne ? '#10b981' : isScoredZero ? '#f87171' : 'var(--border-color)'
+                    }`,
+                    borderRadius: 12,
+                    padding: '12px 16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 10,
                     transition: 'all 0.15s',
+                    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
                   }}
                 >
-                  {grp.id === 'all' ? 'الكل (40)' : grp.id}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Quick Basal / Ceiling Credit Actions & Search Input */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={autoCreditBasal}
-              style={{
-                fontSize: '0.74rem',
-                padding: '4px 10px',
-                background: '#ecfdf5',
-                color: '#065f46',
-                border: '1px solid #a7f3d0',
-                fontWeight: 700,
-              }}
-              title="اعتماد جميع البنود السابقة للخط القاعدي كـ 1 صحيح"
-            >
-              ✓ اعتماد ما قبل القاعدي (1)
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={autoZeroCeiling}
-              style={{
-                fontSize: '0.74rem',
-                padding: '4px 10px',
-                background: '#fef2f2',
-                color: '#991b1b',
-                border: '1px solid #fecaca',
-                fontWeight: 700,
-              }}
-              title="تصفير البنود اللاحقة لسقف التوقف كـ 0"
-            >
-              ⛔ تصفير ما بعد السقف (0)
-            </button>
-
-            <input
-              type="text"
-              className="inp"
-              placeholder="🔍 بحث في البنود..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={{ fontSize: '0.78rem', padding: '4px 10px', width: 150 }}
-            />
-          </div>
-        </div>
-
-        {/* ITEMS LIST (SCROLLABLE) */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '16px 20px',
-            background: 'var(--g0)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 10,
-          }}
-        >
-          {filteredItems.map(item => {
-            const scoreKey = `${currentPrefix}${item.id}`;
-            const currentScore = form.scores[scoreKey];
-            const isScoredOne = currentScore === 1;
-            const isScoredZero = currentScore === 0;
-            const note = form.itemNotes[scoreKey] || '';
-
-            // Check if item is starting item for this age
-            const isStartItem = (activeSubtest === 'receptive' && startingPoints.receptiveStart === item.id) ||
-                                (activeSubtest === 'expressive' && startingPoints.expressiveStart === item.id);
-
-            return (
-              <div
-                key={item.id}
-                style={{
-                  background: 'var(--bg-card)',
-                  border: `1.5px solid ${
-                    isScoredOne ? '#10b981' : isScoredZero ? '#f87171' : 'var(--border-color)'
-                  }`,
-                  borderRadius: 12,
-                  padding: '12px 16px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 10,
-                  transition: 'all 0.15s',
-                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10 }}>
-                  {/* Item Text & Metadata */}
-                  <div style={{ flex: 1, minWidth: 260 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
-                      <span
-                        style={{
-                          background: isScoredOne ? '#10b981' : isScoredZero ? '#ef4444' : '#0e7490',
-                          color: '#ffffff',
-                          fontSize: '0.76rem',
-                          fontWeight: 800,
-                          padding: '3px 8px',
-                          borderRadius: 6,
-                        }}
-                      >
-                        بند #{item.id}
-                      </span>
-                      <span
-                        style={{
-                          background: 'var(--g0)',
-                          color: 'var(--text-sub)',
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          padding: '2px 8px',
-                          borderRadius: 12,
-                          border: '1px solid var(--border-color)',
-                        }}
-                      >
-                        {item.ageGroup}
-                      </span>
-                      <span
-                        style={{
-                          background: 'rgba(14, 116, 144, 0.1)',
-                          color: '#0e7490',
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          padding: '2px 8px',
-                          borderRadius: 12,
-                        }}
-                      >
-                        {item.domain}
-                      </span>
-                      {isStartItem && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10 }}>
+                    {/* Item Text & Metadata */}
+                    <div style={{ flex: 1, minWidth: 260 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
                         <span
                           style={{
-                            background: '#fef3c7',
-                            color: '#b45309',
-                            fontSize: '0.72rem',
+                            background: isScoredOne ? '#10b981' : isScoredZero ? '#ef4444' : '#0e7490',
+                            color: '#ffffff',
+                            fontSize: '0.76rem',
                             fontWeight: 800,
-                            padding: '2px 8px',
-                            borderRadius: 12,
-                            border: '1px solid #fde68a',
+                            padding: '3px 8px',
+                            borderRadius: 6,
                           }}
                         >
-                          ⭐ نقطة البداية الموصى بها لعمر الطالب
+                          بند #{item.id}
                         </span>
+                        <span
+                          style={{
+                            background: 'var(--g0)',
+                            color: 'var(--text-sub)',
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: 12,
+                            border: '1px solid var(--border-color)',
+                          }}
+                        >
+                          {item.ageGroup}
+                        </span>
+                        <span
+                          style={{
+                            background: 'rgba(14, 116, 144, 0.1)',
+                            color: '#0e7490',
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: 12,
+                          }}
+                        >
+                          {item.domain}
+                        </span>
+                        {isStartItem && (
+                          <span
+                            style={{
+                              background: '#fef3c7',
+                              color: '#b45309',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              padding: '2px 8px',
+                              borderRadius: 12,
+                              border: '1px solid #fde68a',
+                            }}
+                          >
+                            ⭐ نقطة البداية الموصى بها لعمر الطالب
+                          </span>
+                        )}
+                      </div>
+
+                      <p style={{ margin: '4px 0 0 0', fontSize: '0.92rem', fontWeight: 600, color: 'var(--text-main)', lineHeight: 1.5 }}>
+                        {item.text}
+                      </p>
+
+                      {item.goal && isScoredZero && (
+                        <div
+                          style={{
+                            marginTop: 6,
+                            fontSize: '0.76rem',
+                            color: '#b91c1c',
+                            background: '#fef2f2',
+                            padding: '4px 10px',
+                            borderRadius: 6,
+                            border: '1px solid #fecaca',
+                          }}
+                        >
+                          <b>🎯 الهدف التأهيلي المقترح:</b> {item.goal}
+                        </div>
                       )}
                     </div>
 
-                    <p style={{ margin: '4px 0 0 0', fontSize: '0.92rem', fontWeight: 600, color: 'var(--text-main)', lineHeight: 1.5 }}>
-                      {item.text}
-                    </p>
-
-                    {item.goal && isScoredZero && (
-                      <div
+                    {/* Score Selection Buttons */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <button
+                        type="button"
+                        onClick={() => handleScoreSelect(item.id, 1)}
                         style={{
-                          marginTop: 6,
-                          fontSize: '0.76rem',
-                          color: '#b91c1c',
-                          background: '#fef2f2',
-                          padding: '4px 10px',
-                          borderRadius: 6,
-                          border: '1px solid #fecaca',
+                          background: isScoredOne ? '#059669' : 'var(--g0)',
+                          color: isScoredOne ? '#ffffff' : 'var(--text-main)',
+                          border: `1.5px solid ${isScoredOne ? '#059669' : 'var(--border-color)'}`,
+                          borderRadius: 8,
+                          padding: '8px 14px',
+                          fontSize: '0.82rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          transition: 'all 0.15s',
+                          boxShadow: isScoredOne ? '0 4px 8px rgba(5, 150, 105, 0.25)' : 'none',
                         }}
                       >
-                        <b>🎯 الهدف التأهيلي المقترح:</b> {item.goal}
-                      </div>
-                    )}
+                        <span>✓</span>
+                        <span>1 - متقن / صحيح</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleScoreSelect(item.id, 0)}
+                        style={{
+                          background: isScoredZero ? '#dc2626' : 'var(--g0)',
+                          color: isScoredZero ? '#ffffff' : 'var(--text-main)',
+                          border: `1.5px solid ${isScoredZero ? '#dc2626' : 'var(--border-color)'}`,
+                          borderRadius: 8,
+                          padding: '8px 14px',
+                          fontSize: '0.82rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          transition: 'all 0.15s',
+                          boxShadow: isScoredZero ? '0 4px 8px rgba(220, 38, 38, 0.25)' : 'none',
+                        }}
+                      >
+                        <span>✕</span>
+                        <span>0 - غير متقن / خطأ</span>
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Score Selection Buttons */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <button
-                      type="button"
-                      onClick={() => handleScoreSelect(item.id, 1)}
-                      style={{
-                        background: isScoredOne ? '#059669' : 'var(--g0)',
-                        color: isScoredOne ? '#ffffff' : 'var(--text-main)',
-                        border: `1.5px solid ${isScoredOne ? '#059669' : 'var(--border-color)'}`,
-                        borderRadius: 8,
-                        padding: '8px 14px',
-                        fontSize: '0.82rem',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        transition: 'all 0.15s',
-                        boxShadow: isScoredOne ? '0 4px 8px rgba(5, 150, 105, 0.25)' : 'none',
-                      }}
-                    >
-                      <span>✓</span>
-                      <span>1 - متقن / صحيح</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleScoreSelect(item.id, 0)}
-                      style={{
-                        background: isScoredZero ? '#dc2626' : 'var(--g0)',
-                        color: isScoredZero ? '#ffffff' : 'var(--text-main)',
-                        border: `1.5px solid ${isScoredZero ? '#dc2626' : 'var(--border-color)'}`,
-                        borderRadius: 8,
-                        padding: '8px 14px',
-                        fontSize: '0.82rem',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        transition: 'all 0.15s',
-                        boxShadow: isScoredZero ? '0 4px 8px rgba(220, 38, 38, 0.25)' : 'none',
-                      }}
-                    >
-                      <span>✕</span>
-                      <span>0 - غير متقن / خطأ</span>
-                    </button>
+                  {/* Item Notes Input */}
+                  <div>
+                    <input
+                      type="text"
+                      className="inp"
+                      placeholder="📝 ملاحظات نوعية على استجابة الطفل لهذا البند..."
+                      value={note}
+                      onChange={e => handleItemNoteChange(item.id, e.target.value)}
+                      style={{ fontSize: '0.78rem', padding: '4px 10px', width: '100%' }}
+                    />
                   </div>
                 </div>
+              );
+            })}
+          </div>
 
-                {/* Item Notes Input */}
-                <div>
-                  <input
-                    type="text"
-                    className="inp"
-                    placeholder="📝 ملاحظات نوعية على استجابة الطفل لهذا البند..."
-                    value={note}
-                    onChange={e => handleItemNoteChange(item.id, e.target.value)}
-                    style={{ fontSize: '0.78rem', padding: '4px 10px', width: '100%' }}
-                  />
-                </div>
+          {/* 5. CLINICAL SUMMARY & RECOMMENDATIONS ACCORDION (INSIDE SCROLL BODY AT BOTTOM) */}
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 12,
+              padding: '14px 18px',
+              marginBottom: 10,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                📋 التقرير الإكلينيكي والتوصيات التأهيلية (PLS-5 Clinical Summary)
+              </span>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={handleGenerateClinicalReport}
+                style={{
+                  fontSize: '0.76rem',
+                  background: '#0891b2',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontWeight: 700,
+                  padding: '4px 12px',
+                  borderRadius: 6,
+                }}
+              >
+                ⚡ توليد التقرير والتوصيات تلقائياً
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-sub)', marginBottom: 4 }}>
+                  الملخص الإكلينيكي والتشخيصي للأداء اللغوي:
+                </label>
+                <textarea
+                  className="inp"
+                  rows={3}
+                  placeholder="الملخص الإكلينيكي والتشخيصي للأداء اللغوي..."
+                  value={form.clinicalSummary}
+                  onChange={e => setForm(f => ({ ...f, clinicalSummary: e.target.value }))}
+                  style={{ width: '100%', fontSize: '0.8rem', resize: 'vertical' }}
+                />
               </div>
-            );
-          })}
-        </div>
-
-        {/* CLINICAL SUMMARY & RECOMMENDATIONS ACCORDION */}
-        <div
-          style={{
-            background: 'var(--bg-card)',
-            borderTop: '1px solid var(--border-color)',
-            padding: '12px 20px',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-main)' }}>
-              📋 التقرير الإكلينيكي والتوصيات التأهيلية (PLS-5 Clinical Summary)
-            </span>
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={handleGenerateClinicalReport}
-              style={{
-                fontSize: '0.76rem',
-                background: '#0891b2',
-                color: '#ffffff',
-                border: 'none',
-                fontWeight: 700,
-                padding: '4px 12px',
-                borderRadius: 6,
-              }}
-            >
-              ⚡ توليد التقرير والتوصيات تلقائياً
-            </button>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <div>
-              <textarea
-                className="inp"
-                rows={2}
-                placeholder="الملخص الإكلينيكي والتشخيصي للأداء اللغوي..."
-                value={form.clinicalSummary}
-                onChange={e => setForm(f => ({ ...f, clinicalSummary: e.target.value }))}
-                style={{ width: '100%', fontSize: '0.8rem', resize: 'vertical' }}
-              />
-            </div>
-            <div>
-              <textarea
-                className="inp"
-                rows={2}
-                placeholder="التوصيات التربوية والتأهيلية الموجهة للخطة الفردية (IEP)..."
-                value={form.recommendations}
-                onChange={e => setForm(f => ({ ...f, recommendations: e.target.value }))}
-                style={{ width: '100%', fontSize: '0.8rem', resize: 'vertical' }}
-              />
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-sub)', marginBottom: 4 }}>
+                  التوصيات التربوية والتأهيلية الموجهة للخطة الفردية (IEP):
+                </label>
+                <textarea
+                  className="inp"
+                  rows={3}
+                  placeholder="التوصيات التربوية والتأهيلية الموجهة للخطة الفردية (IEP)..."
+                  value={form.recommendations}
+                  onChange={e => setForm(f => ({ ...f, recommendations: e.target.value }))}
+                  style={{ width: '100%', fontSize: '0.8rem', resize: 'vertical' }}
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* MODAL FOOTER */}
+        {/* MODAL FOOTER (FIXED AT BOTTOM, OUTSIDE SCROLL BODY) */}
         <div
           style={{
             background: 'var(--g0)',
-            padding: '12px 20px',
+            padding: '10px 20px',
             borderTop: '1px solid var(--border-color)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
-            gap: 12,
+            gap: 10,
+            flexShrink: 0,
           }}
         >
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)', fontWeight: 600 }}>
-            إجمالي البنود المقيمة: <b>{answeredCount}</b> من أصل 80 بنداً (استقبالي: {receptiveAnswered} / تعبيري: {expressiveAnswered})
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-sub)', fontWeight: 600 }}>
+              تم تقييم <strong>{answeredCount}</strong> من أصل <strong>80</strong> بنداً (استقبالي: {receptiveAnswered} / تعبيري: {expressiveAnswered})
+            </span>
+            <span className={`bdg ${answeredCount === 80 ? 'b-gr' : 'b-or'}`} style={{ fontSize: '0.72rem' }}>
+              {Math.round((answeredCount / 80) * 100)}% مكتمل
+            </span>
           </div>
 
           <div style={{ display: 'flex', gap: 10 }}>
             <button
               type="button"
-              className="btn"
+              className="btn btn-g"
               onClick={onClose}
               style={{ fontSize: '0.86rem', padding: '8px 18px' }}
             >
@@ -1334,12 +1374,12 @@ export default function PLS5AssessmentModal({
 
             <button
               type="button"
-              className="btn btn-primary"
+              className="btn btn-p"
               onClick={() => handleSave(false)}
               style={{
                 fontSize: '0.86rem',
                 padding: '8px 22px',
-                background: '#0891b2',
+                background: 'linear-gradient(135deg, #0e7490 0%, #0891b2 100%)',
                 borderColor: '#0891b2',
                 color: '#ffffff',
                 fontWeight: 800,
@@ -1349,7 +1389,7 @@ export default function PLS5AssessmentModal({
               }}
             >
               <span>💾</span>
-              <span>حفظ التقييم اللغوي</span>
+              <span>حفظ تقييم لغة الأطفال (PLS-5)</span>
             </button>
           </div>
         </div>
