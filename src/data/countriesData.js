@@ -5,7 +5,7 @@
 
 export const COUNTRIES = [
   // ==========================================
-  // دول مجلس التعاون الخليجي (GCC Countries)
+  // الدول العربية (Arab Countries)
   // ==========================================
   {
     code: 'SA',
@@ -18,7 +18,7 @@ export const COUNTRIES = [
     currencyNameAr: 'ريال سعودي',
     currencyNameEn: 'Saudi Riyal',
     defaultCity: 'الرياض',
-    region: 'GCC',
+    region: 'Arab',
     isArab: true,
   },
   {
@@ -32,7 +32,7 @@ export const COUNTRIES = [
     currencyNameAr: 'دينار بحريني',
     currencyNameEn: 'Bahraini Dinar',
     defaultCity: 'المنامة',
-    region: 'GCC',
+    region: 'Arab',
     isArab: true,
   },
   {
@@ -46,7 +46,7 @@ export const COUNTRIES = [
     currencyNameAr: 'درهم إماراتي',
     currencyNameEn: 'UAE Dirham',
     defaultCity: 'أبوظبي',
-    region: 'GCC',
+    region: 'Arab',
     isArab: true,
   },
   {
@@ -60,7 +60,7 @@ export const COUNTRIES = [
     currencyNameAr: 'دينار كويتي',
     currencyNameEn: 'Kuwaiti Dinar',
     defaultCity: 'مدينة الكويت',
-    region: 'GCC',
+    region: 'Arab',
     isArab: true,
   },
   {
@@ -74,7 +74,7 @@ export const COUNTRIES = [
     currencyNameAr: 'ريال عماني',
     currencyNameEn: 'Omani Rial',
     defaultCity: 'مسقط',
-    region: 'GCC',
+    region: 'Arab',
     isArab: true,
   },
   {
@@ -88,7 +88,7 @@ export const COUNTRIES = [
     currencyNameAr: 'ريال قطري',
     currencyNameEn: 'Qatari Riyal',
     defaultCity: 'الدوحة',
-    region: 'GCC',
+    region: 'Arab',
     isArab: true,
   },
 

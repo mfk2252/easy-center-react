@@ -11,7 +11,7 @@ export default function CountrySelector({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [regionFilter, setRegionFilter] = useState('all'); // all | arab | gcc | world
+  const [regionFilter, setRegionFilter] = useState('all'); // all | arab | world
   const containerRef = useRef(null);
   const searchInputRef = useRef(null);
 
@@ -50,7 +50,6 @@ export default function CountrySelector({
     const q = search.trim().toLowerCase();
     return COUNTRIES.filter(c => {
       // تصفية المنطقة
-      if (regionFilter === 'gcc' && c.region !== 'GCC') return false;
       if (regionFilter === 'arab' && !c.isArab) return false;
       if (regionFilter === 'world' && c.isArab) return false;
 
@@ -216,7 +215,6 @@ export default function CountrySelector({
             <div style={{ display: 'flex', gap: 4, marginTop: 8, overflowX: 'auto', scrollbarWidth: 'none' }}>
               {[
                 { id: 'all', label: 'الكل' },
-                { id: 'gcc', label: '🌴 دول الخليج' },
                 { id: 'arab', label: '🌍 الدول العربية' },
                 { id: 'world', label: '🌐 باقي دول العالم' },
               ].map(tab => {
