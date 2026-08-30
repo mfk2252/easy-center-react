@@ -1,6 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { CARS2_ITEMS, CARS2_DOMAINS, calculateCARS2Psychometrics } from '../../data/cars2Data';
+import {
+  CARS2_ITEMS,
+  CARS2_DOMAINS,
+  CARS2_COPYRIGHT_INFO,
+  calculateCARS2Psychometrics,
+} from '../../data/cars2Data';
 import { printItem } from '../../utils/printUtils';
 import { sendReportToWhatsApp } from '../../pages/ProgramsReports/programsWhatsApp';
 import IepBridgeModal from '../../pages/ProgramsReports/IepBridgeModal';
@@ -22,7 +27,11 @@ export default function CARS2ReportModal({
 
   const recommendedGoals = useMemo(() => {
     if (!assessment) return [];
-    return extractRecommendedGoals('cars', assessment.results || assessment.scores || {}, CARS2_ITEMS);
+    return extractRecommendedGoals(
+      'cars',
+      assessment.results || assessment.scores || {},
+      CARS2_ITEMS
+    );
   }, [assessment]);
 
   if (!isOpen || !assessment || !psychometrics) return null;
@@ -32,8 +41,17 @@ export default function CARS2ReportModal({
       <tr style="border-bottom:1px solid #e2e8f0;">
         <td style="padding:8px 12px;font-weight:bold;color:#1e40af;">${d.name}</td>
         <td style="padding:8px 12px;text-align:center;">${d.score} / ${d.maxScore}</td>
-        <td style="padding:8px 12px;text-align:center;">${d.avg}</td>
-        <td style="padding:8px 12px;text-align:center;">${d.percentage}%</td>
+        <td style="padding:8px 12px;text-align:center;font-weight:bold;color:#1e40af;">${d.avg} / 4.0</td>
+        <td style="padding:8px 12px;text-align:center;font-weight:600;">${d.percentage}%</td>
+        <td style="padding:8px 12px;text-align:center;font-size:12px;">
+          ${d.avg >= 3.0
+            ? '<span style="color:#dc2626;font-weight:bold;">تأثر شديد</span>'
+            : d.avg >= 2.0
+            ? '<span style="color:#d97706;font-weight:bold;">تأثر متوسط</span>'
+            : d.avg >= 1.5
+            ? '<span style="color:#2563eb;font-weight:bold;">تأثر بسيط</span>'
+            : '<span style="color:#16a34a;font-weight:bold;">طبيعي</span>'}
+        </td>
       </tr>
     `).join('');
 
@@ -44,75 +62,92 @@ export default function CARS2ReportModal({
 
       return `
         <tr style="border-bottom:1px solid #e2e8f0;background:${score && score >= 3 ? '#fef2f2' : score && score >= 2 ? '#fffbeb' : '#ffffff'};">
-          <td style="padding:8px 10px;text-align:center;font-weight:bold;">${it.id}</td>
-          <td style="padding:8px 10px;font-weight:bold;">${it.title}</td>
-          <td style="padding:8px 10px;text-align:center;font-weight:bold;font-size:1.05em;color:#1e40af;">${score !== null ? score.toFixed(1) : '—'}</td>
-          <td style="padding:8px 10px;font-size:0.9em;color:#334155;">
+          <td style="padding:8px 10px;text-align:center;font-weight:bold;color:#1e40af;">${it.id}</td>
+          <td style="padding:8px 10px;font-weight:bold;font-size:12px;">
+            ${it.title}
+            <div style="font-size:10px;color:#64748b;font-weight:normal;">${it.subtitle}</div>
+          </td>
+          <td style="padding:8px 10px;text-align:center;font-weight:bold;font-size:1.1em;color:${score >= 3 ? '#dc2626' : score >= 2 ? '#d97706' : '#16a34a'};">
+            ${score !== null ? score.toFixed(1) : '—'}
+          </td>
+          <td style="padding:8px 10px;font-size:11px;color:#334155;">
             ${anchor ? `<b>${anchor.label}:</b> ${anchor.description}` : '—'}
-            ${note ? `<br/><i style="color:#64748b;">ملاحظة: ${note}</i>` : ''}
+            ${note ? `<div style="margin-top:4px;color:#475569;background:#f1f5f9;padding:4px 8px;border-radius:4px;"><b>ملاحظات الفاحص:</b> ${note}</div>` : ''}
           </td>
         </tr>
       `;
     }).join('');
 
     const html = `
-      <div style="direction:rtl;text-align:right;font-family:'Tajawal',sans-serif;color:#1e293b;padding:10px;">
-        <div style="border-bottom:3px solid #1e40af;padding-bottom:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+      <div style="direction:rtl;text-align:right;font-family:'Tajawal',sans-serif;color:#1e293b;padding:12px;max-width:900px;margin:auto;">
+        <!-- Header -->
+        <div style="border-bottom:3px solid #1e40af;padding-bottom:12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
           <div>
             <h1 style="color:#1e40af;font-size:22px;margin:0 0 4px 0;">🧩 تقرير التقييم والتشخيص النفسي الإكلينيكي (CARS-2)</h1>
-            <p style="margin:0;font-size:13px;color:#64748b;">Childhood Autism Rating Scale, 2nd Edition · مقياس تقدير التوحد في الطفولة</p>
+            <p style="margin:0;font-size:13px;color:#64748b;">Childhood Autism Rating Scale, 2nd Edition · مقياس تقدير التوحد في الطفولة — النسخة القياسية</p>
           </div>
           <div style="text-align:left;font-size:12px;color:#475569;">
             <div><b>التاريخ:</b> ${assessment.date || '—'}</div>
-            <div><b>الرقم المرجعي:</b> ${assessment.id ? assessment.id.slice(0, 8) : 'CARS2'}</div>
+            <div><b>المركز:</b> ${center?.name || 'مركز التربية الخاصة والتأهيل'}</div>
           </div>
         </div>
 
-        <table style="width:100%;margin-bottom:16px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:10px;font-size:13px;">
+        <!-- COPYRIGHT NOTICE BOX -->
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:8px 12px;margin-bottom:14px;font-size:11px;color:#1e40af;line-height:1.5;">
+          <b>⚖️ إشعار حقوق الملكية الفكرية والاعتماد العلمي:</b> مقياس تقدير التوحد في الطفولة — الإصدار الثاني (CARS-2) · 
+          تأليف: <b>${CARS2_COPYRIGHT_INFO.authorsAr}</b> · 
+          الناشر: <b>${CARS2_COPYRIGHT_INFO.publisherAr} (${CARS2_COPYRIGHT_INFO.publisherEn})</b> · 
+          الفئة المستهدفة: ${CARS2_COPYRIGHT_INFO.targetAge} · 
+          المعيار الذهبي المعتمد لتشخيص اضطراب طيف التوحد وتحديد شدة الأعراض وفق معايير DSM-5 و ICD-11.
+        </div>
+
+        <!-- Student & Assessment Info Table -->
+        <table style="width:100%;margin-bottom:14px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:8px;font-size:12px;">
           <tr>
-            <td style="padding:6px 10px;"><b>اسم المفحوص:</b> ${assessment.studentName || '—'}</td>
-            <td style="padding:6px 10px;"><b>العمر الزمني:</b> ${assessment.age || '—'}</td>
-            <td style="padding:6px 10px;"><b>تاريخ الفحص:</b> ${assessment.date || '—'}</td>
+            <td style="padding:4px 8px;"><b>اسم المفحوص:</b> ${assessment.studentName || '—'}</td>
+            <td style="padding:4px 8px;"><b>العمر الزمني:</b> ${assessment.age || '—'}</td>
+            <td style="padding:4px 8px;"><b>تاريخ الفحص:</b> ${assessment.date || '—'}</td>
           </tr>
           <tr>
-            <td style="padding:6px 10px;"><b>التشخيص المبدئي:</b> ${assessment.diagnosis || '—'}</td>
-            <td style="padding:6px 10px;"><b>الأخصائي الفاحص:</b> ${assessment.specialistName || '—'}</td>
-            <td style="padding:6px 10px;"><b>ولي الأمر:</b> ${assessment.parentName || '—'} (${assessment.parentPhone || '—'})</td>
+            <td style="padding:4px 8px;"><b>الأخصائي الفاحص:</b> ${assessment.examinerName || assessment.specialistName || '—'}</td>
+            <td style="padding:4px 8px;"><b>الملاحظ / المستجيب:</b> ${assessment.raterName || '—'} (${assessment.raterRelation || '—'})</td>
+            <td style="padding:4px 8px;"><b>التشخيص المسجل:</b> ${assessment.diagnosis || '—'}</td>
           </tr>
         </table>
 
-        <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:8px;padding:14px;margin-bottom:18px;">
-          <h3 style="margin:0 0 10px 0;color:#1e40af;font-size:16px;">📊 المؤشرات السيكومترية والدرجات المعيارية (Psychometric Indices)</h3>
-          <div style="display:flex;justify-content:space-around;text-align:center;font-size:13px;">
-            <div style="background:#ffffff;padding:8px 14px;border-radius:6px;border:1px solid #bfdbfe;">
-              <div style="color:#64748b;">الدرجة الخام الكلية</div>
-              <div style="font-size:20px;font-weight:900;color:#1e40af;">${psychometrics.rawScore} <span style="font-size:12px;color:#94a3b8;">/ 60</span></div>
+        <!-- Psychometric Dashboard -->
+        <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:8px;padding:12px;margin-bottom:16px;">
+          <h3 style="margin:0 0 10px 0;color:#1e40af;font-size:15px;">📊 المؤشرات السيكومترية والدرجات المعيارية (Psychometric Indices)</h3>
+          <div style="display:flex;justify-content:space-around;text-align:center;font-size:12px;">
+            <div style="background:#fff;padding:8px 14px;border-radius:6px;border:1px solid #bfdbfe;">
+              <span style="color:#64748b;display:block;font-size:11px;">الدرجة الخام الكلية</span>
+              <span style="font-size:22px;font-weight:900;color:#1e40af;">${psychometrics.rawScore} <small style="font-size:11px;color:#64748b;">/ 60.0</small></span>
             </div>
-            <div style="background:#ffffff;padding:8px 14px;border-radius:6px;border:1px solid #bfdbfe;">
-              <div style="color:#64748b;">الدرجة التائية المعيارية (T)</div>
-              <div style="font-size:20px;font-weight:900;color:#0f172a;">${psychometrics.tScore}</div>
+            <div style="background:#fff;padding:8px 14px;border-radius:6px;border:1px solid #bfdbfe;">
+              <span style="color:#64748b;display:block;font-size:11px;">الدرجة التائية (T-Score)</span>
+              <span style="font-size:22px;font-weight:900;color:#0f172a;">T = ${psychometrics.tScore}</span>
             </div>
-            <div style="background:#ffffff;padding:8px 14px;border-radius:6px;border:1px solid #bfdbfe;">
-              <div style="color:#64748b;">الرتبة المئينية (% Rank)</div>
-              <div style="font-size:20px;font-weight:900;color:#0f172a;">${psychometrics.percentile}%</div>
+            <div style="background:#fff;padding:8px 14px;border-radius:6px;border:1px solid #bfdbfe;">
+              <span style="color:#64748b;display:block;font-size:11px;">الرتبة المئينية (% Rank)</span>
+              <span style="font-size:22px;font-weight:900;color:#0f172a;">${psychometrics.percentile}%</span>
             </div>
-            <div style="background:#ffffff;padding:8px 14px;border-radius:6px;border:1px solid #bfdbfe;">
-              <div style="color:#64748b;">التصنيف التشخيصي المعتمد</div>
-              <div style="font-size:15px;font-weight:900;color:${psychometrics.severityKey === 'severe' ? '#dc2626' : psychometrics.severityKey === 'mild_moderate' ? '#d97706' : '#059669'};margin-top:4px;">
-                ${psychometrics.severityLabel}
-              </div>
+            <div style="background:#fff;padding:8px 14px;border-radius:6px;border:1px solid #bfdbfe;">
+              <span style="color:#64748b;display:block;font-size:11px;">التصنيف التشخيصي المعتمد</span>
+              <span style="font-size:13px;font-weight:bold;color:${psychometrics.severityColor};display:block;margin-top:4px;">${psychometrics.severityLabel}</span>
             </div>
           </div>
         </div>
 
-        <h3 style="color:#1e40af;font-size:15px;margin:16px 0 8px 0;">🌐 مظهر الأداء عبر المجالات النمائية الأربعة:</h3>
-        <table style="width:100%;border-collapse:collapse;margin-bottom:18px;font-size:13px;border:1px solid #cbd5e1;">
+        <!-- Domains Table -->
+        <h3 style="color:#1e40af;font-size:14px;margin:14px 0 8px 0;">🌐 توزيع درجات الأداء عبر المجالات النمائية الأربعة:</h3>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;border:1px solid #cbd5e1;">
           <thead style="background:#f1f5f9;">
             <tr>
               <th style="padding:8px 12px;text-align:right;">المجال النمائي</th>
               <th style="padding:8px 12px;text-align:center;">الدرجة المحققة</th>
               <th style="padding:8px 12px;text-align:center;">متوسط البند (1-4)</th>
               <th style="padding:8px 12px;text-align:center;">نسبة التأثر</th>
+              <th style="padding:8px 12px;text-align:center;">مستوى التأثر</th>
             </tr>
           </thead>
           <tbody>
@@ -120,14 +155,15 @@ export default function CARS2ReportModal({
           </tbody>
         </table>
 
-        <h3 style="color:#1e40af;font-size:15px;margin:16px 0 8px 0;">📝 جدول تقييم بنود مقياس CARS-2 التفصيلية (15 بنداً):</h3>
-        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:12px;border:1px solid #cbd5e1;">
+        <!-- Detailed Items Table -->
+        <h3 style="color:#1e40af;font-size:14px;margin:14px 0 8px 0;">📋 التقدير التفصيلي لبنود المقياس الـ 15 وأوصاف السلوك:</h3>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:16px;font-size:11px;border:1px solid #cbd5e1;">
           <thead style="background:#f1f5f9;">
             <tr>
-              <th style="padding:8px 10px;width:30px;text-align:center;">#</th>
-              <th style="padding:8px 10px;width:180px;text-align:right;">البند التشخيصي</th>
-              <th style="padding:8px 10px;width:50px;text-align:center;">الدرجة</th>
-              <th style="padding:8px 10px;text-align:right;">السلوك المرصود ووصف الدرجة</th>
+              <th style="padding:6px 8px;text-align:center;width:30px;">#</th>
+              <th style="padding:6px 8px;text-align:right;width:150px;">البند السلوكي</th>
+              <th style="padding:6px 8px;text-align:center;width:60px;">الدرجة</th>
+              <th style="padding:6px 8px;text-align:right;">الوصف السلوكي الإكلينيكي المسجل</th>
             </tr>
           </thead>
           <tbody>
@@ -135,430 +171,479 @@ export default function CARS2ReportModal({
           </tbody>
         </table>
 
-        <div style="margin-bottom:16px;">
-          <h3 style="color:#1e40af;font-size:15px;margin:0 0 6px 0;">📌 الخلاصة التشخيصية والتفسير الإكلينيكي:</h3>
-          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:12px;font-size:13px;line-height:1.6;white-space:pre-wrap;">
-            ${assessment.clinicalSummary || psychometrics.clinicalImpression}
-          </div>
+        <!-- Clinical Impressions & Recommendations -->
+        <div style="margin-bottom:16px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:12px;font-size:12px;line-height:1.6;">
+          <h3 style="margin:0 0 6px 0;color:#1e40af;font-size:14px;">📝 الخلاصة التشخيصية والملاحظة الإكلينيكية:</h3>
+          <div style="white-space:pre-wrap;color:#334155;">${assessment.clinicalSummary || psychometrics.clinicalImpression}</div>
         </div>
 
-        <div style="margin-bottom:24px;">
-          <h3 style="color:#1e40af;font-size:15px;margin:0 0 6px 0;">💡 التوصيات العلاجية والبرنامج التأهيلي المقترح:</h3>
-          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:12px;font-size:13px;line-height:1.6;white-space:pre-wrap;">
-            ${assessment.recommendations || 'يوصى بوضع خطة تربوية وسلوكية فردية ومتابعة التطور بشكل دوري.'}
-          </div>
+        <div style="margin-bottom:20px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:12px;font-size:12px;line-height:1.6;">
+          <h3 style="margin:0 0 6px 0;color:#1e40af;font-size:14px;">🎯 التوصيات العلاجية والتربوية الفردية:</h3>
+          <div style="white-space:pre-wrap;color:#334155;">${assessment.recommendations || 'يوصى بتطبيق الخطة التربوية الفردية المبنية على نتائج التقييم وجلسات التدخل المتخصصة.'}</div>
         </div>
 
-        <div style="margin-top:35px;display:flex;justify-content:space-between;border-top:1.5px dashed #94a3b8;padding-top:18px;font-size:13px;">
+        <!-- Signatures -->
+        <div style="display:flex;justify-content:space-between;margin-top:24px;padding-top:12px;border-top:1px solid #cbd5e1;font-size:12px;">
           <div style="text-align:center;">
-            <div><b>الأخصائي القائم بالتقييم</b></div>
-            <div style="margin-top:8px;color:#64748b;">${assessment.specialistName || '________________'}</div>
-            <div style="margin-top:25px;">التوقيع: _______________</div>
+            <div><b>الأخصائي النفسي الفاحص:</b></div>
+            <div style="margin-top:24px;color:#64748b;">${assessment.examinerName || assessment.specialistName || '................................'}</div>
           </div>
           <div style="text-align:center;">
-            <div><b>المشرف الفني / الأخصائي النفسي</b></div>
-            <div style="margin-top:8px;color:#64748b;">________________</div>
-            <div style="margin-top:25px;">التوقيع: _______________</div>
+            <div><b>المشرف الفني / الإكلينيكي:</b></div>
+            <div style="margin-top:24px;color:#64748b;">................................</div>
           </div>
           <div style="text-align:center;">
-            <div><b>اعتماد مدير المركز والختم الرسمي</b></div>
-            <div style="margin-top:8px;color:#64748b;">${center?.name || 'مركز التأهيل'}</div>
-            <div style="margin-top:25px;">الختم: _______________</div>
+            <div><b>مدير المركز / الختم الرسمي:</b></div>
+            <div style="margin-top:24px;color:#64748b;">................................</div>
           </div>
         </div>
       </div>
     `;
 
-    printItem({ html }, 'cars2_report', center?.logo, center?.name);
+    printItem(`تقرير مقياس CARS-2 - ${assessment.studentName || 'الطالب'}`, html);
   }
 
-  function handleSendWhatsApp() {
-    sendReportToWhatsApp({
-      parentPhone: assessment.parentPhone,
-      parentName: assessment.parentName,
-      studentName: assessment.studentName,
-      reportTitle: 'تقرير مقياس كارز-2 (CARS-2) لتقدير التوحد',
-      reportType: 'تقرير تشخيصي مقنن',
-      date: assessment.date,
-      summary: `الدرجة الخام: ${psychometrics.rawScore}/60 (الدرجة المعيارية T=${psychometrics.tScore}، الرتبة المئينية ${psychometrics.percentile}%)\nالتشخيص المعتمد: ${psychometrics.severityLabel}`,
-      recommendations: assessment.recommendations || assessment.clinicalSummary,
-      specialistName: assessment.specialistName,
-      centerName: center?.name,
-    });
+  function handleWhatsAppShare() {
+    const text = `*تقرير التقييم والتشخيص النفسي الإكلينيكي بمقياس CARS-2*\n\n` +
+      `*اسم المفحوص:* ${assessment.studentName || '—'}\n` +
+      `*العمر الزمني:* ${assessment.age || '—'}\n` +
+      `*تاريخ الفحص:* ${assessment.date || '—'}\n\n` +
+      `*النتائج السيكومترية الأساسية:*\n` +
+      `• الدرجة الخام الكلية: *${psychometrics.rawScore} من 60.0*\n` +
+      `• الدرجة التائية المعيارية: *T = ${psychometrics.tScore}*\n` +
+      `• الرتبة المئينية: *${psychometrics.percentile}%*\n` +
+      `• التصنيف التشخيصي: *${psychometrics.severityLabel}*\n\n` +
+      `*الخلاصة الإكلينيكية:*\n${assessment.clinicalSummary || psychometrics.clinicalImpression}\n\n` +
+      `*المركز:* ${center?.name || 'مركز التربية الخاصة'}`;
+
+    sendReportToWhatsApp(assessment.parentPhone || '', text);
   }
 
   return (
-    <div className="mbg" style={{ zIndex: 1100 }}>
-      <div className="mb mb-xl"
-        
+    <div className="mbg">
+      <div
+        className="mb"
+        style={{
+          maxWidth: 'min(1100px, calc(100vw - 24px))',
+          width: '100%',
+        }}
       >
-        {/* Modal Header */}
+        {/* Modal Main Header */}
         <div
-          className="modal-header-custom fhd"
+          className="fhd modal-header-custom"
           style={{
-            background: 'linear-gradient(135deg, #1e40af, #2563eb)',
-            color: '#fff',
             padding: '14px 20px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 12,
+            background: 'linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%)',
+            color: '#fff',
             flexShrink: 0,
-            flexGrow: 0,
-            width: '100%',
+            gap: 12,
           }}
         >
-          <div>
-            <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>🧩</span> <span>تقرير التشخيص والتقييم النفسي المعتمد — CARS-2</span>
-            </h2>
-            <p style={{ margin: '3px 0 0 0', fontSize: '.82rem', opacity: 0.9 }}>
-              Childhood Autism Rating Scale, 2nd Edition · تقرير شامل مفصل
-            </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: '1.6rem' }}>🧩</span>
+            <div>
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: '#fff' }}>
+                تقرير التقييم والتشخيص الإكلينيكي — مقياس CARS-2
+              </h2>
+              <p style={{ margin: '2px 0 0 0', fontSize: '0.76rem', opacity: 0.9 }}>
+                Childhood Autism Rating Scale, 2nd Edition · التقرير السيكومتري الشامل
+              </p>
+            </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <button
               type="button"
-              className="btn btn-sm btn-p"
+              className="btn btn-xs"
               onClick={handlePrint}
-              style={{ background: '#fff', color: '#1e40af', fontWeight: 800, borderRadius: 8 }}
+              style={{ background: '#fff', color: '#1e40af', fontWeight: 800, border: 'none' }}
             >
               🖨️ طباعة التقرير الرسمي
             </button>
-            {assessment.parentPhone && (
-              <button
-                type="button"
-                className="btn btn-sm btn-s"
-                onClick={handleSendWhatsApp}
-                style={{ borderRadius: 8, fontWeight: 800 }}
-              >
-                💬 واتساب لولي الأمر
-              </button>
-            )}
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={handleWhatsAppShare}
+              style={{ background: '#25d366', color: '#fff', fontWeight: 700, border: 'none' }}
+            >
+              📱 واتساب
+            </button>
             {onEdit && (
               <button
                 type="button"
-                className="btn btn-sm btn-g"
+                className="btn btn-xs"
                 onClick={() => { onClose(); onEdit(assessment); }}
-                style={{ borderRadius: 8, color: '#fff', background: 'rgba(255,255,255,0.2)', border: 'none' }}
+                style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', fontWeight: 700 }}
               >
-                ✏️ تعديل
+                ✏️ تعديل الدرجات
               </button>
             )}
             <button
               type="button"
+              className="btn btn-xs"
+              onClick={() => setBridgeOpen(true)}
+              style={{ background: '#f59e0b', color: '#fff', fontWeight: 800, border: 'none' }}
+            >
+              🎯 اشتقاق الخطة الفردية (IEP)
+            </button>
+            <button
+              type="button"
+              className="btn btn-xs"
               onClick={onClose}
-              style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontWeight: 700 }}
+              style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', fontWeight: 700 }}
             >
               ✖ إغلاق
             </button>
           </div>
         </div>
 
-        {/* Scrollable Report Content */}
-        <div className="modal-body-scroll" style={{ padding: '20px 24px', flex: 1, overflowY: 'auto' }}>
-          {/* Demographic Box */}
+        {/* Modal Scrollable Body */}
+        <div style={{ padding: '18px 24px', overflowY: 'auto', flex: 1, maxHeight: 'calc(88vh - 80px)' }}>
+
+          {/* Official Header Badge */}
+          <div
+            style={{
+              background: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              borderRadius: 10,
+              padding: '10px 16px',
+              marginBottom: 16,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 8,
+              fontSize: '0.8rem',
+              color: '#1e40af',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: '1.2rem' }}>⚖️</span>
+              <div>
+                <strong>الاعتماد العلمي والأمانة المهنية:</strong> مقياس تقدير التوحد في الطفولة (CARS-2) · تأليف: د. إريك شوبلر، د. روبرت رايشلر، د. باربرا روتشن رينر · الناشر الرسمي: Western Psychological Services (WPS).
+              </div>
+            </div>
+            <span className="bdg b-bl" style={{ fontSize: '0.72rem', fontWeight: 800 }}>
+              المعيار الذهبي المعتمد
+            </span>
+          </div>
+
+          {/* Student & Examiner Info Table */}
           <div
             style={{
               background: 'var(--g0)',
               border: '1px solid var(--border-color)',
-              borderRadius: 12,
-              padding: '14px 18px',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: 12,
+              borderRadius: 10,
+              padding: '12px 18px',
               marginBottom: 18,
             }}
           >
-            <div>
-              <span style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>اسم الطالب:</span>
-              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)' }}>{assessment.studentName || '—'}</div>
-            </div>
-            <div>
-              <span style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>العمر الزمني:</span>
-              <div style={{ fontSize: '.95rem', fontWeight: 700, color: 'var(--text-main)' }}>{assessment.age || '—'}</div>
-            </div>
-            <div>
-              <span style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>تاريخ الفحص:</span>
-              <div style={{ fontSize: '.95rem', fontWeight: 700, color: 'var(--text-main)' }}>{assessment.date || '—'}</div>
-            </div>
-            <div>
-              <span style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>الأخصائي الفاحص:</span>
-              <div style={{ fontSize: '.95rem', fontWeight: 700, color: 'var(--text-main)' }}>{assessment.specialistName || '—'}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, fontSize: '0.85rem' }}>
+              <div>
+                <span style={{ color: 'var(--text-sub)', fontSize: '0.76rem', display: 'block' }}>اسم المفحوص:</span>
+                <strong style={{ color: 'var(--text-main)', fontSize: '0.95rem' }}>{assessment.studentName || '—'}</strong>
+              </div>
+              <div>
+                <span style={{ color: 'var(--text-sub)', fontSize: '0.76rem', display: 'block' }}>العمر الزمني:</span>
+                <strong>{assessment.age || '—'}</strong>
+              </div>
+              <div>
+                <span style={{ color: 'var(--text-sub)', fontSize: '0.76rem', display: 'block' }}>تاريخ الفحص والملاحظة:</span>
+                <strong>{assessment.date || '—'}</strong>
+              </div>
+              <div>
+                <span style={{ color: 'var(--text-sub)', fontSize: '0.76rem', display: 'block' }}>الأخصائي الفاحص الملاحظ:</span>
+                <strong>{assessment.examinerName || assessment.specialistName || '—'}</strong>
+              </div>
+              <div>
+                <span style={{ color: 'var(--text-sub)', fontSize: '0.76rem', display: 'block' }}>مصدر المعلومات / الملاحظ:</span>
+                <strong>{assessment.raterName || '—'} {assessment.raterRelation ? `(${assessment.raterRelation})` : ''}</strong>
+              </div>
+              <div>
+                <span style={{ color: 'var(--text-sub)', fontSize: '0.76rem', display: 'block' }}>التشخيص الأولي المسجل:</span>
+                <strong>{assessment.diagnosis || '—'}</strong>
+              </div>
             </div>
           </div>
 
-          {/* 4 Psychometric Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 20 }}>
-            <div style={{ background: 'var(--bg-card)', border: '1.5px solid var(--pr)', borderRadius: 12, padding: '14px', textAlign: 'center' }}>
-              <span style={{ fontSize: '.76rem', color: 'var(--text-sub)', fontWeight: 700 }}>الدرجة الخام الكلية (Raw)</span>
-              <div style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--pr)', margin: '4px 0' }}>
-                {psychometrics.rawScore} <span style={{ fontSize: '.9rem', color: 'var(--text-sub)' }}>/ 60.0</span>
-              </div>
-              <span style={{ fontSize: '.72rem', color: 'var(--text-sub)' }}>المدى: 15.0 إلى 60.0</span>
-            </div>
-
-            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '14px', textAlign: 'center' }}>
-              <span style={{ fontSize: '.76rem', color: 'var(--text-sub)', fontWeight: 700 }}>الدرجة المعيارية (T-Score)</span>
-              <div style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--text-main)', margin: '4px 0' }}>
-                {psychometrics.tScore}
-              </div>
-              <span style={{ fontSize: '.72rem', color: 'var(--text-sub)' }}>المتوسط = 50 (±10)</span>
-            </div>
-
-            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '14px', textAlign: 'center' }}>
-              <span style={{ fontSize: '.76rem', color: 'var(--text-sub)', fontWeight: 700 }}>الرتبة المئينية (% Rank)</span>
-              <div style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--text-main)', margin: '4px 0' }}>
-                {psychometrics.percentile}%
-              </div>
-              <span style={{ fontSize: '.72rem', color: 'var(--text-sub)' }}>مقارنة بالعينة المعيارية</span>
-            </div>
-
-            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '14px', textAlign: 'center' }}>
-              <span style={{ fontSize: '.76rem', color: 'var(--text-sub)', fontWeight: 700 }}>المستوى التشخيصي</span>
-              <div style={{ margin: '8px 0' }}>
-                <span className={`bdg ${psychometrics.severityBadgeClass}`} style={{ fontSize: '.84rem', fontWeight: 900 }}>
-                  {psychometrics.severityLabel}
-                </span>
-              </div>
-              <span style={{ fontSize: '.72rem', color: 'var(--text-sub)' }}>نقطة القطع: 30.0 / 37.0</span>
-            </div>
-          </div>
-
-          {/* Domain Breakdown Cards */}
+          {/* Psychometric Index Dashboard Cards */}
           <div
             style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
+              background: 'linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%)',
+              border: '1.5px solid #bfdbfe',
               borderRadius: 12,
-              padding: 16,
+              padding: '16px 20px',
               marginBottom: 20,
+              boxShadow: '0 2px 8px rgba(37,99,235,0.06)',
             }}
           >
-            <h3 style={{ margin: '0 0 12px 0', fontSize: '.95rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>🌐</span> <span>تحليل المجالات النمائية الأربعة</span>
+            <h3 style={{ margin: '0 0 14px 0', fontSize: '1rem', fontWeight: 800, color: '#1e40af', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>📊</span> نتائج المؤشرات السيكومترية ومستوى شدة الأعراض (CARS-2 Psychometrics)
             </h3>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 12 }}>
-              {psychometrics.domainScores.map(d => (
-                <div
-                  key={d.id}
-                  style={{
-                    background: 'var(--g0)',
-                    padding: '12px 14px',
-                    borderRadius: 10,
-                    border: '1px solid var(--border-color)',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.82rem', fontWeight: 800, marginBottom: 6 }}>
-                    <span style={{ color: d.color }}>{d.name}</span>
-                    <span>{d.score} / {d.maxScore}</span>
-                  </div>
-                  <div style={{ width: '100%', height: 8, background: 'var(--border-color)', borderRadius: 4, overflow: 'hidden' }}>
-                    <div style={{ width: `${d.percentage}%`, height: '100%', background: d.color }} />
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.72rem', color: 'var(--text-sub)', marginTop: 6 }}>
-                    <span>متوسط البند: <strong>{d.avg}</strong></span>
-                    <span>تأثر: <strong>{d.percentage}%</strong></span>
-                  </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
+              <div style={{ background: '#fff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '10px 14px', textAlign: 'center' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)', display: 'block' }}>الدرجة الخام الكلية:</span>
+                <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#1e40af', lineHeight: 1.2, margin: '4px 0' }}>
+                  {psychometrics.rawScore} <span style={{ fontSize: '0.85rem', color: 'var(--text-sub)', fontWeight: 600 }}>/ 60.0</span>
                 </div>
-              ))}
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-sub)' }}>المدى النظري (15 - 60)</span>
+              </div>
+
+              <div style={{ background: '#fff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '10px 14px', textAlign: 'center' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)', display: 'block' }}>الدرجة التائية المعيارية:</span>
+                <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.2, margin: '4px 0' }}>
+                  T = {psychometrics.tScore}
+                </div>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-sub)' }}>المتوسط 50 ± 10</span>
+              </div>
+
+              <div style={{ background: '#fff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '10px 14px', textAlign: 'center' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)', display: 'block' }}>الرتبة المئينية (% Rank):</span>
+                <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.2, margin: '4px 0' }}>
+                  {psychometrics.percentile}%
+                </div>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-sub)' }}>مقارنة بعينة التقنين</span>
+              </div>
+
+              <div style={{ background: '#fff', border: `2px solid ${psychometrics.severityColor}`, borderRadius: 8, padding: '10px 14px', textAlign: 'center' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)', display: 'block' }}>التصنيف التشخيصي المعتمد:</span>
+                <div style={{ fontSize: '0.95rem', fontWeight: 900, color: psychometrics.severityColor, marginTop: 6, lineHeight: 1.3 }}>
+                  {psychometrics.severityLabel}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Detailed 15 Items Table */}
-          <div
-            style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 12,
-              padding: 16,
-              marginBottom: 20,
-              overflowX: 'auto',
-            }}
-          >
-            <h3 style={{ margin: '0 0 12px 0', fontSize: '.95rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>📋</span> <span>سجل الدرجات التفصيلي لبنود مقياس CARS-2 (15 بنداً)</span>
+          {/* 4 Developmental Domains Breakdown Table */}
+          <div style={{ marginBottom: 20 }}>
+            <h3 style={{ fontSize: '0.98rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>🌐</span> مظهر الأداء السلوكي عبر المجالات الأربعة:
             </h3>
 
-            <table className="tbl" style={{ width: '100%', fontSize: '.82rem' }}>
-              <thead>
-                <tr>
-                  <th style={{ width: 36, textAlign: 'center' }}>#</th>
-                  <th style={{ minWidth: 160 }}>البند التشخيصي</th>
-                  <th style={{ width: 64, textAlign: 'center' }}>الدرجة</th>
-                  <th style={{ minWidth: 260 }}>السلوك والملاحظة المرصودة</th>
-                </tr>
-              </thead>
-              <tbody>
-                {CARS2_ITEMS.map(it => {
-                  const score = assessment.results?.[it.id] !== undefined ? Number(assessment.results[it.id]) : null;
-                  const anchor = it.anchors.find(a => a.score === score);
-                  const note = assessment.itemNotes?.[it.id] || '';
-
-                  return (
-                    <tr key={it.id}>
-                      <td style={{ textAlign: 'center', fontWeight: 800 }}>{it.id}</td>
-                      <td>
-                        <div style={{ fontWeight: 800, color: 'var(--text-main)' }}>{it.title}</div>
-                        <div style={{ fontSize: '.74rem', color: 'var(--text-sub)' }}>{it.domainName}</div>
+            <div style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: 10 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
+                <thead>
+                  <tr style={{ background: 'var(--g0)', borderBottom: '1px solid var(--border-color)' }}>
+                    <th style={{ padding: '10px 14px', textAlign: 'right' }}>المجال السلوكي النمائي</th>
+                    <th style={{ padding: '10px 14px', textAlign: 'center' }}>الدرجة المحققة</th>
+                    <th style={{ padding: '10px 14px', textAlign: 'center' }}>متوسط البند (1-4)</th>
+                    <th style={{ padding: '10px 14px', textAlign: 'center' }}>مؤشر التأثر</th>
+                    <th style={{ padding: '10px 14px', textAlign: 'center' }}>التقييم النوعي</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {psychometrics.domainScores.map((d, i) => (
+                    <tr key={d.id} style={{ borderBottom: i < psychometrics.domainScores.length - 1 ? '1px solid var(--border-color)' : 'none' }}>
+                      <td style={{ padding: '10px 14px', fontWeight: 700, color: d.color }}>
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: d.color, display: 'inline-block', marginLeft: 8 }} />
+                        {d.name}
                       </td>
-                      <td style={{ textAlign: 'center' }}>
+                      <td style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 600 }}>
+                        {d.score} <span style={{ color: 'var(--text-sub)', fontSize: '0.75rem' }}>/ {d.maxScore}</span>
+                      </td>
+                      <td style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 800, color: '#1e40af' }}>
+                        {d.avg} / 4.0
+                      </td>
+                      <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+                          <div style={{ width: 80, height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
+                            <div style={{ width: `${d.percentage}%`, height: '100%', background: d.color }} />
+                          </div>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>{d.percentage}%</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '10px 14px', textAlign: 'center' }}>
                         <span
-                          className="bdg"
-                          style={{
-                            fontWeight: 900,
-                            fontSize: '.85rem',
-                            background: score >= 3 ? '#fee2e2' : score >= 2 ? '#fef3c7' : '#dcfce7',
-                            color: score >= 3 ? '#b91c1c' : score >= 2 ? '#b45309' : '#15803d',
-                          }}
+                          className={`bdg ${
+                            d.avg >= 3.0 ? 'b-re' : d.avg >= 2.0 ? 'b-or' : d.avg >= 1.5 ? 'b-bl' : 'b-gr'
+                          }`}
+                          style={{ fontSize: '0.72rem', fontWeight: 700 }}
                         >
-                          {score !== null ? score.toFixed(1) : '—'}
+                          {d.avg >= 3.0 ? 'تأثر شديد' : d.avg >= 2.0 ? 'تأثر متوسط' : d.avg >= 1.5 ? 'تأثر بسيط' : 'طبيعي'}
                         </span>
                       </td>
-                      <td>
-                        {anchor ? (
-                          <div>
-                            <strong style={{ color: 'var(--text-main)' }}>{anchor.label}: </strong>
-                            <span>{anchor.description}</span>
-                          </div>
-                        ) : (
-                          <span style={{ color: 'var(--text-sub)' }}>لم يتم رصد الدرجة</span>
-                        )}
-                        {note && (
-                          <div style={{ marginTop: 4, fontSize: '.75rem', color: 'var(--pr)', fontStyle: 'italic' }}>
-                            📝 ملاحظة الفاحص: {note}
-                          </div>
-                        )}
-                      </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          {/* Clinical Interpretation Box */}
+          {/* Diagnostic Cutoffs Matrix */}
           <div
             style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 12,
-              padding: 16,
-              marginBottom: 16,
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: 10,
+              padding: '12px 16px',
+              marginBottom: 20,
+              fontSize: '0.8rem',
             }}
           >
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '.95rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>📌</span> <span>الخلاصة الإكلينيكية والتشخيص النفسي</span>
-            </h3>
-            <p style={{ margin: 0, fontSize: '.86rem', lineHeight: 1.6, color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>
-              {assessment.clinicalSummary || psychometrics.clinicalImpression}
-            </p>
+            <strong style={{ display: 'block', color: 'var(--text-main)', marginBottom: 6 }}>
+              📌 الدلالة الإكلينيكية ومعايير القطع التشخيصية لمقياس CARS-2:
+            </strong>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 8 }}>
+              <div style={{ background: '#dcfce7', padding: '6px 10px', borderRadius: 6, color: '#15803d', border: '1px solid #86efac' }}>
+                <strong>الدرجة 15 - 29.5:</strong> الحد الطبيعي (لا تقع ضمن طيف التوحد)
+              </div>
+              <div style={{ background: '#fef3c7', padding: '6px 10px', borderRadius: 6, color: '#b45309', border: '1px solid #fde68a' }}>
+                <strong>الدرجة 30.0 - 36.5:</strong> أعراض طيف توحد بسيطة إلى متوسطة
+              </div>
+              <div style={{ background: '#fee2e2', padding: '6px 10px', borderRadius: 6, color: '#b91c1c', border: '1px solid #fca5a5' }}>
+                <strong>الدرجة 37.0 - 60.0:</strong> أعراض طيف توحد شديدة / حادة
+              </div>
+            </div>
           </div>
 
-          {/* Recommendations Box */}
-          <div
-            style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 12,
-              padding: 16,
-            }}
-          >
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '.95rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>💡</span> <span>التوصيات والبرنامج التأهيلي المقترح</span>
+          {/* Detailed 15 Items Ratings Table */}
+          <div style={{ marginBottom: 20 }}>
+            <h3 style={{ fontSize: '0.98rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>📋</span> الاستجابات الملاحظية التفصيلية للبنود الـ 15:
             </h3>
-            <p style={{ margin: 0, fontSize: '.86rem', lineHeight: 1.6, color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>
-              {assessment.recommendations || 'يوصى بوضع خطة تربوية وسلوكية فردية ومتابعة التطور بشكل دوري.'}
-            </p>
+
+            <div style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: 10 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                <thead>
+                  <tr style={{ background: 'var(--g0)', borderBottom: '1px solid var(--border-color)' }}>
+                    <th style={{ padding: '8px 10px', textAlign: 'center', width: 40 }}>#</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'right', width: 220 }}>البند السلوكي</th>
+                    <th style={{ padding: '8px 10px', textAlign: 'center', width: 70 }}>الدرجة</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'right' }}>التوصيف الإكلينيكي والملاحظات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {CARS2_ITEMS.map((item, idx) => {
+                    const score = assessment.results?.[item.id] !== undefined ? Number(assessment.results[item.id]) : null;
+                    const anchor = item.anchors.find(a => a.score === score);
+                    const note = assessment.itemNotes?.[item.id] || '';
+
+                    return (
+                      <tr
+                        key={item.id}
+                        style={{
+                          borderBottom: idx < CARS2_ITEMS.length - 1 ? '1px solid var(--border-color)' : 'none',
+                          background: score && score >= 3.0 ? 'rgba(239, 68, 68, 0.04)' : score && score >= 2.0 ? 'rgba(245, 158, 11, 0.03)' : undefined,
+                        }}
+                      >
+                        <td style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 800, color: '#1e40af' }}>
+                          {item.id}
+                        </td>
+                        <td style={{ padding: '8px 12px', fontWeight: 700 }}>
+                          {item.title}
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)', fontWeight: 400 }}>{item.subtitle}</div>
+                        </td>
+                        <td style={{ padding: '8px 10px', textAlign: 'center' }}>
+                          <span
+                            className={`bdg ${
+                              score >= 3.0 ? 'b-re' : score >= 2.0 ? 'b-or' : 'b-gr'
+                            }`}
+                            style={{ fontWeight: 800, fontSize: '0.78rem' }}
+                          >
+                            {score !== null ? score.toFixed(1) : '—'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '8px 12px' }}>
+                          {anchor ? (
+                            <div>
+                              <strong style={{ color: 'var(--text-main)', fontSize: '0.8rem' }}>{anchor.label}: </strong>
+                              <span style={{ color: 'var(--text-sub)', fontSize: '0.78rem' }}>{anchor.description}</span>
+                            </div>
+                          ) : (
+                            <span style={{ color: 'var(--text-sub)' }}>—</span>
+                          )}
+                          {note && (
+                            <div style={{ marginTop: 4, background: 'var(--g0)', padding: '4px 8px', borderRadius: 4, fontSize: '0.74rem', color: '#334155' }}>
+                              ✍️ <strong>شواهد وملاحظات الفاحص:</strong> {note}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Clinical Summary & Recommendations */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 14, marginBottom: 20 }}>
+            <div style={{ background: '#fff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '14px 18px' }}>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '0.92rem', fontWeight: 800, color: '#1e40af' }}>
+                📝 الخلاصة التشخيصية والملاحظة الإكلينيكية:
+              </h4>
+              <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-sub)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                {assessment.clinicalSummary || psychometrics.clinicalImpression}
+              </p>
+            </div>
+
+            <div style={{ background: '#fff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '14px 18px' }}>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '0.92rem', fontWeight: 800, color: '#1e40af' }}>
+                🎯 التوصيات العلاجية والتربوية الفردية:
+              </h4>
+              <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-sub)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                {assessment.recommendations || 'يوصى بتطبيق التدخلات السلوكية المتخصصة واشتقاق الخطة التربوية الفردية.'}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Modal Footer */}
+        {/* Modal Sticky Footer */}
         <div
-          className="fa"
+          className="modal-footer-custom"
           style={{
-            padding: '14px 22px',
-            borderTop: '1px solid var(--border-color)',
+            padding: '12px 20px',
             background: 'var(--g0)',
+            borderTop: '1px solid var(--border-color)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
-            gap: 10,
+            gap: 8,
+            flexShrink: 0,
           }}
         >
-          <div style={{ fontSize: '.82rem', color: 'var(--text-sub)' }}>
-            تم التقييم بواسطة: <strong>{assessment.specialistName || 'الأخصائي المعتمد'}</strong> · تاريخ {assessment.date}
-          </div>
-
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button
               type="button"
-              className="btn btn-p"
-              onClick={() => setBridgeOpen(true)}
-              style={{
-                fontWeight: 800,
-                borderRadius: 8,
-                background: 'linear-gradient(135deg, #4338ca, #2563eb)',
-                color: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <span>🎓</span>
-              <span>اشتقاق أهداف الخطة (IEP Bridge)</span>
-              {recommendedGoals.length > 0 && (
-                <span style={{ background: '#fff', color: '#1e40af', padding: '1px 6px', borderRadius: 10, fontSize: '.74rem', fontWeight: 900 }}>
-                  {recommendedGoals.length}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              className="btn btn-s"
+              className="btn btn-pr"
               onClick={handlePrint}
-              style={{ fontWeight: 800, borderRadius: 8 }}
+              style={{ background: '#1e40af', fontWeight: 800 }}
             >
               🖨️ طباعة التقرير
             </button>
             <button
               type="button"
-              className="btn btn-g"
-              onClick={onClose}
-              style={{ fontWeight: 700, borderRadius: 8 }}
+              className="btn"
+              onClick={() => setBridgeOpen(true)}
+              style={{ background: '#f59e0b', color: '#fff', fontWeight: 800 }}
             >
-              إغلاق
+              🎯 اشتقاق الخطة الفردية (IEP)
             </button>
           </div>
+
+          <button
+            type="button"
+            className="btn btn-g"
+            onClick={onClose}
+          >
+            إغلاق
+          </button>
         </div>
       </div>
 
-      {/* IEP BRIDGE MODAL */}
+      {/* IEP Bridge Modal Integration */}
       {bridgeOpen && (
         <IepBridgeModal
           isOpen={bridgeOpen}
           onClose={() => setBridgeOpen(false)}
-          student={{
-            studentId: assessment.studentId,
-            studentName: assessment.studentName,
-            nationalId: assessment.nationalId,
-            diagnosis: assessment.diagnosis,
-            className: assessment.className,
-            parentName: assessment.parentName,
-            parentPhone: assessment.parentPhone,
-          }}
-          assessmentData={{
-            measureId: 'cars',
-            measureName: 'مقياس تقدير التوحد في الطفولة CARS-2',
-            date: assessment.date,
-            score: assessment.score || psychometrics?.rawScore,
-            results: assessment.results || assessment.scores || {},
-          }}
+          assessment={assessment}
           scaleItems={CARS2_ITEMS}
+          scaleType="cars"
         />
       )}
     </div>

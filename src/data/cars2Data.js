@@ -5,6 +5,20 @@
  * وجداول الدرجات المعيارية (T-Scores) والرتب المئينية (Percentiles)
  */
 
+export const CARS2_COPYRIGHT_INFO = {
+  scaleFullNameAr: 'مقياس تقدير التوحد في الطفولة — الإصدار الثاني (النسخة القياسية CARS2-ST)',
+  scaleFullNameEn: 'Childhood Autism Rating Scale, Second Edition (CARS2-ST)',
+  acronym: 'CARS-2',
+  authorsAr: 'د. إريك شوبلر، د. روبرت رايشلر، د. باربرا روتشن رينر',
+  authorsEn: 'Eric Schopler, Ph.D., Robert J. Reichler, M.D., Barbara Rochen Renner, Ph.D.',
+  publisherAr: 'المؤسسة الغربية للخدمات النفسية (Western Psychological Services - WPS)',
+  publisherEn: 'Western Psychological Services (WPS)',
+  targetAge: 'من عمر سنتين وما فوق (الأطفال والمراهقون والراشدون)',
+  diagnosticCategory: 'اضطرابات طيف التوحد (Autism Spectrum Disorders - ASD)',
+  standardizationSummary: 'المعيار الذهبي الملاحظي المعياري لتشخيص اضطراب طيف التوحد وتحديد شدة الأعراض بناءً على معايير الدليل التشخيصي والإحصائي الخامس (DSM-5) والتصنيف الدولي (ICD-11).',
+  purpose: 'التقييم الإكلينيكي الملاحظي الشامل، التمييز بين طيف التوحد والإعاقات النمائية الأخرى، تحديد شدة الأعراض، وبناء وتوجيه أهداف الخطة التربوية الفردية (IEP).',
+};
+
 export const CARS2_DOMAINS = [
   { id: 'social_emotional', name: 'المجال الاجتماعي والانفعالي', items: [1, 2, 3, 10], color: '#3b82f6' },
   { id: 'sensory_motor', name: 'المجال الحسي والحركي', items: [4, 5, 7, 8, 9], color: '#10b981' },
