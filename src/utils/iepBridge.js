@@ -1268,7 +1268,7 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
         }
       }
     });
-  } else if (lookupKey === 'gars_3') {
+  } else if (lookupKey === 'gars_3' || lookupKey === 'gars3') {
     // GARS-3 Specific Item-to-Goal Engine
     items.forEach((it) => {
       const rawScore = responses[it.id] !== undefined ? Number(responses[it.id]) : null;
@@ -1308,6 +1308,66 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
           priority,
           baseline,
           durationWeeks: priorityRank === 1 ? 10 : 8,
+        }));
+      }
+    });
+  } else if (lookupKey === 'pep3' || lookupKey === 'pep_3') {
+    // PEP-3 Specific Item-to-Goal Engine (Emerging = 1, Fail = 0)
+    items.forEach((it) => {
+      const rawScore = responses[it.id] !== undefined && responses[it.id] !== null && responses[it.id] !== '' ? Number(responses[it.id]) : null;
+      if (rawScore !== null && rawScore < 2) {
+        // Emerging (1) is top priority target for IEP; Fail (0) is foundational
+        const isEmerging = rawScore === 1;
+        const priorityRank = isEmerging ? 1 : 2;
+        const priority = isEmerging ? 'critical' : 'high';
+
+        const domainName = it.domainId === 'cvp' ? 'الإدراك المعرفي اللفظي وغير اللفظي'
+          : it.domainId === 'el' ? 'التعبير اللغوي والتواصل'
+          : it.domainId === 'rl' ? 'اللغة الاستقبالية وفهم التوجيهات'
+          : it.domainId === 'fm' ? 'المهارات الحركية الدقيقة'
+          : it.domainId === 'gm' ? 'المهارات الحركية الكبيرة'
+          : it.domainId === 'vmi' ? 'التقليد البصري الحركي'
+          : it.domainId === 'ae' ? 'التعبير الانفعالي والتكيفي'
+          : 'التبادل والتفاعل الاجتماعي';
+
+        const baseline = generatePlepBaseline(
+          it.text,
+          rawScore,
+          2,
+          isEmerging
+            ? `مهارة في طور البزوغ (Emerging) في مجال (${domainName}): [${it.text}] بمحاولة جزئية`
+            : `إخفاق (Fail) في مهارة (${domainName}): [${it.text}] بحاجة لتدريب تأسيسي مدعوم`,
+          'استراتيجيات برنامج تيتش (TEACCH) والدعم البصري وتحليل المهام'
+        );
+
+        let goalText = `أن يؤدي التلميذ مهارة (${it.text}) باستقلالية تامة بنسبة إتقان 80% عبر 3 جلسات متتالية.`;
+        if (it.domainId === 'el') {
+          goalText = `أن يستخدم التلميذ مهارة التواصل (${it.text}) وظيفياً في البيئة الصفية واليومية بنسبة نجاح 80%.`;
+        } else if (it.domainId === 'rl') {
+          goalText = `أن يستجيب التلميذ للتوجيهات بإظهار مهارة (${it.text}) بنسبة دقة 80% في 4 من أصل 5 محاولات.`;
+        } else if (it.domainId === 'ae' || it.domainId === 'sr') {
+          goalText = `أن يظهر التلميذ السلوك التكيفي والاجتماعي في (${it.text}) أثناء التفاعل مع الأخصائي والأقران بنسبة نجاح 80%.`;
+        }
+
+        const domainKey = it.domainId === 'cvp' ? 'cognitive'
+          : it.domainId === 'el' || it.domainId === 'rl' ? 'language'
+          : it.domainId === 'fm' ? 'fine_motor'
+          : it.domainId === 'gm' ? 'gross_motor'
+          : it.domainId === 'vmi' ? 'sensory_integration'
+          : it.domainId === 'ae' ? 'behavior'
+          : 'social_skills';
+
+        recommended.push(buildGoalItem({
+          code: `PEP3-${it.id}`,
+          domain: domainKey,
+          title: `${domainName}: ${it.id}`,
+          text: goalText,
+          mastery: 'تحقيق المعيار باستقلالية عبر 4 أسابيع متتالية',
+          reason: `مشتق من ملف التقييم النفسي التربوي (PEP-3) - بند [${it.id}] بدرجة (${isEmerging ? 'بزوغ Emerging' : 'إخفاق Fail'})`,
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: isEmerging ? 8 : 12,
         }));
       }
     });
