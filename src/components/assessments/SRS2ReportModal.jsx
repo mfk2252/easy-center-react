@@ -93,8 +93,10 @@ export default function SRS2ReportModal({
       </tr>
     `;
 
+    const answers = assessment.results || assessment.scores || {};
+
     const itemsHtml = SRS2_ITEMS.map((it, idx) => {
-      const rawVal = assessment.results?.[it.id] !== undefined ? Number(assessment.results[it.id]) : null;
+      const rawVal = answers[it.id] !== undefined && answers[it.id] !== null ? Number(answers[it.id]) : null;
       let calculatedScore = rawVal;
       if (rawVal !== null && it.isReverse) {
         calculatedScore = 5 - rawVal;
@@ -784,7 +786,8 @@ export default function SRS2ReportModal({
                 </thead>
                 <tbody>
                   {filteredItems.map(it => {
-                    const rawVal = assessment.results?.[it.id] !== undefined ? Number(assessment.results[it.id]) : null;
+                    const answers = assessment.results || assessment.scores || {};
+                    const rawVal = answers[it.id] !== undefined && answers[it.id] !== null ? Number(answers[it.id]) : null;
                     let calculatedScore = rawVal;
                     if (rawVal !== null && it.isReverse) {
                       calculatedScore = 5 - rawVal;

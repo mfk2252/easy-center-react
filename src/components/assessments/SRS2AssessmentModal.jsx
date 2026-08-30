@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { uid, todayStr, calcAge } from '../../utils/dateHelpers';
 import { lsAdd, lsUpd } from '../../hooks/useStorage';
@@ -62,6 +62,26 @@ export default function SRS2AssessmentModal({
   const [activeDomainFilter, setActiveDomainFilter] = useState('all');
   const [showCopyrightDetails, setShowCopyrightDetails] = useState(false);
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
+  const [isManualEdit, setIsManualEdit] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setForm({
+          ...EMPTY_SRS2_FORM,
+          ...initialData,
+          scores: initialData.results || initialData.scores || {},
+          itemNotes: initialData.itemNotes || {},
+        });
+      } else {
+        setForm({
+          ...EMPTY_SRS2_FORM,
+          examinerName: currentUser?.name || '',
+          date: todayStr(),
+        });
+      }
+    }
+  }, [isOpen, initialData, currentUser]);
 
   function handleSelectStudent(e) {
     const val = e.target.value;
@@ -577,175 +597,206 @@ export default function SRS2AssessmentModal({
 
         {/* Scrollable Body */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Student Info & Assessment Metadata */}
+          {/* Student Info & Assessment Metadata - Compact Refactored Header */}
           <div
             style={{
               background: 'var(--g0)',
-              border: '1px solid var(--border-color)',
+              padding: '10px 14px',
               borderRadius: 10,
-              padding: '12px 16px',
+              marginBottom: 14,
+              border: '1px solid var(--border-color)',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: '1.1rem' }}>👤</span>
-                <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--text-main)' }}>
-                  بيانات المفحوص وسياق التقييم الإكلينيكي:
-                </span>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: isHeaderCollapsed ? 0 : 8,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '0.84rem',
+                  fontWeight: 800,
+                  color: '#0d9488',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span>👦</span>
+                <span>بيانات المفحوص والفحص الإكلينيكي</span>
                 {form.studentName && (
-                  <span className="bdg b-bl" style={{ fontSize: '0.75rem', fontWeight: 700 }}>
-                    {form.studentName} {form.age ? `(${form.age})` : ''}
+                  <span
+                    style={{
+                      fontSize: '0.76rem',
+                      background: '#ccfbf1',
+                      color: '#0f766e',
+                      padding: '2px 8px',
+                      borderRadius: 6,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {form.studentName}
                   </span>
                 )}
               </div>
-              <button
-                type="button"
-                className="btn btn-xs btn-ghost"
-                onClick={() => setIsHeaderCollapsed(c => !c)}
-                style={{ fontSize: '0.75rem' }}
-              >
-                {isHeaderCollapsed ? '🔽 عرض تفاصيل الطالب' : '🔼 إخفاء تفاصيل الطالب'}
-              </button>
+
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsManualEdit(prev => !prev)}
+                  className="btn btn-xs btn-g"
+                  style={{ fontSize: '0.72rem', padding: '3px 8px', height: 24 }}
+                  title="تفعيل التعديل اليدوي على البيانات المجلوبة تلقائياً"
+                >
+                  {isManualEdit ? '🔒 قفل التعديل' : '✏️ تعديل يدوي'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsHeaderCollapsed(prev => !prev)}
+                  className="btn btn-xs btn-g"
+                  style={{ fontSize: '0.72rem', padding: '3px 8px', height: 24, fontWeight: 700 }}
+                >
+                  {isHeaderCollapsed ? '⬇️ إظهار التفاصيل' : '⬆️ إخفاء التفاصيل'}
+                </button>
+              </div>
             </div>
 
             {!isHeaderCollapsed && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 12 }}>
-                {/* Student Selection */}
-                <div>
-                  <label style={{ fontSize: '0.76rem', fontWeight: 700, display: 'block', marginBottom: 4 }}>
-                    اختيار الطالب / المستفيد: <span style={{ color: 'red' }}>*</span>
-                  </label>
-                  <select
-                    className="inp"
-                    style={{ width: '100%', fontSize: '0.82rem', padding: '6px 10px' }}
-                    value={form.mode === 'other' ? '__other__' : form.stuId}
-                    onChange={handleSelectStudent}
-                  >
-                    <option value="">-- اختر طالباً مسجلاً --</option>
-                    {students.map(s => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} {s.diagnosis ? `(${s.diagnosis})` : ''} {s.dob ? `· ${calcAge(s.dob)}` : ''}
-                      </option>
-                    ))}
-                    <option value="__other__">➕ إدخال اسم طالب غير مسجل...</option>
-                  </select>
-                </div>
-
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                {/* Mode toggle if other */}
                 {form.mode === 'other' && (
-                  <div>
-                    <label style={{ fontSize: '0.76rem', fontWeight: 700, display: 'block', marginBottom: 4 }}>
-                      اسم الطالب (يدوي):
-                    </label>
-                    <input
-                      type="text"
-                      className="inp"
-                      style={{ width: '100%', fontSize: '0.82rem', padding: '6px 10px' }}
-                      value={form.studentName}
-                      onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
-                      placeholder="أدخل اسم الطالب..."
-                    />
+                  <div style={{ marginBottom: 4 }}>
+                    <div className="fl full">
+                      <label style={{ fontSize: '0.76rem', marginBottom: 2 }}>اسم المستفيد الخارجي <span className="req">*</span></label>
+                      <input
+                        style={{ height: 32, fontSize: '0.82rem' }}
+                        value={form.studentName || ''}
+                        onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
+                        placeholder="اكتب اسم الطالب / المستفيد..."
+                      />
+                    </div>
                   </div>
                 )}
 
-                <div>
-                  <label style={{ fontSize: '0.76rem', fontWeight: 700, display: 'block', marginBottom: 4 }}>
-                    تاريخ الميلاد / العمر:
-                  </label>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                {/* ROW 1: Clinical Essentials (4 Columns) */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 8,
+                  }}
+                >
+                  {/* 1. Student Selection */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الطالب المسجل <span className="req">*</span></label>
+                    <select
+                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
+                      value={form.mode === 'other' ? '__other__' : (form.stuId || '')}
+                      onChange={handleSelectStudent}
+                    >
+                      <option value="">— اختر من الطلاب المسجلين بالمركز —</option>
+                      {students.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                      <option value="__other__">➕ مستفيد خارجي (غير مسجل)</option>
+                    </select>
+                  </div>
+
+                  {/* 2. Chronological Age */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>العمر الزمني</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.age || (form.dob ? calcAge(form.dob) : '')}
+                      readOnly={!isManualEdit}
+                      onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
+                      placeholder="تلقائي حسب تاريخ الميلاد"
+                    />
+                  </div>
+
+                  {/* 3. Medical / Educational Diagnosis */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>التشخيص الطبي / التربوي</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.diagnosis || ''}
+                      readOnly={!isManualEdit && form.mode !== 'other'}
+                      onChange={e => setForm(f => ({ ...f, diagnosis: e.target.value }))}
+                      placeholder="مثال: اشتباه طيف توحد، اضطراب تواصل..."
+                    />
+                  </div>
+
+                  {/* 4. Assessment Date */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>تاريخ التقييم</label>
                     <input
                       type="date"
-                      className="inp"
-                      style={{ width: '60%', fontSize: '0.82rem', padding: '6px 10px' }}
-                      value={form.dob}
-                      onChange={e => {
-                        const dob = e.target.value;
-                        const age = dob ? calcAge(dob) : form.age;
-                        setForm(f => ({ ...f, dob, age }));
-                      }}
-                    />
-                    <input
-                      type="text"
-                      className="inp"
-                      style={{ width: '40%', fontSize: '0.82rem', padding: '6px 10px' }}
-                      value={form.age}
-                      onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
-                      placeholder="العمر"
+                      dir="ltr"
+                      style={{ height: 32, fontSize: '0.82rem', textAlign: 'right', padding: '2px 8px' }}
+                      value={form.date || todayStr()}
+                      onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label style={{ fontSize: '0.76rem', fontWeight: 700, display: 'block', marginBottom: 4 }}>
-                    التشخيص الطبي / النمائي:
-                  </label>
-                  <input
-                    type="text"
-                    className="inp"
-                    style={{ width: '100%', fontSize: '0.82rem', padding: '6px 10px' }}
-                    value={form.diagnosis}
-                    onChange={e => setForm(f => ({ ...f, diagnosis: e.target.value }))}
-                    placeholder="مثال: اشتباه طيف توحد، اضطراب تواصل..."
-                  />
-                </div>
+                {/* ROW 2: Respondent and Examiner Details (4 Columns) */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 8,
+                  }}
+                >
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>اسم الأخصائي الفاحص</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      value={form.examinerName || ''}
+                      onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
+                      placeholder="اسم الأخصائي المشرف..."
+                    />
+                  </div>
 
-                <div>
-                  <label style={{ fontSize: '0.76rem', fontWeight: 700, display: 'block', marginBottom: 4 }}>
-                    اسم المقيم / المستجيب (Rater):
-                  </label>
-                  <input
-                    type="text"
-                    className="inp"
-                    style={{ width: '100%', fontSize: '0.82rem', padding: '6px 10px' }}
-                    value={form.raterName}
-                    onChange={e => setForm(f => ({ ...f, raterName: e.target.value }))}
-                    placeholder="اسم ولي الأمر / المعلم..."
-                  />
-                </div>
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>اسم الفاحص / ولي الأمر</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      value={form.raterName || ''}
+                      onChange={e => setForm(f => ({ ...f, raterName: e.target.value }))}
+                      placeholder="اسم مقدم البيانات..."
+                    />
+                  </div>
 
-                <div>
-                  <label style={{ fontSize: '0.76rem', fontWeight: 700, display: 'block', marginBottom: 4 }}>
-                    صلة القرابة / المستجيب:
-                  </label>
-                  <select
-                    className="inp"
-                    style={{ width: '100%', fontSize: '0.82rem', padding: '6px 10px' }}
-                    value={form.raterRelation}
-                    onChange={e => setForm(f => ({ ...f, raterRelation: e.target.value }))}
-                  >
-                    <option value="الأم">الأم</option>
-                    <option value="الأب">الأب</option>
-                    <option value="معلم الصف">معلم الصف</option>
-                    <option value="معلم التربية الخاصة">معلم التربية الخاصة</option>
-                    <option value="أخصائي رعاية">أخصائي رعاية</option>
-                    <option value="أخرى">أخرى</option>
-                  </select>
-                </div>
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>صلة القرابة / الصفة</label>
+                    <select
+                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
+                      value={form.raterRelation || 'الأم'}
+                      onChange={e => setForm(f => ({ ...f, raterRelation: e.target.value }))}
+                    >
+                      <option value="الأم">الأم</option>
+                      <option value="الأب">الأب</option>
+                      <option value="معلم الصف">معلم الصف</option>
+                      <option value="معلم التربية الخاصة">معلم التربية الخاصة</option>
+                      <option value="أخصائي رعاية">أخصائي رعاية</option>
+                      <option value="أخرى">أخرى</option>
+                    </select>
+                  </div>
 
-                <div>
-                  <label style={{ fontSize: '0.76rem', fontWeight: 700, display: 'block', marginBottom: 4 }}>
-                    الأخصائي الفاحص (Examiner):
-                  </label>
-                  <input
-                    type="text"
-                    className="inp"
-                    style={{ width: '100%', fontSize: '0.82rem', padding: '6px 10px' }}
-                    value={form.examinerName}
-                    onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
-                    placeholder="اسم الأخصائي المشرف..."
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '0.76rem', fontWeight: 700, display: 'block', marginBottom: 4 }}>
-                    تاريخ تطبيق المقياس: <span style={{ color: 'red' }}>*</span>
-                  </label>
-                  <input
-                    type="date"
-                    className="inp"
-                    style={{ width: '100%', fontSize: '0.82rem', padding: '6px 10px' }}
-                    value={form.date}
-                    onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                  />
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>مدة معرفة الطفل</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      value={form.relationshipDuration || ''}
+                      onChange={e => setForm(f => ({ ...f, relationshipDuration: e.target.value }))}
+                      placeholder="مثال: سنتان فأكثر، منذ الولادة..."
+                    />
+                  </div>
                 </div>
               </div>
             )}
