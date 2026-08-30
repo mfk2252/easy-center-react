@@ -199,61 +199,60 @@ export default function CARS2AssessmentModal({
       }
     }
 
-    const payload = {
-      ...form,
-      measureId: 'cars',
-      scaleId: 'cars',
-      measureName: 'مقياس تقدير التوحد في الطفولة — الإصدار الثاني (CARS-2)',
+    const assessmentRecord = {
+      id: form.id || uid(),
+      type: 'cars',
+      scaleKey: 'cars2',
       scaleName: 'مقياس تقدير التوحد في الطفولة (CARS-2)',
-      category: 'autism_spectrum',
-      categoryName: 'مقاييس اضطرابات طيف التوحد',
-      scaleType: 'cars2',
-      score: psychometrics.rawScore,
-      rawScore: psychometrics.rawScore,
-      maxScore: 60,
-      minScore: 15,
-      percentage: psychometrics.percentage,
-      tScore: psychometrics.tScore,
-      percentile: psychometrics.percentile,
-      level: psychometrics.severityLabel,
-      severityLevel: psychometrics.severityLabel,
-      severityKey: psychometrics.severityKey,
-      severityColor: psychometrics.severityColor,
-      color: psychometrics.severityColor,
-      results: form.scores,
+      scaleFullName: CARS2_COPYRIGHT_INFO.scaleFullNameAr,
+      scaleVersion: 'CARS2-ST (Standard Version)',
+      studentId: form.stuId || form.studentId || null,
+      studentName: form.studentName,
+      age: form.age,
+      dob: form.dob,
+      grade: form.grade,
+      school: form.school,
+      diagnosis: form.diagnosis,
+      examinerName: form.examinerName,
+      raterName: form.raterName,
+      raterRelation: form.raterRelation,
+      date: form.date,
       scores: form.scores,
+      results: form.scores,
       itemNotes: form.itemNotes,
       clinicalSummary: form.clinicalSummary,
       recommendations: form.recommendations,
-      domainScores: psychometrics.domainScores,
+      notes: form.notes,
+      totalScore: psychometrics.rawScore,
+      rawScore: psychometrics.rawScore,
+      tScore: psychometrics.tScore,
+      percentile: psychometrics.percentile,
+      severityKey: psychometrics.severityKey,
+      severityLabel: psychometrics.severityLabel,
+      severityColor: psychometrics.severityColor,
+      isAutismCutoff: psychometrics.isAutismCutoff,
+      answeredCount: psychometrics.answeredCount,
+      totalItems: CARS2_ITEMS.length,
       psychometrics,
-      author: CARS2_COPYRIGHT_INFO.authorsAr,
-      publisher: CARS2_COPYRIGHT_INFO.publisherAr,
-      isComplete: psychometrics.isComplete,
+      createdAt: form.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
-    if (initialData?.id) {
-      lsUpd('studentAssessments', initialData.id, payload);
-      toast('✅ تم تحديث تقييم التوحد (CARS-2) بنجاح', 'ok');
+    if (form.id) {
+      lsUpd('assessments', form.id, assessmentRecord);
+      toast('✅ تم تحديث تقييم CARS-2 بنجاح', 'ok');
     } else {
-      const newId = uid();
-      lsAdd('studentAssessments', {
-        ...payload,
-        id: newId,
-        createdAt: new Date().toISOString(),
-      });
-      toast(`✅ تم حفظ تقييم CARS-2 بنجاح (الدرجة الخام: ${psychometrics.rawScore}/60)`, 'ok');
+      lsAdd('assessments', assessmentRecord);
+      toast('✅ تم حفظ تقييم CARS-2 الجديد بنجاح', 'ok');
     }
 
-    if (onSaved) onSaved();
+    if (onSaved) onSaved(assessmentRecord);
     onClose();
   }
 
   function handleSafeClose() {
-    const answeredCount = Object.keys(form.scores || {}).length;
-    if (answeredCount > 0) {
-      if (window.confirm(`⚠️ تنبيه: تم رصد تقييم لـ (${answeredCount}) بنداً في مقياس CARS-2. هل أنت متأكد من رغبتك في الإغلاق دون حفظ التغييرات؟`)) {
+    if (Object.keys(form.scores).length > 0 && !form.id) {
+      if (window.confirm('⚠️ هناك تعديلات غير محفوظة، هل أنت متأكد من الإغلاق؟')) {
         onClose();
       }
     } else {
@@ -262,11 +261,13 @@ export default function CARS2AssessmentModal({
   }
 
   return (
-    <div className="mbg">
+    <div className="mbg" onClick={e => e.target === e.currentTarget && handleSafeClose()}>
       <div
-        className="mb"
+        className="mb mb-xl"
         style={{
-          maxWidth: 'min(1360px, calc(100vw - 24px))',
+          display: 'flex',
+          flexDirection: 'column',
+          maxHeight: '92vh',
           width: '100%',
         }}
       >
@@ -335,24 +336,24 @@ export default function CARS2AssessmentModal({
         {showCopyrightDetails && (
           <div
             style={{
-              background: '#eff6ff',
+              background: 'var(--g0)',
               padding: '14px 20px',
-              borderBottom: '2px solid #93c5fd',
+              borderBottom: '1px solid var(--border-color)',
               fontSize: '0.82rem',
-              color: '#1e3a8a',
+              color: 'var(--text-main)',
               lineHeight: 1.6,
               flexShrink: 0,
             }}
           >
-            <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--pr)' }}>
               <span>📜</span> إشعار حقوق الملكية الفكرية والاعتماد الإكلينيكي لمقياس CARS-2:
             </div>
 
             <div
               style={{
-                background: '#dbeafe',
-                border: '1px solid #bfdbfe',
-                borderRadius: 8,
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--r2)',
                 padding: '8px 12px',
                 marginBottom: 10,
                 display: 'flex',
@@ -361,7 +362,6 @@ export default function CARS2AssessmentModal({
                 flexWrap: 'wrap',
                 gap: 8,
                 fontSize: '0.8rem',
-                color: '#1e40af',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -370,43 +370,43 @@ export default function CARS2AssessmentModal({
                   <strong>إشعار حقوق الملكية الفكرية والأمانة العلمية:</strong> مقياس تقدير التوحد في الطفولة — الإصدار الثاني (CARS-2) · تأليف: د. إريك شوبلر، د. روبرت رايشلر، د. باربرا روتشن رينر · الناشر الرسمي: Western Psychological Services (WPS).
                 </div>
               </div>
-              <span style={{ fontSize: '0.72rem', background: '#bfdbfe', color: '#1e3a8a', padding: '3px 8px', borderRadius: 6, border: '1px solid #93c5fd', fontWeight: 700 }}>
+              <span className="bdg b-bl" style={{ fontSize: '0.72rem', fontWeight: 700 }}>
                 المعيار الذهبي المعتمد للتشخيص
               </span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, marginBottom: 8 }}>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #bfdbfe' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10, marginBottom: 8 }}>
+              <div style={{ background: 'var(--bg-card)', padding: '8px 12px', borderRadius: 'var(--r2)', border: '1px solid var(--border-color)' }}>
                 <strong>المؤلفون الأصليون:</strong> {CARS2_COPYRIGHT_INFO.authorsAr} ({CARS2_COPYRIGHT_INFO.authorsEn})
               </div>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #bfdbfe' }}>
+              <div style={{ background: 'var(--bg-card)', padding: '8px 12px', borderRadius: 'var(--r2)', border: '1px solid var(--border-color)' }}>
                 <strong>الناشر المعتمد:</strong> {CARS2_COPYRIGHT_INFO.publisherAr} ({CARS2_COPYRIGHT_INFO.publisherEn})
               </div>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #bfdbfe' }}>
+              <div style={{ background: 'var(--bg-card)', padding: '8px 12px', borderRadius: 'var(--r2)', border: '1px solid var(--border-color)' }}>
                 <strong>الفئة العمرية المستهدفة:</strong> {CARS2_COPYRIGHT_INFO.targetAge}
               </div>
             </div>
 
-            <div style={{ fontSize: '0.78rem', color: '#3b82f6' }}>
-              <strong>دليل التصحيح الإكلينيكي ونقاط القطع:</strong>
-              <div style={{ display: 'flex', gap: 12, marginTop: 4, flexWrap: 'wrap' }}>
+            <div style={{ fontSize: '0.78rem' }}>
+              <strong style={{ color: 'var(--text-sub)' }}>دليل التصحيح الإكلينيكي ونقاط القطع:</strong>
+              <div style={{ display: 'flex', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
                 <span className="bdg b-gr">أقل من 30.0: ضمن الحدود الطبيعية (لا توجد أعراض توحد)</span>
                 <span className="bdg b-or">30.0 - 36.5: أعراض طيف توحد بسيطة إلى متوسطة (Mild-to-Moderate)</span>
-                <span className="bdg b-re">37.0 - 60.0: أعراض طيف توحد شديدة / حادة (Severe Autism)</span>
+                <span className="bdg b-rd">37.0 - 60.0: أعراض طيف توحد شديدة / حادة (Severe Autism)</span>
               </div>
             </div>
           </div>
         )}
 
         {/* Modal Scrollable Content Area */}
-        <div style={{ padding: '16px 20px', overflowY: 'auto', flex: 1, maxHeight: 'calc(88vh - 140px)' }}>
+        <div className="modal-body-scroll" style={{ padding: '16px 20px', overflowY: 'auto', flex: 1 }}>
 
           {/* Collapsible Student & Examiner Profile Section */}
           <div
             style={{
-              background: 'var(--g0)',
+              background: 'var(--bg-card)',
               border: '1px solid var(--border-color)',
-              borderRadius: 12,
+              borderRadius: 'var(--r)',
               padding: isHeaderCollapsed ? '10px 16px' : '14px 18px',
               marginBottom: 16,
               transition: 'all 0.2s ease',
@@ -436,11 +436,10 @@ export default function CARS2AssessmentModal({
 
             {!isHeaderCollapsed && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-                  <div>
-                    <label className="lbl">نوع تسجيل المفحوص <span style={{ color: 'var(--err)' }}>*</span></label>
+                <div className="fg c4">
+                  <div className="fl">
+                    <label>نوع تسجيل المفحوص <span className="req">*</span></label>
                     <select
-                      className="inp"
                       value={form.mode === 'other' ? '__other__' : (form.stuId || '')}
                       onChange={handleSelectStudent}
                     >
@@ -455,84 +454,77 @@ export default function CARS2AssessmentModal({
                   </div>
 
                   {form.mode === 'other' ? (
-                    <div>
-                      <label className="lbl">اسم المفحوص كاملاً <span style={{ color: 'var(--err)' }}>*</span></label>
+                    <div className="fl">
+                      <label>اسم المفحوص كاملاً <span className="req">*</span></label>
                       <input
                         type="text"
-                        className="inp"
                         placeholder="أدخل اسم الحالة الخارجية..."
                         value={form.studentName}
                         onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
                       />
                     </div>
                   ) : (
-                    <div>
-                      <label className="lbl">التشخيص الحالي المسجل</label>
+                    <div className="fl">
+                      <label>التشخيص الحالي المسجل</label>
                       <input
                         type="text"
-                        className="inp"
                         disabled
                         value={form.diagnosis || 'غير محدد'}
-                        style={{ background: 'var(--g1)', opacity: 0.85 }}
+                        style={{ opacity: 0.85 }}
                       />
                     </div>
                   )}
 
-                  <div>
-                    <label className="lbl">العمر الزمني</label>
+                  <div className="fl">
+                    <label>العمر الزمني</label>
                     <input
                       type="text"
-                      className="inp"
                       placeholder="مثال: 4 سنوات و 6 أشهر"
                       value={form.age}
                       onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
                     />
                   </div>
 
-                  <div>
-                    <label className="lbl">تاريخ تطبيق المقياس <span style={{ color: 'var(--err)' }}>*</span></label>
+                  <div className="fl">
+                    <label>تاريخ تطبيق المقياس <span className="req">*</span></label>
                     <input
                       type="date"
-                      className="inp"
                       value={form.date}
                       onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
                     />
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-                  <div>
-                    <label className="lbl">الأخصائي النفسي / الفاحص الملاحظ <span style={{ color: 'var(--err)' }}>*</span></label>
+                <div className="fg c4">
+                  <div className="fl">
+                    <label>الأخصائي النفسي / الفاحص الملاحظ <span className="req">*</span></label>
                     <input
                       type="text"
-                      className="inp"
                       placeholder="اسم الأخصائي الفاحص..."
                       value={form.examinerName}
                       onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
-                      list="examiners-list"
+                      list="cars2-examiners-list"
                     />
-                    <datalist id="examiners-list">
+                    <datalist id="cars2-examiners-list">
                       {emps.map(em => (
                         <option key={em.id} value={em.name} />
                       ))}
                     </datalist>
                   </div>
 
-                  <div>
-                    <label className="lbl">مصدر المعلومات / القائم بالرعاية (الملاحظ)</label>
+                  <div className="fl">
+                    <label>مصدر المعلومات / القائم بالرعاية</label>
                     <input
                       type="text"
-                      className="inp"
                       placeholder="اسم ولي الأمر / المعلم..."
                       value={form.raterName}
                       onChange={e => setForm(f => ({ ...f, raterName: e.target.value }))}
                     />
                   </div>
 
-                  <div>
-                    <label className="lbl">صلة القرابة / الدور</label>
+                  <div className="fl">
+                    <label>صلة القرابة / الدور</label>
                     <select
-                      className="inp"
                       value={form.raterRelation}
                       onChange={e => setForm(f => ({ ...f, raterRelation: e.target.value }))}
                     >
@@ -546,11 +538,10 @@ export default function CARS2AssessmentModal({
                     </select>
                   </div>
 
-                  <div>
-                    <label className="lbl">الصف / البيئة المدرسية</label>
+                  <div className="fl">
+                    <label>الصف / البيئة المدرسية</label>
                     <input
                       type="text"
-                      className="inp"
                       placeholder="الروضة / المدرسة..."
                       value={form.grade || form.school || ''}
                       onChange={e => setForm(f => ({ ...f, grade: e.target.value, school: e.target.value }))}
@@ -564,18 +555,17 @@ export default function CARS2AssessmentModal({
           {/* Real-time Dynamic Psychometrics & Quick Controls Bar */}
           <div
             style={{
-              background: 'linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%)',
-              border: '1.5px solid #bfdbfe',
-              borderRadius: 12,
+              background: 'var(--g0)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--r)',
               padding: '14px 18px',
               marginBottom: 16,
-              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.05)',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: '1.2rem' }}>📊</span>
-                <strong style={{ fontSize: '0.95rem', color: '#1e40af' }}>
+                <strong style={{ fontSize: '0.95rem', color: 'var(--pr)' }}>
                   المؤشرات السيكومترية الفورية ومستوى شدة الأعراض:
                 </strong>
               </div>
@@ -585,27 +575,27 @@ export default function CARS2AssessmentModal({
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)', fontWeight: 600 }}>تعبئة سريعة للمعاينة:</span>
                 <button
                   type="button"
-                  className="btn btn-xs"
+                  className="btn btn-xs btn-s"
                   onClick={() => autoFillSample('none')}
-                  style={{ fontSize: '0.72rem', padding: '3px 8px', background: '#dcfce7', color: '#15803d', border: '1px solid #86efac' }}
+                  style={{ fontSize: '0.72rem', padding: '3px 8px' }}
                   title="ملء جميع البنود بدرجات طبيعية (<30)"
                 >
                   طبيعي (&lt;30)
                 </button>
                 <button
                   type="button"
-                  className="btn btn-xs"
+                  className="btn btn-xs btn-w"
                   onClick={() => autoFillSample('mild')}
-                  style={{ fontSize: '0.72rem', padding: '3px 8px', background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a' }}
+                  style={{ fontSize: '0.72rem', padding: '3px 8px' }}
                   title="ملء درجات بسيطة إلى متوسطة (30 - 36.5)"
                 >
                   بسيط-متوسط (30-36.5)
                 </button>
                 <button
                   type="button"
-                  className="btn btn-xs"
+                  className="btn btn-xs btn-d"
                   onClick={() => autoFillSample('severe')}
-                  style={{ fontSize: '0.72rem', padding: '3px 8px', background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5' }}
+                  style={{ fontSize: '0.72rem', padding: '3px 8px' }}
                   title="ملء درجات شديدة (37+)"
                 >
                   شديد (37+)
@@ -621,15 +611,12 @@ export default function CARS2AssessmentModal({
                 </button>
                 <button
                   type="button"
-                  className="btn btn-xs"
+                  className="btn btn-xs btn-p"
                   onClick={applyAutoClinicalSummary}
                   style={{
                     fontSize: '0.74rem',
                     padding: '4px 10px',
-                    background: '#1e40af',
-                    color: '#fff',
                     fontWeight: 700,
-                    boxShadow: '0 2px 4px rgba(30,64,175,0.2)',
                   }}
                 >
                   ✨ توليد الخلاصة والتوصيات
@@ -638,103 +625,108 @@ export default function CARS2AssessmentModal({
             </div>
 
             {/* Metric Cards Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
-              <div style={{ background: '#fff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '8px 12px' }}>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>الدرجة الخام الكلية:</span>
-                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#1e40af', lineHeight: 1.2 }}>
-                  {psychometrics.rawScore} <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)', fontWeight: 600 }}>/ 60.0</span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--r2)', padding: '10px 14px' }}>
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', display: 'block', fontWeight: 600 }}>الدرجة الخام الكلية:</span>
+                <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--pr)', lineHeight: 1.2, marginTop: 2 }}>
+                  {psychometrics.rawScore} <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)', fontWeight: 600 }}>/ 60.0</span>
                 </div>
-                <div style={{ fontSize: '0.68rem', color: 'var(--text-sub)', marginTop: 2 }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-sub)', marginTop: 3 }}>
                   الحد الأدنى 15.0 · النقطة الفاصلة 30.0
                 </div>
               </div>
 
-              <div style={{ background: '#fff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '8px 12px' }}>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>الدرجة التائية المعيارية (T):</span>
-                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.2 }}>
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--r2)', padding: '10px 14px' }}>
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', display: 'block', fontWeight: 600 }}>الدرجة التائية المعيارية:</span>
+                <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--text-main)', lineHeight: 1.2, marginTop: 2 }}>
                   T = {psychometrics.tScore}
                 </div>
-                <div style={{ fontSize: '0.68rem', color: 'var(--text-sub)', marginTop: 2 }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-sub)', marginTop: 3 }}>
                   (المتوسط 50 ± 10 انحراف)
                 </div>
               </div>
 
-              <div style={{ background: '#fff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '8px 12px' }}>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>الرتبة المئينية (% Rank):</span>
-                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.2 }}>
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--r2)', padding: '10px 14px' }}>
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', display: 'block', fontWeight: 600 }}>الرتبة المئينية (% Rank):</span>
+                <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--text-main)', lineHeight: 1.2, marginTop: 2 }}>
                   {psychometrics.percentile}%
                 </div>
-                <div style={{ fontSize: '0.68rem', color: 'var(--text-sub)', marginTop: 2 }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-sub)', marginTop: 3 }}>
                   مقارنة بعينة التقنين المعيارية
                 </div>
               </div>
 
-              <div style={{ background: '#fff', border: `1.5px solid ${psychometrics.severityColor}`, borderRadius: 8, padding: '8px 12px' }}>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>التصنيف التشخيصي المعتمد:</span>
-                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: psychometrics.severityColor, marginTop: 4 }}>
+              <div style={{ background: 'var(--bg-card)', border: `1.5px solid ${psychometrics.severityColor}`, borderRadius: 'var(--r2)', padding: '10px 14px' }}>
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', display: 'block', fontWeight: 600 }}>التصنيف التشخيصي المعتمد:</span>
+                <div style={{ fontSize: '0.9rem', fontWeight: 800, color: psychometrics.severityColor, marginTop: 4 }}>
                   {psychometrics.severityLabel}
                 </div>
               </div>
 
-              <div style={{ background: '#fff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '8px 12px' }}>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>اكتمال التقييم:</span>
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--r2)', padding: '10px 14px' }}>
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', display: 'block', fontWeight: 600 }}>اكتمال التقييم:</span>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-                  <span style={{ fontSize: '1rem', fontWeight: 800, color: psychometrics.isComplete ? '#16a34a' : '#d97706' }}>
+                  <span style={{ fontSize: '1.05rem', fontWeight: 800, color: psychometrics.isComplete ? 'var(--ok)' : 'var(--warn)' }}>
                     {psychometrics.answeredCount} / 15
                   </span>
                   <span className={`bdg ${psychometrics.isComplete ? 'b-gr' : 'b-or'}`} style={{ fontSize: '0.68rem', padding: '1px 6px' }}>
                     {psychometrics.percentage}
                   </span>
                 </div>
-                <div style={{ width: '100%', height: 4, background: '#e2e8f0', borderRadius: 2, marginTop: 6, overflow: 'hidden' }}>
-                  <div style={{ width: `${(psychometrics.answeredCount / 15) * 100}%`, height: '100%', background: '#2563eb' }} />
+                <div style={{ width: '100%', height: 5, background: 'var(--g2)', borderRadius: 3, marginTop: 6, overflow: 'hidden' }}>
+                  <div style={{ width: `${(psychometrics.answeredCount / 15) * 100}%`, height: '100%', background: 'var(--pr)', transition: 'width 0.3s ease' }} />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Interactive Domain Filter Chips */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', marginLeft: 4 }}>المجالات السلوكية:</span>
-            <button
-              type="button"
-              className={`btn btn-xs ${activeDomainFilter === 'all' ? 'btn-pr' : 'btn-g'}`}
-              onClick={() => setActiveDomainFilter('all')}
-              style={{ fontWeight: 700, borderRadius: 20, padding: '4px 12px' }}
-            >
-              الكل ({CARS2_ITEMS.length})
-            </button>
+          {/* Interactive Domain Filter Tabs */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
+              <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                📑 بنود مقياس تقدير التوحد (CARS-2 Items):
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>
+                اختر الدرجة المناسبة على السلم المتدرج من (1.0 إلى 4.0)
+              </div>
+            </div>
 
-            {CARS2_DOMAINS.map(dom => {
-              const domRes = psychometrics.domainScores.find(d => d.id === dom.id);
-              const isActive = activeDomainFilter === dom.id;
-              return (
-                <button
-                  key={dom.id}
-                  type="button"
-                  className={`btn btn-xs ${isActive ? 'btn-pr' : 'btn-g'}`}
-                  onClick={() => setActiveDomainFilter(dom.id)}
-                  style={{
-                    fontWeight: 700,
-                    borderRadius: 20,
-                    padding: '4px 12px',
-                    borderColor: isActive ? undefined : dom.color,
-                  }}
-                >
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: dom.color, display: 'inline-block', marginLeft: 6 }} />
-                  {dom.name} ({domRes ? `${domRes.answered}/${domRes.totalItems}` : dom.items.length})
-                  {domRes && domRes.answered > 0 && (
-                    <span style={{ marginRight: 6, fontSize: '0.7rem', opacity: 0.85 }}>
-                      [{domRes.score}/{domRes.maxScore}]
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 6 }}>
+              <button
+                type="button"
+                className={`tab ${activeDomainFilter === 'all' ? 'on' : ''}`}
+                onClick={() => setActiveDomainFilter('all')}
+                style={{ fontSize: '0.78rem', padding: '6px 14px', whiteSpace: 'nowrap' }}
+              >
+                🌐 جميع البنود ({CARS2_ITEMS.length})
+              </button>
+
+              {CARS2_DOMAINS.map(dom => {
+                const domRes = psychometrics.domainScores.find(d => d.id === dom.id);
+                const isActive = activeDomainFilter === dom.id;
+                return (
+                  <button
+                    key={dom.id}
+                    type="button"
+                    className={`tab ${isActive ? 'on' : ''}`}
+                    onClick={() => setActiveDomainFilter(dom.id)}
+                    style={{
+                      fontSize: '0.78rem',
+                      padding: '6px 14px',
+                      whiteSpace: 'nowrap',
+                      borderRight: `3px solid ${dom.color}`,
+                    }}
+                  >
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: dom.color, display: 'inline-block', marginLeft: 6 }} />
+                    {dom.name.split(' ')[0]} {dom.name.split(' ')[1] || ''} ({domRes ? `${domRes.answered}/${domRes.totalItems}` : dom.items.length})
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* 15 Diagnostic Behavioral Item Cards */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
             {filteredItems.map(item => {
               const currentScore = form.scores[item.id] !== undefined ? Number(form.scores[item.id]) : null;
               const isAnswered = currentScore !== null;
@@ -744,29 +736,28 @@ export default function CARS2AssessmentModal({
                 <div
                   key={item.id}
                   style={{
-                    background: '#fff',
+                    background: 'var(--bg-card)',
                     border: isAnswered
                       ? currentScore >= 3.0
-                        ? '1.5px solid #dc2626'
+                        ? '1.5px solid var(--err)'
                         : currentScore >= 2.0
-                        ? '1.5px solid #d97706'
-                        : '1.5px solid #16a34a'
+                        ? '1.5px solid var(--warn)'
+                        : '1.5px solid var(--ok)'
                       : '1px solid var(--border-color)',
-                    borderRadius: 12,
+                    borderRadius: 'var(--r)',
                     padding: '14px 18px',
-                    boxShadow: isAnswered ? '0 3px 10px rgba(0,0,0,0.04)' : 'none',
                     transition: 'all 0.2s ease',
                   }}
                 >
                   {/* Item Header */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1, minWidth: '260px' }}>
                       <div
                         style={{
                           width: 34,
                           height: 34,
-                          borderRadius: 8,
-                          background: dom?.color || '#2563eb',
+                          borderRadius: 'var(--r2)',
+                          background: dom?.color || 'var(--pr)',
                           color: '#fff',
                           display: 'flex',
                           alignItems: 'center',
@@ -778,18 +769,18 @@ export default function CARS2AssessmentModal({
                       >
                         {item.id}
                       </div>
-                      <div>
+                      <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                          <h4 style={{ margin: 0, fontSize: '1.02rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                          <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>
                             {item.title}
                           </h4>
                           <span
                             className="bdg"
                             style={{
-                              background: `${dom?.color || '#3b82f6'}15`,
-                              color: dom?.color || '#3b82f6',
-                              border: `1px solid ${dom?.color || '#3b82f6'}40`,
-                              fontSize: '0.7rem',
+                              background: 'var(--g0)',
+                              color: dom?.color || 'var(--pr)',
+                              border: `1px solid ${dom?.color || 'var(--pr)'}40`,
+                              fontSize: '0.72rem',
                               fontWeight: 700,
                             }}
                           >
@@ -807,11 +798,11 @@ export default function CARS2AssessmentModal({
                         style={{
                           fontSize: '0.85rem',
                           fontWeight: 800,
-                          padding: '4px 10px',
-                          borderRadius: 8,
-                          background: currentScore >= 3.0 ? '#fee2e2' : currentScore >= 2.0 ? '#fef3c7' : '#dcfce7',
-                          color: currentScore >= 3.0 ? '#b91c1c' : currentScore >= 2.0 ? '#b45309' : '#15803d',
-                          border: `1px solid ${currentScore >= 3.0 ? '#fca5a5' : currentScore >= 2.0 ? '#fde68a' : '#86efac'}`,
+                          padding: '4px 12px',
+                          borderRadius: 'var(--r2)',
+                          background: currentScore >= 3.0 ? 'var(--err-l)' : currentScore >= 2.0 ? 'var(--warn-l)' : 'var(--ok-l)',
+                          color: currentScore >= 3.0 ? 'var(--err)' : currentScore >= 2.0 ? 'var(--warn)' : 'var(--ok-d)',
+                          border: `1px solid ${currentScore >= 3.0 ? 'var(--err)' : currentScore >= 2.0 ? 'var(--warn)' : 'var(--ok)'}`,
                           flexShrink: 0,
                         }}
                       >
@@ -824,33 +815,30 @@ export default function CARS2AssessmentModal({
                   <div
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
                       gap: 8,
                       marginTop: 8,
                     }}
                   >
                     {item.anchors.map(anchor => {
                       const isSelected = currentScore === anchor.score;
-                      let badgeBg = '#f1f5f9';
-                      let badgeColor = '#475569';
-                      let activeCardBg = '#f8fafc';
-                      let activeBorderColor = '#cbd5e1';
+
+                      let badgeClass = 'b-bl';
+                      let activeBorder = 'var(--pr)';
+                      let activeBg = 'var(--pr-l)';
 
                       if (anchor.score <= 1.5) {
-                        badgeBg = '#dcfce7';
-                        badgeColor = '#15803d';
-                        activeCardBg = '#f0fdf4';
-                        activeBorderColor = '#16a34a';
+                        badgeClass = 'b-gr';
+                        activeBorder = 'var(--ok)';
+                        activeBg = 'var(--ok-l)';
                       } else if (anchor.score <= 2.5) {
-                        badgeBg = '#fef3c7';
-                        badgeColor = '#b45309';
-                        activeCardBg = '#fffbeb';
-                        activeBorderColor = '#d97706';
+                        badgeClass = 'b-or';
+                        activeBorder = 'var(--warn)';
+                        activeBg = 'var(--warn-l)';
                       } else {
-                        badgeBg = '#fee2e2';
-                        badgeColor = '#b91c1c';
-                        activeCardBg = '#fef2f2';
-                        activeBorderColor = '#dc2626';
+                        badgeClass = 'b-rd';
+                        activeBorder = 'var(--err)';
+                        activeBg = 'var(--err-l)';
                       }
 
                       return (
@@ -860,38 +848,28 @@ export default function CARS2AssessmentModal({
                           onClick={() => handleScoreSelect(item.id, anchor.score)}
                           style={{
                             textAlign: 'right',
-                            background: isSelected ? activeCardBg : '#ffffff',
-                            border: isSelected ? `2px solid ${activeBorderColor}` : '1px solid var(--border-color)',
-                            borderRadius: 8,
+                            background: isSelected ? activeBg : 'var(--g0)',
+                            border: isSelected ? `2px solid ${activeBorder}` : '1px solid var(--border-color)',
+                            borderRadius: 'var(--r2)',
                             padding: '9px 12px',
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
                             display: 'flex',
                             flexDirection: 'column',
                             gap: 4,
-                            boxShadow: isSelected ? `0 2px 8px ${activeBorderColor}30` : 'none',
                           }}
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span
-                                style={{
-                                  fontSize: '0.74rem',
-                                  fontWeight: 800,
-                                  background: badgeBg,
-                                  color: badgeColor,
-                                  padding: '2px 8px',
-                                  borderRadius: 6,
-                                }}
-                              >
+                              <span className={`bdg ${badgeClass}`} style={{ fontSize: '0.74rem', fontWeight: 800 }}>
                                 {anchor.score.toFixed(1)}
                               </span>
-                              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: isSelected ? activeBorderColor : 'var(--text-main)' }}>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: isSelected ? activeBorder : 'var(--text-main)' }}>
                                 {anchor.label}
                               </span>
                             </div>
                             {isSelected && (
-                              <span style={{ fontSize: '0.85rem', color: activeBorderColor, fontWeight: 900 }}>
+                              <span style={{ fontSize: '0.85rem', color: activeBorder, fontWeight: 900 }}>
                                 ✔
                               </span>
                             )}
@@ -908,11 +886,18 @@ export default function CARS2AssessmentModal({
                   <div style={{ marginTop: 10 }}>
                     <input
                       type="text"
-                      className="inp"
                       placeholder={`✍️ ملاحظات إكلينيكية ورصد شواهد السلوك للبند ${item.id} (${item.title})...`}
                       value={form.itemNotes[item.id] || ''}
                       onChange={e => handleItemNoteChange(item.id, e.target.value)}
-                      style={{ fontSize: '0.78rem', padding: '6px 10px', background: 'var(--g0)' }}
+                      style={{
+                        fontSize: '0.78rem',
+                        padding: '6px 10px',
+                        background: 'var(--g0)',
+                        border: '1px dashed var(--border-color)',
+                        borderRadius: 'var(--r2)',
+                        width: '100%',
+                        color: 'var(--text-main)',
+                      }}
                     />
                   </div>
                 </div>
@@ -923,18 +908,17 @@ export default function CARS2AssessmentModal({
           {/* Diagnostic Summary & Evidence-Based Recommendations Section */}
           <div
             style={{
-              background: '#fff',
-              border: '1.5px solid #bfdbfe',
-              borderRadius: 12,
+              background: 'var(--g0)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--r)',
               padding: '16px 20px',
               marginBottom: 16,
-              boxShadow: '0 2px 8px rgba(37,99,235,0.05)',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: '1.2rem' }}>📝</span>
-                <strong style={{ fontSize: '0.98rem', color: '#1e40af' }}>
+                <strong style={{ fontSize: '0.95rem', color: 'var(--pr)' }}>
                   الخلاصة الإكلينيكية التشخيصية والتوصيات العلاجية (CARS-2 Summary & Recommendations):
                 </strong>
               </div>
@@ -951,41 +935,39 @@ export default function CARS2AssessmentModal({
 
                 <button
                   type="button"
-                  className="btn btn-xs"
+                  className="btn btn-xs btn-p"
                   onClick={applyAutoClinicalSummary}
-                  style={{ background: '#1e40af', color: '#fff', fontWeight: 700 }}
+                  style={{ fontWeight: 700 }}
                 >
                   ⚡ توليد تلقائي للتقرير
                 </button>
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 14 }}>
-              <div>
-                <label className="lbl" style={{ fontWeight: 700, color: '#1e40af' }}>
+            <div className="fg c2">
+              <div className="fl">
+                <label style={{ fontWeight: 700 }}>
                   الخلاصة التشخيصية والملاحظة الإكلينيكية:
                 </label>
                 <textarea
-                  className="inp"
                   rows={6}
                   value={form.clinicalSummary}
                   onChange={e => setForm(f => ({ ...f, clinicalSummary: e.target.value }))}
                   placeholder="سيتم توليد ملخص إكلينيكي مفصل يوضح الدرجة الكلية والتصنيف وشدة الأعراض وتوزيع المجالات..."
-                  style={{ lineHeight: 1.6, fontSize: '0.82rem', fontFamily: 'inherit' }}
+                  style={{ lineHeight: 1.6, fontSize: '0.82rem' }}
                 />
               </div>
 
-              <div>
-                <label className="lbl" style={{ fontWeight: 700, color: '#1e40af' }}>
+              <div className="fl">
+                <label style={{ fontWeight: 700 }}>
                   التوصيات التربوية والخطة التأهيلية (IEP & Intervention):
                 </label>
                 <textarea
-                  className="inp"
                   rows={6}
                   value={form.recommendations}
                   onChange={e => setForm(f => ({ ...f, recommendations: e.target.value }))}
                   placeholder="التوصيات المبنية على الأدلة: التدخل السلوكي ABA، التخاطب والتواصل البديل AAC، التكامل الحسي، وتدريب الأسرة..."
-                  style={{ lineHeight: 1.6, fontSize: '0.82rem', fontFamily: 'inherit' }}
+                  style={{ lineHeight: 1.6, fontSize: '0.82rem' }}
                 />
               </div>
             </div>
@@ -1009,10 +991,10 @@ export default function CARS2AssessmentModal({
         >
           {/* Quick status preview in footer */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.82rem', flexWrap: 'wrap' }}>
-            <span>البنود المكتملة: <strong style={{ color: psychometrics.isComplete ? '#16a34a' : '#d97706' }}>{psychometrics.answeredCount} من 15</strong></span>
-            <span>الدرجة الخام: <strong style={{ color: '#1e40af' }}>{psychometrics.rawScore} / 60.0</strong></span>
-            <span>الدرجة التائية: <strong style={{ color: '#0f172a' }}>T={psychometrics.tScore}</strong></span>
-            <span>الرتبة المئينية: <strong style={{ color: '#0f172a' }}>{psychometrics.percentile}%</strong></span>
+            <span>البنود المكتملة: <strong style={{ color: psychometrics.isComplete ? 'var(--ok)' : 'var(--warn)' }}>{psychometrics.answeredCount} من 15</strong></span>
+            <span>الدرجة الخام: <strong style={{ color: 'var(--pr)' }}>{psychometrics.rawScore} / 60.0</strong></span>
+            <span>الدرجة التائية: <strong>T={psychometrics.tScore}</strong></span>
+            <span>الرتبة المئينية: <strong>{psychometrics.percentile}%</strong></span>
             <span>التصنيف: <strong style={{ color: psychometrics.severityColor }}>{psychometrics.severityLabel}</strong></span>
           </div>
 
@@ -1027,15 +1009,13 @@ export default function CARS2AssessmentModal({
 
             <button
               type="button"
-              className="btn"
+              className="btn btn-p"
               onClick={handleSave}
               style={{
-                background: 'linear-gradient(135deg, #1e40af, #2563eb)',
+                background: 'linear-gradient(135deg, #1e40af 0%, #2563eb 100%)',
                 color: '#fff',
                 fontWeight: 800,
                 padding: '8px 20px',
-                borderRadius: 8,
-                boxShadow: '0 2px 6px rgba(37,99,235,0.3)',
               }}
             >
               💾 حفظ تقييم CARS-2 واعتماد النتيجة
