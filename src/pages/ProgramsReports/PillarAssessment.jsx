@@ -39,6 +39,8 @@ import SensoryIntegrationAssessmentModal from '../../components/assessments/Sens
 import SensoryIntegrationReportModal from '../../components/assessments/SensoryIntegrationReportModal';
 import ConnersParentAssessmentModal from '../../components/assessments/ConnersParentAssessmentModal';
 import ConnersParentReportModal from '../../components/assessments/ConnersParentReportModal';
+import MChatAssessmentModal from '../../components/assessments/MChatAssessmentModal';
+import MChatReportModal from '../../components/assessments/MChatReportModal';
 import { PEP3_ITEMS } from '../../data/pep3Data';
 import { LDES_ITEMS } from '../../data/ldesData';
 import { DEV_LD_ITEMS } from '../../data/devLdData';
@@ -48,6 +50,7 @@ import { MYKLEBUST_ITEMS } from '../../data/myklebustData';
 import { FAMILY_DISINTEGRATION_ITEMS } from '../../data/familyDisintegrationData';
 import { SENSORY_INTEGRATION_ITEMS } from '../../data/sensoryIntegrationData';
 import { CONNERS_PARENT_ITEMS } from '../../data/connersParentData';
+import { MCHAT_ITEMS } from '../../data/mchatData';
 import IepBridgeModal from './IepBridgeModal';
 import { extractRecommendedGoals } from '../../utils/iepBridge';
 import {
@@ -226,6 +229,12 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
   const [connersParentReportOpen, setConnersParentReportOpen] = useState(false);
   const [selectedConnersParentAssessment, setSelectedConnersParentAssessment] = useState(null);
 
+  // M-CHAT-R/F Specific Specialized Modals States
+  const [mchatModalOpen, setMchatModalOpen] = useState(false);
+  const [mchatEditData, setMchatEditData] = useState(null);
+  const [mchatReportOpen, setMchatReportOpen] = useState(false);
+  const [selectedMchatAssessment, setSelectedMchatAssessment] = useState(null);
+
   // IEP Bridge State
   const [bridgeOpen, setBridgeOpen] = useState(false);
   const [bridgeAssessment, setBridgeAssessment] = useState(null);
@@ -310,6 +319,11 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
 
   // Scales Form Handlers
   function openNewScaleAssessment(scaleId) {
+    if (scaleId === 'mchat' || scaleId === 'mchat_r_f' || scaleId === 'mchat_r') {
+      setMchatEditData(null);
+      setMchatModalOpen(true);
+      return;
+    }
     if (scaleId === 'speech_screening' || scaleId === 'speech_articulation') {
       setSpeechEditData(null);
       setSpeechModalOpen(true);
@@ -556,6 +570,16 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     setConnersParentReportOpen(true);
   }
 
+  function openEditMchatAssessment(item) {
+    setMchatEditData(item);
+    setMchatModalOpen(true);
+  }
+
+  function openViewMchatReport(item) {
+    setSelectedMchatAssessment(item);
+    setMchatReportOpen(true);
+  }
+
   function handleScaleOptionChange(itemId, value) {
     setScaleResponses(prev => ({
       ...prev,
@@ -617,6 +641,8 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
       setBridgeScaleItems(SENSORY_INTEGRATION_ITEMS);
     } else if (item.measureId === 'conners_parent' || item.scaleType === 'conners_parent' || item.type === 'conners_parent') {
       setBridgeScaleItems(CONNERS_PARENT_ITEMS);
+    } else if (item.measureId === 'mchat' || item.scaleType === 'mchat_r_f' || item.scaleType === 'mchat' || item.measureId === 'mchat_r_f' || item.isMChat) {
+      setBridgeScaleItems(MCHAT_ITEMS);
     } else {
       const scale = allScales.find(s => s.id === item.measureId) || null;
       setBridgeScaleItems(scale?.items || []);
@@ -1208,6 +1234,42 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                       🚀 تطبيق مقياس وفحص PEP-3 المطور
                     </button>
                   </div>
+
+                  {/* M-CHAT-R/F (5th Autism Scale Card) */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(99, 102, 241, 0.04))',
+                      border: '1.5px solid #2563eb',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontWeight: 600, fontSize: '.72rem' }}>المسح والفرز النمائي المبكر</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>M-CHAT-R/F المقنن</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        🧩 قائمة تفقد التوحد المعدلة (M-CHAT-R/F)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        20 بنداً تشخيصياً معتمداً · تحديد مستويات الخطر (منخفض / متوسط / مرتفع) · المقابلة التتبعية وخطة التدخل المبكر
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setMchatEditData(null); setMchatModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#2563eb', color: '#fff', width: '100%' }}
+                    >
+                      🚀 فتح أداة فحص وتطبيق M-CHAT-R/F
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -1758,19 +1820,21 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                 const isFamily = item.measureId === 'family_disintegration' || item.scaleType === 'family_disintegration';
                 const isSensory = item.measureId === 'sensory_integration_scale' || item.scaleType === 'sensory_integration' || item.isSensoryIntegration;
                 const isConnersParent = item.measureId === 'conners_parent' || item.scaleType === 'conners_parent' || item.type === 'conners_parent' || item.isConnersParent;
+                const isMChat = item.measureId === 'mchat' || item.scaleType === 'mchat_r_f' || item.scaleType === 'mchat' || item.measureId === 'mchat_r_f' || item.isMChat;
                 return (
                   <div
                     key={item.id}
                     className="prog-item-card"
                     style={{
-                      border: isConnersParent ? '1.5px solid #ea580c' : isSensory ? '1.5px solid #0284c7' : isFamily ? '1.5px solid #7c3aed' : isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
-                      boxShadow: isConnersParent ? '0 4px 12px rgba(234, 88, 12, 0.08)' : isSensory ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isFamily ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
+                      border: isMChat ? '1.5px solid #2563eb' : isConnersParent ? '1.5px solid #ea580c' : isSensory ? '1.5px solid #0284c7' : isFamily ? '1.5px solid #7c3aed' : isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
+                      boxShadow: isMChat ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isConnersParent ? '0 4px 12px rgba(234, 88, 12, 0.08)' : isSensory ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isFamily ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
                       <div>
                         <div className="prog-student-name" style={{ fontSize: '1.02rem', display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span>{item.studentName}</span>
+                          {isMChat && <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>M-CHAT-R/F (20)</span>}
                           {isConnersParent && <span className="bdg" style={{ background: '#ffedd5', color: '#c2410c', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>كونرز للوالدين (80)</span>}
                           {isCars && <span className="bdg b-bl" style={{ fontSize: '.68rem', padding: '1px 6px' }}>CARS-2</span>}
                           {isGars && <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>GARS-3</span>}
@@ -1791,9 +1855,17 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                         <div className="prog-student-meta">{item.measureName} · {item.date}</div>
                       </div>
                       <span className="bdg b-gr" style={{ fontSize: '0.82rem', fontWeight: 800, flexShrink: 0 }}>
-                        {isConnersParent ? `الخام: ${item.score || 0} / 240` : isSensory ? `الخام: ${item.score || 0} / 90` : isFamily ? `الخام: ${item.score || 0} / 130` : isMyklebust ? `الخام: ${item.score || 0} / 120 (LQ=${item.lq || item.psychometrics?.learningQuotient || '—'})` : isSartawi ? `الخام: ${item.score || 0} / 250 (T=${item.tScore || item.psychometrics?.totalTScore || '—'})` : isLddrs ? `الدرجة الكلية: ${item.score || 0}` : isDevLd ? `الخام: ${item.score} / ${item.maxScore || 160}` : isLdes ? `معامل LDEQ: ${item.ldeq || item.score}` : isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
+                        {isMChat ? `النقاط الإيجابية: ${item.score || item.totalFailedCount || 0} / 20` : isConnersParent ? `الخام: ${item.score || 0} / 240` : isSensory ? `الخام: ${item.score || 0} / 90` : isFamily ? `الخام: ${item.score || 0} / 130` : isMyklebust ? `الخام: ${item.score || 0} / 120 (LQ=${item.lq || item.psychometrics?.learningQuotient || '—'})` : isSartawi ? `الخام: ${item.score || 0} / 250 (T=${item.tScore || item.psychometrics?.totalTScore || '—'})` : isLddrs ? `الدرجة الكلية: ${item.score || 0}` : isDevLd ? `الخام: ${item.score} / ${item.maxScore || 160}` : isLdes ? `معامل LDEQ: ${item.ldeq || item.score}` : isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
                       </span>
                     </div>
+
+                    {isMChat && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>مستوى الخطر: <strong style={{ color: item.severityColor || (item.score >= 8 ? '#dc2626' : item.score >= 3 ? '#d97706' : '#16a34a') }}>{item.level || '—'}</strong></span>
+                        <span>البنود الإيجابية: <strong style={{ color: '#2563eb' }}>{item.score || item.totalFailedCount || 0} من 20</strong></span>
+                        <span>المقابلة التتبعية: <strong style={{ color: item.psychometrics?.needsFollowUp ? '#dc2626' : '#16a34a' }}>{item.psychometrics?.needsFollowUp ? 'مطلوبة ⚠️' : 'غير مطلوبة'}</strong></span>
+                      </div>
+                    )}
 
                     {isConnersParent && (
                       <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
@@ -1951,6 +2023,27 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                           <span>🎓</span>
                           <span>اشتقاق خطة فردية (IEP)</span>
                         </button>
+
+                        {isMChat && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewMchatReport(item)}
+                            style={{ fontWeight: 800, background: '#2563eb', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isMChat && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditMchatAssessment(item)}
+                            title="تعديل درجات مقياس M-CHAT-R/F"
+                          >
+                            ✏️
+                          </button>
+                        )}
 
                         {isConnersParent && (
                           <button
@@ -2876,6 +2969,34 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
           onClose={() => setPls5ReportOpen(false)}
           assessment={selectedPls5Assessment}
           onEdit={(item) => openEditPls5Assessment(item)}
+        />
+      )}
+
+      {/* MODAL: M-CHAT-R/F SPECIALIZED ASSESSMENT WORKSTATION */}
+      {mchatModalOpen && (
+        <MChatAssessmentModal
+          isOpen={mchatModalOpen}
+          onClose={() => {
+            setMchatModalOpen(false);
+            setMchatEditData(null);
+          }}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={mchatEditData}
+        />
+      )}
+
+      {/* MODAL: M-CHAT-R/F OFFICIAL DIAGNOSTIC REPORT & CLINICAL EXPORT */}
+      {mchatReportOpen && selectedMchatAssessment && (
+        <MChatReportModal
+          isOpen={mchatReportOpen}
+          onClose={() => setMchatReportOpen(false)}
+          assessment={selectedMchatAssessment}
+          onEdit={(item) => openEditMchatAssessment(item)}
         />
       )}
     </div>
