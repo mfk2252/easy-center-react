@@ -1217,6 +1217,100 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
         }));
       }
     });
+  } else if (lookupKey === 'srs') {
+    // SRS-2 Specific Item-to-Goal Engine
+    items.forEach((it) => {
+      const rawScore = responses[it.id] !== undefined ? Number(responses[it.id]) : null;
+      if (rawScore !== null) {
+        // Calculate deficit score: for normal items 3,4 are deficits; for reverse items 1,2 are deficits
+        let scoredVal = rawScore;
+        if (it.isReverse) {
+          scoredVal = 5 - rawScore;
+        }
+
+        // ScoredVal >= 3 represents significant social impairment / deficit
+        if (scoredVal >= 3) {
+          const priorityRank = scoredVal === 4 ? 1 : 2;
+          const priority = scoredVal === 4 ? 'critical' : 'high';
+          const domainName = it.domainId === 'awr' ? 'الوعي الاجتماعي'
+            : it.domainId === 'cog' ? 'الإدراك الاجتماعي'
+            : it.domainId === 'com' ? 'التواصل الاجتماعي'
+            : it.domainId === 'mot' ? 'الدافعية الاجتماعية'
+            : 'السلوكيات المقيدة والتكرارية';
+
+          const baseline = generatePlepBaseline(
+            it.text,
+            scoredVal,
+            4,
+            `قصوراً في (${domainName} - ${it.text}) بدرجة شدة (${scoredVal}/4)`,
+            'تدخلاً سلوكياً نمائياً فردياً وبرنامج تنمية المهارات الاجتماعية والتواصلية'
+          );
+
+          let goalText = `أن يظهر التلميذ تحسناً ملحوظاً في مهارة (${it.text}) ويمارس السلوك التفاعلي المناسب بنسبة نجاح 80% في المواقف الاجتماعية والصفية.`;
+          if (it.domainId === 'rrb') {
+            goalText = `أن يقلل التلميذ من تكرار سلوك (${it.text}) بنسبة انخفاض 75% مع استخدام البدائل الحسية والسلوكية المقبولة.`;
+          } else if (it.domainId === 'com' || it.domainId === 'mot') {
+            goalText = `أن يبادر التلميذ بالتواصل والتفاعل الإيجابي مع الأقران والبالغين بدلاً من (${it.text}) في 4 من أصل 5 مواقف يومية.`;
+          }
+
+          recommended.push(buildGoalItem({
+            code: `SRS2-${it.id.toUpperCase()}`,
+            domain: it.domainId === 'rrb' ? 'behavior' : (it.domainId === 'com' ? 'language' : 'social_skills'),
+            title: `${domainName}: ${it.text.slice(0, 32)}...`,
+            text: goalText,
+            mastery: 'إتقان بنسبة 80% عبر 4 جلسات متتالية',
+            reason: `مشتق من مقياس الاستجابة الاجتماعية SRS-2 (بند ${it.id} - ${domainName}) بدرجة قصور (${scoredVal}/4)`,
+            priorityRank,
+            priority,
+            baseline,
+            durationWeeks: priorityRank === 1 ? 10 : 8,
+          }));
+        }
+      }
+    });
+  } else if (lookupKey === 'gars_3') {
+    // GARS-3 Specific Item-to-Goal Engine
+    items.forEach((it) => {
+      const rawScore = responses[it.id] !== undefined ? Number(responses[it.id]) : null;
+      if (rawScore !== null && rawScore >= 2) {
+        const priorityRank = rawScore === 3 ? 1 : 2;
+        const priority = rawScore === 3 ? 'critical' : 'high';
+        const domainName = it.domainId === 'rb' ? 'السلوكيات المقيدة والتكرارية'
+          : it.domainId === 'si' ? 'التفاعل الاجتماعي'
+          : it.domainId === 'sc' ? 'التواصل الاجتماعي'
+          : it.domainId === 'er' ? 'الاستجابات العاطفية والوجدانية'
+          : it.domainId === 'cs' ? 'الأسلوب المعرفي'
+          : 'الكلام غير الملائم واللغة اللاتكيفية';
+
+        const baseline = generatePlepBaseline(
+          it.text,
+          rawScore,
+          3,
+          `أعراض توحد ملحوظة في (${domainName} - ${it.text}) بدرجة تكرار (${rawScore}/3 - ${rawScore === 3 ? 'كثيراً جداً' : 'أحياناً'})`,
+          'برنامج تحليل السلوك التطبيقي (ABA) واستراتيجيات الدعم البصري والتدخل التواصلي الفردي'
+        );
+
+        let goalText = `أن يقلل التلميذ من ظهور سلوك (${it.text}) بنسبة تحسن 75% مع استخدام البدائل الوظيفية المناسبة.`;
+        if (it.domainId === 'si' || it.domainId === 'sc') {
+          goalText = `أن يظهر التلميذ استجابة تفاعلية ملائمة وتواصلاً وظيفياً بديلاً لـ (${it.text}) بنسبة نجاح 80% في المواقف الصفية.`;
+        } else if (it.domainId === 'er') {
+          goalText = `أن يطبق التلميذ استراتيجيات التهدئة الذاتية والمرونة السلوكية عند التعرض لمثير (${it.text}) بنسبة نجاح 80%.`;
+        }
+
+        recommended.push(buildGoalItem({
+          code: `GARS3-${it.id}`,
+          domain: it.domainId === 'rb' || it.domainId === 'er' ? 'autism_behavior' : (it.domainId === 'ms' || it.domainId === 'sc' ? 'language' : 'social_skills'),
+          title: `${domainName}: بند ${it.id}`,
+          text: goalText,
+          mastery: 'تحقيق المعيار عبر 3 أسابيع متتالية',
+          reason: `مشتق من مقياس جيليام 3 (GARS-3) - بند ${it.id} (${domainName}) بدرجة شدة (${rawScore}/3)`,
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: priorityRank === 1 ? 10 : 8,
+        }));
+      }
+    });
   } else {
     // Other scales (PEP-3, Vineland, Portage, SRS, etc.)
     items.forEach((it) => {

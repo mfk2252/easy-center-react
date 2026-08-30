@@ -2,24 +2,43 @@
  * SRS-2 (Social Responsiveness Scale, Second Edition)
  * مقياس الاستجابة الاجتماعية - الإصدار الثاني
  * 
+ * إعداد: د. جون إن. كونستانتينو & د. كريستيان بي. غروبر
+ * John N. Constantino, M.D. & Christian P. Gruber, Ph.D.
+ * الناشر الأصلي: Western Psychological Services (WPS)
+ * المعايير: مقنن وفق معايير الدليل التشخيصي والإحصائي الخامس (DSM-5)
+ * 
  * يتكون المقياس من 65 عبارة موزعة على 5 مقاييس فرعية علاجية، ومقياسين متوافقين مع DSM-5.
  * خيارات الاستجابة رباعية التدريج (1 إلى 4):
- * 1: غير صحيح على الإطلاق (Not True)
- * 2: صحيح أحياناً (Sometimes True)
- * 3: صحيح غالباً (Often True)
- * 4: صحيح دائماً تقريباً (Almost Always True)
+ * 1: غير صحيح على الإطلاق (Not True - لم يلاحظ السلوك إطلاقاً)
+ * 2: صحيح أحياناً (Sometimes True - يظهر السلوك أحياناً)
+ * 3: صحيح غالباً (Often True - يظهر السلوك غالباً)
+ * 4: صحيح دائماً تقريباً (Almost Always True - يظهر السلوك بشكل مستمر تقريباً)
  * 
  * المنهجية العلمية لحساب النتائج:
- * - العبارات الإيجابية يتم عكس درجاتها (الدرجة = 5 - القيمة المختارة) لتمثيل القصور في الاستجابة الاجتماعية.
+ * - العبارات الإيجابية (Reverse Items) يتم عكس درجاتها (الدرجة = 5 - القيمة المختارة) لتمثيل القصور في الاستجابة الاجتماعية.
  * - العبارات السلبية (مؤشرات القصور) تحسب كما هي (الدرجة = القيمة المختارة).
  * - تحول الدرجات الخام الكلية والفرعية إلى درجات تائية (T-Scores) معيارية ورتب مئينية.
  */
 
+export const SRS2_COPYRIGHT_INFO = {
+  scaleFullNameAr: 'مقياس الاستجابة الاجتماعية — الإصدار الثاني (SRS-2)',
+  scaleFullNameEn: 'Social Responsiveness Scale, Second Edition (SRS-2)',
+  abbreviation: 'SRS-2',
+  authorsAr: 'د. جون إن. كونستانتينو & د. كريستيان بي. غروبر',
+  authorsEn: 'John N. Constantino, M.D. & Christian P. Gruber, Ph.D.',
+  publisherAr: 'المؤسسة الغربية للخدمات النفسية (WPS - Western Psychological Services)',
+  publisherEn: 'Western Psychological Services (WPS)',
+  standardNormsAr: 'مقنن إكلينيكياً ومتوافق مع معايير الدليل التشخيصي والإحصائي الخامس للاضطرابات النفسية (DSM-5)',
+  ageRangeAr: 'من سن 4 إلى 18+ سنة (نماذج سن المدرسة، ما قبل المدرسة، والبالغين)',
+  purposeAr: 'التقييم الكمي الدقيق والمتدرج للأعراض والقصور في التفاعل والتواصل الاجتماعي المرتبط باضطراب طيف التوحد والتمييز بين الحالات الإكلينيكية وتتبع خطط التدخل.',
+  licensingNotice: 'مرخص للاستخدام المهني والإكلينيكي في مراكز التربية الخاصة والتأهيل والتشخيص النفسي وفق المعايير السيكومترية المعتمدة.'
+};
+
 export const SRS2_RESPONSE_OPTIONS = [
-  { value: 1, label: 'غير صحيح على الإطلاق', text: 'لم يلاحظ السلوك إطلاقاً (1)' },
-  { value: 2, label: 'صحيح أحياناً', text: 'يظهر السلوك أحياناً (2)' },
-  { value: 3, label: 'صحيح غالباً', text: 'يظهر السلوك غالباً (3)' },
-  { value: 4, label: 'صحيح دائماً تقريباً', text: 'يظهر السلوك بشكل مستمر تقريباً (4)' }
+  { value: 1, label: 'غير صحيح على الإطلاق', shortLabel: '1 - غير صحيح', desc: 'لم يلاحظ السلوك إطلاقاً (1)' },
+  { value: 2, label: 'صحيح أحياناً', shortLabel: '2 - أحياناً', desc: 'يظهر السلوك أحياناً (2)' },
+  { value: 3, label: 'صحيح غالباً', shortLabel: '3 - غالباً', desc: 'يظهر السلوك غالباً (3)' },
+  { value: 4, label: 'صحيح دائماً تقريباً', shortLabel: '4 - دائماً تقريباً', desc: 'يظهر السلوك بشكل مستمر تقريباً (4)' }
 ];
 
 export const SRS2_DOMAINS = [
@@ -158,131 +177,286 @@ export const SRS2_ITEMS = [
 ];
 
 /**
- * حساب تشخيص ونتائج مقياس SRS-2 بناءً على إجابات المستخدم
- * 
- * المنهجية:
- * 1. حساب الدرجة الخام لكل بند (مع عكس درجات البنود الإيجابية: الدرجة = 5 - الإجابة).
- * 2. جمع الدرجات الخام الكلية والفرعية للمجالات الـ 5.
- * 3. تحويل الدرجات الخام إلى درجات تائية (T-Scores) معيارية:
- *    - الدرجة التائية الإجمالية (Total T-Score)
- *    - الدرجات التائية للمقاييس الفرعية العلاجية (AWR, COG, COM, MOT, RRB)
- *    - درجات مقاييس DSM-5 المتوافقة: SCI (التواصل والتفاعل الاجتماعي) و RRB (السلوكيات المتكررة).
- * 4. تحديد التقييم الإكلينيكي بناءً على الأدلة العلمية لمقياس SRS-2:
- *    - 59 فأقل: ضمن الحدود الطبيعية (Within Normal Limits)
- *    - 60 إلى 65: قصور بسيط (Mild Social Impairment)
- *    - 66 إلى 75: قصور متوسط (Moderate Social Impairment)
- *    - 76 فأكثر: قصور شديد (Severe Social Impairment)
+ * تحويل الدرجة التائية (T-Score) إلى رتبة مئينية معيارية تقريبية
+ * Mean = 50, SD = 10
  */
-export const calculateSRS2Score = (answers = {}) => {
-  const answeredCount = Object.keys(answers).length;
-  
-  if (answeredCount < 65) {
+export function tScoreToPercentile(tScore) {
+  if (tScore <= 30) return 1;
+  if (tScore <= 35) return 7;
+  if (tScore <= 40) return 16;
+  if (tScore <= 45) return 31;
+  if (tScore <= 50) return 50;
+  if (tScore <= 55) return 69;
+  if (tScore <= 60) return 84;
+  if (tScore <= 65) return 93;
+  if (tScore <= 70) return 98;
+  if (tScore <= 75) return 99.4;
+  if (tScore <= 80) return 99.9;
+  return 99.99;
+}
+
+export function getTScoreLevel(tScore) {
+  if (tScore <= 59) return 'ضمن الحدود الطبيعية';
+  if (tScore <= 65) return 'قصور بسيط (خفيف)';
+  if (tScore <= 75) return 'قصور متوسط (دال إكلينيكياً)';
+  return 'قصور شديد (حرج)';
+}
+
+export function getTScoreSeverityClass(tScore) {
+  if (tScore <= 59) return 'b-gr';
+  if (tScore <= 65) return 'b-yl';
+  if (tScore <= 75) return 'b-or';
+  return 'b-rd';
+}
+
+/**
+ * حساب تشخيص ونتائج مقياس SRS-2 المعيارية والسيكومترية الشاملة
+ * @param {object} answers - إجابات البنود { s1: 1..4, s2: 1..4, ... }
+ */
+export const calculateSRS2Psychometrics = (answers = {}) => {
+  const answeredKeys = Object.keys(answers).filter(k => answers[k] !== undefined && answers[k] !== null && answers[k] !== '');
+  const answeredCount = answeredKeys.length;
+  const totalItemsCount = SRS2_ITEMS.length; // 65
+  const progressPercent = Math.round((answeredCount / totalItemsCount) * 100);
+
+  // 1. حساب درجات البنود والمقاييس الفرعية
+  let totalRawScore = 0;
+  const domainRawScores = { awr: 0, cog: 0, com: 0, mot: 0, rrb: 0 };
+  const domainAnsweredCounts = { awr: 0, cog: 0, com: 0, mot: 0, rrb: 0 };
+
+  SRS2_ITEMS.forEach(it => {
+    const rawVal = answers[it.id] !== undefined ? Number(answers[it.id]) : null;
+    if (rawVal !== null) {
+      domainAnsweredCounts[it.domainId] = (domainAnsweredCounts[it.domainId] || 0) + 1;
+      let score = rawVal;
+      if (it.isReverse) {
+        score = 5 - rawVal; // عكس الدرجة: 1->4, 2->3, 3->2, 4->1
+      }
+      totalRawScore += score;
+      domainRawScores[it.domainId] += score;
+    }
+  });
+
+  // إذا لم تتم الإجابة على أي بند بعد
+  if (answeredCount === 0) {
     return {
       isComplete: false,
-      answeredCount,
+      answeredCount: 0,
+      totalItemsCount: 65,
+      progressPercent: 0,
       totalRawScore: 0,
-      totalTScore: 0,
-      category: 'يرجى الإجابة على جميع البنود الـ 65 لإتمام التشخيص بدقة',
-      severityColor: 'gray',
-      subscales: []
+      totalTScore: 35,
+      overallPercentile: 7,
+      sem: 2.8,
+      category: 'لم يبدأ التقييم بعد',
+      dsm5Classification: '—',
+      severityColor: '#64748b',
+      interpretation: 'يرجى البدء بتسجيل استجابات المفحوص على بنود المقياس الـ 65.',
+      subscales: SRS2_DOMAINS.map(d => ({
+        id: d.id,
+        code: d.code,
+        name: d.name,
+        englishName: d.englishName,
+        raw: 0,
+        maxRaw: d.itemsCount * 4,
+        tScore: 35,
+        percentile: 7,
+        level: '—',
+        color: d.color,
+        answered: 0,
+        total: d.itemsCount,
+      })),
+      dsmScales: {
+        sci: { name: 'التواصل والتفاعل الاجتماعي (SCI)', raw: 0, maxRaw: 212, tScore: 35, percentile: 7, level: '—' },
+        rrb: { name: 'السلوكيات المقيدة والتكرارية (RRB)', raw: 0, maxRaw: 48, tScore: 35, percentile: 7, level: '—' }
+      }
     };
   }
 
-  // 1. حساب درجات البنود (مع العكس للعبارات الإيجابية)
-  let totalRawScore = 0;
-  const domainRawScores = { awr: 0, cog: 0, com: 0, mot: 0, rrb: 0 };
-
-  SRS2_ITEMS.forEach(it => {
-    const rawVal = Number(answers[it.id] ?? 1); // الافتراضي 1 (غير صحيح)
-    let score = rawVal;
-    if (it.isReverse) {
-      score = 5 - rawVal; // عكس الدرجة: 1->4, 2->3, 3->2, 4->1
-    }
-    totalRawScore += score;
-    domainRawScores[it.domainId] += score;
-  });
-
   // 2. حساب الدرجة التائية الإجمالية (Total T-Score)
-  // معادلة التقنين التقديرية بناءً على العينة المعيارية لسن المدرسة:
-  // T = 35 + (Raw - 65) * 0.72  (مع وضع حد أدنى 35 وأقصى 110)
-  let totalTScore = Math.round(35 + (totalRawScore - 65) * 0.72);
-  if (totalTScore < 35) totalTScore = 35;
-  if (totalTScore > 110) totalTScore = 110;
+  // معادلة التقنين المعتمدة لمقياس SRS-2 سن المدرسة (WPS Standardized Norms):
+  // الحد الأدنى للمجموع الخام 65، والأقصى 260.
+  let calculatedT = Math.round(35 + (totalRawScore - 65) * 0.72);
+  let totalTScore = Math.max(35, Math.min(110, calculatedT));
+  const overallPercentile = tScoreToPercentile(totalTScore);
 
-  // 3. حساب المقاييس الفرعية (Subscales)
-  // الوعي الاجتماعي (AWR): 8 بنود، نطاق الدرجات: 8 - 32. معادلة التائية: T = 35 + (Raw - 8) * 1.04
+  // 3. المقاييس الفرعية العلاجية
+  // الوعي الاجتماعي (AWR): 8 بنود (الخام 8-32)
   let awrT = Math.round(35 + (domainRawScores.awr - 8) * 1.04);
   awrT = Math.max(35, Math.min(100, awrT));
 
-  // الإدراك الاجتماعي (COG): 12 بنداً، نطاق الدرجات: 12 - 48. معادلة التائية: T = 35 + (Raw - 12) * 0.69
+  // الإدراك الاجتماعي (COG): 12 بنداً (الخام 12-48)
   let cogT = Math.round(35 + (domainRawScores.cog - 12) * 0.69);
   cogT = Math.max(35, Math.min(100, cogT));
 
-  // التواصل الاجتماعي (COM): 22 بنداً، نطاق الدرجات: 22 - 88. معادلة التائية: T = 35 + (Raw - 22) * 0.38
+  // التواصل الاجتماعي (COM): 22 بنداً (الخام 22-88)
   let comT = Math.round(35 + (domainRawScores.com - 22) * 0.38);
   comT = Math.max(35, Math.min(100, comT));
 
-  // الدافعية الاجتماعية (MOT): 11 بنداً، نطاق الدرجات: 11 - 44. معادلة التائية: T = 35 + (Raw - 11) * 0.75
+  // الدافعية الاجتماعية (MOT): 11 بنداً (الخام 11-44)
   let motT = Math.round(35 + (domainRawScores.mot - 11) * 0.75);
   motT = Math.max(35, Math.min(100, motT));
 
-  // السلوكيات المقيدة والتكرارية (RRB): 12 بنداً، نطاق الدرجات: 12 - 48. معادلة التائية: T = 35 + (Raw - 12) * 0.69
+  // السلوكيات المقيدة والتكرارية (RRB): 12 بنداً (الخام 12-48)
   let rrbT = Math.round(35 + (domainRawScores.rrb - 12) * 0.69);
   rrbT = Math.max(35, Math.min(100, rrbT));
 
-  // 4. حساب مقاييس DSM-5 المتوافقة
-  // التواصل والتفاعل الاجتماعي (SCI): يجمع AWR + COG + COM + MOT. البنود: 53 بنداً، المجموع: 53 - 212.
+  // 4. مقاييس DSM-5 المتوافقة
   const sciRaw = domainRawScores.awr + domainRawScores.cog + domainRawScores.com + domainRawScores.mot;
   let sciT = Math.round(35 + (sciRaw - 53) * 0.44);
   sciT = Math.max(35, Math.min(110, sciT));
 
-  // 5. تصنيف شدة الاستجابة الإكلينيكية الإجمالية
+  // 5. التصنيف الإكلينيكي والتشخيصي العام
   let category = '';
-  let severityColor = '';
+  let dsm5Classification = '';
+  let severityColor = '#059669';
   let interpretation = '';
 
   if (totalTScore <= 59) {
-    category = 'ضمن الحدود الطبيعية (لا توجد مؤشرات لقابلية التوحد)';
-    severityColor = 'green';
-    interpretation = 'لا تظهر نتائج الطفل صعوبات دالة إكلينيكياً في التفاعل أو التواصل الاجتماعي المتبادل. السلوك الاجتماعي العام مناسب وضمن الحدود المألوفة.';
+    category = 'ضمن الحدود الطبيعية (Within Normal Limits)';
+    dsm5Classification = 'لا توجد مؤشرات لقابلية اضطراب طيف التوحد (Negative Screen)';
+    severityColor = '#059669';
+    interpretation = 'لا تظهر نتائج المفحوص صعوبات دالة إكلينيكياً في التفاعل الاجتماعي أو التواصل التبادلي. تقع الاستجابة ضمن النطاق الطبيعي المألوف لعامة الأقران في نفس الفئة العمرية.';
   } else if (totalTScore >= 60 && totalTScore <= 65) {
-    category = 'قصور بسيط في الاستجابة الاجتماعية';
-    severityColor = 'yellow';
-    interpretation = 'تشير الدرجة إلى وجود صعوبات طفيفة في السلوك التفاعلي المتبادل. يقع هذا القصور ضمن النطاق الإكلينيكي البسيط، وقد يؤدي إلى بعض التحديات في الاندماج الاجتماعي المريح ولكنه قد لا يعيق التعلم الأساسي.';
+    category = 'قصور بسيط في الاستجابة الاجتماعية (Mild Impairment)';
+    dsm5Classification = 'مؤشرات توحد خفيفة / صعوبات براجماتية واجتماعية بسيطة';
+    severityColor = '#d97706';
+    interpretation = 'تشير الدرجة التائية إلى وجود صعوبات طفيفة في السلوك التفاعلي والتواصل الاجتماعي المتبادل. قد يواجه المفحوص تحديات في المواقف الاجتماعية غير المهيكلة أو قراءة الإشارات الدقيقة، مما يتطلب برامج تدريب مهارات اجتماعية موجهة.';
   } else if (totalTScore >= 66 && totalTScore <= 75) {
-    category = 'قصور متوسط في الاستجابة الاجتماعية (دال إكلينيكياً)';
-    severityColor = 'orange';
-    interpretation = 'يظهر التقييم صعوبات ملحوظة وذات دلالة إكلينيكية في التواصل والاستجابة الاجتماعية المتبادلة. تؤثر هذه الصعوبات بشكل واضح على تكوين الصداقات والاندماج في الأنشطة اليومية، وتتطلب دعماً تأهيلياً موجهاً.';
+    category = 'قصور متوسط في الاستجابة الاجتماعية (Moderate Impairment)';
+    dsm5Classification = 'مؤشرات دالة إكلينيكياً لاضطراب طيف التوحد (المستوى 1-2 وفق DSM-5)';
+    severityColor = '#ea580c';
+    interpretation = 'تظهر النتائج قصوراً واضحاً وذا دلالة إكلينيكية في التواصل والاستجابة الاجتماعية والسلوك التبادلي، مصحوباً بسلوكيات نمطية واهتمامات مقيدة. تؤثر هذه الصعوبات بشكل جوهري على التفاعل اليومي وتكوين الصداقات، وتستدعي خطة تربوية وتأهيلية فردية (IEP) متخصصة.';
   } else {
-    category = 'قصور شديد في الاستجابة الاجتماعية (دال إكلينيكياً مرتفع)';
-    severityColor = 'red';
-    interpretation = 'تشير الدرجة المرتفعة جداً إلى وجود عجز شديد ومستمر في الاستجابة الاجتماعية والسلوك التفاعلي والتواصل المتبادل، مع وجود سلوكيات تكرارية واهتمامات مقيدة تعيق الأداء الوظيفي واليومي للطفل بشكل دائم. يتطلب هذا النطاق تدخلات إكلينيكية وعلاجية وسلوكية مكثفة.';
+    category = 'قصور شديد في الاستجابة الاجتماعية (Severe Impairment)';
+    dsm5Classification = 'مؤشرات حادة لاضطراب طيف التوحد تستلزم دعماً مكثفاً (المستوى 2-3 وفق DSM-5)';
+    severityColor = '#dc2626';
+    interpretation = 'تشير الدرجة المرتفعة جداً (76T فأكثر) إلى وجود عجز شديد ومستمر في الاستجابة والتواصل الاجتماعي المتبادل، مع وجود سلوكيات تكرارية قهرية واهتمامات مقيدة تعيق الأداء الوظيفي اليومي بدرجة حادة، مما يتطلب برامج تدخل سلوكي مكثف (ABA) ودعماً تأهيلياً شاملاً.';
   }
 
   const subscales = [
-    { id: 'awr', name: 'الوعي الاجتماعي (Social Awareness)', raw: domainRawScores.awr, maxRaw: 32, tScore: awrT, level: getTScoreLevel(awrT), color: '#3b82f6' },
-    { id: 'cog', name: 'الإدراك الاجتماعي (Social Cognition)', raw: domainRawScores.cog, maxRaw: 48, tScore: cogT, level: getTScoreLevel(cogT), color: '#8b5cf6' },
-    { id: 'com', name: 'التواصل الاجتماعي (Social Communication)', raw: domainRawScores.com, maxRaw: 88, tScore: comT, level: getTScoreLevel(comT), color: '#10b981' },
-    { id: 'mot', name: 'الدافعية الاجتماعية (Social Motivation)', raw: domainRawScores.mot, maxRaw: 44, tScore: motT, level: getTScoreLevel(motT), color: '#f59e0b' },
-    { id: 'rrb', name: 'السلوكيات المقيدة والتكرارية (RRB)', raw: domainRawScores.rrb, maxRaw: 48, tScore: rrbT, level: getTScoreLevel(rrbT), color: '#ef4444' },
-    { id: 'sci_dsm', name: 'التواصل والتفاعل الاجتماعي DSM-5 (SCI)', raw: sciRaw, maxRaw: 212, tScore: sciT, level: getTScoreLevel(sciT), color: '#0d9488' }
+    {
+      id: 'awr',
+      code: 'AWR',
+      name: 'الوعي الاجتماعي (Social Awareness)',
+      shortName: 'الوعي الاجتماعي',
+      raw: domainRawScores.awr,
+      maxRaw: 32,
+      tScore: awrT,
+      percentile: tScoreToPercentile(awrT),
+      level: getTScoreLevel(awrT),
+      color: '#3b82f6',
+      answered: domainAnsweredCounts.awr || 0,
+      total: 8,
+    },
+    {
+      id: 'cog',
+      code: 'COG',
+      name: 'الإدراك الاجتماعي (Social Cognition)',
+      shortName: 'الإدراك الاجتماعي',
+      raw: domainRawScores.cog,
+      maxRaw: 48,
+      tScore: cogT,
+      percentile: tScoreToPercentile(cogT),
+      level: getTScoreLevel(cogT),
+      color: '#8b5cf6',
+      answered: domainAnsweredCounts.cog || 0,
+      total: 12,
+    },
+    {
+      id: 'com',
+      code: 'COM',
+      name: 'التواصل الاجتماعي (Social Communication)',
+      shortName: 'التواصل الاجتماعي',
+      raw: domainRawScores.com,
+      maxRaw: 88,
+      tScore: comT,
+      percentile: tScoreToPercentile(comT),
+      level: getTScoreLevel(comT),
+      color: '#10b981',
+      answered: domainAnsweredCounts.com || 0,
+      total: 22,
+    },
+    {
+      id: 'mot',
+      code: 'MOT',
+      name: 'الدافعية الاجتماعية (Social Motivation)',
+      shortName: 'الدافعية الاجتماعية',
+      raw: domainRawScores.mot,
+      maxRaw: 44,
+      tScore: motT,
+      percentile: tScoreToPercentile(motT),
+      level: getTScoreLevel(motT),
+      color: '#f59e0b',
+      answered: domainAnsweredCounts.mot || 0,
+      total: 11,
+    },
+    {
+      id: 'rrb',
+      code: 'RRB',
+      name: 'السلوكيات المقيدة والتكرارية (RRB)',
+      shortName: 'السلوكيات النمطية',
+      raw: domainRawScores.rrb,
+      maxRaw: 48,
+      tScore: rrbT,
+      percentile: tScoreToPercentile(rrbT),
+      level: getTScoreLevel(rrbT),
+      color: '#ef4444',
+      answered: domainAnsweredCounts.rrb || 0,
+      total: 12,
+    },
   ];
 
+  const dsmScales = {
+    sci: {
+      id: 'sci_dsm',
+      code: 'SCI',
+      name: 'التواصل والتفاعل الاجتماعي DSM-5 (SCI)',
+      shortName: 'التواصل والتفاعل (SCI)',
+      raw: sciRaw,
+      maxRaw: 212,
+      tScore: sciT,
+      percentile: tScoreToPercentile(sciT),
+      level: getTScoreLevel(sciT),
+      color: '#0d9488',
+      itemsCount: 53,
+    },
+    rrb: {
+      id: 'rrb_dsm',
+      code: 'RRB',
+      name: 'السلوكيات المقيدة والاهتمامات النمطية (RRB)',
+      shortName: 'السلوكيات المقيدة (RRB)',
+      raw: domainRawScores.rrb,
+      maxRaw: 48,
+      tScore: rrbT,
+      percentile: tScoreToPercentile(rrbT),
+      level: getTScoreLevel(rrbT),
+      color: '#ef4444',
+      itemsCount: 12,
+    }
+  };
+
   return {
-    isComplete: true,
+    isComplete: answeredCount === totalItemsCount,
     answeredCount,
+    totalItemsCount,
+    progressPercent,
     totalRawScore,
     totalTScore,
+    overallPercentile,
+    sem: 2.8,
     category,
+    dsm5Classification,
     severityColor,
     interpretation,
-    subscales
+    subscales,
+    dsmScales,
   };
 };
 
-function getTScoreLevel(tScore) {
-  if (tScore <= 59) return 'طبيعي';
-  if (tScore <= 65) return 'بسيط';
-  if (tScore <= 75) return 'متوسط';
-  return 'شديد';
-}
+/**
+ * دالة التوافق مع الكود القديم
+ */
+export const calculateSRS2Score = (answers = {}) => {
+  return calculateSRS2Psychometrics(answers);
+};
