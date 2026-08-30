@@ -1057,7 +1057,7 @@ export default function SRS2AssessmentModal({
                                 fontWeight: 700,
                               }}
                             >
-                              {domain?.code} · {domain?.name.split(' ')[0]}
+                              {domain?.code} · {domain?.name ? domain.name.split(' ')[0] : ''}
                             </span>
                           </td>
 
