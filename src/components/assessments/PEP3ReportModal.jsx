@@ -87,7 +87,7 @@ export default function PEP3ReportModal({
         <tr style="border-bottom:1px solid #e2e8f0;background:${score === 0 ? '#fef2f2' : score === 1 ? '#fffbeb' : '#ffffff'};">
           <td style="padding:6px 8px;text-align:center;font-weight:bold;color:#64748b;">${idx + 1}</td>
           <td style="padding:6px 8px;font-weight:600;font-size:12px;">${it.text}</td>
-          <td style="padding:6px 8px;text-align:center;font-size:11px;color:#64748b;">${domMeta?.name.split(' ')[0] || ''}</td>
+          <td style="padding:6px 8px;text-align:center;font-size:11px;color:#64748b;">${domMeta?.name ? domMeta.name.split(' ')[0] : ''}</td>
           <td style="padding:6px 8px;text-align:center;font-weight:bold;color:${score === 2 ? '#16a34a' : score === 1 ? '#ca8a04' : score === 0 ? '#dc2626' : '#94a3b8'};">
             ${score !== null ? responseLabels[score] || score : '—'}
           </td>
@@ -755,7 +755,7 @@ ${assessment.clinicalSummary || psychometrics.interpretation}
                         </td>
                         <td style={{ padding: '8px', textAlign: 'center' }}>
                           <span style={{ fontSize: '0.7rem', color: domMeta?.color, fontWeight: 700 }}>
-                            {domMeta?.name.split(' ')[0]}
+                            {domMeta?.name ? domMeta.name.split(' ')[0] : ''}
                           </span>
                         </td>
                         <td style={{ padding: '8px', textAlign: 'center', fontWeight: 800 }}>

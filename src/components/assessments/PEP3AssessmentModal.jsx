@@ -1004,7 +1004,7 @@ ${psychometrics.interpretation}`;
                             display: 'inline-block',
                           }}
                         >
-                          {domain?.code} · {domain?.name.split(' ')[0]}
+                          {domain?.code} · {domain?.name ? domain.name.split(' ')[0] : ''}
                         </span>
                       </td>
 

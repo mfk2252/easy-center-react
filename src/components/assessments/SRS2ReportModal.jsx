@@ -836,7 +836,7 @@ export default function SRS2ReportModal({
                               fontWeight: 700,
                             }}
                           >
-                            {domMeta?.code} · {domMeta?.name.split(' ')[0]}
+                            {domMeta?.code} · {domMeta?.name ? domMeta.name.split(' ')[0] : ''}
                           </span>
                         </td>
                         <td style={{ padding: '6px 10px', textAlign: 'center', fontWeight: 700, color: '#047857', fontSize: '0.76rem' }}>
