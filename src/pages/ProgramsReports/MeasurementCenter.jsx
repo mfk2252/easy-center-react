@@ -26,6 +26,8 @@ import SensoryIntegrationAssessmentModal from '../../components/assessments/Sens
 import SensoryIntegrationReportModal from '../../components/assessments/SensoryIntegrationReportModal';
 import SensoryChecklistAssessmentModal from '../../components/assessments/SensoryChecklistAssessmentModal';
 import SensoryChecklistReportModal from '../../components/assessments/SensoryChecklistReportModal';
+import MChatAssessmentModal from '../../components/assessments/MChatAssessmentModal';
+import MChatReportModal from '../../components/assessments/MChatReportModal';
 
 const EMPTY_MEASURE = {
   id: '',
@@ -108,6 +110,11 @@ export default function MeasurementCenter({ onBack }) {
   const [sensoryReportOpen, setSensoryReportOpen] = useState(false);
   const [selectedSensoryAssessment, setSelectedSensoryAssessment] = useState(null);
 
+  // M-CHAT-R/F Specific Modals
+  const [mchatModalOpen, setMchatModalOpen] = useState(false);
+  const [mchatReportOpen, setMchatReportOpen] = useState(false);
+  const [selectedMChatAssessment, setSelectedMChatAssessment] = useState(null);
+
   function reload() {
     setStudents(lsGet('students') || []);
     setEmps(lsGet('employees') || []);
@@ -180,6 +187,11 @@ export default function MeasurementCenter({ onBack }) {
   }
 
   function openAssessmentModal(scaleId) {
+    if (scaleId === 'mchat' || scaleId === 'mchat_r_f' || scaleId === 'mchat_r') {
+      setSelectedMChatAssessment(null);
+      setMchatModalOpen(true);
+      return;
+    }
     if (scaleId === 'cars') {
       setCarsModalOpen(true);
       return;
@@ -362,6 +374,7 @@ export default function MeasurementCenter({ onBack }) {
             <div style={{ padding: 24, textAlign: 'center', color: 'var(--g5)' }}>لا توجد تقييمات مسجلة بعد.</div>
           ) : (
             assessments.map(item => {
+              const isMChat = item.measureId === 'mchat_r_f' || item.measureId === 'mchat' || item.scaleId === 'mchat_r_f' || item.scaleType === 'mchat_r_f';
               const isCars = item.measureId === 'cars' || item.scaleType === 'cars2';
               const isLdes = item.measureId === 'learning_difficulties' || item.scaleType === 'learning_difficulties' || item.measureId === 'ldes';
               const isDevLd = item.measureId === 'dev_learning_difficulties' || item.scaleType === 'dev_learning_difficulties' || item.measureId === 'dev_ld_preschool' || item.scaleType === 'dev_ld_preschool';
@@ -374,6 +387,7 @@ export default function MeasurementCenter({ onBack }) {
                   <div>
                     <div style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span>{item.measureName || 'مقياس'}</span>
+                      {isMChat && <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.68rem', fontWeight: 800 }}>M-CHAT-R/F</span>}
                       {isCars && <span className="bdg b-bl" style={{ fontSize: '.68rem' }}>CARS-2</span>}
                       {isLdes && <span className="bdg" style={{ background: '#fef3c7', color: '#b45309', fontSize: '.68rem', fontWeight: 800 }}>LDES</span>}
                       {isDevLd && <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontSize: '.68rem', fontWeight: 800 }}>صعوبات الروضة</span>}
@@ -388,6 +402,19 @@ export default function MeasurementCenter({ onBack }) {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span className="bdg b-cy">الدرجة: {item.score ?? 0}</span>
+                    {isMChat && (
+                      <button
+                        type="button"
+                        className="btn btn-xs"
+                        style={{ background: '#2563eb', color: '#fff', fontWeight: 800 }}
+                        onClick={() => {
+                          setSelectedMChatAssessment(item);
+                          setMchatReportOpen(true);
+                        }}
+                      >
+                        📄 تقرير M-CHAT-R/F
+                      </button>
+                    )}
                     {isCars && (
                       <button
                         type="button"
@@ -636,6 +663,30 @@ export default function MeasurementCenter({ onBack }) {
           isOpen={sensoryReportOpen}
           onClose={() => setSensoryReportOpen(false)}
           assessment={selectedSensoryAssessment}
+        />
+      )}
+
+      {/* M-CHAT-R/F MODALS */}
+      {mchatModalOpen && (
+        <MChatAssessmentModal
+          isOpen={mchatModalOpen}
+          onClose={() => setMchatModalOpen(false)}
+          onSaved={() => reload()}
+          students={students}
+          emps={emps}
+          initialData={selectedMChatAssessment}
+        />
+      )}
+
+      {mchatReportOpen && selectedMChatAssessment && (
+        <MChatReportModal
+          isOpen={mchatReportOpen}
+          onClose={() => setMchatReportOpen(false)}
+          assessment={selectedMChatAssessment}
+          onEdit={(ass) => {
+            setSelectedMChatAssessment(ass);
+            setMchatModalOpen(true);
+          }}
         />
       )}
 

@@ -9,6 +9,7 @@ import { SENSORY_INTEGRATION_ITEMS, calculateSensoryIntegrationScore } from '../
 import { SENSORY_CHECKLIST_ITEMS, calculateSensoryChecklistScore } from '../data/sensoryChecklistData';
 
 import { CONNERS_PARENT_ITEMS, calculateConnersParentScore } from "../data/connersParentData";
+import { MCHAT_ITEMS } from '../data/mchatData';
 
 export const MEASUREMENT_CATEGORIES = [
   {
@@ -444,6 +445,23 @@ const SRS_ITEMS = generateItems('s', 65);
 
 const DEFAULT_SCALE_LIBRARY = [
   // 1. Autism Spectrum Scales (اضطرابات طيف التوحد)
+  {
+    id: 'mchat_r_f',
+    name: 'قائمة تفقد التوحد المعدلة (M-CHAT-R/F)',
+    nameEn: 'M-CHAT-R/F (Modified Checklist for Autism in Toddlers, Revised with Follow-Up)',
+    category: 'autism',
+    description: 'الأداة العالمية المقننة للمسح والكشف المبكر عن طيف التوحد للأطفال من عمر 16 إلى 30 شهراً — 20 بنداً تشخيصياً مع تحديد مستويات الخطر الإكلينيكي والمقابلة التتبعية',
+    icon: '🧩',
+    color: '#2563eb',
+    scoreMode: 'sum',
+    responseType: 'yesno',
+    minValue: 0,
+    maxValue: 1,
+    maxScore: 20,
+    items: MCHAT_ITEMS,
+    thresholdText: '0-2: خطر منخفض (Low Risk) | 3-7: خطر متوسط (Medium Risk) | 8-20: خطر مرتفع (High Risk)',
+    isDefault: true,
+  },
   {
     id: 'cars',
     name: 'كارز (CARS-2)',
