@@ -33,6 +33,40 @@ const EMPTY_SRS2_FORM = {
   recommendations: '',
 };
 
+function extractScores(data) {
+  if (!data) return {};
+  if (data.scores && typeof data.scores === 'object') return data.scores;
+  if (data.results && typeof data.results === 'object') return data.results;
+  if (data.answers && typeof data.answers === 'object') return data.answers;
+  if (data.items && typeof data.items === 'object') return data.items;
+  return {};
+}
+
+function extractItemNotes(data) {
+  if (!data) return {};
+  if (data.itemNotes && typeof data.itemNotes === 'object') return data.itemNotes;
+  return {};
+}
+
+function normalizeFormState(data, defaultUser) {
+  if (!data) {
+    return {
+      ...EMPTY_SRS2_FORM,
+      examinerName: defaultUser?.name || '',
+      date: todayStr(),
+    };
+  }
+  return {
+    ...EMPTY_SRS2_FORM,
+    ...data,
+    scores: extractScores(data),
+    itemNotes: extractItemNotes(data),
+    studentName: data.studentName || data.stuName || '',
+    examinerName: data.examinerName || defaultUser?.name || '',
+    date: data.date || data.assessmentDate || todayStr(),
+  };
+}
+
 export default function SRS2AssessmentModal({
   isOpen,
   onClose,
@@ -43,21 +77,7 @@ export default function SRS2AssessmentModal({
 }) {
   const { toast, currentUser } = useApp();
 
-  const [form, setForm] = useState(() => {
-    if (initialData) {
-      return {
-        ...EMPTY_SRS2_FORM,
-        ...initialData,
-        scores: initialData.results || initialData.scores || {},
-        itemNotes: initialData.itemNotes || {},
-      };
-    }
-    return {
-      ...EMPTY_SRS2_FORM,
-      examinerName: currentUser?.name || '',
-      date: todayStr(),
-    };
-  });
+  const [form, setForm] = useState(() => normalizeFormState(initialData, currentUser));
 
   const [activeDomainFilter, setActiveDomainFilter] = useState('all');
   const [showCopyrightDetails, setShowCopyrightDetails] = useState(false);
@@ -66,20 +86,7 @@ export default function SRS2AssessmentModal({
 
   useEffect(() => {
     if (isOpen) {
-      if (initialData) {
-        setForm({
-          ...EMPTY_SRS2_FORM,
-          ...initialData,
-          scores: initialData.results || initialData.scores || {},
-          itemNotes: initialData.itemNotes || {},
-        });
-      } else {
-        setForm({
-          ...EMPTY_SRS2_FORM,
-          examinerName: currentUser?.name || '',
-          date: todayStr(),
-        });
-      }
+      setForm(normalizeFormState(initialData, currentUser));
     }
   }, [isOpen, initialData, currentUser]);
 
@@ -121,34 +128,41 @@ export default function SRS2AssessmentModal({
 
   // Real-time Psychometrics Calculation
   const psychometrics = useMemo(() => {
-    return calculateSRS2Psychometrics(form.scores);
+    return calculateSRS2Psychometrics(form.scores || {});
   }, [form.scores]);
 
   const filteredItems = useMemo(() => {
-    if (activeDomainFilter === 'all') return SRS2_ITEMS;
-    return SRS2_ITEMS.filter(it => it.domainId === activeDomainFilter);
+    const items = SRS2_ITEMS || [];
+    if (activeDomainFilter === 'all') return items;
+    return items.filter(it => it.domainId === activeDomainFilter);
   }, [activeDomainFilter]);
 
   if (!isOpen) return null;
 
   function handleScoreSelect(itemId, scoreValue) {
-    setForm(prev => ({
-      ...prev,
-      scores: {
-        ...prev.scores,
-        [itemId]: Number(scoreValue),
-      },
-    }));
+    setForm(prev => {
+      const currentScores = prev.scores || {};
+      return {
+        ...prev,
+        scores: {
+          ...currentScores,
+          [itemId]: Number(scoreValue),
+        },
+      };
+    });
   }
 
   function handleItemNoteChange(itemId, noteText) {
-    setForm(prev => ({
-      ...prev,
-      itemNotes: {
-        ...prev.itemNotes,
-        [itemId]: noteText,
-      },
-    }));
+    setForm(prev => {
+      const currentNotes = prev.itemNotes || {};
+      return {
+        ...prev,
+        itemNotes: {
+          ...currentNotes,
+          [itemId]: noteText,
+        },
+      };
+    });
   }
 
   function autoFillSample(level = 'mild') {
@@ -967,132 +981,145 @@ export default function SRS2AssessmentModal({
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredItems.map(it => {
-                    const domain = SRS2_DOMAINS.find(d => d.id === it.domainId);
-                    const currentScore = form.scores[it.id];
-                    const note = form.itemNotes[it.id] || '';
+                  {(() => {
+                    const safeScores = form.scores || {};
+                    const safeNotes = form.itemNotes || {};
 
-                    // For standard items: 3, 4 are severe deficits
-                    // For reverse items: 1, 2 are severe deficits
-                    let isSevereDeficit = false;
-                    if (currentScore !== undefined) {
-                      const scoredVal = it.isReverse ? 5 - Number(currentScore) : Number(currentScore);
-                      isSevereDeficit = scoredVal >= 3;
+                    if (filteredItems.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: 'var(--text-sub)', fontSize: '0.86rem' }}>
+                            ⚠️ لا توجد بنود مطابقة لهذه التصفية. يرجى اختيار مجال آخر أو اختيار "جميع البنود (65)".
+                          </td>
+                        </tr>
+                      );
                     }
 
-                    return (
-                      <tr
-                        key={it.id}
-                        style={{
-                          borderBottom: '1px solid var(--border-color)',
-                          background: isSevereDeficit
-                            ? (it.isReverse ? 'rgba(239, 68, 68, 0.05)' : 'rgba(239, 68, 68, 0.07)')
-                            : (currentScore !== undefined ? 'rgba(13, 148, 136, 0.03)' : 'transparent'),
-                        }}
-                      >
-                        {/* Item ID */}
-                        <td style={{ padding: '8px 6px', textAlign: 'center', fontWeight: 800, color: 'var(--text-sub)' }}>
-                          {it.id.replace('s', '')}
-                        </td>
+                    return filteredItems.map(it => {
+                      const domain = SRS2_DOMAINS.find(d => d.id === it.domainId);
+                      const currentScore = safeScores[it.id];
+                      const note = safeNotes[it.id] || '';
 
-                        {/* Item Text */}
-                        <td style={{ padding: '8px 12px', lineHeight: 1.5 }}>
-                          <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>
-                            {it.text}
-                          </div>
-                          {it.isReverse && (
-                            <div style={{ marginTop: 2 }}>
-                              <span
-                                className="bdg"
-                                style={{
-                                  background: '#ecfdf5',
-                                  color: '#047857',
-                                  border: '1px solid #a7f3d0',
-                                  fontSize: '0.66rem',
-                                  fontWeight: 700,
-                                }}
-                                title="عبارة إيجابية تعكس درجاتها سيكومترياً لاحتساب القصور"
-                              >
-                                🔄 بند إيجابي (درجة مقلوبة في المقياس)
-                              </span>
+                      let isSevereDeficit = false;
+                      if (currentScore !== undefined && currentScore !== null) {
+                        const scoredVal = it.isReverse ? 5 - Number(currentScore) : Number(currentScore);
+                        isSevereDeficit = scoredVal >= 3;
+                      }
+
+                      return (
+                        <tr
+                          key={it.id}
+                          style={{
+                            borderBottom: '1px solid var(--border-color)',
+                            background: isSevereDeficit
+                              ? (it.isReverse ? 'rgba(239, 68, 68, 0.05)' : 'rgba(239, 68, 68, 0.07)')
+                              : (currentScore !== undefined && currentScore !== null ? 'rgba(13, 148, 136, 0.03)' : 'transparent'),
+                          }}
+                        >
+                          {/* Item ID */}
+                          <td style={{ padding: '8px 6px', textAlign: 'center', fontWeight: 800, color: 'var(--text-sub)' }}>
+                            {it.id.replace('s', '')}
+                          </td>
+
+                          {/* Item Text */}
+                          <td style={{ padding: '8px 12px', lineHeight: 1.5 }}>
+                            <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>
+                              {it.text}
                             </div>
-                          )}
-                        </td>
-
-                        {/* Domain Badge */}
-                        <td style={{ padding: '8px 6px', textAlign: 'center' }}>
-                          <span
-                            className="bdg"
-                            style={{
-                              background: domain?.bgLight || '#f1f5f9',
-                              color: domain?.color || '#334155',
-                              border: `1px solid ${domain?.borderColor || '#cbd5e1'}`,
-                              fontSize: '0.68rem',
-                              fontWeight: 700,
-                            }}
-                          >
-                            {domain?.code} · {domain?.name.split(' ')[0]}
-                          </span>
-                        </td>
-
-                        {/* Response Options */}
-                        <td style={{ padding: '8px 10px' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
-                            {SRS2_RESPONSE_OPTIONS.map(opt => {
-                              const isSelected = currentScore === opt.value;
-                              return (
-                                <button
-                                  key={opt.value}
-                                  type="button"
-                                  onClick={() => handleScoreSelect(it.id, opt.value)}
+                            {it.isReverse && (
+                              <div style={{ marginTop: 2 }}>
+                                <span
+                                  className="bdg"
                                   style={{
-                                    padding: '6px 4px',
-                                    borderRadius: 6,
-                                    border: isSelected
-                                      ? '2px solid #0d9488'
-                                      : '1px solid var(--border-color)',
-                                    background: isSelected
-                                      ? '#0d9488'
-                                      : 'var(--bg-card)',
-                                    color: isSelected ? '#fff' : 'var(--text-main)',
-                                    fontSize: '0.72rem',
-                                    fontWeight: isSelected ? 800 : 500,
-                                    cursor: 'pointer',
-                                    textAlign: 'center',
-                                    lineHeight: 1.2,
-                                    transition: 'all 0.15s ease',
+                                    background: '#ecfdf5',
+                                    color: '#047857',
+                                    border: '1px solid #a7f3d0',
+                                    fontSize: '0.66rem',
+                                    fontWeight: 700,
                                   }}
-                                  title={opt.desc}
+                                  title="عبارة إيجابية تعكس درجاتها سيكومترياً لاحتساب القصور"
                                 >
-                                  <div>{opt.value}</div>
-                                  <div style={{ fontSize: '0.64rem', opacity: isSelected ? 1 : 0.8 }}>
-                                    {opt.value === 1 ? 'غير صحيح' : opt.value === 2 ? 'أحياناً' : opt.value === 3 ? 'غالباً' : 'دائماً'}
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </td>
+                                  🔄 بند إيجابي (درجة مقلوبة في المقياس)
+                                </span>
+                              </div>
+                            )}
+                          </td>
 
-                        {/* Item Qualitative Note */}
-                        <td style={{ padding: '8px 8px' }}>
-                          <input
-                            type="text"
-                            className="inp"
-                            style={{
-                              width: '100%',
-                              fontSize: '0.74rem',
-                              padding: '4px 6px',
-                              borderRadius: 4,
-                            }}
-                            placeholder="ملاحظة نوعية..."
-                            value={note}
-                            onChange={e => handleItemNoteChange(it.id, e.target.value)}
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          {/* Domain Badge */}
+                          <td style={{ padding: '8px 6px', textAlign: 'center' }}>
+                            <span
+                              className="bdg"
+                              style={{
+                                background: domain?.bgLight || '#f1f5f9',
+                                color: domain?.color || '#334155',
+                                border: `1px solid ${domain?.borderColor || '#cbd5e1'}`,
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                              }}
+                            >
+                              {domain?.code} · {domain?.name.split(' ')[0]}
+                            </span>
+                          </td>
+
+                          {/* Response Options */}
+                          <td style={{ padding: '8px 10px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+                              {SRS2_RESPONSE_OPTIONS.map(opt => {
+                                const isSelected = currentScore === opt.value;
+                                return (
+                                  <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => handleScoreSelect(it.id, opt.value)}
+                                    style={{
+                                      padding: '6px 4px',
+                                      borderRadius: 6,
+                                      border: isSelected
+                                        ? '2px solid #0d9488'
+                                        : '1px solid var(--border-color)',
+                                      background: isSelected
+                                        ? '#0d9488'
+                                        : 'var(--bg-card)',
+                                      color: isSelected ? '#fff' : 'var(--text-main)',
+                                      fontSize: '0.72rem',
+                                      fontWeight: isSelected ? 800 : 500,
+                                      cursor: 'pointer',
+                                      textAlign: 'center',
+                                      lineHeight: 1.2,
+                                      transition: 'all 0.15s ease',
+                                    }}
+                                    title={opt.desc}
+                                  >
+                                    <div>{opt.value}</div>
+                                    <div style={{ fontSize: '0.64rem', opacity: isSelected ? 1 : 0.8 }}>
+                                      {opt.value === 1 ? 'غير صحيح' : opt.value === 2 ? 'أحياناً' : opt.value === 3 ? 'غالباً' : 'دائماً'}
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </td>
+
+                          {/* Item Qualitative Note */}
+                          <td style={{ padding: '8px 8px' }}>
+                            <input
+                              type="text"
+                              className="inp"
+                              style={{
+                                width: '100%',
+                                fontSize: '0.74rem',
+                                padding: '4px 6px',
+                                borderRadius: 4,
+                              }}
+                              placeholder="ملاحظة نوعية..."
+                              value={note}
+                              onChange={e => handleItemNoteChange(it.id, e.target.value)}
+                            />
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })()}
                 </tbody>
               </table>
             </div>
