@@ -707,25 +707,25 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     
     // Prevent duplication: If the autism or speech featured cards are shown at the top,
     // we do not display those scales in the generic bottom list.
-    const isAutismFeatured = selectedCategoryFilter === 'all' || selectedCategoryFilter === 'autism';
-    const isMchatScale = ['mchat', 'mchat_r_f', 'mchat_rf'].includes(s.id);
-    if (isAutismFeatured && isMchatScale) {
-      return false; // User specifically requested to remove M-CHAT-R/F from the bottom list
+    const isAutismFeatured = (selectedCategoryFilter === 'all' || selectedCategoryFilter === 'autism') && !searchTerm;
+    const isAutismScale = ['cars', 'gars', 'gars3', 'srs', 'srs2', 'pep3', 'pep', 'mchat', 'mchat_r_f', 'mchat_rf'].includes(s.id);
+    if (isAutismFeatured && isAutismScale) {
+      return false; 
     }
 
-    const isSpeechFeatured = selectedCategoryFilter === 'all' || selectedCategoryFilter === 'speech_language';
+    const isSpeechFeatured = (selectedCategoryFilter === 'all' || selectedCategoryFilter === 'speech_language') && !searchTerm;
     const isSpeechScale = ['pls5', 'abuhasiba_arabic_lang', 'abuhasiba', 'speech_articulation', 'speech_screening', 'peabody_ppvt', 'ppvt5'].includes(s.id);
     if (isSpeechFeatured && isSpeechScale) {
       return false;
     }
 
-    const isLdFeatured = selectedCategoryFilter === 'all' || selectedCategoryFilter === 'learning_academic';
+    const isLdFeatured = (selectedCategoryFilter === 'all' || selectedCategoryFilter === 'learning_academic') && !searchTerm;
     const isLdScale = ['myklebust_scale', 'sartawi_scale', 'lddrs_battery', 'dev_learning_difficulties', 'dev_ld_preschool', 'learning_difficulties', 'ldes'].includes(s.id);
     if (isLdFeatured && isLdScale) {
       return false;
     }
 
-    const isAdhdFeatured = selectedCategoryFilter === 'all' || selectedCategoryFilter === 'adhd';
+    const isAdhdFeatured = (selectedCategoryFilter === 'all' || selectedCategoryFilter === 'adhd') && !searchTerm;
     const isAdhdScale = ['conners_parent', 'conners'].includes(s.id);
     if (isAdhdFeatured && isAdhdScale) {
       return false;
