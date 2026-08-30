@@ -150,7 +150,7 @@ export default function GARS3ReportModal({
         ` : ''}
 
         <h3 style="color:#0f766e;font-size:15px;margin:20px 0 8px 0;">📑 تفريغ استجابات بنود المقياس (${targetItems.length} بنداً):</h3>
-        <table style="width:100%;border-collapse:collapse;font-size:12px;border:1px solid #cbd5e1;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;border:1px solid #cbd5e1;margin-bottom:24px;">
           <thead style="background:#f1f5f9;">
             <tr>
               <th style="padding:6px 10px;text-align:center;width:40px;">#</th>
@@ -163,6 +163,22 @@ export default function GARS3ReportModal({
             ${itemsHtml}
           </tbody>
         </table>
+
+        <!-- Signatures Section -->
+        <div style="margin-top:30px;padding-top:16px;border-top:1.5px solid #cbd5e1;display:flex;justify-content:space-between;text-align:center;font-size:13px;">
+          <div>
+            <div style="font-weight:bold;margin-bottom:30px;">الأخصائي الفاحص</div>
+            <div>${assessment.examinerName || assessment.specialistName || '.......................'}</div>
+          </div>
+          <div>
+            <div style="font-weight:bold;margin-bottom:30px;">المشرف الفني / الإكلينيكي</div>
+            <div>.......................</div>
+          </div>
+          <div>
+            <div style="font-weight:bold;margin-bottom:30px;">مدير المركز / المدرسة</div>
+            <div>.......................</div>
+          </div>
+        </div>
       </div>
     `;
 

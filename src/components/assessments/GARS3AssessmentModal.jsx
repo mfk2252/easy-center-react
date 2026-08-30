@@ -22,7 +22,7 @@ const EMPTY_GARS3_FORM = {
   raterRelation: 'الأم',
   relationshipDuration: 'سنتان',
   examinerName: '',
-  examinerRole: 'أخصائي نفسي / تشخيص',
+  examinerRole: 'أخصائي نفسي / تشخيص وتعديل سلوك',
   date: todayStr(),
   isVerbal: true, // true: 6 subscales (58 items), false: 4 subscales (44 items)
   notes: '',
@@ -267,15 +267,15 @@ export default function GARS3AssessmentModal({
               </h2>
               <span
                 style={{
-                  fontSize: '.72rem',
-                  padding: '2px 8px',
+                  fontSize: '.74rem',
+                  padding: '3px 10px',
                   borderRadius: 20,
                   background: 'rgba(255, 255, 255, 0.25)',
                   fontWeight: 800,
                   color: '#fff',
                 }}
               >
-                {form.isVerbal ? '6 مقاييس (ناطق)' : '4 مقاييس (غير ناطق)'}
+                {form.isVerbal ? '🗣️ 6 مقاييس فرعية (ناطق)' : '🤫 4 مقاييس فرعية أساسية (غير ناطق)'}
               </span>
             </div>
             <p style={{ margin: '3px 0 0 0', fontSize: '.78rem', opacity: 0.9 }}>
@@ -610,9 +610,9 @@ export default function GARS3AssessmentModal({
                       </span>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: '.76rem', color: 'var(--text-sub)', marginBottom: 3 }}>
-                          المقياس الفرعي: <strong style={{ color: domain?.color }}>{domain?.name}</strong>
+                          المقياس الفرعي: <strong style={{ color: domain?.color }}>{domain?.name} ({domain?.code})</strong>
                         </div>
-                        <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-main)', lineHeight: 1.6 }}>
+                        <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-main)', lineHeight: 1.6 }}>
                           {it.text || it.title}
                         </div>
                       </div>
@@ -623,7 +623,7 @@ export default function GARS3AssessmentModal({
                       <span
                         style={{
                           fontSize: '1rem',
-                          fontWeight: 700,
+                          fontWeight: 800,
                           padding: '3px 10px',
                           borderRadius: 6,
                           background: currentScore !== null ? `${domain?.color || 'var(--pr)'}20` : 'var(--g0)',
@@ -669,7 +669,7 @@ export default function GARS3AssessmentModal({
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                            <span style={{ fontWeight: 600, fontSize: '.88rem', color: isSelected ? domain?.color || '#0d9488' : 'var(--text-main)' }}>
+                            <span style={{ fontWeight: 700, fontSize: '.88rem', color: isSelected ? domain?.color || '#0d9488' : 'var(--text-main)' }}>
                               {opt.label} ({optScore})
                             </span>
                             {isSelected && <span style={{ color: domain?.color || '#0d9488', fontSize: '.9rem', fontWeight: 700 }}>✓</span>}
@@ -787,7 +787,7 @@ export default function GARS3AssessmentModal({
           </div>
 
           <div style={{ display: 'flex', gap: 8 }}>
-            <button type="button" className="btn btn-g" onClick={onClose}>
+            <button type="button" className="btn btn-g" onClick={handleSafeClose}>
               إلغاء
             </button>
             <button
@@ -804,3 +804,4 @@ export default function GARS3AssessmentModal({
     </div>
   );
 }
+
