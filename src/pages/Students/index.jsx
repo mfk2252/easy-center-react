@@ -32,17 +32,17 @@ const STATUS_BADGES = {
 
 // Default Initial Classes (الصفوف)
 const DEFAULT_SECTIONS = [
-  { id: 'sec_autism', name: 'صف اللؤلؤ', type: 'قسم اضطراب طيف التوحد', capacity: 10, supervisorId: '', color: '#1a56db', icon: '🦪', description: 'برامج التأهيل والتدريب للطلاب ذوي طيف التوحد' },
-  { id: 'sec_down', name: 'صف المرجان', type: 'قسم متلازمة داون', capacity: 8, supervisorId: '', color: '#059669', icon: '🪸', description: 'تنمية المهارات الإدراكية والحركية والاجتماعية' },
-  { id: 'sec_early', name: 'صف الزمرد', type: 'قسم التدخل المبكر', capacity: 12, supervisorId: '', color: '#7c3aed', icon: '💎', description: 'الرعاية التأهيلية والتدخل المبكر للأطفال' },
+  { id: 'sec_autism', code: 'C-01', name: 'صف اللؤلؤ', type: 'قسم اضطراب طيف التوحد', capacity: 10, supervisorId: '', color: '#1a56db', icon: '🦪', description: 'برامج التأهيل والتدريب للطلاب ذوي طيف التوحد' },
+  { id: 'sec_down', code: 'C-02', name: 'صف المرجان', type: 'قسم متلازمة داون', capacity: 8, supervisorId: '', color: '#059669', icon: '🪸', description: 'تنمية المهارات الإدراكية والحركية والاجتماعية' },
+  { id: 'sec_early', code: 'C-03', name: 'صف الزمرد', type: 'قسم التدخل المبكر', capacity: 12, supervisorId: '', color: '#7c3aed', icon: '💎', description: 'الرعاية التأهيلية والتدخل المبكر للأطفال' },
 ];
 
 // Default Initial Categories (الفئات والتشخيصات)
 const DEFAULT_CATEGORIES = [
-  { id: 'cat_autism', name: 'اضطراب طيف التوحد', icon: '🧩', description: 'فئة متخصصة في التأهيل السلوكي والتواصلي لطيف التوحد' },
-  { id: 'cat_down', name: 'متلازمة داون', icon: '🌟', description: 'برامج الدعم الإدراكي والحركي والاستقلالية' },
-  { id: 'cat_learning', name: 'صعوبات التعلم', icon: '📚', description: 'برامج التربية الخاصة وتنمية المهارات الأكاديمية' },
-  { id: 'cat_early', name: 'تأخر نمائي شامل', icon: '🌱', description: 'برامج التدخل المبكر والتحفيز النمائي' },
+  { id: 'cat_autism', code: 'AUT-01', name: 'اضطراب طيف التوحد', capacity: 20, color: '#1a56db', icon: '🧩', description: 'فئة متخصصة في التأهيل السلوكي والتواصلي لطيف التوحد' },
+  { id: 'cat_down', code: 'DS-01', name: 'متلازمة داون', capacity: 15, color: '#059669', icon: '🌟', description: 'برامج الدعم الإدراكي والحركي والاستقلالية' },
+  { id: 'cat_learning', code: 'LD-01', name: 'صعوبات التعلم', capacity: 15, color: '#d97706', icon: '📚', description: 'برامج التربية الخاصة وتنمية المهارات الأكاديمية' },
+  { id: 'cat_early', code: 'EI-01', name: 'تأخر نمائي شامل', capacity: 20, color: '#7c3aed', icon: '🌱', description: 'برامج التدخل المبكر والتحفيز النمائي' },
 ];
 
 const EMPTY_STU = {
@@ -58,8 +58,8 @@ const EMPTY_STU = {
 
 const EMPTY_QS = { stuId: '', type: 'تخاطب ونطق', date: '', time: '', duration: 45, empId: '', notes: '', attachData: '', attachName: '' };
 const EMPTY_CONSULT = { beneficiaryName: '', parentName: '', date: '', time: '', empId: '', duration: 45, notes: '', attachData: '', attachName: '' };
-const EMPTY_SEC = { name: '', type: 'قسم متخصص', capacity: 10, supervisorId: '', color: '#1a56db', icon: '🏫', description: '' };
-const EMPTY_CAT = { name: '', icon: '📂', description: '' };
+const EMPTY_SEC = { name: '', code: '', type: 'قسم متخصص', capacity: 10, supervisorId: '', color: '#1a56db', icon: '🏫', description: '' };
+const EMPTY_CAT = { name: '', code: '', capacity: 20, color: '#7c3aed', icon: '📂', description: '' };
 
 const ITEMS_PER_PAGE = 12;
 
@@ -314,41 +314,132 @@ export default function StudentsPage() {
 
   // Modal 4: Class Handler
   function openSecForm(sec = null) {
-    if (sec) { setSecForm({ ...EMPTY_SEC, ...sec }); setSecEditId(sec.id); }
-    else { setSecForm(EMPTY_SEC); setSecEditId(null); }
+    if (sec) { 
+      setSecForm({ ...EMPTY_SEC, ...sec }); 
+      setSecEditId(sec.id); 
+    } else { 
+      setSecForm({ ...EMPTY_SEC, code: `SEC-0${sections.length + 1}` }); 
+      setSecEditId(null); 
+    }
     setShowSecModal(true);
   }
 
   function saveSec() {
     if (!secForm.name.trim()) { toast('⚠️ أدخل اسم الصف', 'er'); return; }
+
+    const oldSec = sections.find(s => s.id === secEditId);
+    const oldName = oldSec?.name;
+
     if (secEditId) {
       lsUpd('sections', secEditId, secForm);
-      toast('✅ تم تحديث بيانات الصف', 'ok');
+      toast('✅ تم تحديث بيانات الصف بنجاح', 'ok');
+
+      // Update student records if section name changed
+      if (oldName && oldName !== secForm.name) {
+        const allStus = lsGet('students');
+        let updatedCount = 0;
+        const updatedStus = allStus.map(s => {
+          if (s.sectionId === secEditId || s.className === oldName) {
+            updatedCount++;
+            return { ...s, className: secForm.name, sectionId: secEditId };
+          }
+          return s;
+        });
+        if (updatedCount > 0) {
+          localStorage.setItem('scs_students', JSON.stringify(updatedStus));
+        }
+      }
+
+      if (activeFolder && activeFolder.type === 'class' && activeFolder.id === secEditId) {
+        setActiveFolder({ ...activeFolder, name: secForm.name, data: secForm });
+      }
     } else {
-      lsAdd('sections', { ...secForm, id: uid() });
+      const newId = uid();
+      lsAdd('sections', { ...secForm, id: newId });
       toast('✅ تم إضافة الصف الجديد بنجاح', 'ok');
     }
     setShowSecModal(false);
     reload();
   }
 
+  function deleteSec(secId, secName) {
+    if (!window.confirm(`⚠️ هل أنت متأكد من حذف الصف "${secName}"؟`)) return;
+    lsDel('sections', secId);
+    toast('🗑️ تم حذف الصف بنجاح', 'ok');
+    if (activeFolder?.id === secId) setActiveFolder(null);
+    reload();
+  }
+
   // Modal 5: Category Handler
   function openCatForm(cat = null) {
-    if (cat) { setCatForm({ ...EMPTY_CAT, ...cat }); setCatEditId(cat.id); }
-    else { setCatForm(EMPTY_CAT); setCatEditId(null); }
+    if (cat && typeof cat === 'object') {
+      const existing = categories.find(c => c.id === cat.id || c.name === cat.name);
+      if (existing) {
+        setCatForm({ ...EMPTY_CAT, ...existing });
+        setCatEditId(existing.id);
+      } else {
+        setCatForm({ ...EMPTY_CAT, ...cat });
+        setCatEditId(cat.id || null);
+      }
+    } else if (typeof cat === 'string') {
+      const existing = categories.find(c => c.name === cat);
+      if (existing) {
+        setCatForm({ ...EMPTY_CAT, ...existing });
+        setCatEditId(existing.id);
+      } else {
+        setCatForm({ ...EMPTY_CAT, name: cat });
+        setCatEditId(null);
+      }
+    } else {
+      setCatForm({ ...EMPTY_CAT, code: `CAT-0${categories.length + 1}` });
+      setCatEditId(null);
+    }
     setShowCatModal(true);
   }
 
   function saveCat() {
     if (!catForm.name.trim()) { toast('⚠️ أدخل اسم القسم / الفئة', 'er'); return; }
+
+    const oldCat = categories.find(c => c.id === catEditId || c.name === catForm.name);
+    const oldName = oldCat?.name || catForm.name;
+
     if (catEditId) {
       lsUpd('categories', catEditId, catForm);
-      toast('✅ تم تحديث الفئة', 'ok');
+      toast('✅ تم تحديث بيانات الفئة بنجاح', 'ok');
+
+      // Update student records if category/diagnosis name changed
+      if (oldName && oldName !== catForm.name) {
+        const allStus = lsGet('students');
+        let updatedCount = 0;
+        const updatedStus = allStus.map(s => {
+          if (s.categoryId === catEditId || (s.diagnosis || '').trim() === oldName) {
+            updatedCount++;
+            return { ...s, diagnosis: catForm.name, categoryId: catEditId };
+          }
+          return s;
+        });
+        if (updatedCount > 0) {
+          localStorage.setItem('scs_students', JSON.stringify(updatedStus));
+        }
+      }
+
+      if (activeFolder && activeFolder.type === 'category' && (activeFolder.id === catEditId || activeFolder.name === oldName)) {
+        setActiveFolder({ ...activeFolder, id: catEditId, name: catForm.name, data: catForm });
+      }
     } else {
-      lsAdd('categories', { ...catForm, id: uid() });
+      const newId = uid();
+      lsAdd('categories', { ...catForm, id: newId });
       toast('✅ تم إضافة القسم / الفئة بنجاح', 'ok');
     }
     setShowCatModal(false);
+    reload();
+  }
+
+  function deleteCat(catId, catName) {
+    if (!window.confirm(`⚠️ هل أنت متأكد من حذف القسم / الفئة "${catName}"؟`)) return;
+    lsDel('categories', catId);
+    toast('🗑️ تم حذف الفئة بنجاح', 'ok');
+    if (activeFolder?.id === catId || activeFolder?.name === catName) setActiveFolder(null);
     reload();
   }
 
@@ -546,7 +637,8 @@ export default function StudentsPage() {
         /* DEDICATED SUB-PAGE HEADER (عند الدخول لصفحة صف معين أو فئة معينة) */
         <div style={{
           background: 'var(--bg-card)',
-          border: '1.5px solid var(--pr)',
+          border: `1.5px solid ${activeFolder.data?.color || 'var(--pr)'}`,
+          borderRight: `6px solid ${activeFolder.data?.color || 'var(--pr)'}`,
           borderRadius: 'var(--r)',
           padding: '18px 22px',
           marginBottom: '20px',
@@ -569,11 +661,18 @@ export default function StudentsPage() {
 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.6rem' }}>{activeFolder.data?.icon || (activeFolder.type === 'class' ? '🏫' : '🧩')}</span>
+                <span style={{ fontSize: '1.6rem', background: `${activeFolder.data?.color || 'var(--pr)'}20`, padding: '4px 10px', borderRadius: '10px' }}>
+                  {activeFolder.data?.icon || (activeFolder.type === 'class' ? '🏫' : '🧩')}
+                </span>
                 <h2 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-main)', margin: 0 }}>
                   {activeFolder.name}
                 </h2>
-                <span className="bdg b-bl" style={{ fontSize: '0.78rem', padding: '3px 10px' }}>
+                {activeFolder.data?.code && (
+                  <span className="bdg b-gy" style={{ fontSize: '0.75rem', padding: '3px 8px' }}>
+                    {activeFolder.data.code}
+                  </span>
+                )}
+                <span className="bdg b-bl" style={{ fontSize: '0.78rem', padding: '3px 10px', backgroundColor: `${activeFolder.data?.color || 'var(--pr)'}20`, color: activeFolder.data?.color || 'var(--pr)' }}>
                   {filteredStudents.length} طلاب
                 </span>
               </div>
@@ -585,15 +684,36 @@ export default function StudentsPage() {
             </div>
           </div>
 
-          {canAdd && (
-            <button
-              onClick={() => openForm(null, activeFolder.type === 'class' ? activeFolder.id : '', activeFolder.type === 'category' ? activeFolder.name : '')}
-              className="btn btn-p"
-            >
-              <Plus style={{ width: '16px', height: '16px' }} />
-              <span>إضافة طالب {activeFolder.type === 'class' ? 'لهذا الصف' : 'لهذه الفئة'}</span>
-            </button>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {canEdit && (
+              <button
+                onClick={() => {
+                  if (activeFolder.type === 'class') {
+                    const sec = sections.find(s => s.id === activeFolder.id || s.name === activeFolder.name);
+                    openSecForm(sec || activeFolder.data);
+                  } else {
+                    const cat = categories.find(c => c.id === activeFolder.id || c.name === activeFolder.name);
+                    openCatForm(cat || activeFolder.data || { name: activeFolder.name });
+                  }
+                }}
+                className="btn btn-g"
+                style={{ padding: '8px 14px', fontSize: '0.82rem' }}
+              >
+                <Edit3 style={{ width: '15px', height: '15px' }} />
+                <span>تعديل بيانات {activeFolder.type === 'class' ? 'الصف' : 'الفئة'} (اللون، السعة، الكود)</span>
+              </button>
+            )}
+
+            {canAdd && (
+              <button
+                onClick={() => openForm(null, activeFolder.type === 'class' ? activeFolder.id : '', activeFolder.type === 'category' ? activeFolder.name : '')}
+                className="btn btn-p"
+              >
+                <Plus style={{ width: '16px', height: '16px' }} />
+                <span>إضافة طالب {activeFolder.type === 'class' ? 'لهذا الصف' : 'لهذه الفئة'}</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -608,6 +728,7 @@ export default function StudentsPage() {
               const maxCap = Number(cls.capacity) || 10;
               const percentage = Math.round((clsStudents.length / maxCap) * 100);
               const supervisor = emps.find(e => e.id === cls.supervisorId);
+              const clsColor = cls.color || '#1a56db';
 
               return (
                 <div
@@ -617,42 +738,75 @@ export default function StudentsPage() {
                   style={{
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
-                    border: '1.5px solid var(--border-color)',
+                    border: `1.5px solid ${clsColor}40`,
+                    borderRight: `6px solid ${clsColor}`,
                     borderRadius: 'var(--r)',
                     padding: '18px',
                     margin: 0
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--pr)';
+                    e.currentTarget.style.borderColor = clsColor;
                     e.currentTarget.style.transform = 'translateY(-2px)';
                     e.currentTarget.style.boxShadow = 'var(--sh2)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border-color)';
+                    e.currentTarget.style.borderColor = `${clsColor}40`;
                     e.currentTarget.style.transform = 'translateY(0)';
                     e.currentTarget.style.boxShadow = 'var(--sh)';
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyBetween: 'space-between', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span style={{ fontSize: '1.8rem' }}>{cls.icon || '🏫'}</span>
+                      <span style={{ fontSize: '1.8rem', background: `${clsColor}15`, padding: '6px 10px', borderRadius: '10px' }}>
+                        {cls.icon || '🏫'}
+                      </span>
                       <div>
-                        <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)', margin: 0 }}>{cls.name}</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)', margin: 0 }}>{cls.name}</h3>
+                          {cls.code && (
+                            <span className="bdg b-gy" style={{ fontSize: '0.7rem', padding: '2px 6px' }}>{cls.code}</span>
+                          )}
+                        </div>
                         <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>{cls.type || 'قسم مخصص'}</span>
                       </div>
                     </div>
-                    <span className="bdg b-bl" style={{ fontSize: '0.76rem', padding: '4px 10px' }}>
-                      {clsStudents.length} / {maxCap} طالب
-                    </span>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                      <span className="bdg" style={{ fontSize: '0.76rem', padding: '4px 10px', backgroundColor: `${clsColor}20`, color: clsColor, fontWeight: '700' }}>
+                        {clsStudents.length} / {maxCap} طالب
+                      </span>
+
+                      {canEdit && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); openSecForm(cls); }}
+                            className="btn btn-g btn-xs"
+                            title="تعديل بيانات الصف (اللون، السعة، الكود، الاسم)"
+                            style={{ padding: '3px 8px', fontSize: '0.75rem' }}
+                          >
+                            <Edit3 style={{ width: '13px', height: '13px' }} />
+                            <span>تعديل</span>
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); deleteSec(cls.id, cls.name); }}
+                            className="btn btn-g btn-xs"
+                            title="حذف الصف"
+                            style={{ padding: '3px 6px', color: 'var(--warn)' }}
+                          >
+                            <Trash2 style={{ width: '13px', height: '13px' }} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <p style={{ fontSize: '0.78rem', color: 'var(--text-sub)', marginBottom: '12px', height: '36px', overflow: 'hidden' }}>
                     {cls.description || 'فصل تأهيلي وتدريبي مجهز بالمركز'}
                   </p>
 
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-sub)', marginBottom: '10px', display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-sub)', marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span>المشرف: <strong style={{ color: 'var(--text-main)' }}>{supervisor ? supervisor.name : 'غير محدد'}</strong></span>
-                    <span style={{ color: 'var(--pr)', fontWeight: '700' }}>افتح الصف ⬅️</span>
+                    <span style={{ color: clsColor, fontWeight: '700' }}>افتح الصف ⬅️</span>
                   </div>
 
                   {/* Capacity Bar */}
@@ -661,7 +815,7 @@ export default function StudentsPage() {
                       style={{
                         width: `${Math.min(percentage, 100)}%`,
                         height: '100%',
-                        background: percentage >= 100 ? 'var(--warn)' : 'var(--pr)',
+                        background: percentage >= 100 ? 'var(--warn)' : clsColor,
                         transition: 'width 0.3s ease'
                       }}
                     />
@@ -680,6 +834,8 @@ export default function StudentsPage() {
             {allCategoryOptions.map((catName) => {
               const catObj = categories.find(c => c.name === catName);
               const catStudents = students.filter(s => (s.diagnosis || '').trim() === catName);
+              const catColor = catObj?.color || '#7c3aed';
+              const catCap = catObj?.capacity || 20;
 
               return (
                 <div
@@ -689,37 +845,75 @@ export default function StudentsPage() {
                   style={{
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
-                    border: '1.5px solid var(--border-color)',
+                    border: `1.5px solid ${catColor}40`,
+                    borderRight: `6px solid ${catColor}`,
                     borderRadius: 'var(--r)',
                     padding: '18px',
                     margin: 0
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--pur)';
+                    e.currentTarget.style.borderColor = catColor;
                     e.currentTarget.style.transform = 'translateY(-2px)';
                     e.currentTarget.style.boxShadow = 'var(--sh2)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border-color)';
+                    e.currentTarget.style.borderColor = `${catColor}40`;
                     e.currentTarget.style.transform = 'translateY(0)';
                     e.currentTarget.style.boxShadow = 'var(--sh)';
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span style={{ fontSize: '1.8rem' }}>{catObj?.icon || '🎯'}</span>
-                      <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)', margin: 0 }}>{catName}</h3>
+                      <span style={{ fontSize: '1.8rem', background: `${catColor}15`, padding: '6px 10px', borderRadius: '10px' }}>
+                        {catObj?.icon || '🎯'}
+                      </span>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)', margin: 0 }}>{catName}</h3>
+                          {catObj?.code && (
+                            <span className="bdg b-gy" style={{ fontSize: '0.7rem', padding: '2px 6px' }}>{catObj.code}</span>
+                          )}
+                        </div>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>سعة الفئة: {catCap} طالب</span>
+                      </div>
                     </div>
-                    <span className="bdg b-pu" style={{ fontSize: '0.78rem', padding: '4px 10px' }}>
-                      {catStudents.length} طلاب
-                    </span>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                      <span className="bdg" style={{ fontSize: '0.78rem', padding: '4px 10px', backgroundColor: `${catColor}20`, color: catColor, fontWeight: '700' }}>
+                        {catStudents.length} طلاب
+                      </span>
+
+                      {canEdit && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); openCatForm(catObj || { name: catName }); }}
+                            className="btn btn-g btn-xs"
+                            title="تعديل بيانات الفئة (اللون، السعة، الكود، الاسم)"
+                            style={{ padding: '3px 8px', fontSize: '0.75rem' }}
+                          >
+                            <Edit3 style={{ width: '13px', height: '13px' }} />
+                            <span>تعديل</span>
+                          </button>
+                          {catObj?.id && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); deleteCat(catObj.id, catName); }}
+                              className="btn btn-g btn-xs"
+                              title="حذف الفئة"
+                              style={{ padding: '3px 6px', color: 'var(--warn)' }}
+                            >
+                              <Trash2 style={{ width: '13px', height: '13px' }} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <p style={{ fontSize: '0.78rem', color: 'var(--text-sub)', marginBottom: '12px', minHeight: '36px' }}>
                     {catObj?.description || 'مسار تشخيصي وتأهيلي متخصص بالمركز'}
                   </p>
 
-                  <div style={{ fontSize: '0.78rem', color: 'var(--pur)', fontWeight: '700', textAlign: 'left' }}>
+                  <div style={{ fontSize: '0.78rem', color: catColor, fontWeight: '700', textAlign: 'left' }}>
                     عرض طلاب الفئة ⬅️
                   </div>
                 </div>
@@ -1263,88 +1457,208 @@ export default function StudentsPage() {
         </div>
       )}
 
-      {/* 8️⃣ MODAL 4: ADD CLASS (إضافة صف) */}
+      {/* 8️⃣ MODAL 4: ADD / EDIT CLASS (إضافة وتعديل بيانات الصف) */}
       {showSecModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-          <div className="wg" style={{ width: '100%', maxWidth: '500px', margin: 0 }}>
-            <div className="wg-h">
-              <h3>🏫 {secEditId ? 'تعديل بيانات الصف' : 'إضافة صف / شعبة جديدة'}</h3>
+          <div className="wg" style={{ width: '100%', maxWidth: '560px', margin: 0 }}>
+            <div className="wg-h" style={{ borderBottom: '2px solid var(--border-color)', padding: '16px 20px' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: '800' }}>🏫 {secEditId ? 'تعديل كافة بيانات الصف' : 'إضافة صف / شعبة جديدة'}</h3>
               <button onClick={() => setShowSecModal(false)} className="btn btn-g btn-xs"><X style={{ width: '14px', height: '14px' }} /></button>
             </div>
-            <div className="wg-b fg c2">
-              <div className="fl full">
+            <div className="wg-b fg c2" style={{ padding: '20px' }}>
+              <div className="fl">
                 <label>اسم الصف الدراسي <span className="req">*</span></label>
                 <input type="text" value={secForm.name} onChange={e => setSecForm(s => ({ ...s, name: e.target.value }))} placeholder="مثال: صف اللؤلؤ، صف الفرسان..." />
               </div>
+
               <div className="fl">
-                <label>الأيقونة المميزة</label>
-                <select value={secForm.icon} onChange={e => setSecForm(s => ({ ...s, icon: e.target.value }))}>
-                  <option value="🏫">🏫 مدرسة</option>
-                  <option value="🦪">🦪 لؤلؤ</option>
-                  <option value="🪸">🪸 مرجان</option>
-                  <option value="💎">💎 زمرد</option>
-                  <option value="🎨">🎨 فن وإبداع</option>
-                  <option value="🌟">🌟 نجوم</option>
-                  <option value="👑">👑 الفرسان</option>
-                </select>
+                <label>رمز / كود الصف</label>
+                <input type="text" value={secForm.code || ''} onChange={e => setSecForm(s => ({ ...s, code: e.target.value }))} placeholder="مثال: SEC-01" />
               </div>
+
+              {/* Color Picker & Presets */}
+              <div className="fl full">
+                <label>لون الصف المخصص (للحاويات والتقارير)</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input
+                    type="color"
+                    value={secForm.color || '#1a56db'}
+                    onChange={e => setSecForm(s => ({ ...s, color: e.target.value }))}
+                    style={{ width: '45px', height: '38px', padding: '2px', borderRadius: '6px', cursor: 'pointer', border: '1px solid var(--border-color)' }}
+                  />
+                  <input
+                    type="text"
+                    value={secForm.color || '#1a56db'}
+                    onChange={e => setSecForm(s => ({ ...s, color: e.target.value }))}
+                    style={{ width: '110px', fontFamily: 'monospace' }}
+                  />
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {['#1a56db', '#059669', '#7c3aed', '#d97706', '#dc2626', '#0891b2', '#db2777'].map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setSecForm(s => ({ ...s, color: c }))}
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          backgroundColor: c,
+                          border: secForm.color === c ? '2px solid var(--text-main)' : 'none',
+                          cursor: 'pointer',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
               <div className="fl">
-                <label>السعة الاستيعابية القصوى</label>
-                <input type="number" min="1" value={secForm.capacity} onChange={e => setSecForm(s => ({ ...s, capacity: e.target.value }))} />
+                <label>الأيقونة المميزة / الرمز</label>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <input
+                    type="text"
+                    value={secForm.icon || '🏫'}
+                    onChange={e => setSecForm(s => ({ ...s, icon: e.target.value }))}
+                    style={{ width: '60px', textAlign: 'center', fontSize: '1.2rem' }}
+                  />
+                  <select value={secForm.icon} onChange={e => setSecForm(s => ({ ...s, icon: e.target.value }))} style={{ flex: 1 }}>
+                    <option value="🏫">🏫 مدرسة</option>
+                    <option value="🦪">🦪 لؤلؤ</option>
+                    <option value="🪸">🪸 مرجان</option>
+                    <option value="💎">💎 زمرد</option>
+                    <option value="🎨">🎨 فن وإبداع</option>
+                    <option value="🌟">🌟 نجوم</option>
+                    <option value="👑">👑 الفرسان</option>
+                    <option value="🚀">🚀 الأمل</option>
+                    <option value="🌈">🌈 قوس قزح</option>
+                    <option value="🌻">🌻 عباد الشمس</option>
+                  </select>
+                </div>
               </div>
+
+              <div className="fl">
+                <label>السعة الاستيعابية القصوى (طلاب)</label>
+                <input type="number" min="1" max="100" value={secForm.capacity || 10} onChange={e => setSecForm(s => ({ ...s, capacity: e.target.value }))} />
+              </div>
+
               <div className="fl full">
                 <label>المعلم / الأخصائي المشرف على الصف</label>
-                <select value={secForm.supervisorId} onChange={e => setSecForm(s => ({ ...s, supervisorId: e.target.value }))}>
+                <select value={secForm.supervisorId || ''} onChange={e => setSecForm(s => ({ ...s, supervisorId: e.target.value }))}>
                   <option value="">-- اختر الأخصائي المشرف --</option>
                   {specialists.map(e => <option key={e.id} value={e.id}>{e.name} ({e.role})</option>)}
                 </select>
               </div>
+
+              <div className="fl full">
+                <label>نوع القسم / التخصص</label>
+                <input type="text" value={secForm.type || 'قسم متخصص'} onChange={e => setSecForm(s => ({ ...s, type: e.target.value }))} placeholder="مثال: قسم طيف التوحد، قسم التدخل المبكر..." />
+              </div>
+
               <div className="fl full">
                 <label>وصف الصف والبرامج المخصصة له</label>
-                <textarea rows="2" value={secForm.description} onChange={e => setSecForm(s => ({ ...s, description: e.target.value }))} />
+                <textarea rows="2" value={secForm.description || ''} onChange={e => setSecForm(s => ({ ...s, description: e.target.value }))} placeholder="أدخل أهداف ورسالة هذا الصف..." />
               </div>
             </div>
-            <div style={{ padding: '12px 16px', background: 'var(--g0)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div style={{ padding: '14px 20px', background: 'var(--g0)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
               <button onClick={() => setShowSecModal(false)} className="btn btn-g">إلغاء</button>
-              <button onClick={saveSec} className="btn btn-p">حفظ الصف</button>
+              <button onClick={saveSec} className="btn btn-p">حفظ بيانات الصف</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 9️⃣ MODAL 5: ADD CATEGORY / DEPARTMENT (إضافة قسم / فئة) */}
+      {/* 9️⃣ MODAL 5: ADD / EDIT CATEGORY / DEPARTMENT (إضافة وتعديل الفئة والقسم) */}
       {showCatModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-          <div className="wg" style={{ width: '100%', maxWidth: '500px', margin: 0 }}>
-            <div className="wg-h">
-              <h3>📂 {catEditId ? 'تعديل بيانات القسم' : 'إضافة قسم / فئة تشخيصية جديد'}</h3>
+          <div className="wg" style={{ width: '100%', maxWidth: '560px', margin: 0 }}>
+            <div className="wg-h" style={{ borderBottom: '2px solid var(--border-color)', padding: '16px 20px' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: '800' }}>📂 {catEditId ? 'تعديل كافة بيانات الفئة / القسم' : 'إضافة قسم / فئة تشخيصية جديدة'}</h3>
               <button onClick={() => setShowCatModal(false)} className="btn btn-g btn-xs"><X style={{ width: '14px', height: '14px' }} /></button>
             </div>
-            <div className="wg-b fg c2">
-              <div className="fl full">
-                <label>اسم القسم / الفئة <span className="req">*</span></label>
+            <div className="wg-b fg c2" style={{ padding: '20px' }}>
+              <div className="fl">
+                <label>اسم القسم / الفئة التشخيصية <span className="req">*</span></label>
                 <input type="text" value={catForm.name} onChange={e => setCatForm(c => ({ ...c, name: e.target.value }))} placeholder="مثال: قسم التوحد، قسم التدخل المبكر..." />
               </div>
-              <div className="fl full">
-                <label>رمز / أيقونة الفئة</label>
-                <select value={catForm.icon} onChange={e => setCatForm(c => ({ ...c, icon: e.target.value }))}>
-                  <option value="🧩">🧩 توحد / طيف التوحد</option>
-                  <option value="🌟">🌟 متلازمة داون</option>
-                  <option value="📚">📚 صعوبات التعلم</option>
-                  <option value="🌱">🌱 التدخل المبكر</option>
-                  <option value="🩺">🩺 العلاج الوظيفي</option>
-                  <option value="👂">👂 التخاطب والسمعيات</option>
-                  <option value="📂">📂 قسم عام</option>
-                </select>
+
+              <div className="fl">
+                <label>رمز / كود الفئة</label>
+                <input type="text" value={catForm.code || ''} onChange={e => setCatForm(c => ({ ...c, code: e.target.value }))} placeholder="مثال: AUT-01" />
               </div>
+
+              {/* Color Picker & Presets */}
+              <div className="fl full">
+                <label>لون الفئة المخصص (للحاويات والبطاقات)</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input
+                    type="color"
+                    value={catForm.color || '#7c3aed'}
+                    onChange={e => setCatForm(c => ({ ...c, color: e.target.value }))}
+                    style={{ width: '45px', height: '38px', padding: '2px', borderRadius: '6px', cursor: 'pointer', border: '1px solid var(--border-color)' }}
+                  />
+                  <input
+                    type="text"
+                    value={catForm.color || '#7c3aed'}
+                    onChange={e => setCatForm(c => ({ ...c, color: e.target.value }))}
+                    style={{ width: '110px', fontFamily: 'monospace' }}
+                  />
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {['#7c3aed', '#1a56db', '#059669', '#d97706', '#dc2626', '#0891b2', '#db2777'].map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setCatForm(c => ({ ...c, color: c }))}
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          backgroundColor: c,
+                          border: catForm.color === c ? '2px solid var(--text-main)' : 'none',
+                          cursor: 'pointer',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="fl">
+                <label>رمز / أيقونة الفئة</label>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <input
+                    type="text"
+                    value={catForm.icon || '🎯'}
+                    onChange={e => setCatForm(c => ({ ...c, icon: e.target.value }))}
+                    style={{ width: '60px', textAlign: 'center', fontSize: '1.2rem' }}
+                  />
+                  <select value={catForm.icon} onChange={e => setCatForm(c => ({ ...c, icon: e.target.value }))} style={{ flex: 1 }}>
+                    <option value="🧩">🧩 توحد / طيف التوحد</option>
+                    <option value="🌟">🌟 متلازمة داون</option>
+                    <option value="📚">📚 صعوبات التعلم</option>
+                    <option value="🌱">🌱 التدخل المبكر</option>
+                    <option value="🩺">🩺 العلاج الوظيفي</option>
+                    <option value="👂">👂 التخاطب والسمعيات</option>
+                    <option value="🎯">🎯 اضطرابات نمائية</option>
+                    <option value="📂">📂 قسم عام</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="fl">
+                <label>السعة الاستيعابية للفئة (طلاب)</label>
+                <input type="number" min="1" max="200" value={catForm.capacity || 20} onChange={e => setCatForm(c => ({ ...c, capacity: e.target.value }))} />
+              </div>
+
               <div className="fl full">
                 <label>الوصف والخدمات التأهيلية المقدمة في هذا القسم</label>
-                <textarea rows="3" value={catForm.description} onChange={e => setCatForm(c => ({ ...c, description: e.target.value }))} placeholder="اكتب تفاصيل المسار التأهيلي..." />
+                <textarea rows="3" value={catForm.description || ''} onChange={e => setCatForm(c => ({ ...c, description: e.target.value }))} placeholder="اكتب تفاصيل المسار التأهيلي والخدمات المتاحة..." />
               </div>
             </div>
-            <div style={{ padding: '12px 16px', background: 'var(--g0)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div style={{ padding: '14px 20px', background: 'var(--g0)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
               <button onClick={() => setShowCatModal(false)} className="btn btn-g">إلغاء</button>
-              <button onClick={saveCat} className="btn btn-p">حفظ القسم</button>
+              <button onClick={saveCat} className="btn btn-p">حفظ بيانات الفئة</button>
             </div>
           </div>
         </div>
