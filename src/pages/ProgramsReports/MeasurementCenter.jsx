@@ -14,6 +14,12 @@ import {
 import { StudentPicker, validateStudentPick, EMPTY_STU_PICK } from './StudentPicker';
 import CARS2AssessmentModal from '../../components/assessments/CARS2AssessmentModal';
 import CARS2ReportModal from '../../components/assessments/CARS2ReportModal';
+import GARS3AssessmentModal from '../../components/assessments/GARS3AssessmentModal';
+import GARS3ReportModal from '../../components/assessments/GARS3ReportModal';
+import SRS2AssessmentModal from '../../components/assessments/SRS2AssessmentModal';
+import SRS2ReportModal from '../../components/assessments/SRS2ReportModal';
+import PEP3AssessmentModal from '../../components/assessments/PEP3AssessmentModal';
+import PEP3ReportModal from '../../components/assessments/PEP3ReportModal';
 import LDESAssessmentModal from '../../components/assessments/LDESAssessmentModal';
 import LDESReportModal from '../../components/assessments/LDESReportModal';
 import DevLdAssessmentModal from '../../components/assessments/DevLdAssessmentModal';
@@ -78,6 +84,21 @@ export default function MeasurementCenter({ onBack }) {
   const [carsModalOpen, setCarsModalOpen] = useState(false);
   const [carsReportOpen, setCarsReportOpen] = useState(false);
   const [selectedCarsAssessment, setSelectedCarsAssessment] = useState(null);
+
+  // SRS-2 Specific Modals
+  const [srsModalOpen, setSrsModalOpen] = useState(false);
+  const [srsReportOpen, setSrsReportOpen] = useState(false);
+  const [selectedSrsAssessment, setSelectedSrsAssessment] = useState(null);
+
+  // GARS-3 Specific Modals
+  const [garsModalOpen, setGarsModalOpen] = useState(false);
+  const [garsReportOpen, setGarsReportOpen] = useState(false);
+  const [selectedGarsAssessment, setSelectedGarsAssessment] = useState(null);
+
+  // PEP-3 Specific Modals
+  const [pep3ModalOpen, setPep3ModalOpen] = useState(false);
+  const [pep3ReportOpen, setPep3ReportOpen] = useState(false);
+  const [selectedPep3Assessment, setSelectedPep3Assessment] = useState(null);
 
   // LDES Specific Modals
   const [ldesModalOpen, setLdesModalOpen] = useState(false);
@@ -193,7 +214,23 @@ export default function MeasurementCenter({ onBack }) {
       return;
     }
     if (scaleId === 'cars') {
+      setSelectedCarsAssessment(null);
       setCarsModalOpen(true);
+      return;
+    }
+    if (scaleId === 'gars' || scaleId === 'gars3') {
+      setSelectedGarsAssessment(null);
+      setGarsModalOpen(true);
+      return;
+    }
+    if (scaleId === 'srs' || scaleId === 'srs2') {
+      setSelectedSrsAssessment(null);
+      setSrsModalOpen(true);
+      return;
+    }
+    if (scaleId === 'pep3' || scaleId === 'pep') {
+      setSelectedPep3Assessment(null);
+      setPep3ModalOpen(true);
       return;
     }
     if (scaleId === 'learning_difficulties' || scaleId === 'ldes') {
@@ -376,6 +413,9 @@ export default function MeasurementCenter({ onBack }) {
             assessments.map(item => {
               const isMChat = item.measureId === 'mchat_r_f' || item.measureId === 'mchat' || item.scaleId === 'mchat_r_f' || item.scaleType === 'mchat_r_f';
               const isCars = item.measureId === 'cars' || item.scaleType === 'cars2';
+              const isGars = item.measureId === 'gars' || item.measureId === 'gars3' || item.scaleType === 'gars3';
+              const isSrs = item.measureId === 'srs' || item.scaleType === 'srs2' || item.measureId === 'srs2';
+              const isPep3 = item.measureId === 'pep3' || item.scaleType === 'pep3';
               const isLdes = item.measureId === 'learning_difficulties' || item.scaleType === 'learning_difficulties' || item.measureId === 'ldes';
               const isDevLd = item.measureId === 'dev_learning_difficulties' || item.scaleType === 'dev_learning_difficulties' || item.measureId === 'dev_ld_preschool' || item.scaleType === 'dev_ld_preschool';
               const isLddrs = item.measureId === 'lddrs_battery' || item.scaleType === 'lddrs' || item.measureId?.startsWith('lddrs');
@@ -389,6 +429,9 @@ export default function MeasurementCenter({ onBack }) {
                       <span>{item.measureName || 'مقياس'}</span>
                       {isMChat && <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.68rem', fontWeight: 800 }}>M-CHAT-R/F</span>}
                       {isCars && <span className="bdg b-bl" style={{ fontSize: '.68rem' }}>CARS-2</span>}
+                      {isGars && <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontSize: '.68rem', fontWeight: 800 }}>GARS-3</span>}
+                      {isSrs && <span className="bdg" style={{ background: '#d1fae5', color: '#047857', fontSize: '.68rem', fontWeight: 800 }}>SRS-2</span>}
+                      {isPep3 && <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.68rem', fontWeight: 800 }}>PEP-3</span>}
                       {isLdes && <span className="bdg" style={{ background: '#fef3c7', color: '#b45309', fontSize: '.68rem', fontWeight: 800 }}>LDES</span>}
                       {isDevLd && <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontSize: '.68rem', fontWeight: 800 }}>صعوبات الروضة</span>}
                       {isLddrs && <span className="bdg" style={{ background: '#fee2e2', color: '#991b1b', fontSize: '.68rem', fontWeight: 800 }}>بطارية الزيات</span>}
@@ -397,7 +440,7 @@ export default function MeasurementCenter({ onBack }) {
                       {isConnersParent && <span className="bdg" style={{ background: '#ffedd5', color: '#c2410c', fontSize: '.68rem', fontWeight: 800 }}>كونرز للوالدين</span>}
                     </div>
                     <div style={{ fontSize: '.76rem', color: 'var(--g5)' }}>
-                      {item.studentName || 'طالب'} • {item.date} • {item.level || 'نتيجة'} {item.tScore ? `(T: ${item.tScore} | ${item.percentile}%)` : ''} {item.percentage ? `(${item.percentage})` : ''}
+                      {item.studentName || 'طالب'} • {item.date} • {item.level || 'نتيجة'} {(item.totalTScore || item.tScore) ? `(T: ${item.totalTScore || item.tScore} | ${item.overallPercentile || item.percentile || 0}%)` : ''} {item.percentage ? `(${item.percentage})` : ''}
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -425,6 +468,45 @@ export default function MeasurementCenter({ onBack }) {
                         }}
                       >
                         📄 تقرير CARS-2
+                      </button>
+                    )}
+                    {isGars && (
+                      <button
+                        type="button"
+                        className="btn btn-xs"
+                        style={{ background: '#0d9488', color: '#fff', fontWeight: 800 }}
+                        onClick={() => {
+                          setSelectedGarsAssessment(item);
+                          setGarsReportOpen(true);
+                        }}
+                      >
+                        📄 تقرير GARS-3
+                      </button>
+                    )}
+                    {isSrs && (
+                      <button
+                        type="button"
+                        className="btn btn-xs"
+                        style={{ background: '#059669', color: '#fff', fontWeight: 800 }}
+                        onClick={() => {
+                          setSelectedSrsAssessment(item);
+                          setSrsReportOpen(true);
+                        }}
+                      >
+                        📄 تقرير SRS-2
+                      </button>
+                    )}
+                    {isPep3 && (
+                      <button
+                        type="button"
+                        className="btn btn-xs"
+                        style={{ background: '#2563eb', color: '#fff', fontWeight: 800 }}
+                        onClick={() => {
+                          setSelectedPep3Assessment(item);
+                          setPep3ReportOpen(true);
+                        }}
+                      >
+                        📄 تقرير PEP-3
                       </button>
                     )}
                     {isLdes && (
@@ -686,6 +768,75 @@ export default function MeasurementCenter({ onBack }) {
           onEdit={(ass) => {
             setSelectedMChatAssessment(ass);
             setMchatModalOpen(true);
+          }}
+        />
+      )}
+
+      {/* SRS-2 MODALS */}
+      {srsModalOpen && (
+        <SRS2AssessmentModal
+          isOpen={srsModalOpen}
+          onClose={() => setSrsModalOpen(false)}
+          onSaved={() => reload()}
+          students={students}
+          emps={emps}
+          initialData={selectedSrsAssessment}
+        />
+      )}
+      {srsReportOpen && selectedSrsAssessment && (
+        <SRS2ReportModal
+          isOpen={srsReportOpen}
+          onClose={() => setSrsReportOpen(false)}
+          assessment={selectedSrsAssessment}
+          onEdit={(ass) => {
+            setSelectedSrsAssessment(ass);
+            setSrsModalOpen(true);
+          }}
+        />
+      )}
+
+      {/* GARS-3 MODALS */}
+      {garsModalOpen && (
+        <GARS3AssessmentModal
+          isOpen={garsModalOpen}
+          onClose={() => setGarsModalOpen(false)}
+          onSaved={() => reload()}
+          students={students}
+          emps={emps}
+          initialData={selectedGarsAssessment}
+        />
+      )}
+      {garsReportOpen && selectedGarsAssessment && (
+        <GARS3ReportModal
+          isOpen={garsReportOpen}
+          onClose={() => setGarsReportOpen(false)}
+          assessment={selectedGarsAssessment}
+          onEdit={(ass) => {
+            setSelectedGarsAssessment(ass);
+            setGarsModalOpen(true);
+          }}
+        />
+      )}
+
+      {/* PEP-3 MODALS */}
+      {pep3ModalOpen && (
+        <PEP3AssessmentModal
+          isOpen={pep3ModalOpen}
+          onClose={() => setPep3ModalOpen(false)}
+          onSaved={() => reload()}
+          students={students}
+          emps={emps}
+          initialData={selectedPep3Assessment}
+        />
+      )}
+      {pep3ReportOpen && selectedPep3Assessment && (
+        <PEP3ReportModal
+          isOpen={pep3ReportOpen}
+          onClose={() => setPep3ReportOpen(false)}
+          assessment={selectedPep3Assessment}
+          onEdit={(ass) => {
+            setSelectedPep3Assessment(ass);
+            setPep3ModalOpen(true);
           }}
         />
       )}
