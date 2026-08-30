@@ -218,12 +218,29 @@ export default function GARS3AssessmentModal({
     onClose();
   }
 
+  function handleSafeClose() {
+    if (psychometrics.answeredCount > 0) {
+      if (window.confirm('⚠️ لديك تقييم قيد الإدخال، هل أنت متأكد من رغبتك في إغلاق النافذة وفقدان التغييرات غير المحفوظة؟')) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  }
+
   const totalRequiredItems = form.isVerbal ? 58 : 44;
 
   return (
-    <div className="mbg" style={{ zIndex: 1100 }}>
-      <div className="mb mb-xl"
-        
+    <div className="mbg" style={{ zIndex: 1100 }} onClick={e => e.target === e.currentTarget && handleSafeClose()}>
+      <div
+        className="mb"
+        style={{
+          maxWidth: 'min(1360px, calc(100vw - 24px))',
+          width: '100%',
+          maxHeight: 'min(94vh, calc(100dvh - 20px))',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
         {/* Modal Header */}
         <div
@@ -269,7 +286,7 @@ export default function GARS3AssessmentModal({
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleSafeClose}
               style={{
                 background: 'rgba(255, 255, 255, 0.2)',
                 border: 'none',
@@ -548,7 +565,7 @@ export default function GARS3AssessmentModal({
                     fontWeight: 700,
                   }}
                 >
-                  {d.name} ({domainResult?.answeredCount || 0}/{d.itemCount})
+                  {d.name} ({domainResult?.answeredCount || 0}/{d.itemsCount})
                 </button>
               );
             })}

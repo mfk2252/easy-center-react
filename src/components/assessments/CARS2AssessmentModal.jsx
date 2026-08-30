@@ -263,12 +263,13 @@ export default function CARS2AssessmentModal({
   return (
     <div className="mbg" onClick={e => e.target === e.currentTarget && handleSafeClose()}>
       <div
-        className="mb mb-xl"
+        className="mb"
         style={{
+          maxWidth: 'min(1360px, calc(100vw - 24px))',
+          width: '100%',
+          maxHeight: 'min(94vh, calc(100dvh - 20px))',
           display: 'flex',
           flexDirection: 'column',
-          maxHeight: '92vh',
-          width: '100%',
         }}
       >
         {/* Modal Main Header */}

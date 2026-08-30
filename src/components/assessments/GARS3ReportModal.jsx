@@ -200,9 +200,16 @@ export default function GARS3ReportModal({
   }
 
   return (
-    <div className="mbg" style={{ zIndex: 1100 }}>
-      <div className="mb mb-xl"
-        
+    <div className="mbg" style={{ zIndex: 1100 }} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div
+        className="mb"
+        style={{
+          maxWidth: 'min(1360px, calc(100vw - 24px))',
+          width: '100%',
+          maxHeight: 'min(94vh, calc(100dvh - 20px))',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
         {/* Modal Header */}
         <div
