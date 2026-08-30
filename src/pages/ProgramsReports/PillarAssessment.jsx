@@ -708,7 +708,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     // Prevent duplication: If the autism or speech featured cards are shown at the top,
     // we do not display those scales in the generic bottom list.
     const isAutismFeatured = selectedCategoryFilter === 'all' || selectedCategoryFilter === 'autism';
-    const isAutismScale = ['cars', 'gars', 'gars3', 'srs', 'pep3', 'pep'].includes(s.id);
+    const isAutismScale = ['cars', 'gars', 'gars3', 'srs', 'srs2', 'pep3', 'pep', 'mchat', 'mchat_r_f', 'mchat_rf'].includes(s.id);
     if (isAutismFeatured && isAutismScale) {
       return false;
     }
@@ -722,6 +722,12 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     const isLdFeatured = selectedCategoryFilter === 'all' || selectedCategoryFilter === 'learning_academic';
     const isLdScale = ['myklebust_scale', 'sartawi_scale', 'lddrs_battery', 'dev_learning_difficulties', 'dev_ld_preschool', 'learning_difficulties', 'ldes'].includes(s.id);
     if (isLdFeatured && isLdScale) {
+      return false;
+    }
+
+    const isAdhdFeatured = selectedCategoryFilter === 'all' || selectedCategoryFilter === 'adhd';
+    const isAdhdScale = ['conners_parent', 'conners'].includes(s.id);
+    if (isAdhdFeatured && isAdhdScale) {
       return false;
     }
 
