@@ -1,4 +1,4 @@
-.nav{background:var(--g9);display:flex;align-items:center;gap:2px;overflow:visible;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3);padding:0 8px}
+.nav{background:var(--g9);display:flex;align-items:center;gap:2px;overflow-x:auto;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3);padding:0 8px}
 .nav::-webkit-scrollbar{display:none}
 .nav-brand{display:flex;align-items:center;gap:9px;padding:9px 14px 9px 6px;border-left:1px solid rgba(255,255,255,.1);margin-left:4px;flex-shrink:0;min-width:0}
 .nav-brand img{height:36px;border-radius:8px;object-fit:cover;flex-shrink:0}

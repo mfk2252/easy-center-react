@@ -30,7 +30,8 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="nav no-print">
+    <nav className="nav no-print" style={{ justifyContent: 'center', margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '2px', width: '100%', maxWidth: '1280px', padding: '0 8px' }}>
       <div className="nav-brand" title={center.name || ''}>
         {center.logo
           ? <img src={center.logo} alt={center.name || ''} style={{ height: 36, borderRadius: 8, objectFit: 'cover' }}/>
@@ -76,6 +77,7 @@ export default function Navbar() {
       <button type="button" className="nav-icon-btn no-print" onClick={() => setSearchOpen(true)} title={t('search')}>🔍</button>
       <button type="button" className="dark-toggle no-print" onClick={toggleDark}>{darkMode ? '☀️' : '🌙'}</button>
       <button type="button" className="nav-logout no-print" onClick={logout}>{t('logout')}</button>
+      </div>
     </nav>
   );
 }
