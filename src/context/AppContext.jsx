@@ -32,7 +32,7 @@ export const FONT_OPTIONS = [
 ];
 
 export function applyFontVariables(size, weight) {
-  const s = Math.max(12, Math.min(24, parseInt(size, 10) || 15));
+  const s = Math.max(12, Math.min(24, parseInt(size, 10) || 16));
   const w = String(weight || '400');
   const wNum = parseInt(w, 10) || 400;
 
@@ -71,7 +71,7 @@ export function applyFontFamily(fontId) {
 
 export function applyFontSettings(size, weight, family) {
   if (size || weight) {
-    applyFontVariables(size || 15, weight || '400');
+    applyFontVariables(size || 16, weight || '400');
   }
   if (family) {
     applyFontFamily(family);

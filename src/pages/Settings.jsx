@@ -1141,6 +1141,23 @@ export default function Settings() {
                 </div>
               </div>
 
+              {/* أزرار استعادة الافتراضي */}
+              <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 16 }}>
+                <button
+                  type="button"
+                  className="btn btn-g"
+                  onClick={() => {
+                    setFontFamily('tajawal');
+                    setFontSize(16);
+                    setFontWeight('400');
+                    applyActiveFontSettings(16, '400', 'tajawal');
+                  }}
+                  style={{ padding: '8px 16px', fontSize: '.85rem' }}
+                >
+                  🔄 استعادة إعدادات الخط الافتراضية
+                </button>
+              </div>
+
               {/* تحكم الحجم والوزن */}
               <div className="fg c2" style={{ marginBottom: 24 }}>
                 <div style={{ padding: '16px', background: 'var(--g0)', borderRadius: 12, border: '1px solid var(--border-color)' }}>
