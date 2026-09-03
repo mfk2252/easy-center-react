@@ -37,30 +37,31 @@ export default function Navbar() {
           : <div className="nav-brand-ph">🏥</div>}
       </div>
 
-      {NAV_ITEMS.filter(item => canSeeTab(role, item.id)).map(item => (
-        <button
-          key={item.id}
-          type="button"
-          className={`nb ${isActive(item.id) ? 'on' : ''}`}
-          onClick={() => go(item.id)}
-        >
-          {item.icon} {t(item.key)}
-        </button>
-      ))}
-
-      {isAdmin && (
-        <button
-          type="button"
-          className={`nb ${activeView === 'admin' ? 'on' : ''}`}
-          onClick={() => go('admin')}
-          style={{ color: '#f59e0b' }}
-          title={t('nav.admin') || 'لوحة الإدارة'}
-        >
-          👑 {t('nav.admin') || 'الإدارة العامة'}
-        </button>
-      )}
-
-      <div className="spacer"/>
+      
+      <div className="nav-scroll-area" style={{ display: 'flex', alignItems: 'center', gap: '2px', overflowX: 'auto', flex: 1, minWidth: 0, padding: '0 4px', msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
+        <style>{`.nav-scroll-area::-webkit-scrollbar { display: none; }`}</style>
+        {NAV_ITEMS.filter(item => canSeeTab(role, item.id)).map(item => (
+          <button
+            key={item.id}
+            type="button"
+            className={`nb ${isActive(item.id) ? 'on' : ''}`}
+            onClick={() => go(item.id)}
+          >
+            {item.icon} {t(item.key)}
+          </button>
+        ))}
+        {isAdmin && (
+          <button
+            type="button"
+            className={`nb ${activeView === 'admin' ? 'on' : ''}`}
+            onClick={() => go('admin')}
+            style={{ color: '#f59e0b' }}
+            title={t('nav.admin') || 'لوحة الإدارة'}
+          >
+            👑 {t('nav.admin') || 'الإدارة العامة'}
+          </button>
+        )}
+      </div>
 
       <NotificationsDropdown />
 
