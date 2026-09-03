@@ -13,6 +13,19 @@ const TYPE_META = {
   appointment: { icon: '📅', color: 'var(--pr)' },
 };
 
+
+const safeDateStr = (val) => {
+  if (!val) return '';
+  if (typeof val === 'string') return val.slice(0, 10);
+  if (typeof val.toDate === 'function') {
+    try { return val.toDate().toISOString().slice(0, 10); } catch(e) {}
+  }
+  if (val.seconds) {
+    try { return new Date(val.seconds * 1000).toISOString().slice(0, 10); } catch(e) {}
+  }
+  return String(val).slice(0, 10);
+};
+
 export default function StudentTimeline({
   sessions = [],
   reports = [],
@@ -32,7 +45,7 @@ export default function StudentTimeline({
       list.push({
         id: `sess-${s.id}`,
         type: 'session',
-        date: s.date || '',
+        date: safeDateStr(s.date),
         time: s.time,
         title: s.type || t('timeline.session'),
         desc: s.notes || s.goals || '',
@@ -44,7 +57,7 @@ export default function StudentTimeline({
       list.push({
         id: `rep-${r.id}`,
         type: 'report',
-        date: r.date || '',
+        date: safeDateStr(r.date),
         title: r.title || t('timeline.report'),
         desc: r.summary || r.content || '',
       });
@@ -54,7 +67,7 @@ export default function StudentTimeline({
       list.push({
         id: `att-${a.id || a.date}`,
         type: 'absence',
-        date: a.date || '',
+        date: safeDateStr(a.date),
         title: t('timeline.absence'),
         desc: a.notes || a.reason || '',
       });
@@ -65,7 +78,7 @@ export default function StudentTimeline({
         list.push({
           id: `iep-${g.id}`,
           type: 'plan',
-          date: (g.updatedAt || g.start || '').slice(0, 10),
+          date: safeDateStr(g.updatedAt || g.start),
           title: t('timeline.planChange'),
           desc: g.goal || g.domain || '',
         });
@@ -76,7 +89,7 @@ export default function StudentTimeline({
       list.push({
         id: `file-${a.id}`,
         type: 'file',
-        date: a.date || '',
+        date: safeDateStr(a.date),
         title: t('timeline.file'),
         desc: a.name || a.label || '',
       });
@@ -86,7 +99,7 @@ export default function StudentTimeline({
       list.push({
         id: `appt-${a.id}`,
         type: 'appointment',
-        date: a.date || '',
+        date: safeDateStr(a.date),
         time: a.time,
         title: a.type || '📅',
         desc: a.notes || '',
@@ -97,7 +110,7 @@ export default function StudentTimeline({
       list.push({
         id: `pay-${p.id}`,
         type: 'payment',
-        date: p.date || '',
+        date: safeDateStr(p.date),
         title: '💳',
         desc: `${p.amount} — ${p.method || ''}`,
       });
