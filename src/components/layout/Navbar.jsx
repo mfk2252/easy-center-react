@@ -13,7 +13,6 @@ const NAV_ITEMS = [
   { id: 'prog-reports', key: 'nav.progReports', icon: '📚' },
   { id: 'statistics', key: 'nav.statistics', icon: '📈' },
   { id: 'center', key: 'nav.center', icon: '🏢' },
-  { id: 'settings', key: 'nav.settings', icon: '⚙️' },
 ];
 
 export default function Navbar() {
@@ -75,6 +74,16 @@ export default function Navbar() {
       </button>
 
       <button type="button" className="nav-icon-btn no-print" onClick={() => setSearchOpen(true)} title={t('search')}>🔍</button>
+      {canSeeTab(role, 'settings') && (
+        <button 
+          type="button" 
+          className={`nav-icon-btn no-print ${isActive('settings') ? 'on' : ''}`}
+          onClick={() => go('settings')} 
+          title={t('nav.settings')}
+        >
+          ⚙️
+        </button>
+      )}
       <button type="button" className="dark-toggle no-print" onClick={toggleDark}>{darkMode ? '☀️' : '🌙'}</button>
       <button type="button" className="nav-logout no-print" onClick={logout}>{t('logout')}</button>
       </div>
