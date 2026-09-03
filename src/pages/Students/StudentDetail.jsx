@@ -4,12 +4,13 @@ import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { calcAge, formatDate, todayStr, uid, nowTimeStr } from '../../utils/dateHelpers';
 import StudentTimeline from '../../components/students/StudentTimeline';
 import { handleFileInputChange } from '../../utils/fileUpload';
+import { GoalPickerModal } from '../ProgramsReports/GoalsBank';
 import { centerWhatsAppUrl, parentCanViewStudent } from '../../utils/parentAccess';
 import { getCurrencySymbol } from '../../utils/constants';
 
 const IEP_DOMAINS = ['التواصل واللغة','المهارات الاجتماعية','السلوك والانتباه','المهارات الحركية','الرعاية الذاتية','الأكاديمي','أخرى'];
 const EMPTY_IEP = { domain:'', goal:'', priority:'medium', start:'', review:'', progress:0, notes:'' };
-const EMPTY_SESSION = { type:'تخاطب ونطق', date:'', time:'', duration:45, empId:'', status:'done', notes:'', goals:'', attachmentData:'', attachmentName:'' };
+const EMPTY_SESSION = { type:'تخاطب ونطق', date:'', time:'', duration:45, empId:'', status:'done', notes:'', goals:'', attachmentData:'', attachmentName:'', iepGoalId:'', iepProgress:0 };
 const EMPTY_APPT = { type:'تخاطب ونطق', date:'', time:'', duration:'45 دقيقة', mode:'inperson', link:'', empId:'', notes:'' };
 const EMPTY_REPORT = { period:'month', title:'', summary:'', content:'', date:'' };
 const EMPTY_BIP = { title:'', targetBehaviors:'', strategies:'', reviewDate:'', notes:'', active:true };
@@ -42,6 +43,9 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
   // Form states
   const [showIepForm, setShowIepForm] = useState(false);
   const [iepEditId, setIepEditId] = useState(null);
+  const [showGoalPicker, setShowGoalPicker] = useState(false);
+  const [showEvalImport, setShowEvalImport] = useState(false);
+  const [evalSuggestions, setEvalSuggestions] = useState([]);
   const [iepForm, setIepForm] = useState(EMPTY_IEP);
   const [showSessForm, setShowSessForm] = useState(false);
   const [sessEditId, setSessEditId] = useState(null);
@@ -180,6 +184,68 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
   const attendanceRate = attStu.length ? Math.round(attStu.filter(a=>a.status==='present').length / attStu.length * 100) : 0;
 
   // IEP
+  
+  
+  function handleOpenEvalImport() {
+    const evals = (lsGet('progEvaluations') || []).filter(e => e.stuId === stuId);
+    if (evals.length === 0) {
+      toast('⚠️ لا يوجد تقييم مبدئي مسجل لهذا الطالب', 'er');
+      return;
+    }
+    // Get latest evaluation
+    evals.sort((a,b) => (b.date || '').localeCompare(a.date || ''));
+    const latest = evals[0];
+    
+    // Extract suggestions from recommendations and summary
+    const text = (latest.recommendations || '') + '\n' + (latest.summary || '');
+    const lines = text.split('\n').map(l => l.trim().replace(/^-+/, '').trim()).filter(l => l.length > 5);
+    
+    if (lines.length === 0) {
+      toast('⚠️ التقييم المبدئي لا يحتوي على توصيات صالحة للاستيراد', 'er');
+      return;
+    }
+    
+    setEvalSuggestions(lines.map((l, i) => ({ id: i, text: l, selected: true, domain: latest.domain || 'أخرى' })));
+    setShowEvalImport(true);
+  }
+
+  function handleSaveEvalGoals() {
+    const selected = evalSuggestions.filter(s => s.selected);
+    selected.forEach(g => {
+      lsAdd('iepGoals', {
+        id: uid(),
+        stuId,
+        domain: g.domain,
+        goal: g.text,
+        priority: 'high',
+        progress: 0,
+        start: todayStr(),
+        notes: 'مستخرج تلقائياً من التقييم المبدئي'
+      });
+    });
+    setShowEvalImport(false);
+    load();
+    toast(`✅ تم استيراد ${selected.length} هدف من التقييم`, 'ok');
+  }
+
+  function handleImportGoals(selectedGoals) {
+    selectedGoals.forEach(g => {
+      lsAdd('iepGoals', {
+        id: uid(),
+        stuId,
+        domain: g.domain || 'أخرى',
+        goal: g.text,
+        priority: 'medium',
+        progress: 0,
+        start: todayStr(),
+        notes: `مستورد من برنامج: ${g.program}`
+      });
+    });
+    setShowGoalPicker(false);
+    load();
+    toast('✅ تم استيراد الأهداف بنجاح', 'ok');
+  }
+
   function saveIep() {
     if (!iepForm.domain || !iepForm.goal) { toast('⚠️ أدخل المجال والهدف','er'); return; }
     if (iepEditId) { lsUpd('iepGoals', iepEditId, { ...iepForm, stuId }); toast('✅ تم التحديث','ok'); }
@@ -189,8 +255,14 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
   function delIep(id) { if(!window.confirm('حذف هذا الهدف؟'))return; lsDel('iepGoals',id); load(); toast('🗑️ تم الحذف','ok'); }
 
   // Sessions
-  function saveSess() {
+    function saveSess() {
     if (!sessForm.date) { toast('⚠️ أدخل تاريخ الجلسة','er'); return; }
+    if (sessForm.iepGoalId && sessForm.status === 'done' && sessForm.iepProgress != null) {
+       const goal = iepGoals.find(g => g.id === sessForm.iepGoalId);
+       if (goal) {
+          lsUpd('iepGoals', goal.id, { ...goal, progress: Number(sessForm.iepProgress) });
+       }
+    }
     if (sessEditId) { lsUpd('sessions', sessEditId, { ...sessForm, stuId }); toast('✅ تم التحديث','ok'); }
     else { lsAdd('sessions', { ...sessForm, stuId, id: uid() }); toast('✅ تم تسجيل الجلسة','ok'); }
     setShowSessForm(false); load();
@@ -295,6 +367,39 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
         />
       )}
 
+      
+      {showGoalPicker && (
+        <GoalPickerModal
+          onClose={() => setShowGoalPicker(false)}
+          onConfirm={handleImportGoals}
+        />
+      )}
+
+      
+      {showEvalImport && (
+        <div className="mbg" onClick={e=>{if(e.target===e.currentTarget)setShowEvalImport(false);}}>
+          <div className="mb">
+            <div className="mb-h"><h2>🪄 أهداف مقترحة من التقييم المبدئي</h2></div>
+            <div className="mb-b" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+              <p style={{ color: 'var(--text-sub)', marginBottom: 15 }}>تم استخراج هذه النقاط من (التوصيات والملخص) في أحدث تقييم مبدئي للطالب. حدد ما تود تحويله إلى هدف IEP:</p>
+              {evalSuggestions.map(s => (
+                <div key={s.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10, padding: 10, background: 'var(--bg2)', borderRadius: 8 }}>
+                  <input type="checkbox" checked={s.selected} onChange={e => setEvalSuggestions(prev => prev.map(x => x.id === s.id ? {...x, selected: e.target.checked} : x))} style={{ marginTop: 4 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--pr)' }}>{s.domain}</div>
+                    <div style={{ fontSize: '0.95rem' }}>{s.text}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mb-f">
+              <button className="btn btn-p" onClick={handleSaveEvalGoals}>حفظ الأهداف المحددة</button>
+              <button className="btn btn-x" onClick={() => setShowEvalImport(false)}>إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* INFO TAB */}
       {tab === 'info' && (
         <div className="g2">
@@ -336,7 +441,17 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
       {tab === 'iep' && (
         <div>
           <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:12 }}>
-            {canEdit && <button className="btn btn-p" onClick={()=>{ setIepForm({...EMPTY_IEP, start:today}); setIepEditId(null); setShowIepForm(true); }}>➕ هدف جديد</button>}
+            
+            
+            {canEdit && (
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button className="btn btn-p" onClick={()=>{ setIepForm({...EMPTY_IEP, start:todayStr()}); setIepEditId(null); setShowIepForm(true); }}>➕ هدف جديد</button>
+                <button className="btn btn-s" onClick={() => setShowGoalPicker(true)}>🗂️ استيراد من بنك الأهداف</button>
+                <button className="btn btn-g" onClick={handleOpenEvalImport}>🪄 استخراج من التقييم المبدئي</button>
+              </div>
+            )}
+
+
           </div>
           {iepGoals.length === 0
             ? <div className="empty"><div className="ei">🎯</div><div className="et">لا توجد أهداف IEP</div></div>
@@ -424,6 +539,23 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
                     <div className="fl"><label>الوقت</label><input type="time" value={sessForm.time} onChange={fldS('time')}/></div>
                     <div className="fl"><label>المدة (دقيقة)</label><input type="number" value={sessForm.duration} onChange={e=>setSessForm(f=>({...f,duration:Number(e.target.value)}))} min="1"/></div>
                     <div className="fl"><label>الحالة</label><select value={sessForm.status} onChange={fldS('status')}><option value="done">✅ منجزة</option><option value="scheduled">⏳ مجدولة</option><option value="cancelled">❌ ملغاة</option></select></div>
+                    
+                    <div className="fl full"><label>ربط بهدف IEP (اختياري)</label>
+                      <select value={sessForm.iepGoalId || ''} onChange={e => {
+                        const g = iepGoals.find(x => x.id === e.target.value);
+                        setSessForm(f => ({...f, iepGoalId: e.target.value, iepProgress: g ? g.progress : 0, goals: g ? g.goal : f.goals}));
+                      }}>
+                        <option value="">-- بدون ربط --</option>
+                        {iepGoals.map(g => <option key={g.id} value={g.id}>{g.domain} - {g.goal}</option>)}
+                      </select>
+                    </div>
+                    {sessForm.iepGoalId && (
+                      <div className="fl full">
+                        <label>نسبة إنجاز الهدف (تحديث مباشر لخطة IEP) <strong>{sessForm.iepProgress || 0}%</strong></label>
+                        <input type="range" min="0" max="100" value={sessForm.iepProgress || 0} onChange={e => setSessForm(f => ({...f, iepProgress: Number(e.target.value)}))} style={{width:'100%', accentColor:'var(--p)'}} />
+                      </div>
+                    )}
+
                     <div className="fl full"><label>الأهداف / محتوى الجلسة</label><textarea value={sessForm.goals} onChange={fldS('goals')} rows={2} placeholder="ما تم العمل عليه..."/></div>
                     <div className="fl full"><label>ملاحظات</label><textarea value={sessForm.notes} onChange={fldS('notes')} rows={2}/></div>
                     <div className="fl full"><label>مرفق توثيق (صورة أو ملف)</label><input type="file" accept="image/*,.pdf,.doc,.docx" onChange={sessAttach}/>{sessForm.attachmentName && <span style={{ fontSize:'.78rem', marginRight:8 }}>{sessForm.attachmentName}</span>}{sessForm.attachmentData && <button type="button" className="btn btn-xs btn-d" style={{ marginRight:6 }} onClick={()=>setSessForm(f=>({...f,attachmentData:'',attachmentName:''}))}>إزالة المرفق</button>}</div>
