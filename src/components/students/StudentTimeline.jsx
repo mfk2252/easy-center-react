@@ -79,7 +79,7 @@ export default function StudentTimeline({
           id: `iep-${g.id}`,
           type: 'plan',
           date: safeDateStr(g.updatedAt || g.start),
-          title: t('timeline.planChange'),
+          title: '🎯 إدراج هدف IEP',
           desc: g.goal || g.domain || '',
         });
       }

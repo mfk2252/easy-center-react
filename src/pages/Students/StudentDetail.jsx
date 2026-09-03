@@ -10,7 +10,7 @@ import { getCurrencySymbol } from '../../utils/constants';
 
 const IEP_DOMAINS = ['التواصل واللغة','المهارات الاجتماعية','السلوك والانتباه','المهارات الحركية','الرعاية الذاتية','الأكاديمي','أخرى'];
 const EMPTY_IEP = { domain:'', goal:'', priority:'medium', start:'', review:'', progress:0, notes:'' };
-const EMPTY_SESSION = { type:'تخاطب ونطق', date:'', time:'', duration:45, empId:'', status:'done', notes:'', goals:'', attachmentData:'', attachmentName:'', iepGoalId:'', iepProgress:0 };
+const EMPTY_SESSION = { type:'تخاطب ونطق', date:'', time:'', duration:45, empId:'', status:'done', notes:'', goals:'', attachmentData:'', attachmentName:'', linkedGoals: [] };
 const EMPTY_APPT = { type:'تخاطب ونطق', date:'', time:'', duration:'45 دقيقة', mode:'inperson', link:'', empId:'', notes:'' };
 const EMPTY_REPORT = { period:'month', title:'', summary:'', content:'', date:'' };
 const EMPTY_BIP = { title:'', targetBehaviors:'', strategies:'', reviewDate:'', notes:'', active:true };
@@ -198,7 +198,7 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
     
     // Extract suggestions from recommendations and summary
     const text = (latest.recommendations || '') + '\n' + (latest.summary || '');
-    const lines = text.split('\n').map(l => l.trim().replace(/^-+/, '').trim()).filter(l => l.length > 5);
+    const lines = text.split(/[\n.،]+/).map(l => l.trim().replace(/^-+|-+$/g, '').trim()).filter(l => l.length > 5);
     
     if (lines.length === 0) {
       toast('⚠️ التقييم المبدئي لا يحتوي على توصيات صالحة للاستيراد', 'er');
@@ -257,11 +257,13 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
   // Sessions
     function saveSess() {
     if (!sessForm.date) { toast('⚠️ أدخل تاريخ الجلسة','er'); return; }
-    if (sessForm.iepGoalId && sessForm.status === 'done' && sessForm.iepProgress != null) {
-       const goal = iepGoals.find(g => g.id === sessForm.iepGoalId);
-       if (goal) {
-          lsUpd('iepGoals', goal.id, { ...goal, progress: Number(sessForm.iepProgress) });
-       }
+    if (sessForm.linkedGoals && sessForm.linkedGoals.length > 0 && sessForm.status === 'done') {
+       sessForm.linkedGoals.forEach(link => {
+          const goal = iepGoals.find(g => g.id === link.goalId);
+          if (goal) {
+             lsUpd('iepGoals', goal.id, { ...goal, progress: Number(link.progress) });
+          }
+       });
     }
     if (sessEditId) { lsUpd('sessions', sessEditId, { ...sessForm, stuId }); toast('✅ تم التحديث','ok'); }
     else { lsAdd('sessions', { ...sessForm, stuId, id: uid() }); toast('✅ تم تسجيل الجلسة','ok'); }
@@ -540,22 +542,40 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
                     <div className="fl"><label>المدة (دقيقة)</label><input type="number" value={sessForm.duration} onChange={e=>setSessForm(f=>({...f,duration:Number(e.target.value)}))} min="1"/></div>
                     <div className="fl"><label>الحالة</label><select value={sessForm.status} onChange={fldS('status')}><option value="done">✅ منجزة</option><option value="scheduled">⏳ مجدولة</option><option value="cancelled">❌ ملغاة</option></select></div>
                     
-                    <div className="fl full"><label>ربط بهدف IEP (اختياري)</label>
-                      <select value={sessForm.iepGoalId || ''} onChange={e => {
-                        const g = iepGoals.find(x => x.id === e.target.value);
-                        setSessForm(f => ({...f, iepGoalId: e.target.value, iepProgress: g ? g.progress : 0, goals: g ? g.goal : f.goals}));
-                      }}>
-                        <option value="">-- بدون ربط --</option>
-                        {iepGoals.map(g => <option key={g.id} value={g.id}>{g.domain} - {g.goal}</option>)}
-                      </select>
-                    </div>
-                    {sessForm.iepGoalId && (
-                      <div className="fl full">
-                        <label>نسبة إنجاز الهدف (تحديث مباشر لخطة IEP) <strong>{sessForm.iepProgress || 0}%</strong></label>
-                        <input type="range" min="0" max="100" value={sessForm.iepProgress || 0} onChange={e => setSessForm(f => ({...f, iepProgress: Number(e.target.value)}))} style={{width:'100%', accentColor:'var(--p)'}} />
+                    <div className="fl full"><label>الأهداف التي تم العمل عليها في هذه الجلسة (يمكنك اختيار عدة أهداف)</label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: 'var(--bg2)', padding: '10px', borderRadius: '8px', maxHeight: '250px', overflowY: 'auto' }}>
+                         {iepGoals.map(g => {
+                            const isLinked = (sessForm.linkedGoals || []).find(x => x.goalId === g.id);
+                            return (
+                              <div key={g.id} style={{ display: 'flex', flexDirection: 'column', gap: '5px', padding: '10px', background: 'var(--bg)', borderRadius: '6px', border: '1px solid var(--bdr)' }}>
+                                <label style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', cursor: 'pointer', whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: '1.5' }}>
+                                  <input type="checkbox" checked={!!isLinked} onChange={(e) => {
+                                     if (e.target.checked) {
+                                        setSessForm(f => ({ ...f, linkedGoals: [...(f.linkedGoals||[]), { goalId: g.id, progress: g.progress || 0 }] }));
+                                     } else {
+                                        setSessForm(f => ({ ...f, linkedGoals: (f.linkedGoals||[]).filter(x => x.goalId !== g.id) }));
+                                     }
+                                  }} style={{ marginTop: '4px', transform: 'scale(1.2)' }} />
+                                  <span style={{ fontSize: '0.9rem', color: 'var(--text-main)' }}><strong>{g.domain}:</strong> {g.goal}</span>
+                                </label>
+                                {isLinked && (
+                                  <div style={{ paddingRight: '25px', marginTop: '8px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--p)', fontWeight: 'bold' }}>
+                                       <span>نسبة الإنجاز الحالية:</span>
+                                       <span>{isLinked.progress}%</span>
+                                    </div>
+                                    <input type="range" min="0" max="100" value={isLinked.progress} onChange={(e) => {
+                                       const val = Number(e.target.value);
+                                       setSessForm(f => ({ ...f, linkedGoals: f.linkedGoals.map(x => x.goalId === g.id ? { ...x, progress: val } : x) }));
+                                    }} style={{ width: '100%', accentColor: 'var(--p)' }} />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                         })}
+                         {iepGoals.length === 0 && <div style={{ fontSize: '0.85rem', color: 'var(--text-sub)', textAlign: 'center', padding: '10px' }}>لا توجد أهداف نشطة في خطة الطالب الحالية.</div>}
                       </div>
-                    )}
-
+                    </div>
                     <div className="fl full"><label>الأهداف / محتوى الجلسة</label><textarea value={sessForm.goals} onChange={fldS('goals')} rows={2} placeholder="ما تم العمل عليه..."/></div>
                     <div className="fl full"><label>ملاحظات</label><textarea value={sessForm.notes} onChange={fldS('notes')} rows={2}/></div>
                     <div className="fl full"><label>مرفق توثيق (صورة أو ملف)</label><input type="file" accept="image/*,.pdf,.doc,.docx" onChange={sessAttach}/>{sessForm.attachmentName && <span style={{ fontSize:'.78rem', marginRight:8 }}>{sessForm.attachmentName}</span>}{sessForm.attachmentData && <button type="button" className="btn btn-xs btn-d" style={{ marginRight:6 }} onClick={()=>setSessForm(f=>({...f,attachmentData:'',attachmentName:''}))}>إزالة المرفق</button>}</div>
