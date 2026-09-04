@@ -92,6 +92,36 @@ const EMPTY_ASSESSMENT = {
   recommendations: '',
 };
 
+const CollapsibleSection = ({ title, color, defaultOpen = true, children }) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const isNamedColor = color && color !== 'text-main';
+  return (
+    <div style={{ marginBottom: 16, border: '1px solid var(--border-color)', borderRadius: 12, overflow: 'hidden', background: 'var(--bg-card)' }}>
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        style={{ 
+          padding: '12px 16px', 
+          background: isNamedColor ? `var(--${color}-l, var(--g0))` : 'var(--g0)', 
+          color: isNamedColor ? `var(--${color}, var(--text-main))` : 'var(--text-main)', 
+          fontWeight: 800, 
+          cursor: 'pointer',
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          userSelect: 'none'
+        }}>
+        <span>{title}</span>
+        <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{isOpen ? '▲ إخفاء التفاصيل' : '▼ عرض التفاصيل'}</span>
+      </div>
+      {isOpen && (
+        <div style={{ padding: '16px', background: 'var(--bg-card)' }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function PillarAssessment({ onDataChange, activeCategoryView: extActiveCategoryView, onCategoryChange }) {
   const { toast, center, currentUser } = useApp();
   const [subTab, setSubTab] = useState('scales'); // 'scales' | 'initial' | 'results'
@@ -319,8 +349,13 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     if (!validateStudentPick(evalForm)) { toast('⚠️ اختر الطالب من القائمة أو أدخل اسمه', 'er'); return; }
     if (!evalForm.date) { toast('⚠️ أدخل تاريخ التقييم', 'er'); return; }
 
+    const stu = students.find(s => s.id === evalForm.stuId);
+    const resolvedName = evalForm.studentName || stu?.name || '';
+
     const payload = {
       ...evalForm,
+      studentName: resolvedName,
+      age: evalForm.age || (evalForm.dob ? calcAge(evalForm.dob) : ''),
       isUnregistered: evalForm.mode === 'other',
       updatedAt: new Date().toISOString(),
     };
@@ -697,11 +732,17 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
           </tr>
         </table>
         ${item.history ? `<h3>📜 التاريخ التطوري والحالة النمائية:</h3><p style="white-space:pre-wrap;">${item.history}</p>` : ''}
-        ${item.parentsInterview ? `<h3>👨‍👩‍👧 نتائج مقابلة ولي الأمر والملاحظة:</h3><p style="white-space:pre-wrap;">${item.parentsInterview}</p>` : ''}
+        ${item.medicalHistory ? `<h3>🏥 التطور الارتقائي والطبي:</h3><p style="white-space:pre-wrap;">${item.medicalHistory}</p>` : ''}
+        ${item.familyHistory ? `<h3>🏡 التاريخ العائلي:</h3><p style="white-space:pre-wrap;">${item.familyHistory}</p>` : ''}
         ${item.appliedTools ? `<h3>🧪 الأدوات والمقاييس المستخدمة:</h3><p style="white-space:pre-wrap;">${item.appliedTools}</p>` : ''}
-        ${item.observationSessions ? `<h3>👁️ ملاحظات الجلسات التشخيصية:</h3><p style="white-space:pre-wrap;">${item.observationSessions}</p>` : ''}
+        ${item.toolsNotes ? `<h3>📝 مناقشة وملاحظات أدوات التقييم:</h3><p style="white-space:pre-wrap;">${item.toolsNotes}</p>` : ''}
+        ${item.parentsInterview ? `<h3>👨‍👩‍👧 مقابلة ولي الأمر:</h3><p style="white-space:pre-wrap;">${item.parentsInterview}</p>` : ''}
+        ${item.parentsNeeds ? `<h3>🎯 الاحتياجات التدريبية للأهل:</h3><p style="white-space:pre-wrap;">${item.parentsNeeds}</p>` : ''}
+        ${item.observationSessions ? `<h3>👁️ ملاحظات الجلسات الاستكشافية:</h3><p style="white-space:pre-wrap;">${item.observationSessions}</p>` : ''}
+        ${item.strengths ? `<h3>💪 نقاط القوة لدى المستفيد:</h3><p style="white-space:pre-wrap;">${item.strengths}</p>` : ''}
+        ${item.weaknesses ? `<h3>⚠️ نقاط الاحتياج والضعف:</h3><p style="white-space:pre-wrap;">${item.weaknesses}</p>` : ''}
         ${item.summary ? `<h3>📌 الخلاصة ومستوى الأداء الحالي:</h3><p style="white-space:pre-wrap;">${item.summary}</p>` : ''}
-        ${item.recommendations ? `<h3>💡 التوصيات والبرنامج المقترح:</h3><p style="white-space:pre-wrap;">${item.recommendations}</p>` : ''}
+        ${item.recommendations ? `<h3>💡 التوصيات والبرنامج المقترح (أهداف IEP):</h3><p style="white-space:pre-wrap;">${item.recommendations}</p>` : ''}
         <div style="margin-top:30px;display:flex;justify-content:space-between;border-top:1px dashed #94a3b8;padding-top:16px;">
           <div><b>توقيع الأخصائي:</b> _______________</div>
           <div><b>اعتماد مدير المركز:</b> _______________</div>
@@ -838,7 +879,16 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
           </div>
 
           {filteredEvals.length === 0 ? (
-            <EmptyState icon="🎯" title="لا توجد تقييمات مبدئية مسجلة بعد" sub="اضغط ➕ تقييم مبدئي جديد لبدء توثيق رحلة تشخيص الطالب" />
+            <EmptyState 
+              icon="🎯" 
+              title="لا توجد تقييمات مبدئية مسجلة بعد" 
+              sub="اضغط ➕ تقييم مبدئي جديد لبدء توثيق رحلة تشخيص الطالب" 
+              action={
+                <button type="button" className="btn btn-p" onClick={openNewEval}>
+                  ➕ تقييم مبدئي جديد
+                </button>
+              }
+            />
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14 }}>
               {filteredEvals.map(item => (
@@ -2624,7 +2674,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                </div>
                <div style={{ display: 'flex', gap: 8 }}>
                  <button type="button" className="btn btn-s" onClick={fillSuggestedDraftEval} style={{ fontWeight: 800, background: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)', color: '#fff', border: 'none' }}>✨ مسودة سريعة (توليد آلي)</button>
-                 <button type="button" className="btn btn-bl" onClick={() => printItem('evaluations', evalForm, students)} style={{ fontWeight: 800 }}>🖨️ طباعة التقرير</button>
+                 <button type="button" className="btn btn-bl" onClick={() => printEvalItem(evalForm)} style={{ fontWeight: 800 }}>🖨️ طباعة التقرير</button>
                </div>
             </div>
           </div>
