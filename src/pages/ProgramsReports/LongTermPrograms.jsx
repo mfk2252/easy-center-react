@@ -7,6 +7,7 @@ import { StudentPicker, validateStudentPick, EMPTY_STU_PICK } from './StudentPic
 import { GoalPickerModal, GoalsBankManagerModal, getAllGoals } from './GoalsBank';
 import { DOMAINS, PROGRAMS, domainLabel, programLabel, programColor } from '../../utils/goalsBank';
 import BulkImporter from './BulkImporter';
+import UnifiedBackButton from '../../components/ui/UnifiedBackButton';
 
 const EMPTY_PROG = {
   ...EMPTY_STU_PICK,
@@ -241,11 +242,11 @@ export default function LongTermPrograms({ onBack }) {
           <h2>📘 نظام البرامج طويلة المدى</h2>
           <p>خطط تربوية فردية (IEP) مبنية على بنوك أهداف قياسية: لوفاس، بورتاج، إيبلز، بيب-3، هيلب</p>
         </div>
-        <div className="ph-a" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div className="ph-a" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <button type="button" className="btn btn-p" onClick={openNew}>➕ برنامج جديد</button>
           <button type="button" className="btn btn-s btn-sm" onClick={() => setShowBankManager(true)}>🗂️ بنك الأهداف</button>
           <button type="button" className="btn btn-s btn-sm" onClick={() => setShowBulk(true)}>📥 استيراد ضخم</button>
-          <button type="button" className="btn btn-g" onClick={onBack}>← رجوع</button>
+          <UnifiedBackButton onClick={onBack} label="العودة للبرامج والتقارير" />
         </div>
       </div>
 

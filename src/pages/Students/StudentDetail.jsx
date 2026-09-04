@@ -7,6 +7,7 @@ import { handleFileInputChange } from '../../utils/fileUpload';
 import { GoalPickerModal } from '../ProgramsReports/GoalsBank';
 import { centerWhatsAppUrl, parentCanViewStudent } from '../../utils/parentAccess';
 import { getCurrencySymbol } from '../../utils/constants';
+import UnifiedBackButton from '../../components/ui/UnifiedBackButton';
 
 const IEP_DOMAINS = ['التواصل واللغة','المهارات الاجتماعية','السلوك والانتباه','المهارات الحركية','الرعاية الذاتية','الأكاديمي','أخرى'];
 const EMPTY_IEP = { domain:'', goal:'', priority:'medium', start:'', review:'', progress:0, notes:'' };
@@ -337,7 +338,7 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
           {isParent && centerWa && <a href={centerWa} target="_blank" rel="noreferrer" className="btn btn-bl btn-sm">💬 واتساب المركز</a>}
           {!isParent && stu.parentPhone && <a href={`https://wa.me/${stu.parentPhone.replace(/[^0-9+]/g,'').replace(/^0/,'966')}`} target="_blank" rel="noreferrer" className="btn btn-bl btn-sm">💬 واتساب ولي الأمر</a>}
           {canEdit && <button className="btn btn-p" onClick={() => onEdit(stu)}>✏️ تعديل</button>}
-          <button className="btn btn-g" onClick={onBack}>← رجوع</button>
+          <UnifiedBackButton onClick={onBack} label="العودة لقائمة الطلاب" />
         </div>
       </div>
 

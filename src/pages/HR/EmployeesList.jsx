@@ -4,6 +4,7 @@ import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { ROLES, SPECIALIST_ROLES } from '../../utils/constants';
 import { calcAge, todayStr, uid } from '../../utils/dateHelpers';
 import EmptyState from '../../components/ui/EmptyState';
+import UnifiedBackButton from '../../components/ui/UnifiedBackButton';
 
 function roleLabel(r) { return ROLES[r] || r || '—'; }
 const isSpec = r => SPECIALIST_ROLES.includes(r);
@@ -89,7 +90,7 @@ export default function EmployeesList() {
           <div className="det-acts">
             {canEdit&&<button className="btn btn-p" onClick={()=>openForm(detailEmp)}>✏️ تعديل</button>}
             {detailEmp.phone&&<a href={`https://wa.me/${detailEmp.phone.replace(/[^0-9+]/g,'').replace(/^0/,'966')}`} target="_blank" rel="noreferrer" className="btn btn-bl btn-sm">💬</a>}
-            <button className="btn btn-g" onClick={()=>setDetailId(null)}>← رجوع</button>
+            <UnifiedBackButton onClick={()=>setDetailId(null)} label="العودة لقائمة الموظفين" />
           </div>
         </div>
         <div className="stats" style={{gridTemplateColumns:'repeat(3,1fr)'}}>
@@ -216,9 +217,9 @@ export default function EmployeesList() {
     <div>
       <div className="ph">
         <div className="ph-t"><h2>👥 قائمة الموظفين</h2><p>إدارة شاملة للكوادر البشرية في المركز</p></div>
-        <div className="ph-a">
+        <div className="ph-a" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           {canEdit&&<button className="btn btn-p" onClick={()=>openForm()}>➕ موظف جديد</button>}
-          <button className="btn btn-g" onClick={()=>go('hr')}>← رجوع للوحة الموظفين</button>
+          <UnifiedBackButton onClick={()=>go('hr')} label="العودة للوحة الموظفين" />
         </div>
       </div>
       <div className="tabs">

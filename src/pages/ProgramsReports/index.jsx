@@ -7,6 +7,7 @@ import PillarAssessment from './PillarAssessment';
 import PillarPlans from './PillarPlans';
 import PillarProgress from './PillarProgress';
 import PillarFamily from './PillarFamily';
+import UnifiedBackButton from '../../components/ui/UnifiedBackButton';
 
 /**
  * أقسام البرامج والتقارير في Easy Center
@@ -176,21 +177,11 @@ export default function ProgramsReportsHub() {
           /* المسار الافتراضي عند التواجد في الصفحة الرئيسية للقسم */
           <div className="ph" style={{ marginBottom: 14 }}>
             <div className="ph-t" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                className="btn btn-g btn-sm"
+              <UnifiedBackButton
                 onClick={backToHub}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  fontWeight: 700,
-                  borderRadius: 'var(--r2)',
-                }}
-              >
-                <span>➡️</span>
-                <span>العودة للأقسام الرئيسية</span>
-              </button>
+                label="العودة للأقسام الرئيسية"
+                size="sm"
+              />
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--g5)' }}>
                 <span>/</span>
@@ -244,27 +235,10 @@ export default function ProgramsReportsHub() {
             </div>
 
             {/* زر العودة للفئات المدمج في ترويسة القسم ومحاذى لليسار */}
-            <button
-              type="button"
-              className="btn btn-g"
+            <UnifiedBackButton
               onClick={() => setAssessmentCategory(null)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                fontWeight: 700,
-                fontSize: '0.88rem',
-                padding: '8px 16px',
-                borderRadius: 'var(--r2)',
-                border: '1.5px solid var(--border-color)',
-                background: 'var(--bg-card)',
-                boxShadow: 'var(--sh)',
-                cursor: 'pointer',
-              }}
-            >
-              <span>←</span>
-              <span>العودة للفئات</span>
-            </button>
+              label="العودة للفئات"
+            />
           </div>
         ) : (
           /* الترويسة الرئيسية للقسم مع أزرار التنقل السريع بين الأقسام */

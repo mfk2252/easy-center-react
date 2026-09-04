@@ -25,6 +25,57 @@
 .btn-bl { background: #25d366; color: white; }
 .btn-bl:hover:not(:disabled) { background: #1da851; }
 
+/* ══ UNIFIED BACK BUTTON (زر العودة الموحد) ══ */
+.btn-unified-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-main);
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: var(--r2);
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  box-shadow: var(--sh);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  text-decoration: none;
+  user-select: none;
+}
+.btn-unified-back:hover:not(:disabled) {
+  border-color: var(--pr);
+  background: var(--pr-l);
+  color: var(--pr);
+  box-shadow: var(--sh2);
+}
+.btn-unified-back:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.btn-unified-back .back-arrow-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+.btn-unified-back:hover:not(:disabled) .back-arrow-icon {
+  transform: translateX(-3px);
+}
+.btn-unified-back.btn-sm {
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  gap: 6px;
+}
+.btn-unified-back.btn-xs {
+  padding: 3px 8px;
+  font-size: 0.74rem;
+  gap: 4px;
+}
+
 /* ══ BADGES ══ */
 .bdg {
   display: inline-flex; align-items: center; gap: 3px;

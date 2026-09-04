@@ -4,6 +4,7 @@ import { lsGet, lsDel } from '../../hooks/useStorage';
 import { printItem } from '../../utils/printUtils';
 import EmptyState from '../../components/ui/EmptyState';
 import InitialAssessmentModal from '../../components/assessments/InitialAssessmentModal';
+import UnifiedBackButton from '../../components/ui/UnifiedBackButton';
 
 export default function InitialAssessment({ onBack }) {
   const { toast } = useApp();
@@ -31,13 +32,13 @@ export default function InitialAssessment({ onBack }) {
 
   return (
     <div className="card full">
-      <div className="fhd">
-        <h2 style={{ fontSize: '1.2rem', color: 'var(--p)', display: 'flex', gap: 8, alignItems: 'center' }}>
+      <div className="fhd" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+        <h2 style={{ fontSize: '1.2rem', color: 'var(--p)', display: 'flex', gap: 8, alignItems: 'center', margin: 0 }}>
           🎯 مركز التقييم والتشخيص
         </h2>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <button type="button" className="btn btn-p" onClick={openNew}>➕ تقييم مبدئي جديد</button>
-          <button type="button" className="btn btn-g" onClick={onBack}>العودة للبرامج والتقارير</button>
+          <UnifiedBackButton onClick={onBack} label="العودة للبرامج والتقارير" />
         </div>
       </div>
 

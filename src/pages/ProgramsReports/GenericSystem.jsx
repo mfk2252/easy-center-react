@@ -5,6 +5,7 @@ import { uid, todayStr } from '../../utils/dateHelpers';
 import { printItem } from '../../utils/printUtils';
 import EmptyState from '../../components/ui/EmptyState';
 import { StudentPicker, validateStudentPick, EMPTY_STU_PICK } from './StudentPicker';
+import UnifiedBackButton from '../../components/ui/UnifiedBackButton';
 
 /**
  * قالب عام قابل لإعادة الاستخدام لأي نظام تقارير من الأنظمة العشرة لا يملك
@@ -80,9 +81,9 @@ export default function GenericSystem({ title, icon, collectionKey, onBack }) {
           <h2>{icon} {title}</h2>
           <p>عرض وإضافة سجلات هذا النظام — معزولة بالكامل لمركزك</p>
         </div>
-        <div className="ph-a" style={{ display: 'flex', gap: 8 }}>
+        <div className="ph-a" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <button type="button" className="btn btn-p" onClick={openNew}>➕ إضافة جديد</button>
-          <button type="button" className="btn btn-g" onClick={onBack}>← رجوع للوحة الأنظمة</button>
+          <UnifiedBackButton onClick={onBack} label="العودة للوحة الأنظمة" />
         </div>
       </div>
 

@@ -23,6 +23,7 @@ import PEP3ReportModal from '../../components/assessments/PEP3ReportModal';
 import LDESAssessmentModal from '../../components/assessments/LDESAssessmentModal';
 import LDESReportModal from '../../components/assessments/LDESReportModal';
 import DevLdAssessmentModal from '../../components/assessments/DevLdAssessmentModal';
+import UnifiedBackButton from '../../components/ui/UnifiedBackButton';
 import DevLdReportModal from '../../components/assessments/DevLdReportModal';
 import LDDRSAssessmentModal from '../../components/assessments/LDDRSAssessmentModal';
 import LDDRSReportModal from '../../components/assessments/LDDRSReportModal';
@@ -331,9 +332,9 @@ export default function MeasurementCenter({ onBack }) {
           <h2>🧪 المقاييس والتقييمات</h2>
           <p>مكتبة مقاييس مركزية + إمكانية إضافة مقاييس جديدة لكل مركز مع حفظها داخل هذا المركز فقط.</p>
         </div>
-        <div className="ph-a" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div className="ph-a" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <button type="button" className="btn btn-p" onClick={openMeasureModal}>➕ إضافة مقياس جديد</button>
-          <button type="button" className="btn btn-g" onClick={onBack}>← رجوع</button>
+          <UnifiedBackButton onClick={onBack} label="العودة للبرامج والتقارير" />
         </div>
       </div>
 

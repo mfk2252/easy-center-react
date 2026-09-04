@@ -10,6 +10,7 @@ import { DIAGNOSES, SPECIALIST_ROLES } from '../../utils/constants';
 import { calcAge, todayStr, uid, nowTimeStr } from '../../utils/dateHelpers';
 import StudentDetail from './StudentDetail';
 import { parentCanViewStudent, centerWhatsAppUrl } from '../../utils/parentAccess';
+import UnifiedBackButton from '../../components/ui/UnifiedBackButton';
 
 // Student Statuses
 const STATUSES = {
@@ -649,21 +650,14 @@ export default function StudentsPage() {
           flexWrap: 'wrap',
           gap: '16px'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <button
-              onClick={() => setActiveFolder(null)}
-              className="btn btn-g"
-              style={{ padding: '8px 14px', fontSize: '0.82rem' }}
-            >
-              <ArrowRight style={{ width: '16px', height: '16px' }} />
-              <span>العودة لجميع {activeFolder.type === 'class' ? 'الصفوف' : 'الفئات'}</span>
-            </button>
+          {/* القسم الأيمن: الأيقونة والعنوان والتفاصيل */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0, flex: 1 }}>
+            <span style={{ fontSize: '1.6rem', background: `${activeFolder.data?.color || 'var(--pr)'}20`, padding: '4px 10px', borderRadius: '10px', flexShrink: 0 }}>
+              {activeFolder.data?.icon || (activeFolder.type === 'class' ? '🏫' : '🧩')}
+            </span>
 
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.6rem', background: `${activeFolder.data?.color || 'var(--pr)'}20`, padding: '4px 10px', borderRadius: '10px' }}>
-                  {activeFolder.data?.icon || (activeFolder.type === 'class' ? '🏫' : '🧩')}
-                </span>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <h2 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-main)', margin: 0 }}>
                   {activeFolder.name}
                 </h2>
@@ -684,7 +678,8 @@ export default function StudentsPage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {/* القسم الأيسر: أزرار الإجراءات + زر العودة الموحد في أقصى اليسار */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
             {canEdit && (
               <button
                 onClick={() => {
@@ -708,11 +703,18 @@ export default function StudentsPage() {
               <button
                 onClick={() => openForm(null, activeFolder.type === 'class' ? activeFolder.id : '', activeFolder.type === 'category' ? activeFolder.name : '')}
                 className="btn btn-p"
+                style={{ padding: '8px 16px', fontSize: '0.85rem' }}
               >
                 <Plus style={{ width: '16px', height: '16px' }} />
                 <span>إضافة طالب {activeFolder.type === 'class' ? 'لهذا الصف' : 'لهذه الفئة'}</span>
               </button>
             )}
+
+            {/* زر العودة الموحد على اليسار متناسقاً تماماً مع جميع واجهات النظام */}
+            <UnifiedBackButton
+              onClick={() => setActiveFolder(null)}
+              label={`العودة لجميع ${activeFolder.type === 'class' ? 'الصفوف' : 'الفئات'}`}
+            />
           </div>
         </div>
       )}
