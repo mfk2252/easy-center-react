@@ -1,64 +1,11 @@
-import { useState, useEffect } from 'react';
-import { useApp } from '../../context/AppContext';
-import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
-import { uid, todayStr, calcAge } from '../../utils/dateHelpers';
-import { printItem } from '../../utils/printUtils';
-import { handleFileInputChange, FILE_ACCEPT_IMAGE } from '../../utils/fileUpload';
-import EmptyState from '../../components/ui/EmptyState';
-import { StudentPicker, validateStudentPick, EMPTY_STU_PICK } from './StudentPicker';
+const fs = require('fs');
+const path = 'src/pages/ProgramsReports/InitialAssessment.jsx';
+let code = fs.readFileSync(path, 'utf8');
 
-const PROGRAM_DOMAINS = [
-  'التربية الخاصة', 'التدخل المبكر', 'مرحلة الروضة', 'صعوبات التعلم',
-  'فرط الحركة ونقص الانتباه', 'تعديل السلوك', 'التكامل الحسي',
-  'التفاعل الاجتماعي', 'الرعاية الذاتية', 'التخاطب والنطق',
-];
+const returnStart = code.indexOf('return (');
+const returnEnd = code.lastIndexOf(');') + 2;
 
-const EMPTY_EVAL = {
-  ...EMPTY_STU_PICK,
-  dob: '', age: '', diagnosis: '', specialistName: '', photo: '',
-  history: '', caseHistory: '', medicalHistory: '', familyHistory: '',
-  appliedTools: '', toolsNotes: '',
-  parentsInterview: '', parentsNeeds: '',
-  observationSessions: '',
-  strengths: '', weaknesses: '',
-  recommendations: '', summary: '',
-  domain: 'التربية الخاصة', date: '',
-};
-
-// دالة التحقق من صحة البيانات
-function validateEvaluationForm(form) {
-  const errors = [];
-  
-  // 1. التحقق من اختيار الطالب
-  if (!validateStudentPick(form)) {
-    errors.push('اختر الطالب من القائمة أو أدخل اسمه');
-  }
-  
-  // 2. التحقق من التاريخ
-  if (!form.date || form.date.trim() === '') {
-    errors.push('أدخل تاريخ التقييم');
-  }
-  
-  // 3. التحقق من المجال
-  if (!form.domain || form.domain.trim() === '') {
-    errors.push('اختر المجال التعليمي/العلاجي');
-  }
-  
-  // 4. التحقق من وجود محتوى واحد على الأقل
-  const hasContent = 
-    (form.history?.trim() || '') !== '' ||
-    (form.parentsInterview?.trim() || '') !== '' ||
-    (form.appliedTools?.trim() || '') !== '' ||
-    (form.observationSessions?.trim() || '') !== '';
-  
-  if (!hasContent) {
-    errors.push('أدخل محتوى التقرير (التاريخ التطوري أو مقابلة الأهل أو أدوات أو الملاحظات)');
-  }
-  
-  return errors;
-}
-
-
+const newReturn = `
 const CollapsibleSection = ({ title, color, defaultOpen = true, children }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
@@ -66,8 +13,8 @@ const CollapsibleSection = ({ title, color, defaultOpen = true, children }) => {
       <div 
         onClick={() => setIsOpen(!isOpen)}
         style={{ 
-          padding: '12px 16px', background: color ? `var(--${color}-l)` : 'var(--g0)', 
-          color: color ? `var(--${color})` : 'var(--text-main)', fontWeight: 800, cursor: 'pointer',
+          padding: '12px 16px', background: color ? \`var(--\${color}-l)\` : 'var(--g0)', 
+          color: color ? \`var(--\${color})\` : 'var(--text-main)', fontWeight: 800, cursor: 'pointer',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none'
         }}>
         <span>{title}</span>
@@ -82,113 +29,6 @@ const CollapsibleSection = ({ title, color, defaultOpen = true, children }) => {
   );
 };
 
-export default function InitialAssessment({ onBack }) {
-  const { toast, center } = useApp();
-  const [students, setStudents] = useState([]);
-  const [emps, setEmps] = useState([]);
-  const [evalForm, setEvalForm] = useState({ ...EMPTY_EVAL, date: todayStr() });
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editId, setEditId] = useState(null);
-  const [helperNote, setHelperNote] = useState('');
-  const [formErrors, setFormErrors] = useState([]);
-
-  function reload() {
-    setStudents(lsGet('students'));
-    setEmps(lsGet('employees'));
-  }
-  useEffect(() => { reload(); }, []);
-
-  const evaluations = lsGet('progEvaluations').sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-
-  function openNew() {
-    setFormErrors([]);
-    setHelperNote('');
-    setEvalForm({ ...EMPTY_EVAL, date: todayStr() });
-    setEditId(null);
-    setModalOpen(true);
-  }
-  function openEdit(item) {
-    setFormErrors([]);
-    setHelperNote('');
-    setEvalForm({ ...EMPTY_EVAL, ...item });
-    setEditId(item.id);
-    setModalOpen(true);
-  }
-
-  async function onEvalPhoto(e) {
-    try {
-      const res = await handleFileInputChange(e, { imagesOnly: true });
-      if (res) setEvalForm(f => ({ ...f, photo: res.data }));
-    } catch (ex) {
-      toast('⚠️ ' + (ex.i18nKey === 'file.tooLarge' ? 'حجم الصورة يتجاوز 2 ميجا' : 'نوع الملف غير مدعوم'), 'er');
-    }
-  }
-
-  function fillSuggestedDraft() {
-    const domain = evalForm.domain || 'التربية الخاصة';
-    setEvalForm(f => ({
-      ...f,
-      caseHistory: f.caseHistory || f.history || 'تم تحويل الحالة من قبل جهة طبية للاستشارة وتقييم القدرات النمائية.',
-      medicalHistory: f.medicalHistory || 'لا توجد مشكلات طبية مصاحبة تذكر، نمو ارتقائي طبيعي في أغلب الجوانب الحركية الكبرى وتأخر في الجوانب الدقيقة.',
-      familyHistory: f.familyHistory || 'يعيش مع الوالدين، ترتيبه الثاني، لا توجد أمراض وراثية مشابهة في العائلة.',
-      parentsInterview: f.parentsInterview || 'أفاد ولي الأمر بوجود تحديات في نطق بعض الحروف وتشتت سريع أثناء أداء المهام.',
-      parentsNeeds: f.parentsNeeds || 'الأسرة بحاجة إلى توجيه حول كيفية التعامل مع السلوكيات النمطية وتعميم المهارات في المنزل من خلال جدول منظم.',
-      appliedTools: f.appliedTools || '• مقابلة أولية مع ولي الأمر\n• ملاحظة مباشرة في البيئة الطبيعية\n• استبانة تقييم المهارات',
-      toolsNotes: f.toolsNotes || 'أظهر استجابة جيدة لبعض فقرات التقييم وتفاعل إيجابي مع المعززات المادية، وتشتت في فقرات أخرى تتطلب تركيزاً بصرياً.',
-      strengths: f.strengths || '• تواصل بصري جيد في أغلب الأحيان\n• مهارات حركية كبرى ممتازة\n• استجابة سريعة للمعززات الاجتماعية',
-      weaknesses: f.weaknesses || '• ضعف في التركيز والانتباه للمهام التي تتطلب أكثر من 5 دقائق\n• قصور في التواصل اللفظي للتعبير عن الاحتياجات',
-      observationSessions: f.observationSessions || 'لوحظ خلال الملاحظة الاستكشافية تفاعل محدود مع الأقران وميل للعب الفردي.',
-      summary: f.summary || 'خلاصة التقييم المبدئي تشير إلى احتياج الحالة للتدخل الشامل في مجالات التواصل وتعديل السلوك وتنمية الانتباه الإدراكي.',
-      recommendations: f.recommendations || `• إدراج الحالة في برنامج تدخل مبكر في مجال ${domain}\n• وضع أهداف لتنمية مهارات الانتباه المشترك كأولوية قصوى\n• دمج جلسات النطق والتخاطب مع تعديل السلوك\n• جدولة اجتماع دوري (شهري) مع الأسرة للمتابعة وتدريبهم على تعميم المهارات`
-    }));
-    setHelperNote('تم تجهيز مسودة مقترحة شاملة متكاملة — راجعها وعدّلها قبل الحفظ.');
-  }
-
-  function save() {
-    // التحقق من صحة البيانات
-    const validationErrors = validateEvaluationForm(evalForm);
-    
-    // إذا كانت هناك أخطاء - عرضها وإيقاف العملية
-    if (validationErrors.length > 0) {
-      setFormErrors(validationErrors);
-      toast('⚠️ تحقق من الأخطاء أعلاه', 'er');
-      return;
-    }
-    
-    // مسح الأخطاء السابقة
-    setFormErrors([]);
-    
-    // البيانات صحيحة - حفظ
-    const payload = {
-      ...evalForm,
-      age: evalForm.age || (evalForm.dob ? calcAge(evalForm.dob) : ''),
-      isUnregistered: evalForm.mode === 'other',
-    };
-    
-    if (editId) { 
-      lsUpd('progEvaluations', editId, payload); 
-      toast('✅ تم تحديث التقييم بنجاح', 'ok'); 
-    } else { 
-      lsAdd('progEvaluations', { ...payload, id: uid(), createdAt: todayStr() }); 
-      toast('✅ تم حفظ التقييم بنجاح', 'ok'); 
-    }
-    
-    setModalOpen(false);
-  }
-
-  function del(id) {
-    if (!window.confirm('حذف هذا التقييم نهائياً؟')) return;
-    lsDel('progEvaluations', id);
-    toast('🗑️ تم الحذف', 'ok');
-  }
-
-  function printEval(item) {
-    const data = item || evalForm;
-    if (!validateStudentPick(data)) { toast('⚠️ اختر الطالب أولاً', 'er'); return; }
-    printItem({ ...data, age: data.age || (data.dob ? calcAge(data.dob) : '') }, 'initial_eval', center?.logo, center?.name);
-  }
-
-  
 return (
     <div className="card full">
       <div className="fhd">
@@ -284,7 +124,7 @@ return (
                       style={{
                         width: 100, height: 100, border: '2px dashed var(--border-color)', borderRadius: 12,
                         display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                        background: evalForm.photo ? `url(${evalForm.photo}) center/cover` : 'var(--g0)',
+                        background: evalForm.photo ? \`url(\${evalForm.photo}) center/cover\` : 'var(--g0)',
                       }}
                     >
                       {!evalForm.photo && <span style={{ fontSize: '.72rem', color: 'var(--g5)' }}>📷 صورة</span>}
@@ -356,3 +196,9 @@ return (
       )}
     </div>
   );
+`
+
+code = code.substring(0, returnStart) + newReturn;
+
+fs.writeFileSync(path, code);
+console.log("Patched UI successfully.");
