@@ -12,19 +12,33 @@ const STATUS_LABEL = { present:'✅ حاضر', absent:'❌ غائب', late:'⚠�
 const STATUS_COLOR = { present:'var(--ok)', absent:'var(--err)', late:'var(--warn)', leave:'var(--cyan)', holiday:'var(--g4)' };
 
 export default function HrAttendance() {
-  const { go } = useApp();
+  const { go, toast } = useApp();
   const [view, setView] = useState('monthly');
   const [month, setMonth] = useState(new Date());
   const [emps, setEmps] = useState([]);
   const [attEmp, setAttEmp] = useState([]);
+  const [leaves, setLeaves] = useState([]);
   const [selEmp, setSelEmp] = useState('all');
 
   useEffect(() => {
     setEmps(lsGet('employees') || []);
     setAttEmp(lsGet('attEmp') || []);
+    setLeaves(lsGet('leaves') || []);
   }, []);
 
-  function reload() { setAttEmp(lsGet('attEmp') || []); }
+  function reload() {
+    setAttEmp(lsGet('attEmp') || []);
+    setLeaves(lsGet('leaves') || []);
+  }
+
+  function getApprovedLeave(empId, dateStr) {
+    return (leaves || []).find(l =>
+      l.empId === empId &&
+      l.status === 'approved' &&
+      l.from <= dateStr &&
+      dateStr <= l.to
+    );
+  }
 
   const mk = monthKey(month);
   const year = month.getFullYear();
@@ -36,13 +50,40 @@ export default function HrAttendance() {
   });
 
   function getStatus(empId, dateStr) {
-    return attEmp.find(a => a.empId === empId && a.date === dateStr);
+    const record = attEmp.find(a => a.empId === empId && a.date === dateStr);
+    if (record) return record;
+    const approvedLeave = getApprovedLeave(empId, dateStr);
+    if (approvedLeave) {
+      return { status: 'leave', isApprovedLeave: true, leaveType: approvedLeave.type };
+    }
+    return null;
   }
 
   async function setStatus(empId, dateStr, status) {
-    const existing = getStatus(empId, dateStr);
-    if (existing) { lsUpd('attEmp', existing.id, { status }); }
-    else { lsAdd('attEmp', { id: uid(), empId, date: dateStr, status, timeIn:'', timeOut:'' }); }
+    const approvedLeave = getApprovedLeave(empId, dateStr);
+    const emp = emps.find(e => e.id === empId);
+
+    if (approvedLeave && (status === 'present' || status === 'late')) {
+      const confirmAttend = window.confirm(
+        `⚠️ تنبيه تعارض: الموظف (${emp?.name || ''}) حاصل على إجازة رسمية معتمدة (${approvedLeave.type}) في هذا التاريخ (${dateStr}).\n\nهل حضر الموظف بالفعل وتريد توثيق حضوره كحضور استثنائي؟`
+      );
+      if (!confirmAttend) return;
+    }
+
+    const existing = attEmp.find(a => a.empId === empId && a.date === dateStr);
+    let note = existing?.note || '';
+    if (approvedLeave && (status === 'present' || status === 'late')) {
+      note = (note ? note + ' | ' : '') + `حضور استثنائي أثناء إجازة (${approvedLeave.type})`;
+    } else if (status === 'leave' && approvedLeave) {
+      note = `إجازة معتمدة: ${approvedLeave.type}`;
+    }
+
+    if (existing) {
+      lsUpd('attEmp', existing.id, { status, note });
+    } else {
+      lsAdd('attEmp', { id: uid(), empId, date: dateStr, status, timeIn:'', timeOut:'', note });
+    }
+    toast('✅ تم تحديث سجل الحضور', 'ok');
     reload();
   }
 
@@ -50,11 +91,19 @@ export default function HrAttendance() {
 
   function countForEmp(empId) {
     const empAtt = attEmp.filter(a => a.empId === empId && a.date.startsWith(mk));
+    let leaveCount = empAtt.filter(a => a.status === 'leave').length;
+    daysArr.forEach(d => {
+      const hasExplicit = empAtt.find(a => a.date === d.dateStr);
+      if (!hasExplicit && getApprovedLeave(empId, d.dateStr)) {
+        leaveCount++;
+      }
+    });
+
     return {
       present: empAtt.filter(a => a.status === 'present').length,
       absent: empAtt.filter(a => a.status === 'absent').length,
       late: empAtt.filter(a => a.status === 'late').length,
-      leave: empAtt.filter(a => a.status === 'leave').length,
+      leave: leaveCount,
     };
   }
 
