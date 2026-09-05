@@ -343,11 +343,27 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
       </div>
 
       {/* Stats */}
-      <div className="stats" style={{ gridTemplateColumns:'repeat(4,1fr)' }}>
-        <div className="sc g"><div className="lb">الجلسات المسجلة</div><div className="vl">{sessions.length}</div></div>
-        <div className="sc"><div className="lb">المواعيد القادمة</div><div className="vl">{appts.filter(a=>a.date>=today).length}</div></div>
-        <div className="sc v"><div className="lb">أهداف IEP</div><div className="vl">{iepGoals.length}</div></div>
-        <div className="sc o"><div className="lb">نسبة الحضور</div><div className="vl">{attendanceRate}%</div></div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 18 }}>
+        <div className="unified-stat-box">
+          <div className="stat-label">🩺 الجلسات المسجلة</div>
+          <div className="stat-val" style={{ color: 'var(--ok)' }}>{sessions.length}</div>
+          <div className="stat-sub">جلسات تأهيلية منفذة</div>
+        </div>
+        <div className="unified-stat-box">
+          <div className="stat-label">📅 المواعيد القادمة</div>
+          <div className="stat-val" style={{ color: 'var(--pr)' }}>{appts.filter(a=>a.date>=today).length}</div>
+          <div className="stat-sub">مجدولة للفترات القادمة</div>
+        </div>
+        <div className="unified-stat-box">
+          <div className="stat-label">🎯 أهداف IEP</div>
+          <div className="stat-val" style={{ color: 'var(--pur)' }}>{iepGoals.length}</div>
+          <div className="stat-sub">أهداف الخطة الفردية</div>
+        </div>
+        <div className="unified-stat-box">
+          <div className="stat-label">📊 نسبة الحضور</div>
+          <div className="stat-val" style={{ color: 'var(--warn)' }}>{attendanceRate}%</div>
+          <div className="stat-sub">معدل الالتزام والمواظبة</div>
+        </div>
       </div>
 
       {/* Tabs */}

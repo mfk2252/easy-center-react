@@ -8,6 +8,7 @@ import PillarPlans from './PillarPlans';
 import PillarProgress from './PillarProgress';
 import PillarFamily from './PillarFamily';
 import UnifiedBackButton from '../../components/ui/UnifiedBackButton';
+import UnifiedPageHeader from '../../components/ui/UnifiedPageHeader';
 
 /**
  * أقسام البرامج والتقارير في Easy Center
@@ -127,164 +128,50 @@ export default function ProgramsReportsHub() {
   if (currentView !== 'hub' && activeSectionObj) {
     return (
       <div className="programs-section-page">
-        {/* شريط المسار والتنقل العلوي (Breadcrumbs) */}
+        {/* ترويسة الصفحة الموحدة للأقسام أو الفئات التشخيصية */}
         {activeCatMeta ? (
-          /* المسار العميق عند الدخول لفئة تشخيصية فرعية */
-          <div className="ph" style={{ marginBottom: 14 }}>
-            <div className="ph-t" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: '0.88rem' }}>
-              <button
-                type="button"
-                className="btn btn-g btn-xs"
-                onClick={backToHub}
-                style={{ fontWeight: 600, borderRadius: 'var(--r2)', padding: '4px 10px' }}
-              >
-                <span>🏠</span>
-                <span>الرئيسية</span>
-              </button>
-              <span style={{ color: 'var(--g5)', fontSize: '0.8rem' }}>&gt;</span>
-              <button
-                type="button"
-                className="btn btn-g btn-xs"
-                onClick={backToHub}
-                style={{ fontWeight: 600, borderRadius: 'var(--r2)', padding: '4px 10px' }}
-              >
-                <span>البرامج والتقارير</span>
-              </button>
-              <span style={{ color: 'var(--g5)', fontSize: '0.8rem' }}>&gt;</span>
-              <button
-                type="button"
-                className="btn btn-g btn-xs"
-                onClick={() => setAssessmentCategory(null)}
-                style={{ fontWeight: 600, borderRadius: 'var(--r2)', padding: '4px 10px', color: 'var(--pr)' }}
-              >
-                <span>🎯</span>
-                <span>مركز التقييم والتشخيص</span>
-              </button>
-              <span style={{ color: 'var(--g5)', fontSize: '0.8rem' }}>&gt;</span>
-              <span style={{ fontWeight: 800, color: 'var(--text-main)', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.9rem' }}>
-                <span>{activeCatMeta.icon}</span>
-                <span>{activeCatMeta.name}</span>
-              </span>
-            </div>
-
-            <div className="ph-a" style={{ display: 'flex', gap: 6 }}>
-              <span className="bdg b-bl" style={{ fontSize: '0.78rem' }}>
-                {activeCatMeta.name}
-              </span>
-            </div>
-          </div>
+          /* المسار والترويسة عند الدخول لفئة تشخيصية فرعية */
+          <UnifiedPageHeader
+            icon={<span style={{ fontSize: '1.45rem' }}>{activeCatMeta.icon || '🎯'}</span>}
+            iconBg={`${activeCatMeta.color || 'var(--pr)'}20`}
+            iconColor={activeCatMeta.color || 'var(--pr)'}
+            accentColor={activeCatMeta.color || activeSectionObj.color}
+            title={activeCatMeta.name}
+            subtitle={activeCatMeta.description || activeSectionObj.subtitle}
+            badge={<span className="bdg b-bl">{activeCatMeta.name}</span>}
+            onBack={() => setAssessmentCategory(null)}
+            backLabel="العودة للفئات التشخيصية"
+          />
         ) : (
-          /* المسار الافتراضي عند التواجد في الصفحة الرئيسية للقسم */
-          <div className="ph" style={{ marginBottom: 14 }}>
-            <div className="ph-t" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <UnifiedBackButton
-                onClick={backToHub}
-                label="العودة للأقسام الرئيسية"
-                size="sm"
-              />
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--g5)' }}>
-                <span>/</span>
-                <span style={{ fontWeight: 800, color: 'var(--text-main)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <span>{activeSectionObj.icon}</span>
-                  <span>{activeSectionObj.title}</span>
-                </span>
+          /* الترويسة الرئيسية الموحدة للقسم مع أزرار التنقل السريع بين الأقسام */
+          <UnifiedPageHeader
+            icon={<span style={{ fontSize: '1.45rem' }}>{activeSectionObj.icon}</span>}
+            iconBg={activeSectionObj.accentBg}
+            iconColor={activeSectionObj.color}
+            accentColor={activeSectionObj.color}
+            title={activeSectionObj.title}
+            subtitle={activeSectionObj.subtitle}
+            badge={<span className={`bdg ${activeSectionObj.badgeClass}`}>{activeSectionObj.tag}</span>}
+            actions={
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {SECTIONS.filter(s => s.id !== currentView).map(s => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className="btn btn-xs btn-g"
+                    onClick={() => navigateTo(s.id)}
+                    title={s.title}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                  >
+                    <span>{s.icon}</span>
+                    <span>{s.title.split(' ')[0]}</span>
+                  </button>
+                ))}
               </div>
-            </div>
-
-            <div className="ph-a" style={{ display: 'flex', gap: 6 }}>
-              <span className={`bdg ${activeSectionObj.badgeClass}`}>
-                {activeSectionObj.tag}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* ترويسة الصفحة الحالية (Banner) */}
-        {activeCatMeta ? (
-          /* ترويسة مدمجة داخل صفحة الفئة الفرعية مع زر العودة للفئات على اليسار وإخفاء الأزرار الخارجية */
-          <div
-            className="prog-page-banner"
-            style={{
-              borderRight: `4px solid ${activeCatMeta.color || activeSectionObj.color}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 16,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-              <div
-                className="prog-page-icon"
-                style={{
-                  background: `${activeCatMeta.color || 'var(--pr)'}15`,
-                  color: activeCatMeta.color || 'var(--pr)',
-                }}
-              >
-                {activeCatMeta.icon || '🎯'}
-              </div>
-              <div style={{ minWidth: 0 }}>
-                <h3 className="prog-page-title" style={{ margin: 0, fontWeight: 700 }}>
-                  {activeCatMeta.name}
-                </h3>
-                <p className="prog-page-subtitle" style={{ margin: '4px 0 0 0', fontWeight: 400 }}>
-                  {activeCatMeta.description || activeSectionObj.subtitle}
-                </p>
-              </div>
-            </div>
-
-            {/* زر العودة للفئات المدمج في ترويسة القسم ومحاذى لليسار */}
-            <UnifiedBackButton
-              onClick={() => setAssessmentCategory(null)}
-              label="العودة للفئات"
-            />
-          </div>
-        ) : (
-          /* الترويسة الرئيسية للقسم مع أزرار التنقل السريع بين الأقسام */
-          <div
-            className="prog-page-banner"
-            style={{
-              borderRight: `4px solid ${activeSectionObj.color}`,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-              <div
-                className="prog-page-icon"
-                style={{
-                  background: activeSectionObj.accentBg,
-                  color: activeSectionObj.color,
-                }}
-              >
-                {activeSectionObj.icon}
-              </div>
-              <div style={{ minWidth: 0 }}>
-                <h3 className="prog-page-title">
-                  {activeSectionObj.title}
-                </h3>
-                <p className="prog-page-subtitle">
-                  {activeSectionObj.subtitle}
-                </p>
-              </div>
-            </div>
-
-            {/* أزرار الانتقال السريع بين الأقسام */}
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {SECTIONS.filter(s => s.id !== currentView).map(s => (
-                <button
-                  key={s.id}
-                  type="button"
-                  className="btn btn-xs btn-g"
-                  onClick={() => navigateTo(s.id)}
-                  title={s.title}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                >
-                  <span>{s.icon}</span>
-                  <span>{s.title.split(' ')[0]}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+            }
+            onBack={backToHub}
+            backLabel="العودة للأقسام الرئيسية"
+          />
         )}
 
         {/* محتوى الصفحة المستقلة المختارة */}
@@ -309,37 +196,35 @@ export default function ProgramsReportsHub() {
   // ==========================================
   return (
     <div>
-      {/* ترويسة الصفحة القياسية */}
-      <div className="ph">
-        <div className="ph-t">
-          <h2>📚 {t('progReports.title') || 'البرامج والخطط التأهيلية والتقارير'}</h2>
-          <p>
-            منظومة متكاملة لإدارة رحلة الطالب التأهيلية: اختر القسم للدخول إلى صفحته المتخصصة وإدارته
-          </p>
-        </div>
-      </div>
+      {/* ترويسة الصفحة الموحدة */}
+      <UnifiedPageHeader
+        icon="📚"
+        title={t('progReports.title') || 'البرامج والخطط التأهيلية والتقارير'}
+        subtitle="منظومة متكاملة لإدارة رحلة الطالب التأهيلية: المقاييس والتشخيص، الخطط الفردية (IEP)، التقارير الدورية، والتواصل الأسري"
+        badge={`${stats.evalCount + stats.planCount + stats.reportCount + stats.meetingCount} سجل تأهيلي`}
+      />
 
-      {/* كروت الإحصائيات الأربعة المتوافقة مع النظام القياسي (.stats و .sc) */}
-      <div className="stats" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', marginBottom: 16 }}>
-        <div className="sc" style={{ borderRightColor: 'var(--pr)', cursor: 'pointer' }} onClick={() => navigateTo('assessment')}>
-          <div className="lb">🎯 تقييمات وتشخيصات</div>
-          <div className="vl">{stats.evalCount}</div>
-          <div className="sb">سجل تشخيص واختبار</div>
+      {/* كروت الإحصائيات الأربعة المتوافقة مع النظام القياسي (.unified-stat-box) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
+        <div className="unified-stat-box" style={{ cursor: 'pointer' }} onClick={() => navigateTo('assessment')}>
+          <div className="stat-label">🎯 تقييمات وتشخيصات</div>
+          <div className="stat-val" style={{ color: 'var(--pr)' }}>{stats.evalCount}</div>
+          <div className="stat-sub">سجل تشخيص واختبار مقنن</div>
         </div>
-        <div className="sc v" style={{ borderRightColor: 'var(--pur, #7c3aed)', cursor: 'pointer' }} onClick={() => navigateTo('plans')}>
-          <div className="lb">📋 خطط فردية وبرامج</div>
-          <div className="vl">{stats.planCount}</div>
-          <div className="sb">خطة IEP وسلوك BIP</div>
+        <div className="unified-stat-box" style={{ cursor: 'pointer' }} onClick={() => navigateTo('plans')}>
+          <div className="stat-label">📋 خطط فردية وبرامج</div>
+          <div className="stat-val" style={{ color: 'var(--pur)' }}>{stats.planCount}</div>
+          <div className="stat-sub">خطة IEP وسلوك BIP</div>
         </div>
-        <div className="sc g" style={{ borderRightColor: 'var(--ok, #059669)', cursor: 'pointer' }} onClick={() => navigateTo('progress')}>
-          <div className="lb">📊 تقارير دورية وإنجاز</div>
-          <div className="vl">{stats.reportCount}</div>
-          <div className="sb">تقارير أسبوعية وشهرية وسنوية</div>
+        <div className="unified-stat-box" style={{ cursor: 'pointer' }} onClick={() => navigateTo('progress')}>
+          <div className="stat-label">📊 تقارير دورية وإنجاز</div>
+          <div className="stat-val" style={{ color: 'var(--ok)' }}>{stats.reportCount}</div>
+          <div className="stat-sub">تقارير أسبوعية وشهرية وسنوية</div>
         </div>
-        <div className="sc o" style={{ borderRightColor: 'var(--warn, #d97706)', cursor: 'pointer' }} onClick={() => navigateTo('family')}>
-          <div className="lb">👨‍👩‍👧 شراكة وتواصل أسري</div>
-          <div className="vl">{stats.meetingCount}</div>
-          <div className="sb">محاضر وتواصل ومتابعة</div>
+        <div className="unified-stat-box" style={{ cursor: 'pointer' }} onClick={() => navigateTo('family')}>
+          <div className="stat-label">👨‍👩‍👧 شراكة وتواصل أسري</div>
+          <div className="stat-val" style={{ color: 'var(--warn)' }}>{stats.meetingCount}</div>
+          <div className="stat-sub">محاضر وتواصل ومتابعة منزلية</div>
         </div>
       </div>
 

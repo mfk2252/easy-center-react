@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { isPlatformAdminEmail } from '../firebase/auth';
+import UnifiedPageHeader from '../components/ui/UnifiedPageHeader';
 
 const COUNTRY_BY_CODE = {
   '+966': 'السعودية', '+971': 'الإمارات', '+973': 'البحرين', '+974': 'قطر',
@@ -147,27 +148,50 @@ export default function AdminSubscriptions() {
   ];
 
   return (
-    <div style={{ padding: '20px', maxWidth: 1100, margin: '0 auto', direction: 'rtl', color: 'var(--text-main)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900, color: 'var(--text-main)' }}>🔐 إدارة الاشتراكات</h1>
-          <p style={{ margin: '5px 0 0 0', color: 'var(--g5)' }}>إجمالي المراكز المسجلة: {centers.length}</p>
-        </div>
-      </div>
+    <div style={{ padding: '20px', maxWidth: 1200, margin: '0 auto', direction: 'rtl', color: 'var(--text-main)' }}>
+      <UnifiedPageHeader
+        icon="🔐"
+        title="إدارة اشتراكات المنصة والمراكز"
+        subtitle="إدارة وتفعيل تراخيص المراكز المشتركة، تمديد الفترات، ومتابعة حالات الاشتراكات السحابية"
+        badge={`${centers.length} مراكز مسجلة`}
+        actions={
+          <button
+            type="button"
+            className="btn btn-g btn-sm"
+            onClick={loadCenters}
+            title="تحديث قائمة المراكز من السحابة"
+          >
+            🔄 تحديث البيانات
+          </button>
+        }
+      />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(120px,1fr))', gap: 10, marginBottom: 20 }}>
-        {[
-          ['نشط (مؤقت)', stats.active, '#10b981'],
-          ['دائم', stats.permanent, '#7c3aed'],
-          ['تجريبي', stats.trial, '#3b82f6'],
-          ['ينتهي خلال 7 أيام', stats.expiringSoon, '#f59e0b'],
-          ['موقوف', stats.suspended, '#6b7280'],
-        ].map(([label, val, color]) => (
-          <div key={label} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '10px 14px', borderRight: `4px solid ${color}` }}>
-            <div style={{ fontSize: '.72rem', color: 'var(--g5)' }}>{label}</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: 900, color }}>{val}</div>
-          </div>
-        ))}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
+        <div className="unified-stat-box">
+          <div className="stat-label">✅ نشط (مؤقت)</div>
+          <div className="stat-val" style={{ color: '#10b981' }}>{stats.active}</div>
+          <div className="stat-sub">اشتراك سنوي أو شهري سارٍ</div>
+        </div>
+        <div className="unified-stat-box">
+          <div className="stat-label">💎 اشتراك دائم</div>
+          <div className="stat-val" style={{ color: '#7c3aed' }}>{stats.permanent}</div>
+          <div className="stat-sub">ترخيص مدى الحياة</div>
+        </div>
+        <div className="unified-stat-box">
+          <div className="stat-label">⏳ تجريبي</div>
+          <div className="stat-val" style={{ color: '#3b82f6' }}>{stats.trial}</div>
+          <div className="stat-sub">فترة تجربة مجانية</div>
+        </div>
+        <div className="unified-stat-box">
+          <div className="stat-label">⚠️ ينتهي قريباً (7 أيام)</div>
+          <div className="stat-val" style={{ color: '#f59e0b' }}>{stats.expiringSoon}</div>
+          <div className="stat-sub">يتطلب تجديد الاشتراك</div>
+        </div>
+        <div className="unified-stat-box">
+          <div className="stat-label">🛑 موقوف</div>
+          <div className="stat-val" style={{ color: '#6b7280' }}>{stats.suspended}</div>
+          <div className="stat-sub">اشتراكات معلقة أو ملغاة</div>
+        </div>
       </div>
 
       <div style={{

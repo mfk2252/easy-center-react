@@ -11,6 +11,7 @@ import { calcAge, todayStr, uid, nowTimeStr } from '../../utils/dateHelpers';
 import StudentDetail from './StudentDetail';
 import { parentCanViewStudent, centerWhatsAppUrl } from '../../utils/parentAccess';
 import UnifiedBackButton from '../../components/ui/UnifiedBackButton';
+import UnifiedPageHeader from '../../components/ui/UnifiedPageHeader';
 
 // Student Statuses
 const STATUSES = {
@@ -512,81 +513,95 @@ export default function StudentsPage() {
   return (
     <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto', direction: 'rtl' }}>
       
-      {/* 1️⃣ TOP HEADER BAR (زر إضافة طالب، جلسة، استشارة، قسم، صف) */}
-      <div style={{
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border-color)',
-        borderRadius: 'var(--r)',
-        padding: '18px 22px',
-        marginBottom: '20px',
-        boxShadow: 'var(--sh)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '16px'
-      }}>
-        <div>
-          <h1 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-            <Users style={{ width: '26px', height: '26px', color: 'var(--pr)' }} />
-            <span>{isParent ? 'بيانات الطفل والبرامج' : 'إدارة الطلاب والشعب'}</span>
-          </h1>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-sub)', marginTop: '4px', margin: 0 }}>
-            {isParent ? 'متابعة الملف الشخصي والبرامج التأهيلية للطفل' : 'نظام شامل لإدارة الطلاب حسب الصفوف، الفئات التشخيصية، والأخصائيين المشرفين'}
-          </p>
-        </div>
+      {/* 1️⃣ TOP HEADER BAR (ترويسة الصفحة الموحدة) */}
+      {!activeFolder && (
+        <UnifiedPageHeader
+          icon={<Users style={{ width: 24, height: 24 }} />}
+          title={isParent ? 'بيانات الطفل والبرامج' : 'إدارة الطلاب والشعب'}
+          subtitle={isParent ? 'متابعة الملف الشخصي والبرامج التأهيلية للطفل' : 'نظام شامل لإدارة الطلاب حسب الصفوف، الفئات التشخيصية، والأخصائيين المشرفين'}
+          badge={`${students.length} طالب`}
+          actions={
+            !isParent ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                {/* Button 1: طالب جديد */}
+                {canAdd && (
+                  <button onClick={() => openForm()} className="btn btn-p" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', fontSize: '0.88rem' }}>
+                    <Plus style={{ width: 16, height: 16 }} />
+                    <span>طالب جديد</span>
+                  </button>
+                )}
 
-        {/* Action Buttons Toolbar */}
-        {!isParent && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            {/* Button 1: طالب جديد */}
-            {canAdd && (
-              <button onClick={() => openForm()} className="btn btn-p" style={{ padding: '9px 16px', fontSize: '0.88rem' }}>
-                <Plus style={{ width: '16px', height: '16px' }} />
-                <span>طالب جديد</span>
-              </button>
-            )}
+                {/* Button 2: تسجيل جلسة */}
+                {canEdit && (
+                  <button onClick={openQuickSession} className="btn btn-s" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', fontSize: '0.85rem' }}>
+                    <Stethoscope style={{ width: 15, height: 15 }} />
+                    <span>تسجيل جلسة</span>
+                  </button>
+                )}
 
-            {/* Button 2: تسجيل جلسة */}
-            {canEdit && (
-              <button onClick={openQuickSession} className="btn btn-s" style={{ padding: '9px 14px', fontSize: '0.85rem' }}>
-                <Stethoscope style={{ width: '15px', height: '15px' }} />
-                <span>تسجيل جلسة</span>
-              </button>
-            )}
+                {/* Button 3: تسجيل استشارة */}
+                {canEdit && (
+                  <button onClick={openConsult} className="btn btn-v" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', fontSize: '0.85rem' }}>
+                    <MessageCircle style={{ width: 15, height: 15 }} />
+                    <span>تسجيل استشارة</span>
+                  </button>
+                )}
 
-            {/* Button 3: تسجيل استشارة */}
-            {canEdit && (
-              <button onClick={openConsult} className="btn btn-v" style={{ padding: '9px 14px', fontSize: '0.85rem' }}>
-                <MessageCircle style={{ width: '15px', height: '15px' }} />
-                <span>تسجيل استشارة</span>
-              </button>
-            )}
+                {/* Button 4: إضافة قسم */}
+                {canAdd && (
+                  <button onClick={() => openCatForm()} className="btn btn-g" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', fontSize: '0.85rem' }}>
+                    <FolderPlus style={{ width: 15, height: 15, color: 'var(--pur)' }} />
+                    <span>إضافة قسم</span>
+                  </button>
+                )}
 
-            {/* Button 4: إضافة قسم */}
-            {canAdd && (
-              <button onClick={() => openCatForm()} className="btn btn-g" style={{ padding: '9px 14px', fontSize: '0.85rem' }}>
-                <FolderPlus style={{ width: '15px', height: '15px', color: 'var(--pur)' }} />
-                <span>إضافة قسم</span>
-              </button>
-            )}
+                {/* Button 5: إضافة صف */}
+                {canAdd && (
+                  <button onClick={() => openSecForm()} className="btn btn-g" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', fontSize: '0.85rem' }}>
+                    <School style={{ width: 15, height: 15, color: 'var(--pr)' }} />
+                    <span>إضافة صف</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              centerWa && (
+                <a href={centerWa} target="_blank" rel="noreferrer" className="btn btn-s">
+                  💬 التواصل مع المركز
+                </a>
+              )
+            )
+          }
+        />
+      )}
 
-            {/* Button 5: إضافة صف */}
-            {canAdd && (
-              <button onClick={() => openSecForm()} className="btn btn-g" style={{ padding: '9px 14px', fontSize: '0.85rem' }}>
-                <School style={{ width: '15px', height: '15px', color: 'var(--pr)' }} />
-                <span>إضافة صف</span>
-              </button>
-            )}
+      {/* 2️⃣ بطاقات الإحصائيات السريعة الموحدة */}
+      {!activeFolder && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
+          <div className="unified-stat-box">
+            <div className="stat-label">👦 إجمالي الطلاب المسجلين</div>
+            <div className="stat-val">{students.length}</div>
+            <div className="stat-sub">في كافة الأقسام والصفوف</div>
           </div>
-        )}
 
-        {isParent && centerWa && (
-          <a href={centerWa} target="_blank" rel="noreferrer" className="btn btn-s">
-            💬 التواصل مع المركز
-          </a>
-        )}
-      </div>
+          <div className="unified-stat-box">
+            <div className="stat-label">✅ الطلاب النشطون والمستمرون</div>
+            <div className="stat-val" style={{ color: 'var(--ok)' }}>{students.filter(s => s.status === 'active').length}</div>
+            <div className="stat-sub">ملفات منتظمة في التدريب</div>
+          </div>
+
+          <div className="unified-stat-box">
+            <div className="stat-label">⏳ قائمة الانتظار</div>
+            <div className="stat-val" style={{ color: 'var(--warn)' }}>{students.filter(s => s.status === 'waitlist').length}</div>
+            <div className="stat-sub">بانتظار توفر مقاعد شاغرة</div>
+          </div>
+
+          <div className="unified-stat-box">
+            <div className="stat-label">🏫 الصفوف والشعب التأهيلية</div>
+            <div className="stat-val" style={{ color: 'var(--pr)' }}>{sections.length}</div>
+            <div className="stat-sub">موزعة على التخصصات</div>
+          </div>
+        </div>
+      )}
 
       {/* 2️⃣ NAVIGATION & SUB-PAGE ROUTING SYSTEM */}
       {!activeFolder ? (
@@ -635,88 +650,62 @@ export default function StudentsPage() {
           </div>
         </div>
       ) : (
-        /* DEDICATED SUB-PAGE HEADER (عند الدخول لصفحة صف معين أو فئة معينة) */
-        <div style={{
-          background: 'var(--bg-card)',
-          border: `1.5px solid ${activeFolder.data?.color || 'var(--pr)'}`,
-          borderRight: `6px solid ${activeFolder.data?.color || 'var(--pr)'}`,
-          borderRadius: 'var(--r)',
-          padding: '18px 22px',
-          marginBottom: '20px',
-          boxShadow: 'var(--sh2)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '16px'
-        }}>
-          {/* القسم الأيمن: الأيقونة والعنوان والتفاصيل */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0, flex: 1 }}>
-            <span style={{ fontSize: '1.6rem', background: `${activeFolder.data?.color || 'var(--pr)'}20`, padding: '4px 10px', borderRadius: '10px', flexShrink: 0 }}>
-              {activeFolder.data?.icon || (activeFolder.type === 'class' ? '🏫' : '🧩')}
-            </span>
-
-            <div style={{ minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <h2 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-main)', margin: 0 }}>
-                  {activeFolder.name}
-                </h2>
-                {activeFolder.data?.code && (
-                  <span className="bdg b-gy" style={{ fontSize: '0.75rem', padding: '3px 8px' }}>
-                    {activeFolder.data.code}
-                  </span>
-                )}
-                <span className="bdg b-bl" style={{ fontSize: '0.78rem', padding: '3px 10px', backgroundColor: `${activeFolder.data?.color || 'var(--pr)'}20`, color: activeFolder.data?.color || 'var(--pr)' }}>
-                  {filteredStudents.length} طلاب
+        /* DEDICATED SUB-PAGE HEADER (ترويسة مخصصة موحدة عند الدخول لصفحة صف معين أو فئة معينة) */
+        <UnifiedPageHeader
+          icon={<span style={{ fontSize: '1.45rem' }}>{activeFolder.data?.icon || (activeFolder.type === 'class' ? '🏫' : '🧩')}</span>}
+          iconBg={`${activeFolder.data?.color || 'var(--pr)'}20`}
+          iconColor={activeFolder.data?.color || 'var(--pr)'}
+          accentColor={activeFolder.data?.color || 'var(--pr)'}
+          title={activeFolder.name}
+          subtitle={activeFolder.data?.description || `قائمة طلاب ${activeFolder.type === 'class' ? 'الصف' : 'الفئة'} المسجلين`}
+          badge={
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {activeFolder.data?.code && (
+                <span className="bdg b-gy" style={{ fontSize: '0.75rem', padding: '3px 8px' }}>
+                  {activeFolder.data.code}
                 </span>
-              </div>
-              {activeFolder.data?.description && (
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-sub)', marginTop: '4px', margin: 0 }}>
-                  {activeFolder.data.description}
-                </p>
+              )}
+              <span className="bdg b-bl" style={{ fontSize: '0.78rem', padding: '3px 10px', backgroundColor: `${activeFolder.data?.color || 'var(--pr)'}20`, color: activeFolder.data?.color || 'var(--pr)', fontWeight: 800 }}>
+                {filteredStudents.length} طلاب
+              </span>
+            </div>
+          }
+          actions={
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              {canEdit && (
+                <button
+                  onClick={() => {
+                    if (activeFolder.type === 'class') {
+                      const sec = sections.find(s => s.id === activeFolder.id || s.name === activeFolder.name);
+                      openSecForm(sec || activeFolder.data);
+                    } else {
+                      const cat = categories.find(c => c.id === activeFolder.id || c.name === activeFolder.name);
+                      openCatForm(cat || activeFolder.data || { name: activeFolder.name });
+                    }
+                  }}
+                  className="btn btn-g"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', fontSize: '0.82rem' }}
+                >
+                  <Edit3 style={{ width: 15, height: 15 }} />
+                  <span>تعديل بيانات {activeFolder.type === 'class' ? 'الصف' : 'الفئة'}</span>
+                </button>
+              )}
+
+              {canAdd && (
+                <button
+                  onClick={() => openForm(null, activeFolder.type === 'class' ? activeFolder.id : '', activeFolder.type === 'category' ? activeFolder.name : '')}
+                  className="btn btn-p"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontSize: '0.85rem' }}
+                >
+                  <Plus style={{ width: 16, height: 16 }} />
+                  <span>إضافة طالب {activeFolder.type === 'class' ? 'لهذا الصف' : 'لهذه الفئة'}</span>
+                </button>
               )}
             </div>
-          </div>
-
-          {/* القسم الأيسر: أزرار الإجراءات + زر العودة الموحد في أقصى اليسار */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            {canEdit && (
-              <button
-                onClick={() => {
-                  if (activeFolder.type === 'class') {
-                    const sec = sections.find(s => s.id === activeFolder.id || s.name === activeFolder.name);
-                    openSecForm(sec || activeFolder.data);
-                  } else {
-                    const cat = categories.find(c => c.id === activeFolder.id || c.name === activeFolder.name);
-                    openCatForm(cat || activeFolder.data || { name: activeFolder.name });
-                  }
-                }}
-                className="btn btn-g"
-                style={{ padding: '8px 14px', fontSize: '0.82rem' }}
-              >
-                <Edit3 style={{ width: '15px', height: '15px' }} />
-                <span>تعديل بيانات {activeFolder.type === 'class' ? 'الصف' : 'الفئة'} (اللون، السعة، الكود)</span>
-              </button>
-            )}
-
-            {canAdd && (
-              <button
-                onClick={() => openForm(null, activeFolder.type === 'class' ? activeFolder.id : '', activeFolder.type === 'category' ? activeFolder.name : '')}
-                className="btn btn-p"
-                style={{ padding: '8px 16px', fontSize: '0.85rem' }}
-              >
-                <Plus style={{ width: '16px', height: '16px' }} />
-                <span>إضافة طالب {activeFolder.type === 'class' ? 'لهذا الصف' : 'لهذه الفئة'}</span>
-              </button>
-            )}
-
-            {/* زر العودة الموحد على اليسار متناسقاً تماماً مع جميع واجهات النظام */}
-            <UnifiedBackButton
-              onClick={() => setActiveFolder(null)}
-              label={`العودة لجميع ${activeFolder.type === 'class' ? 'الصفوف' : 'الفئات'}`}
-            />
-          </div>
-        </div>
+          }
+          onBack={() => setActiveFolder(null)}
+          backLabel={`العودة لجميع ${activeFolder.type === 'class' ? 'الصفوف' : 'الفئات'}`}
+        />
       )}
 
       {/* 3️⃣ VIEWS CONTENT */}
@@ -930,17 +919,7 @@ export default function StudentsPage() {
         <div style={{ marginTop: '10px' }}>
           
           {/* COMPREHENSIVE FILTER TOOLBAR */}
-          <div style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-color)',
-            borderRadius: 'var(--r)',
-            padding: '16px',
-            marginBottom: '16px',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: '12px',
-            alignItems: 'center'
-          }}>
+          <div className="unified-filter-toolbar">
             {/* Search Input */}
             <div style={{ position: 'relative', gridColumn: 'span 2' }}>
               <Search style={{ width: '16px', height: '16px', position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-sub)' }} />

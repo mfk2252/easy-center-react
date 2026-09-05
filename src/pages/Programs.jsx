@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel } from '../hooks/useStorage';
 import { todayStr, uid } from '../utils/dateHelpers';
 import EmptyState from '../components/ui/EmptyState';
+import UnifiedPageHeader from '../components/ui/UnifiedPageHeader';
 
 const EMPTY_ACT = { name:'', date:'', year:'', section:'', image:'', participantIds:[], responsibleEmpIds:[], notes:'', fileData:'', fileName:'' };
 
@@ -57,14 +58,58 @@ export default function Programs() {
 
   return (
     <div>
-      <div className="ph">
-        <div className="ph-t"><h2>🎯 الأنشطة والفعاليات</h2><p>تسجيل الفعاليات والأنشطة مع التاريخ والمشاركين</p></div>
-        <div className="ph-a">{canEdit&&<button type="button" className="btn btn-p" onClick={openNew}>➕ فعالية جديدة</button>}</div>
+      <UnifiedPageHeader
+        icon="🎯"
+        title="الأنشطة والفعاليات بالمركز"
+        subtitle="توثيق الأنشطة الميدانية، والفعاليات الترفيهية والتأهيلية ومشاركات الطلاب والكوادر"
+        badge={`${filtered.length} فعالية`}
+        actions={
+          canEdit && (
+            <button type="button" className="btn btn-p" onClick={openNew} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>➕</span>
+              <span>فعالية جديدة</span>
+            </button>
+          )
+        }
+      />
+
+      {/* بطاقات الإحصائيات السريعة */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 18 }}>
+        <div className="unified-stat-box">
+          <div className="stat-label">🎯 إجمالي الفعاليات</div>
+          <div className="stat-val">{activities.length}</div>
+          <div className="stat-sub">كافة الأنشطة المجدولة</div>
+        </div>
+
+        <div className="unified-stat-box">
+          <div className="stat-label">📅 فعاليات العام ({displayYear})</div>
+          <div className="stat-val" style={{ color: 'var(--pr)' }}>{filtered.length}</div>
+          <div className="stat-sub">الفعاليات المعتمدة للعام</div>
+        </div>
+
+        <div className="unified-stat-box">
+          <div className="stat-label">👥 مشاركات الطلاب</div>
+          <div className="stat-val" style={{ color: 'var(--ok)' }}>
+            {activities.reduce((sum, a) => sum + (a.participantIds?.length || 0), 0)}
+          </div>
+          <div className="stat-sub">إجمالي الحضور الطلابي</div>
+        </div>
+
+        <div className="unified-stat-box">
+          <div className="stat-label">👷 المشرفون والكوادر</div>
+          <div className="stat-val" style={{ color: 'var(--pur)' }}>
+            {activities.reduce((sum, a) => sum + (a.responsibleEmpIds?.length || 0), 0)}
+          </div>
+          <div className="stat-sub">تكليفات الإشراف والتنظيم</div>
+        </div>
       </div>
 
-      <div className="tb" style={{marginBottom:12}}>
-        <label style={{fontSize:'.8rem',fontWeight:700,color:'var(--g5)',marginLeft:8}}>العام:</label>
-        <select className="fsel" value={displayYear} onChange={e=>setFilterYear(e.target.value)}>
+      <div className="unified-filter-toolbar" style={{ gridTemplateColumns: 'auto 1fr', marginBottom: 16 }}>
+        <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span>📅</span>
+          <span>تصفية حسب العام:</span>
+        </label>
+        <select className="srch" style={{ maxWidth: 220, height: 38 }} value={displayYear} onChange={e=>setFilterYear(e.target.value)}>
           {years.length===0&&<option value={String(new Date().getFullYear())}>{new Date().getFullYear()}</option>}
           {years.map(y=><option key={y} value={y}>{y}</option>)}
         </select>

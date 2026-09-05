@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { lsGet, lsAdd, lsDel } from '../hooks/useStorage';
 import { todayStr, uid, formatHijriDate } from '../utils/dateHelpers';
 import { collectSystemAlerts } from '../utils/alertEngine';
+import UnifiedPageHeader from '../components/ui/UnifiedPageHeader';
 
 const EMPTY_MANUAL = { title: '', details: '', date: '', time: '', severity: 'info' };
 const SEV_LABEL = { urgent: 'عاجل', warn: 'تحذير', info: 'معلومة' };
@@ -148,11 +149,31 @@ export default function Dashboard() {
 
   return (
     <div>
-      <div className="ph">
-        <div className="ph-t">
-          <h2>📊 لوحة التحكم</h2>
-        </div>
-      </div>
+      <UnifiedPageHeader
+        icon="📊"
+        title="لوحة التحكم والمتابعة اللحظية"
+        subtitle="نظرة مركزية على العمليات التشغيلية، حضور الطلاب، الكادر الوظيفي، وتنبيهات النظام"
+        badge={center?.name || 'مركز الأمل'}
+        actions={
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <button type="button" className="btn btn-g btn-sm" onClick={() => refreshAlerts()}>
+              🔄 تحديث
+            </button>
+            {canManual && (
+              <button
+                type="button"
+                className="btn btn-p btn-sm"
+                onClick={() => {
+                  setManualForm({ ...EMPTY_MANUAL, date: todayStr() });
+                  setShowManualForm(true);
+                }}
+              >
+                ➕ إضافة تنبيه
+              </button>
+            )}
+          </div>
+        }
+      />
 
       {/* شريط حالة المركز اليوم الذكي والديناميكي */}
       {showStatusBanner && (
@@ -244,40 +265,42 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* كروت الإحصائيات التفاعلية */}
-      <div className="stats" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-        <div className="sc clickable-stat" onClick={() => go('hr')}>
-          <div className="lb">الموظفون</div>
-          <div className="vl">{data.emps.length}</div>
-          <div className="sb">موظف نشط ←</div>
+      {/* كروت الإحصائيات الموحدة والتفاعلية */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 16 }}>
+        <div className="unified-stat-box clickable" onClick={() => go('hr')} style={{ cursor: 'pointer' }}>
+          <div className="stat-label">👥 الكادر الوظيفي</div>
+          <div className="stat-val">{data.emps.length}</div>
+          <div className="stat-sub">موظف وأخصائي نشط ←</div>
         </div>
         
-        <div className="sc g clickable-stat" onClick={() => go('students')}>
-          <div className="lb">الطلاب النشطون</div>
-          <div className="vl">{activeStudents.length}</div>
-          <div className="sb">طالب نشط ←</div>
+        <div className="unified-stat-box clickable" onClick={() => go('students')} style={{ cursor: 'pointer' }}>
+          <div className="stat-label">🎓 الطلاب النشطون</div>
+          <div className="stat-val" style={{ color: 'var(--ok)' }}>{activeStudents.length}</div>
+          <div className="stat-sub">طالب منتظم ومسجل ←</div>
         </div>
 
         <div
-          className="sc o clickable-stat"
+          className="unified-stat-box clickable"
           onClick={() => { sessionStorage.setItem('scs_attendance_tab', 'sessions'); go('attendance'); }}
+          style={{ cursor: 'pointer' }}
         >
-          <div className="lb">حضور الجلسات اليوم</div>
-          <div className="vl">
-            {sessPresent}/{sessStudents.length}
+          <div className="stat-label">🩺 حضور الجلسات اليوم</div>
+          <div className="stat-val" style={{ color: 'var(--warn)' }}>
+            {sessPresent} / {sessStudents.length}
           </div>
-          <div className="sb">جلسات حضورية ←</div>
+          <div className="stat-sub">جلسات حضورية مسجلة ←</div>
         </div>
 
         <div
-          className="sc v clickable-stat"
+          className="unified-stat-box clickable"
           onClick={() => { sessionStorage.setItem('scs_attendance_tab', 'morning'); go('attendance'); }}
+          style={{ cursor: 'pointer' }}
         >
-          <div className="lb">حضور الصفوف اليوم</div>
-          <div className="vl">
-            {classPresent}/{classStudents.length}
+          <div className="stat-label">🏫 حضور الفصول اليوم</div>
+          <div className="stat-val" style={{ color: 'var(--pr)' }}>
+            {classPresent} / {classStudents.length}
           </div>
-          <div className="sb">صباحي + مسائي ←</div>
+          <div className="stat-sub">صباحي + مسائي ←</div>
         </div>
       </div>
 

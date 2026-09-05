@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel } from '../hooks/useStorage';
 import { todayStr, uid, daysUntilDate, nextAnnualOccurrenceDate, nowTimeStr } from '../utils/dateHelpers';
 import { SPECIALIST_ROLES } from '../utils/constants';
+import UnifiedPageHeader from '../components/ui/UnifiedPageHeader';
 
 const DAYS_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 const MONTHS_AR = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
@@ -388,108 +389,79 @@ export default function Calendar() {
         }
       `}</style>
     <div style={{ maxWidth: 1440, margin: '0 auto', padding: '16px 18px 24px', fontFamily: 'inherit' }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: 16,
-        marginBottom: 14,
-        padding: '18px 20px',
-        borderRadius: 22,
-        border: '1px solid var(--border-color)',
-        background: 'linear-gradient(135deg, rgba(26, 86, 219, 0.12), rgba(124, 58, 237, 0.08))',
-        boxShadow: '0 16px 40px rgba(15, 23, 42, 0.08)'
-      }}>
-        <div>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            background: 'rgba(255,255,255,0.75)',
-            border: '1px solid rgba(59,130,246,0.16)',
-            color: 'var(--pr)',
-            padding: '6px 10px',
-            borderRadius: 999,
-            fontSize: '0.72rem',
-            fontWeight: 800,
-            marginBottom: 8
-          }}>
-            <span>🗓️</span> التقويم
-          </div>
-          <h2 style={{ fontSize: 'clamp(1.35rem, 2vw, 1.9rem)', fontWeight: 900, margin: 0, color: 'var(--text-main)' }}>
-            {MONTHS_AR[month]} {year}
-          </h2>
-          <div style={{ marginTop: 6, fontSize: '0.82rem', color: 'var(--text-sub)' }}>
-            نظرة موحدة بالشهر مع الأحداث والمواعيد المهمة
-          </div>
-        </div>
+      <UnifiedPageHeader
+        icon="🗓️"
+        title={`تقويم المركز - ${MONTHS_AR[month]} ${year}`}
+        subtitle="نظرة زمنية شاملة لجدول المواعيد والجلسات التأهيلية، الأحداث والتقييمات"
+        badge={`${monthSummary.total} موعد وحدث`}
+        actions={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', background: 'var(--bg-card)', padding: 4, borderRadius: 12, border: '1px solid var(--border-color)', boxShadow: 'var(--sh)' }}>
+              <button
+                type="button"
+                className="btn btn-sm"
+                style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '6px 10px', color: 'var(--text-main)', fontWeight: 700 }}
+                onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() - 1); return n; })}
+              >
+                السابق
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm"
+                style={{ background: 'var(--pr-l)', border: '1px solid rgba(59,130,246,0.18)', borderRadius: 8, padding: '6px 12px', fontWeight: 800, color: 'var(--pr)' }}
+                onClick={() => setCur(new Date())}
+              >
+                اليوم
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm"
+                style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '6px 10px', color: 'var(--text-main)', fontWeight: 700 }}
+                onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() + 1); return n; })}
+              >
+                التالي
+              </button>
+            </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', background: 'var(--bg-card)', padding: 4, borderRadius: 12, border: '1px solid var(--border-color)', boxShadow: 'var(--sh)' }}>
-            <button
-              type="button"
-              className="btn btn-sm"
-              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '6px 10px', color: 'var(--text-main)', fontWeight: 700 }}
-              onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() - 1); return n; })}
-            >
-              السابق
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm"
-              style={{ background: 'var(--pr-l)', border: '1px solid rgba(59,130,246,0.18)', borderRadius: 8, padding: '6px 12px', fontWeight: 800, color: 'var(--pr)' }}
-              onClick={() => setCur(new Date())}
-            >
-              اليوم
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm"
-              style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '6px 10px', color: 'var(--text-main)', fontWeight: 700 }}
-              onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() + 1); return n; })}
-            >
-              التالي
-            </button>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <button type="button" className="btn btn-p btn-sm" style={{ borderRadius: 10, padding: '7px 12px' }} onClick={() => openForm()}>
+                ➕ حدث عام
+              </button>
+              <button type="button" className="btn btn-s btn-sm" style={{ borderRadius: 10, padding: '7px 12px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.15)' }} onClick={() => openStuAppt()}>
+                📅 موعد طالب
+              </button>
+              <button type="button" className="btn btn-s btn-sm" style={{ borderRadius: 10, padding: '7px 12px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.15)' }} onClick={() => openStuSess()}>
+                🩺 جلسة
+              </button>
+              <button type="button" className="btn btn-sm" style={{ borderRadius: 10, padding: '7px 12px', background: 'rgba(245, 158, 11, 0.09)', color: '#c084fc', border: '1px solid rgba(192,132,252,0.2)' }} onClick={() => openEval()}>
+                📋 تقييم
+              </button>
+            </div>
           </div>
+        }
+      />
 
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            <button type="button" className="btn btn-p btn-sm" style={{ borderRadius: 10, padding: '7px 12px' }} onClick={() => openForm()}>
-              ➕ حدث عام
-            </button>
-            <button type="button" className="btn btn-s btn-sm" style={{ borderRadius: 10, padding: '7px 12px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.15)' }} onClick={() => openStuAppt()}>
-              📅 موعد طالب
-            </button>
-            <button type="button" className="btn btn-s btn-sm" style={{ borderRadius: 10, padding: '7px 12px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.15)' }} onClick={() => openStuSess()}>
-              🩺 جلسة
-            </button>
-            <button type="button" className="btn btn-sm" style={{ borderRadius: 10, padding: '7px 12px', background: 'rgba(245, 158, 11, 0.09)', color: '#c084fc', border: '1px solid rgba(192,132,252,0.2)' }} onClick={() => openEval()}>
-              📋 تقييم
-            </button>
-          </div>
+      {/* بطاقات إحصائيات الشهر القياسية */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, marginBottom: 16 }}>
+        <div className="unified-stat-box">
+          <div className="stat-label">📌 إجمالي الفعاليات</div>
+          <div className="stat-val">{monthSummary.total}</div>
+          <div className="stat-sub">كافة مواعيد وجلسات الشهر</div>
         </div>
-      </div>
-
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '8px 12px', borderRadius: 999, boxShadow: 'var(--sh)' }}>
-          <span style={{ fontSize: '0.8rem', color: 'var(--pr)' }}>📌</span>
-          <span style={{ fontSize: '0.76rem', color: 'var(--text-sub)' }}>إجمالي</span>
-          <strong style={{ fontSize: '0.84rem', color: 'var(--text-main)' }}>{monthSummary.total}</strong>
+        <div className="unified-stat-box">
+          <div className="stat-label">🩺 الجلسات التأهيلية</div>
+          <div className="stat-val" style={{ color: 'var(--ok)' }}>{monthSummary.sessions}</div>
+          <div className="stat-sub">جلسات نطق وعلاج طبيعي ووظيفي</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '8px 12px', borderRadius: 999, boxShadow: 'var(--sh)' }}>
-          <span style={{ fontSize: '0.8rem', color: '#10b981' }}>🩺</span>
-          <span style={{ fontSize: '0.76rem', color: 'var(--text-sub)' }}>جلسات</span>
-          <strong style={{ fontSize: '0.84rem', color: 'var(--text-main)' }}>{monthSummary.sessions}</strong>
+        <div className="unified-stat-box">
+          <div className="stat-label">📅 مواعيد الطلاب</div>
+          <div className="stat-val" style={{ color: 'var(--pr)' }}>{monthSummary.appointments}</div>
+          <div className="stat-sub">مواعيد كشف ومراجعات</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '8px 12px', borderRadius: 999, boxShadow: 'var(--sh)' }}>
-          <span style={{ fontSize: '0.8rem', color: '#3b82f6' }}>📅</span>
-          <span style={{ fontSize: '0.76rem', color: 'var(--text-sub)' }}>مواعيد</span>
-          <strong style={{ fontSize: '0.84rem', color: 'var(--text-main)' }}>{monthSummary.appointments}</strong>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '8px 12px', borderRadius: 999, boxShadow: 'var(--sh)' }}>
-          <span style={{ fontSize: '0.8rem', color: '#f59e0b' }}>⚡</span>
-          <span style={{ fontSize: '0.76rem', color: 'var(--text-sub)' }}>أحداث</span>
-          <strong style={{ fontSize: '0.84rem', color: 'var(--text-main)' }}>{monthSummary.events}</strong>
+        <div className="unified-stat-box">
+          <div className="stat-label">⚡ الفعاليات والأنشطة</div>
+          <div className="stat-val" style={{ color: 'var(--warn)' }}>{monthSummary.events}</div>
+          <div className="stat-sub">مناسبات وأنشطة المركز</div>
         </div>
       </div>
 

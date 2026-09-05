@@ -12,6 +12,7 @@ import { db } from '../firebase/config';
 import { useLang } from '../context/LanguageContext';
 import { handleFileInputChange, FILE_ACCEPT_IMAGE } from '../utils/fileUpload';
 import { getRoleLabel, getUserPermissionLabels, getCurrentUsername } from '../utils/userLabels';
+import UnifiedPageHeader from '../components/ui/UnifiedPageHeader';
 
 const PRESET_COLORS = ['#1a56db', '#7c3aed', '#059669', '#dc2626', '#d97706', '#0891b2', '#db2777', '#0f172a'];
 const ROLE_OPTIONS = [
@@ -506,45 +507,23 @@ export default function Settings() {
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', paddingBottom: 40 }}>
       {/* رأس الصفحة الحديث والموحد */}
-      <div className="ph" style={{ marginBottom: 20, alignItems: 'center' }}>
-        <div className="ph-t">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <div style={{
-              width: 44,
-              height: 44,
-              borderRadius: 12,
-              background: 'var(--pr-l)',
-              color: 'var(--pr)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.4rem',
-              flexShrink: 0
-            }}>
-              ⚙️
-            </div>
-            <div>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>إعدادات النظام والمركز</h2>
-              <p style={{ margin: '2px 0 0', color: 'var(--g5)', fontSize: '.84rem' }}>
-                تخصيص هوية المركز، المظهر، حسابات الكادر، وتأمين البيانات
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="ph-a">
+      <UnifiedPageHeader
+        icon="⚙️"
+        title="إعدادات النظام والمركز"
+        subtitle="تخصيص هوية المركز، المظهر والخطوط، حسابات وصلاحيات الكادر، وتأمين البيانات والمزامنة"
+        badge={center?.name || 'مركز الأمل'}
+        actions={
           <button
             type="button"
-            className="btn btn-g"
+            className="btn btn-g btn-sm"
             onClick={handleRefreshAll}
             disabled={refreshLoading}
-            style={{ fontSize: '.82rem', padding: '8px 14px' }}
             title="مزامنة وتحديث كافة بيانات النظام من السحابة"
           >
             {refreshLoading ? '⏳ جارٍ التحديث...' : '🔄 مزامنة فورية'}
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* شريط التبويبات الحديث والمتجاوب */}
       <div style={{

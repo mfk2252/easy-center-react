@@ -8,6 +8,7 @@ import { handleFileInputChange } from '../../utils/fileUpload';
 import AttachmentField from '../../components/ui/AttachmentField';
 import { CUSTODY_CATEGORIES } from '../../utils/custodyCategories';
 import { getCurrencySymbol } from '../../utils/constants';
+import UnifiedPageHeader from '../../components/ui/UnifiedPageHeader';
 
 const DOC_TYPES = { stats:'إحصائية وزارية', policy:'لائحة / سياسة', report:'تقرير', strategy:'استراتيجية', circular:'تعميم', memo:'📝 مذكرة داخلية', other:'أخرى' };
 const EXPENSE_CATS = { salary:'رواتب', rent:'إيجار', utilities:'فواتير', supplies:'مستلزمات', maintenance:'صيانة', training:'تدريب', other:'أخرى' };
@@ -300,9 +301,12 @@ export default function CenterPage() {
 
   return (
     <div>
-      <div className="ph">
-        <div className="ph-t"><h2>🏢 إدارة المركز</h2><p>الشراكات والمالية والوثائق وأولياء الأمور والنقل والعهدة</p></div>
-      </div>
+      <UnifiedPageHeader
+        icon="🏢"
+        title="إدارة المركز والخدمات المساندة"
+        subtitle="الشراكات المؤسسية، الإدارة المالية، أولياء الأمور، النقل والباصات، العهدة، والوثائق الرسمية"
+        badge={`${partners.length} شركاء · ${buses.length} باصات · ${docs.length} وثائق`}
+      />
       <div className="tabs" style={{ flexWrap:'wrap' }}>
         {[['partners','🤝 الشراكات'],['finance','💳 المالية'],['parents','👨‍👩‍👧 أولياء الأمور'],['bus','🚌 خدمة الباص'],['docs','📄 الوثائق'],['custody','🗄️ العهدة'],['visits','🏛️ الزيارات']].map(([v,l])=>(
           <button key={v} type="button" className={`tab ${tab===v?'on':''}`} onClick={()=>setTab(v)}>{l}</button>
@@ -315,9 +319,17 @@ export default function CenterPage() {
           <div style={{display:'flex',justifyContent:'flex-end',marginBottom:12}}>
             {isManager&&<button className="btn btn-p" onClick={()=>{setPartnerForm({...EMPTY_PARTNER});setPartnerEditId(null);setShowPartnerForm(true);}}>➕ شريك جديد</button>}
           </div>
-          <div className="stats" style={{gridTemplateColumns:'repeat(2,1fr)'}}>
-            <div className="sc"><div className="lb">الشركاء</div><div className="vl">{partners.length}</div></div>
-            <div className="sc g"><div className="lb">الشراكات النشطة</div><div className="vl">{partners.length}</div></div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 16 }}>
+            <div className="unified-stat-box">
+              <div className="stat-label">🤝 إجمالي الشركاء</div>
+              <div className="stat-val">{partners.length}</div>
+              <div className="stat-sub">جهات ومؤسسات متعاونة</div>
+            </div>
+            <div className="unified-stat-box">
+              <div className="stat-label">✅ الشراكات النشطة</div>
+              <div className="stat-val" style={{ color: 'var(--ok)' }}>{partners.length}</div>
+              <div className="stat-sub">اتفاقيات وبروتوكولات سارية</div>
+            </div>
           </div>
           {partners.length===0 ? <EmptyState icon="🤝" title="لا يوجد شركاء"/> : partners.map(p=>(
             <div key={p.id} className="card clickable" onClick={()=>setViewPartner(p)}>
@@ -442,10 +454,24 @@ export default function CenterPage() {
                 ))}
                 <button type="button" className="btn btn-g btn-sm no-print" onClick={()=>window.print()} style={{marginRight:'auto'}}>🖨️ طباعة</button>
               </div>
-              <div className="stats" style={{gridTemplateColumns:'repeat(3,1fr)'}}>
-                <div className="sc g"><div className="lb">إجمالي الإيرادات</div><div className="vl" style={{fontSize:'1.2rem'}}>{totalIncome.toLocaleString()} {currSym}</div></div>
-                <div className="sc r"><div className="lb">إجمالي المصروفات</div><div className="vl" style={{fontSize:'1.2rem'}}>{totalExpenses.toLocaleString()} {currSym}</div></div>
-                <div className={`sc ${totalIncome-totalExpenses>=0?'g':'r'}`}><div className="lb">الصافي</div><div className="vl" style={{fontSize:'1.2rem'}}>{(totalIncome-totalExpenses).toLocaleString()} {currSym}</div></div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 18 }}>
+                <div className="unified-stat-box">
+                  <div className="stat-label">💰 إجمالي الإيرادات</div>
+                  <div className="stat-val" style={{ color: 'var(--ok)' }}>{totalIncome.toLocaleString()} {currSym}</div>
+                  <div className="stat-sub">تحصيلات الرسوم والخدمات</div>
+                </div>
+                <div className="unified-stat-box">
+                  <div className="stat-label">🧾 إجمالي المصروفات</div>
+                  <div className="stat-val" style={{ color: 'var(--err)' }}>{totalExpenses.toLocaleString()} {currSym}</div>
+                  <div className="stat-sub">الرواتب والتشغيل والصيانة</div>
+                </div>
+                <div className="unified-stat-box">
+                  <div className="stat-label">📊 صافي المركز</div>
+                  <div className="stat-val" style={{ color: totalIncome - totalExpenses >= 0 ? 'var(--ok)' : 'var(--err)' }}>
+                    {(totalIncome - totalExpenses).toLocaleString()} {currSym}
+                  </div>
+                  <div className="stat-sub">الفائض / العجز المالي</div>
+                </div>
               </div>
               <div className="g2">
                 <div className="wg">
@@ -590,9 +616,17 @@ export default function CenterPage() {
                   </div>
                 </div>
               )}
-              <div className="stats" style={{ gridTemplateColumns:'repeat(2,1fr)' }}>
-                <div className="sc"><div className="lb">أولياء الأمور</div><div className="vl">{extractParents(students).length}</div></div>
-                <div className="sc g"><div className="lb">تفاعلات مسجلة</div><div className="vl">{parentLogs.length}</div></div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 16 }}>
+                <div className="unified-stat-box">
+                  <div className="stat-label">👨‍👩‍👧 أولياء الأمور</div>
+                  <div className="stat-val">{extractParents(students).length}</div>
+                  <div className="stat-sub">أولياء أمور مسجلون بالمركز</div>
+                </div>
+                <div className="unified-stat-box">
+                  <div className="stat-label">📋 تفاعلات مسجلة</div>
+                  <div className="stat-val" style={{ color: 'var(--pr)' }}>{parentLogs.length}</div>
+                  <div className="stat-sub">زيارات، مكالمات، وإرشادات</div>
+                </div>
               </div>
               {extractParents(students).length===0
                 ? <EmptyState icon="👨‍👩‍👧" title="لا يوجد بيانات أولياء أمور" sub="أضف أسماء وجوالات في ملفات الطلاب"/>

@@ -4,6 +4,7 @@ import { lsGet } from '../hooks/useStorage';
 import { todayStr } from '../utils/dateHelpers';
 import { ROLES, getCurrencySymbol } from '../utils/constants';
 import { printItem } from '../utils/printUtils';
+import UnifiedPageHeader from '../components/ui/UnifiedPageHeader';
 
 function roleLabel(r) { return ROLES[r] || r || '—'; }
 
@@ -107,17 +108,17 @@ export default function Reports() {
 
   return (
     <div>
-      <div className="ph">
-        <div className="ph-t">
-          <h2>📊 التقارير والإحصائيات</h2>
-          <p>تحليلات مع فلترة زمنية</p>
-        </div>
-        <div className="ph-a">
+      <UnifiedPageHeader
+        icon="📊"
+        title="التقارير والإحصائيات الشاملة"
+        subtitle="تحليلات الأداء، التقارير المالية والإدارية، ونسب الحضور والتأهيل بفلترة زمنية دقيقة"
+        badge={filterLabel}
+        actions={
           <button type="button" className="btn btn-g no-print" onClick={() => window.print()}>
             🖨️ طباعة التقرير الكامل
           </button>
-        </div>
-      </div>
+        }
+      />
 
       <div className="wg" style={{ marginBottom: 14 }}>
         <div className="wg-h">
@@ -176,23 +177,26 @@ export default function Reports() {
 
       {tab === 'overview' && (
         <div>
-          <div className="stats" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-            <div className="sc g">
-              <div className="lb">الطلاب النشطون</div>
-              <div className="vl">{active.length}</div>
-              <div className="sb">من {students.length} إجمالي</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 16 }}>
+            <div className="unified-stat-box">
+              <div className="stat-label">🎓 الطلاب النشطون</div>
+              <div className="stat-val" style={{ color: 'var(--ok)' }}>{active.length}</div>
+              <div className="stat-sub">من {students.length} إجمالي الطلاب</div>
             </div>
-            <div className="sc">
-              <div className="lb">الموظفون</div>
-              <div className="vl">{emps.length}</div>
+            <div className="unified-stat-box">
+              <div className="stat-label">👥 الكادر الوظيفي</div>
+              <div className="stat-val">{emps.length}</div>
+              <div className="stat-sub">إجمالي المعلمين والأخصائيين</div>
             </div>
-            <div className="sc v">
-              <div className="lb">الجلسات (ضمن الفلتر)</div>
-              <div className="vl">{sessionsF.length}</div>
+            <div className="unified-stat-box">
+              <div className="stat-label">🩺 الجلسات المنفذة</div>
+              <div className="stat-val" style={{ color: 'var(--pr)' }}>{sessionsF.length}</div>
+              <div className="stat-sub">ضمن الفترة المحددة</div>
             </div>
-            <div className="sc o">
-              <div className="lb">سجلات حضور (ضمن الفلتر)</div>
-              <div className="vl">{attF.filter(a => a.status === 'present').length}</div>
+            <div className="unified-stat-box">
+              <div className="stat-label">✅ حضور الجلسات</div>
+              <div className="stat-val" style={{ color: 'var(--warn)' }}>{attF.filter(a => a.status === 'present').length}</div>
+              <div className="stat-sub">سجلات حضور مسجلة بالفترة</div>
             </div>
           </div>
           <div className="g2">
@@ -344,18 +348,21 @@ export default function Reports() {
 
       {tab === 'hr' && (
         <div>
-          <div className="stats" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-            <div className="sc">
-              <div className="lb">إجمالي الموظفين</div>
-              <div className="vl">{emps.length}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 16 }}>
+            <div className="unified-stat-box">
+              <div className="stat-label">👥 إجمالي الموظفين</div>
+              <div className="stat-val">{emps.length}</div>
+              <div className="stat-sub">موظف وكادر مسجل</div>
             </div>
-            <div className="sc o">
-              <div className="lb">إجازات (ضمن الفلتر)</div>
-              <div className="vl">{leavesF.length}</div>
+            <div className="unified-stat-box">
+              <div className="stat-label">🌴 إجازات (ضمن الفلتر)</div>
+              <div className="stat-val" style={{ color: 'var(--warn)' }}>{leavesF.length}</div>
+              <div className="stat-sub">إجازات مستحقة بالفترة</div>
             </div>
-            <div className="sc g">
-              <div className="lb">إجازات معلقة (كل الفترات)</div>
-              <div className="vl">{leaves.filter(l => l.status === 'pending').length}</div>
+            <div className="unified-stat-box">
+              <div className="stat-label">⏳ إجازات معلقة</div>
+              <div className="stat-val" style={{ color: 'var(--ok)' }}>{leaves.filter(l => l.status === 'pending').length}</div>
+              <div className="stat-sub">بانتظار الموافقة والاعتماد</div>
             </div>
           </div>
           <div className="wg">
@@ -384,24 +391,27 @@ export default function Reports() {
 
       {tab === 'finance' && canSeeFinance && (
         <div>
-          <div className="stats" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-            <div className="sc g">
-              <div className="lb">الإيرادات (الفلتر)</div>
-              <div className="vl" style={{ fontSize: '1.2rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 16 }}>
+            <div className="unified-stat-box">
+              <div className="stat-label">💰 الإيرادات (الفلتر)</div>
+              <div className="stat-val" style={{ color: 'var(--ok)' }}>
                 {income.toLocaleString()} {getCurrencySymbol(center?.currency)}
               </div>
+              <div className="stat-sub">مجموع الإيرادات المحصلة</div>
             </div>
-            <div className="sc r">
-              <div className="lb">المصروفات (الفلتر)</div>
-              <div className="vl" style={{ fontSize: '1.2rem' }}>
+            <div className="unified-stat-box">
+              <div className="stat-label">🧾 المصروفات (الفلتر)</div>
+              <div className="stat-val" style={{ color: 'var(--err)' }}>
                 {expenses.toLocaleString()} {getCurrencySymbol(center?.currency)}
               </div>
+              <div className="stat-sub">مجموع المصروفات والتشغيل</div>
             </div>
-            <div className={`sc ${income - expenses >= 0 ? 'g' : 'r'}`}>
-              <div className="lb">الصافي</div>
-              <div className="vl" style={{ fontSize: '1.2rem' }}>
+            <div className="unified-stat-box">
+              <div className="stat-label">📊 الصافي المالي</div>
+              <div className="stat-val" style={{ color: income - expenses >= 0 ? 'var(--ok)' : 'var(--err)' }}>
                 {(income - expenses).toLocaleString()} {getCurrencySymbol(center?.currency)}
               </div>
+              <div className="stat-sub">الفائض / العجز بالفترة</div>
             </div>
           </div>
         </div>
