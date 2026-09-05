@@ -244,3 +244,77 @@ tr:hover td { background: var(--g0); }
 .ph-t h2 { font-size: 1.1rem; font-weight: var(--fw-bold, 700); color: var(--text-main); display: flex; align-items: center; gap: 8px; }
 .ph-t p { font-size: .78rem; color: var(--text-sub); margin-top: 3px; font-weight: var(--fw, 400); }
 .ph-a { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* ══ UNIFIED DESIGN SYSTEM STANDARDS ══ */
+.unified-page-header {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.unified-filter-toolbar {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: center;
+  box-shadow: var(--sh);
+}
+.unified-stat-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--r);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: var(--sh);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.unified-stat-box:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sh2);
+}
+.unified-stat-box .stat-label {
+  font-size: 0.8rem;
+  font-weight: var(--fw-semibold, 600);
+  color: var(--text-sub);
+}
+.unified-stat-box .stat-val {
+  font-size: 1.35rem;
+  font-weight: var(--fw-bold, 800);
+  color: var(--text-main);
+  line-height: 1.2;
+}
+.unified-stat-box .stat-sub {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  margin-top: 2px;
+}
+.unified-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.unified-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--r);
+  padding: 18px;
+  box-shadow: var(--sh);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.unified-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--sh2);
+  border-color: var(--pr);
+}
+

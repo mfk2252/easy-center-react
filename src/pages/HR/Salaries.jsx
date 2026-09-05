@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { lsGet, lsAdd, lsUpd } from '../../hooks/useStorage';
 import { uid } from '../../utils/dateHelpers';
+import { Banknote, ChevronRight, ChevronLeft, Zap, Search, Printer, CheckCircle2, Clock, Edit3 } from 'lucide-react';
+import UnifiedPageHeader from '../../components/ui/UnifiedPageHeader';
 
 function monthKey(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
 function monthLabel(d) { return d.toLocaleDateString('ar-SA', { month:'long', year:'numeric' }); }
@@ -11,17 +13,19 @@ export default function Salaries() {
   const [month, setMonth] = useState(new Date());
   const [emps, setEmps] = useState([]);
   const [salaries, setSalaries] = useState([]);
+  const [q, setQ] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [detailId, setDetailId] = useState(null);
   const [detailData, setDetailData] = useState(null);
 
   const canEdit = currentUser?.role === 'manager';
 
   useEffect(() => {
-    setEmps(lsGet('employees'));
-    setSalaries(lsGet('salaries'));
+    setEmps(lsGet('employees') || []);
+    setSalaries(lsGet('salaries') || []);
   }, []);
 
-  function reload() { setSalaries(lsGet('salaries')); }
+  function reload() { setSalaries(lsGet('salaries') || []); }
   const mk = monthKey(month);
 
   function getEmpSalary(empId) {
@@ -29,7 +33,7 @@ export default function Salaries() {
   }
 
   function genAll() {
-    if (!window.confirm(`توليد رواتب ${monthLabel(month)} لجميع الموظفين؟`)) return;
+    if (!window.confirm(`توليد مسير رواتب ${monthLabel(month)} لجميع الموظفين؟`)) return;
     let count = 0;
     emps.forEach(e => {
       if (!getEmpSalary(e.id)) {
@@ -75,34 +79,155 @@ export default function Salaries() {
   const paidCount = emps.filter(e => getEmpSalary(e.id)?.status === 'paid').length;
   const unpaidCount = emps.length - paidCount;
 
+  const filteredEmps = emps.filter(e => {
+    if (q) {
+      const s = q.toLowerCase();
+      if (!(e.name || '').toLowerCase().includes(s) && !(e.role || '').toLowerCase().includes(s)) return false;
+    }
+    if (filterStatus === 'paid') return getEmpSalary(e.id)?.status === 'paid';
+    if (filterStatus === 'unpaid') return getEmpSalary(e.id)?.status !== 'paid';
+    return true;
+  });
+
   return (
-    <div>
-      <div className="ph">
-        <div className="ph-t"><h2>💰 الرواتب</h2><p>{monthLabel(month)}</p></div>
-        <div className="ph-a">
-          <button className="btn btn-g btn-sm" onClick={() => setMonth(d => { const n=new Date(d); n.setMonth(n.getMonth()-1); return n; })}>→ السابق</button>
-          <button className="btn btn-p btn-sm" onClick={() => setMonth(new Date())}>الشهر الحالي</button>
-          <button className="btn btn-g btn-sm" onClick={() => setMonth(d => { const n=new Date(d); n.setMonth(n.getMonth()+1); return n; })}>التالي ←</button>
-          {canEdit && <button className="btn btn-g" onClick={genAll}>⚡ توليد رواتب الشهر</button>}
-          <button type="button" className="btn btn-g" onClick={() => go('center')}>← رجوع لإدارة المركز</button>
+    <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto', direction: 'rtl' }}>
+      
+      {/* الترويسة الموحدة */}
+      <UnifiedPageHeader
+        icon={<Banknote style={{ width: 24, height: 24 }} />}
+        iconBg="rgba(16, 185, 129, 0.15)"
+        iconColor="#10b981"
+        accentColor="#10b981"
+        title="مسير الرواتب والمستحقات"
+        subtitle={`إدارة الرواتب الشهرية والبدلات والخصومات — ${monthLabel(month)}`}
+        badge={`${emps.length} موظف`}
+        actions={
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            {canEdit && (
+              <button
+                className="btn btn-p"
+                onClick={genAll}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', fontSize: '0.84rem' }}
+              >
+                <Zap style={{ width: 15, height: 15 }} />
+                <span>توليد مسير الشهر</span>
+              </button>
+            )}
+            <button
+              className="btn btn-g"
+              onClick={() => window.print()}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', fontSize: '0.84rem' }}
+            >
+              <Printer style={{ width: 15, height: 15 }} />
+              <span>طباعة المسير</span>
+            </button>
+          </div>
+        }
+        onBack={() => go('hr')}
+        backLabel="العودة للوحة الموظفين"
+      />
+
+      {/* شريط اختيار الشهر والتنقل */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--r)', padding: '10px 16px', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-main)' }}>فترة المسير:</span>
+          <span className="bdg b-gr" style={{ fontSize: '0.85rem', padding: '4px 10px' }}>{monthLabel(month)}</span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button
+            className="btn btn-g btn-sm"
+            onClick={() => setMonth(d => { const n=new Date(d); n.setMonth(n.getMonth()-1); return n; })}
+            style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+          >
+            <ChevronRight style={{ width: 14, height: 14 }} />
+            <span>الشهر السابق</span>
+          </button>
+          <button
+            className="btn btn-p btn-sm"
+            onClick={() => setMonth(new Date())}
+            style={{ padding: '6px 14px' }}
+          >
+            الشهر الحالي
+          </button>
+          <button
+            className="btn btn-g btn-sm"
+            onClick={() => setMonth(d => { const n=new Date(d); n.setMonth(n.getMonth()+1); return n; })}
+            style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+          >
+            <span>الشهر التالي</span>
+            <ChevronLeft style={{ width: 14, height: 14 }} />
+          </button>
         </div>
       </div>
 
-      <div className="stats" style={{ gridTemplateColumns:'repeat(3,1fr)' }}>
-        <div className="sc"><div className="lb">إجمالي الرواتب</div><div className="vl" style={{fontSize:'1.2rem'}}>{totalSalaries.toLocaleString()}</div><div className="sb">ريال هذا الشهر</div></div>
-        <div className="sc g"><div className="lb">تم الصرف</div><div className="vl">{paidCount}</div><div className="sb">موظف</div></div>
-        <div className="sc o"><div className="lb">لم يُصرف بعد</div><div className="vl">{unpaidCount}</div><div className="sb">موظف</div></div>
+      {/* إحصائيات سريعة */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 18 }}>
+        <div className="unified-stat-box">
+          <div className="stat-label">💰 إجمالي الرواتب والبدلات</div>
+          <div className="stat-val" style={{ color: '#10b981' }}>{totalSalaries.toLocaleString()} ر.س</div>
+          <div className="stat-sub">المسير الإجمالي لهذا الشهر</div>
+        </div>
+
+        <div className="unified-stat-box">
+          <div className="stat-label">✅ تم الصرف واعتماد التحويل</div>
+          <div className="stat-val" style={{ color: 'var(--ok)' }}>{paidCount} موظف</div>
+          <div className="stat-sub">تم تأكيد تحويل مستحقاتهم</div>
+        </div>
+
+        <div className="unified-stat-box">
+          <div className="stat-label">⏳ لم يُصرف بعد</div>
+          <div className="stat-val" style={{ color: unpaidCount > 0 ? 'var(--warn)' : 'var(--text-sub)' }}>
+            {unpaidCount} موظف
+          </div>
+          <div className="stat-sub">بانتظار إجراءات الاعتماد</div>
+        </div>
       </div>
 
-      <div style={{ overflowX:'auto' }}>
+      {/* شريط الفلترة والبحث الموحد */}
+      <div className="unified-filter-toolbar" style={{ gridTemplateColumns: '1fr auto' }}>
+        <div style={{ position: 'relative' }}>
+          <Search style={{ width: 15, height: 15, position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-sub)' }} />
+          <input
+            type="text"
+            placeholder="ابحث باسم الموظف أو الوظيفة..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="srch"
+            style={{ width: '100%', paddingRight: 36, height: 38, fontSize: '0.84rem' }}
+          />
+        </div>
+
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="srch"
+          style={{ height: 38, fontSize: '0.84rem', fontWeight: 600 }}
+        >
+          <option value="all">📌 جميع حالات الصرف</option>
+          <option value="paid">✅ تم الصرف فقط</option>
+          <option value="unpaid">⏳ لم يُصرف بعد</option>
+        </select>
+      </div>
+
+      {/* جدول الرواتب الموحد */}
+      <div className="table-responsive" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--r)', overflow: 'hidden', boxShadow: 'var(--sh)', marginBottom: 20 }}>
         <table>
           <thead>
             <tr>
-              <th>الموظف</th><th>الوظيفة</th><th>الراتب الأساسي</th><th>البدلات</th><th>المكافآت</th><th>الخصومات</th><th>الصافي</th><th>الحالة</th><th>إجراءات</th>
+              <th>الموظف</th>
+              <th>الوظيفة</th>
+              <th>الأساسي</th>
+              <th>البدلات</th>
+              <th>المكافآت</th>
+              <th>الخصومات</th>
+              <th>صافي الراتب</th>
+              <th>حالة الصرف</th>
+              <th style={{ textAlign: 'center' }}>إجراءات</th>
             </tr>
           </thead>
           <tbody>
-            {emps.map(e => {
+            {filteredEmps.map(e => {
               const sal = getEmpSalary(e.id);
               const base = sal ? sal.base : Number(e.salary)||0;
               const allowances = sal ? (Number(sal.housing)||0)+(Number(sal.transport)||0) : (Number(e.allowanceHousing)||0)+(Number(e.allowanceTransport)||0);
@@ -112,18 +237,42 @@ export default function Salaries() {
               const isPaid = sal?.status === 'paid';
               return (
                 <tr key={e.id}>
-                  <td><b>{e.name}</b></td>
-                  <td style={{fontSize:'.8rem',color:'var(--g5)'}}>{e.role}</td>
+                  <td>
+                    <div style={{ fontWeight: 800, color: 'var(--text-main)' }}>{e.name}</div>
+                  </td>
+                  <td><span className="bdg b-cy" style={{ fontSize: '0.74rem' }}>{e.role}</span></td>
                   <td>{base.toLocaleString()} ر</td>
                   <td>{allowances.toLocaleString()} ر</td>
-                  <td>{bonus ? bonus.toLocaleString()+' ر' : '—'}</td>
-                  <td>{deductions ? <span style={{color:'var(--err)'}}>{deductions.toLocaleString()} ر</span> : '—'}</td>
-                  <td><b style={{color:'var(--ok)'}}>{total.toLocaleString()} ر</b></td>
-                  <td>{isPaid ? <span className="bdg b-gr">✅ مُصرَّف</span> : <span className="bdg b-or">⏳ لم يُصرَّف</span>}</td>
+                  <td>{bonus ? <span style={{ color: 'var(--ok)', fontWeight: 700 }}>+{bonus.toLocaleString()} ر</span> : '—'}</td>
+                  <td>{deductions ? <span style={{ color: 'var(--err)', fontWeight: 700 }}>-{deductions.toLocaleString()} ر</span> : '—'}</td>
+                  <td><b style={{ color: '#10b981', fontSize: '0.95rem' }}>{total.toLocaleString()} ر</b></td>
                   <td>
-                    <div style={{display:'flex',gap:4}}>
-                      {canEdit && <button className="btn btn-g btn-xs" onClick={() => openDetail(e)}>✏️</button>}
-                      {canEdit && !isPaid && sal && <button className="btn btn-s btn-xs" onClick={() => markPaid(sal.id)}>✅ صرف</button>}
+                    {isPaid ? (
+                      <span className="bdg b-gr" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <CheckCircle2 style={{ width: 12, height: 12 }} />
+                        <span>مُصرَّف</span>
+                      </span>
+                    ) : (
+                      <span className="bdg b-or" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <Clock style={{ width: 12, height: 12 }} />
+                        <span>لم يُصرَّف</span>
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+                      {canEdit && (
+                        <button className="btn btn-g btn-xs" onClick={() => openDetail(e)} title="تعديل وتفصيل المسير">
+                          <Edit3 style={{ width: 13, height: 13 }} />
+                          <span style={{ marginRight: 2 }}>تفصيل</span>
+                        </button>
+                      )}
+                      {canEdit && !isPaid && sal && (
+                        <button className="btn btn-s btn-xs" onClick={() => markPaid(sal.id)} title="تأكيد صرف الراتب">
+                          <CheckCircle2 style={{ width: 13, height: 13 }} />
+                          <span style={{ marginRight: 2 }}>اعتماد الصرف</span>
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -137,28 +286,50 @@ export default function Salaries() {
       {detailId && detailData && (
         <div className="mbg" onClick={e => { if(e.target===e.currentTarget) setDetailId(null); }}>
           <div className="mb mb-large" style={{ padding:0, overflow:'hidden', borderRadius:16 }}>
-            <div className="fhd" style={{ padding:'14px 20px', borderRadius:0 }}>
-              <h2>💰 راتب {detailData.emp.name} — {monthLabel(month)}</h2>
+            <div className="fhd" style={{ padding:'16px 20px', borderRadius:0 }}>
+              <h2>💰 بيان راتب {detailData.emp.name} — {monthLabel(month)}</h2>
+              <p>تعديل بنود الراتب والبدلات والخصومات للشهر المحدد</p>
             </div>
-            <div style={{ padding:'18px 20px' }}>
+            <div style={{ padding:'20px' }}>
               <div className="fg c2">
-                <div className="fl"><label>الراتب الأساسي (ريال)</label><input type="number" value={detailData.sal.base} onChange={e=>setDetailData(d=>({...d,sal:{...d.sal,base:e.target.value}}))} min="0"/></div>
-                <div className="fl"><label>بدل السكن</label><input type="number" value={detailData.sal.housing} onChange={e=>setDetailData(d=>({...d,sal:{...d.sal,housing:e.target.value}}))} min="0"/></div>
-                <div className="fl"><label>بدل النقل</label><input type="number" value={detailData.sal.transport} onChange={e=>setDetailData(d=>({...d,sal:{...d.sal,transport:e.target.value}}))} min="0"/></div>
-                <div className="fl"><label>مكافآت / حوافز</label><input type="number" value={detailData.sal.bonus} onChange={e=>setDetailData(d=>({...d,sal:{...d.sal,bonus:e.target.value}}))} min="0"/></div>
-                <div className="fl"><label>خصومات</label><input type="number" value={detailData.sal.deductions} onChange={e=>setDetailData(d=>({...d,sal:{...d.sal,deductions:e.target.value}}))} min="0"/></div>
-                <div className="fl"><label>ملاحظات</label><input value={detailData.sal.notes||''} onChange={e=>setDetailData(d=>({...d,sal:{...d.sal,notes:e.target.value}}))} placeholder="أي ملاحظات..."/></div>
+                <div className="fl">
+                  <label>الراتب الأساسي (ريال)</label>
+                  <input type="number" value={detailData.sal.base} onChange={e=>setDetailData(d=>({...d,sal:{...d.sal,base:e.target.value}}))} min="0"/>
+                </div>
+                <div className="fl">
+                  <label>بدل السكن</label>
+                  <input type="number" value={detailData.sal.housing} onChange={e=>setDetailData(d=>({...d,sal:{...d.sal,housing:e.target.value}}))} min="0"/>
+                </div>
+                <div className="fl">
+                  <label>بدل النقل</label>
+                  <input type="number" value={detailData.sal.transport} onChange={e=>setDetailData(d=>({...d,sal:{...d.sal,transport:e.target.value}}))} min="0"/>
+                </div>
+                <div className="fl">
+                  <label>مكافآت / حوافز إضافية</label>
+                  <input type="number" value={detailData.sal.bonus} onChange={e=>setDetailData(d=>({...d,sal:{...d.sal,bonus:e.target.value}}))} min="0"/>
+                </div>
+                <div className="fl">
+                  <label>خصومات / جزاءات</label>
+                  <input type="number" value={detailData.sal.deductions} onChange={e=>setDetailData(d=>({...d,sal:{...d.sal,deductions:e.target.value}}))} min="0"/>
+                </div>
+                <div className="fl">
+                  <label>ملاحظات الراتب</label>
+                  <input value={detailData.sal.notes||''} onChange={e=>setDetailData(d=>({...d,sal:{...d.sal,notes:e.target.value}}))} placeholder="أي ملاحظات..."/>
+                </div>
               </div>
-              <div style={{ marginTop:14, padding:'12px 16px', background:'var(--ok-l)', borderRadius:'var(--r2)', fontSize:'1rem', fontWeight:900, color:'var(--ok-d)' }}>
-                💰 الصافي: {(
-                  (Number(detailData.sal.base)||0)+(Number(detailData.sal.housing)||0)+(Number(detailData.sal.transport)||0)+(Number(detailData.sal.bonus)||0)-(Number(detailData.sal.deductions)||0)
-                ).toLocaleString()} ريال
+              <div style={{ marginTop: 16, padding: '14px 18px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: 'var(--r2)', fontSize: '1.05rem', fontWeight: 900, color: '#065f46', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>صافي المستحق للموظف:</span>
+                <span style={{ fontSize: '1.25rem' }}>
+                  {(
+                    (Number(detailData.sal.base)||0)+(Number(detailData.sal.housing)||0)+(Number(detailData.sal.transport)||0)+(Number(detailData.sal.bonus)||0)-(Number(detailData.sal.deductions)||0)
+                  ).toLocaleString()} ريال
+                </span>
               </div>
             </div>
             <div className="fa">
-              <button className="btn btn-p" onClick={saveDetail}>💾 حفظ</button>
-              <button className="btn btn-g no-print" onClick={() => window.print()}>🖨️ طباعة</button>
-              <button className="btn btn-g" onClick={() => setDetailId(null)}>إغلاق</button>
+              <button className="btn btn-g" onClick={() => setDetailId(null)}>إلغاء</button>
+              <button className="btn btn-g no-print" onClick={() => window.print()}>🖨️ طباعة المسير</button>
+              <button className="btn btn-p" onClick={saveDetail}>💾 حفظ الراتب</button>
             </div>
           </div>
         </div>
@@ -166,3 +337,4 @@ export default function Salaries() {
     </div>
   );
 }
+
