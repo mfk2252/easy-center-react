@@ -731,51 +731,45 @@ export default function CenterEventsTab() {
       {/* MODAL: VIEW EVENT DETAILS */}
       {/* ========================================================================= */}
       {viewEvent && (
-        <div
-          className="mbg"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: 16
-          }}
-          onClick={() => setViewEvent(null)}
-        >
-          <div
-            className="card"
-            style={{
-              width: '100%',
-              maxWidth: 620,
-              maxHeight: '90vh',
-              background: 'var(--bg-card)',
-              color: 'var(--text-main)',
-              borderRadius: 16,
-              border: '1px solid var(--border-color)',
-              padding: 0,
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: 'var(--sh3)'
-            }}
-            onClick={e => e.stopPropagation()}
-          >
+        <div className="mbg">
+          <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
             {/* Header */}
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', background: 'var(--g0)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-main)' }}>
-                <span>🎉</span>
-                <span>بطاقة وتوثيق الفعالية</span>
+            <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '1.08rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>🎉</span>
+                  <span>بطاقة وتوثيق الفعالية</span>
+                </h2>
+                <p style={{ margin: '4px 0 0', fontSize: '.78rem', opacity: 0.9 }}>
+                  بيانات الفعالية ومؤشرات الجودة والدمج المجتمعي
+                </p>
               </div>
-              <button type="button" className="btn btn-xs btn-g" onClick={() => setViewEvent(null)}>
+              <button
+                type="button"
+                className="btn btn-xs"
+                onClick={() => setViewEvent(null)}
+                style={{
+                  background: 'rgba(255,255,255,0.18)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  padding: '6px 12px',
+                  borderRadius: 8,
+                  fontSize: '.8rem',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  cursor: 'pointer'
+                }}
+                title="إغلاق النافذة"
+              >
                 <X style={{ width: 15, height: 15 }} />
+                <span>إغلاق</span>
               </button>
             </div>
 
             {/* Content */}
-            <div style={{ padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div className="modal-body-scroll" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
                   <span className="bdg b-bl">{EVENT_CATEGORIES.find(c => c.id === viewEvent.category)?.label || 'فعالية'}</span>
@@ -824,7 +818,7 @@ export default function CenterEventsTab() {
             </div>
 
             {/* Footer */}
-            <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border-color)', background: 'var(--g0)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="fa" style={{ justifyContent: 'space-between' }}>
               <button
                 type="button"
                 className="btn btn-p"
@@ -846,51 +840,45 @@ export default function CenterEventsTab() {
       {/* MODAL: CREATE / EDIT EVENT */}
       {/* ========================================================================= */}
       {showModal && (
-        <div
-          className="mbg"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: 16
-          }}
-          onClick={() => setShowModal(false)}
-        >
-          <div
-            className="card"
-            style={{
-              width: '100%',
-              maxWidth: 680,
-              maxHeight: '90vh',
-              background: 'var(--bg-card)',
-              color: 'var(--text-main)',
-              borderRadius: 16,
-              border: '1px solid var(--border-color)',
-              padding: 0,
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: 'var(--sh3)'
-            }}
-            onClick={e => e.stopPropagation()}
-          >
+        <div className="mbg">
+          <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
             {/* Modal Header */}
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', background: 'var(--g0)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-main)' }}>
-                <span>🎉</span>
-                <span>{editId ? 'تعديل بيانات الفعالية' : 'إضافة وتوثيق فعالية جديدة'}</span>
+            <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '1.08rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>🎉</span>
+                  <span>{editId ? 'تعديل بيانات الفعالية' : 'إضافة وتوثيق فعالية جديدة'}</span>
+                </h2>
+                <p style={{ margin: '4px 0 0', fontSize: '.78rem', opacity: 0.9 }}>
+                  توثيق الفعاليات الميدانية والوطنية مع مراعاة متطلبات الجودة والاعتماد
+                </p>
               </div>
-              <button type="button" className="btn btn-xs btn-g" onClick={() => setShowModal(false)}>
+              <button
+                type="button"
+                className="btn btn-xs"
+                onClick={() => setShowModal(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.18)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  padding: '6px 12px',
+                  borderRadius: 8,
+                  fontSize: '.8rem',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  cursor: 'pointer'
+                }}
+                title="إغلاق النافذة"
+              >
                 <X style={{ width: 15, height: 15 }} />
+                <span>إغلاق</span>
               </button>
             </div>
 
             {/* Modal Body */}
-            <div style={{ padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div className="modal-body-scroll" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
               
               <div className="fl">
                 <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem' }}>
@@ -1080,11 +1068,11 @@ export default function CenterEventsTab() {
             </div>
 
             {/* Modal Footer */}
-            <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border-color)', background: 'var(--g0)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <div className="fa">
               <button type="button" className="btn btn-g" onClick={() => setShowModal(false)}>
                 إلغاء
               </button>
-              <button type="button" className="btn btn-p" onClick={handleSave} style={{ fontWeight: 700 }}>
+              <button type="button" className="btn btn-p" onClick={handleSave} style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 💾 حفظ وتوثيق الفعالية
               </button>
             </div>

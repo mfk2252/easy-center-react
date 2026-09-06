@@ -226,15 +226,23 @@ export default function AcademicYearsManager() {
         }
         return y;
       });
+      if (form.isCurrent) {
+        updatedYears = updatedYears.map(y => ({ ...y, isCurrent: y.id === editId }));
+      }
       toast('✅ تم حفظ تعديلات العام / الدورة بنجاح', 'ok');
     } else {
+      const newId = `ay_${Date.now()}`;
+      const isCurr = form.isCurrent || updatedYears.length === 0;
+      if (isCurr) {
+        updatedYears = updatedYears.map(y => ({ ...y, isCurrent: false }));
+      }
       const newYearObj = {
-        id: `ay_${Date.now()}`,
+        id: newId,
         name: form.name.trim(),
         code: form.code.trim() || form.name.trim(),
         startDate: form.startDate,
         endDate: form.endDate,
-        isCurrent: updatedYears.length === 0,
+        isCurrent: isCurr,
         status: form.status,
         terms: termsArray
       };
@@ -519,142 +527,149 @@ export default function AcademicYearsManager() {
 
       {/* MODAL: ADD / EDIT ACADEMIC YEAR OR REHAB CYCLE */}
       {showModal && (
-        <div
-          className="mbg"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: 16
-          }}
-          onClick={() => setShowModal(false)}
-        >
-          <div
-            className="card"
-            style={{
-              width: '100%',
-              maxWidth: 520,
-              background: 'var(--bg-card)',
-              color: 'var(--text-main)',
-              borderRadius: 16,
-              border: '1px solid var(--border-color)',
-              padding: 0,
-              overflow: 'hidden',
-              boxShadow: 'var(--sh3)'
-            }}
-            onClick={e => e.stopPropagation()}
-          >
+        <div className="mbg">
+          <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
             {/* Modal Header */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '16px 20px',
-              borderBottom: '1px solid var(--border-color)',
-              background: 'var(--g0)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: '1rem', color: 'var(--text-main)' }}>
-                <span>{currentModeInfo.icon}</span>
-                <span>{editId ? 'تعديل بيانات العام / الدورة' : `إضافة ${currentModeInfo.cycleNamePrefix} جديدة`}</span>
+            <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '1.08rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>{currentModeInfo.icon}</span>
+                  <span>{editId ? 'تعديل بيانات العام / الدورة' : `إضافة ${currentModeInfo.cycleNamePrefix} جديدة`}</span>
+                </h2>
+                <p style={{ margin: '4px 0 0', fontSize: '.78rem', opacity: 0.9 }}>
+                  ضبط المدى الزمني والمحطات التقييمية لربط الخطط الفردية والتقارير
+                </p>
               </div>
               <button
                 type="button"
-                className="btn btn-xs btn-g"
+                className="btn btn-xs"
                 onClick={() => setShowModal(false)}
-                style={{ padding: '4px 8px', borderRadius: 8 }}
+                style={{
+                  background: 'rgba(255,255,255,0.18)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  padding: '6px 12px',
+                  borderRadius: 8,
+                  fontSize: '.8rem',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  cursor: 'pointer'
+                }}
+                title="إغلاق النافذة"
               >
                 <X style={{ width: 15, height: 15 }} />
+                <span>إغلاق</span>
               </button>
             </div>
 
             {/* Modal Body */}
-            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div className="fl">
-                <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem' }}>
-                  اسم العام / الدورة التأهيلية <span style={{ color: 'var(--err)' }}>*</span>
-                </label>
-                <input
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder={currentModeInfo.namePlaceholder}
-                  style={{ background: 'var(--bg-input)', color: 'var(--text-main)' }}
-                />
-              </div>
+            <div className="modal-body-scroll" style={{ padding: '20px 22px' }}>
+              <div className="fg c2">
+                <div className="fl full">
+                  <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem' }}>
+                    اسم العام / الدورة التأهيلية <span className="req">*</span>
+                  </label>
+                  <input
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder={currentModeInfo.namePlaceholder}
+                  />
+                </div>
 
-              <div className="fl">
-                <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem' }}>الكود المرجعي / المعرف المختصر</label>
-                <input
-                  value={form.code}
-                  onChange={e => setForm(f => ({ ...f, code: e.target.value }))}
-                  placeholder="مثال: 2025-2026 أو CYCLE-01"
-                  dir="ltr"
-                  style={{ background: 'var(--bg-input)', color: 'var(--text-main)' }}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div className="fl">
-                  <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem' }}>تاريخ البدء</label>
+                  <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem' }}>
+                    الكود المرجعي / المعرف المختصر
+                  </label>
+                  <input
+                    value={form.code}
+                    onChange={e => setForm(f => ({ ...f, code: e.target.value }))}
+                    placeholder="مثال: 2025-2026 أو CYCLE-01"
+                    dir="ltr"
+                  />
+                </div>
+
+                <div className="fl">
+                  <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem' }}>
+                    حالة العام / الدورة
+                  </label>
+                  <select
+                    value={form.status}
+                    onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
+                  >
+                    <option value="active">نشط تشغيلياً 🟢</option>
+                    <option value="upcoming">مستقبلي / قيد الإعداد ⏳</option>
+                    <option value="completed">مكتمل ومؤرشف ✅</option>
+                  </select>
+                </div>
+
+                <div className="fl">
+                  <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem' }}>
+                    تاريخ البدء
+                  </label>
                   <input
                     type="date"
                     value={form.startDate}
                     onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
-                    style={{ background: 'var(--bg-input)', color: 'var(--text-main)' }}
                   />
                 </div>
+
                 <div className="fl">
-                  <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem' }}>تاريخ الانتهاء</label>
+                  <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem' }}>
+                    تاريخ الانتهاء
+                  </label>
                   <input
                     type="date"
                     value={form.endDate}
                     onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
-                    style={{ background: 'var(--bg-input)', color: 'var(--text-main)' }}
                   />
                 </div>
-              </div>
 
-              <div className="fl">
-                <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem' }}>
-                  {currentModeInfo.termTypeLabel} (افصل بينها بفاصلة ,)
-                </label>
-                <input
-                  value={form.terms}
-                  onChange={e => setForm(f => ({ ...f, terms: e.target.value }))}
-                  placeholder={currentModeInfo.defaultTerms}
-                  style={{ background: 'var(--bg-input)', color: 'var(--text-main)' }}
-                />
-                <div style={{ fontSize: '.72rem', color: 'var(--text-sub)', marginTop: 3 }}>
-                  مثال: {currentModeInfo.defaultTerms}
+                <div className="fl full">
+                  <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem' }}>
+                    {currentModeInfo.termTypeLabel} <span style={{ fontSize: '.74rem', color: 'var(--text-sub)', fontWeight: 400 }}>(افصل بينها بفاصلة ,)</span>
+                  </label>
+                  <input
+                    value={form.terms}
+                    onChange={e => setForm(f => ({ ...f, terms: e.target.value }))}
+                    placeholder={currentModeInfo.defaultTerms}
+                  />
+                  <div style={{ fontSize: '.73rem', color: 'var(--text-sub)', marginTop: 4 }}>
+                    💡 اقتراح نمطي: {currentModeInfo.defaultTerms}
+                  </div>
                 </div>
-              </div>
 
-              <div className="fl">
-                <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem' }}>حالة العام / الدورة</label>
-                <select
-                  value={form.status}
-                  onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
-                  style={{ background: 'var(--bg-input)', color: 'var(--text-main)' }}
-                >
-                  <option value="active">نشط تشغيلياً 🟢</option>
-                  <option value="upcoming">مستقبلي / قيد الإعداد ⏳</option>
-                  <option value="completed">مكتمل ومؤرشف ✅</option>
-                </select>
+                <div className="fl full" style={{
+                  background: 'var(--g0)',
+                  padding: '12px 16px',
+                  borderRadius: 10,
+                  border: '1px solid var(--border-color)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginTop: 6
+                }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '.86rem', color: 'var(--text-main)' }}>
+                      تعيين كعام نشط رئيسي للمركز ⭐
+                    </div>
+                    <div style={{ fontSize: '.74rem', color: 'var(--text-sub)', marginTop: 2 }}>
+                      يتم اعتماد هذا العام تلقائياً للطلاب الجدد والخطط التأهيلية والتقارير
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={form.isCurrent}
+                    onChange={e => setForm(f => ({ ...f, isCurrent: e.target.checked }))}
+                    style={{ width: 18, height: 18, cursor: 'pointer', accentColor: 'var(--pr)' }}
+                  />
+                </div>
               </div>
             </div>
 
             {/* Modal Footer */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: 8,
-              padding: '14px 20px',
-              borderTop: '1px solid var(--border-color)',
-              background: 'var(--g0)'
-            }}>
+            <div className="fa">
               <button
                 type="button"
                 className="btn btn-g"
@@ -666,9 +681,9 @@ export default function AcademicYearsManager() {
                 type="button"
                 className="btn btn-p"
                 onClick={handleSave}
-                style={{ fontWeight: 700 }}
+                style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}
               >
-                💾 حفظ وتثبيت
+                💾 حفظ وتثبيت التغييرات
               </button>
             </div>
           </div>
