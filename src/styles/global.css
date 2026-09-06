@@ -279,16 +279,33 @@ body.dark .sw-sec{background:var(--bg-input);border-color:var(--border-color);}
   .settings-grid { grid-template-columns: 1fr !important; }
 }
 
-/* إصلاح Navbar على الموبايل */
+/* إصلاح Navbar على الموبايل كشريط موحد متكامل */
 @media (max-width: 768px) {
   .nav {
+    padding: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .nav-inner {
     padding: 6px 8px;
-    gap: 2px;
+    gap: 3px;
   }
   .nb {
-    padding: 6px 8px;
-    font-size: .72rem;
+    padding: 7px 10px;
+    font-size: .78rem;
     white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .spacer {
+    flex: 0 0 8px !important;
+    min-width: 8px !important;
+  }
+  .nav-logout {
+    padding: 6px 10px;
+    font-size: .75rem;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .nav-sync { display: none; }
 }

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLang } from '../../context/LanguageContext';
 import { canSeeTab } from '../../utils/permissions';
@@ -20,6 +21,7 @@ export default function Navbar() {
   const { t, toggleLang, lang } = useLang();
   const role = currentUser?.role || '';
   const isAdmin = isPlatformAdminEmail(currentUser?.email);
+  const activeBtnRef = useRef(null);
 
   // دالة للتحقق من كون الزر هو النشط حالياً
   const isActive = (itemId) => {
@@ -28,30 +30,44 @@ export default function Navbar() {
     return false;
   };
 
-  return (
-    <nav className="nav no-print" style={{ justifyContent: 'center', margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '2px', width: '100%', maxWidth: '1280px', padding: '0 8px' }}>
-      <div className="nav-brand" title={center.name || ''}>
-        {center.logo
-          ? <img src={center.logo} alt={center.name || ''} style={{ height: 36, borderRadius: 8, objectFit: 'cover' }}/>
-          : <div className="nav-brand-ph">🏥</div>}
-      </div>
+  // التمرير السلس نحو التبويب النشط عند التبديل
+  useEffect(() => {
+    if (activeBtnRef.current) {
+      activeBtnRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
+    }
+  }, [activeView]);
 
-      
-      <div className="nav-scroll-area" style={{ display: 'flex', alignItems: 'center', gap: '2px', overflowX: 'auto', flex: 1, minWidth: 0, padding: '0 4px', msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
-        <style>{`.nav-scroll-area::-webkit-scrollbar { display: none; }`}</style>
-        {NAV_ITEMS.filter(item => canSeeTab(role, item.id)).map(item => (
-          <button
-            key={item.id}
-            type="button"
-            className={`nb ${isActive(item.id) ? 'on' : ''}`}
-            onClick={() => go(item.id)}
-          >
-            {item.icon} {t(item.key)}
-          </button>
-        ))}
+  return (
+    <nav className="nav no-print">
+      <div className="nav-inner">
+        <div className="nav-brand" title={center.name || ''}>
+          {center.logo
+            ? <img src={center.logo} alt={center.name || ''} style={{ height: 36, borderRadius: 8, objectFit: 'cover' }}/>
+            : <div className="nav-brand-ph">🏥</div>}
+        </div>
+
+        {NAV_ITEMS.filter(item => canSeeTab(role, item.id)).map(item => {
+          const active = isActive(item.id);
+          return (
+            <button
+              key={item.id}
+              ref={active ? activeBtnRef : null}
+              type="button"
+              className={`nb ${active ? 'on' : ''}`}
+              onClick={() => go(item.id)}
+            >
+              {item.icon} {t(item.key)}
+            </button>
+          );
+        })}
+
         {isAdmin && (
           <button
+            ref={activeView === 'admin' ? activeBtnRef : null}
             type="button"
             className={`nb ${activeView === 'admin' ? 'on' : ''}`}
             onClick={() => go('admin')}
@@ -61,32 +77,58 @@ export default function Navbar() {
             👑 {t('nav.admin') || 'الإدارة العامة'}
           </button>
         )}
-      </div>
 
-      <NotificationsDropdown />
+        <div className="spacer" />
 
-      <button
-        type="button"
-        className="nav-lang-btn no-print"
-        onClick={toggleLang}
-        title={t('langSwitch')}
-      >
-        {lang === 'ar' ? 'EN' : 'ع'}
-      </button>
+        <NotificationsDropdown />
 
-      <button type="button" className="nav-icon-btn no-print" onClick={() => setSearchOpen(true)} title={t('search')}>🔍</button>
-      {canSeeTab(role, 'settings') && (
-        <button 
-          type="button" 
-          className={`nav-icon-btn no-print ${isActive('settings') ? 'on' : ''}`}
-          onClick={() => go('settings')} 
-          title={t('nav.settings')}
+        <button
+          type="button"
+          className="nav-lang-btn no-print"
+          onClick={toggleLang}
+          title={t('langSwitch')}
         >
-          ⚙️
+          {lang === 'ar' ? 'EN' : 'ع'}
         </button>
-      )}
-      <button type="button" className="dark-toggle no-print" onClick={toggleDark}>{darkMode ? '☀️' : '🌙'}</button>
-      <button type="button" className="nav-logout no-print" onClick={logout}>{t('logout')}</button>
+
+        <button
+          type="button"
+          className="nav-icon-btn no-print"
+          onClick={() => setSearchOpen(true)}
+          title={t('search')}
+        >
+          🔍
+        </button>
+
+        {canSeeTab(role, 'settings') && (
+          <button 
+            ref={isActive('settings') ? activeBtnRef : null}
+            type="button" 
+            className={`nav-icon-btn no-print ${isActive('settings') ? 'on' : ''}`}
+            onClick={() => go('settings')} 
+            title={t('nav.settings')}
+          >
+            ⚙️
+          </button>
+        )}
+
+        <button
+          type="button"
+          className="dark-toggle no-print"
+          onClick={toggleDark}
+          title={darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}
+        >
+          {darkMode ? '☀️' : '🌙'}
+        </button>
+
+        <button
+          type="button"
+          className="nav-logout no-print"
+          onClick={logout}
+          title={t('logout')}
+        >
+          {t('logout')}
+        </button>
       </div>
     </nav>
   );

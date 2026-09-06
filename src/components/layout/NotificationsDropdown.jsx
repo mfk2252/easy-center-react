@@ -15,6 +15,7 @@ export default function NotificationsDropdown() {
   const [activeFilter, setActiveFilter] = useState('all'); // all | unread | sessions | appointments | finance | attendance | iep | general
   const [notifData, setNotifData] = useState({ list: [], unreadCount: 0, totalCount: 0, hasUrgent: false });
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [coords, setCoords] = useState({ top: 52, left: 16 });
   const dropdownRef = useRef(null);
 
   // تحديث الإشعارات من قاعدة البيانات
@@ -29,6 +30,25 @@ export default function NotificationsDropdown() {
       setTimeout(() => setIsRefreshing(false), 200);
     }
   }, [currentUser]);
+
+  // تحديث موضع القائمة عند فتحها
+  useEffect(() => {
+    if (isOpen && dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect();
+      const popupWidth = Math.min(420, window.innerWidth * 0.92);
+      let left = rect.left;
+      if (left + popupWidth > window.innerWidth - 10) {
+        left = window.innerWidth - popupWidth - 10;
+      }
+      if (left < 10) {
+        left = 10;
+      }
+      setCoords({
+        top: Math.min(window.innerHeight - 120, rect.bottom + 6),
+        left: Math.round(left),
+      });
+    }
+  }, [isOpen]);
 
   // تحديث تلقائي عند فتح القائمة، وتحديث دوري كل 20 ثانية لرصد أي تغييرات لحظية
   useEffect(() => {
@@ -49,10 +69,12 @@ export default function NotificationsDropdown() {
     }
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
       document.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen]);
@@ -215,9 +237,9 @@ export default function NotificationsDropdown() {
           id="global-notifications-dropdown"
           className="notifs-popup-container"
           style={{
-            position: 'absolute',
-            top: 'calc(100% + 8px)',
-            left: 0,
+            position: 'fixed',
+            top: coords.top,
+            left: coords.left,
             width: 'min(420px, 92vw)',
             maxHeight: 'min(580px, 82vh)',
             background: 'var(--bg-card, #ffffff)',
