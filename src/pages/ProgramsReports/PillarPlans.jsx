@@ -9,11 +9,18 @@ import { DOMAINS, PROGRAMS, domainLabel, programLabel, programColor } from '../.
 import BulkImporter from './BulkImporter';
 import { sendReportToWhatsApp } from './programsWhatsApp';
 import ProgramDetailModal from './ProgramDetailModal';
+import IepPromotionModal from './IepPromotionModal';
+import IepComparisonModal from './IepComparisonModal';
+import { getAcademicYears, getCurrentAcademicYear } from '../../utils/academicYears';
 
 const EMPTY_PROG = {
   ...EMPTY_STU_PICK,
   title: '', duration: 'فصل دراسي (3 أشهر)', startDate: todayStr(), reviewDate: '', specialistName: '',
   goals: [], activities: '', notes: '', status: 'active',
+  academicYear: '',
+  academicYearId: '',
+  cycleNumber: 1,
+  previousPlanId: null,
 };
 
 const EMPTY_BIP = {
@@ -77,6 +84,15 @@ export default function PillarPlans({ onDataChange }) {
   const [emps, setEmps] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudentFilter, setSelectedStudentFilter] = useState('');
+  const [selectedYearFilter, setSelectedYearFilter] = useState('');
+
+  // Academic years
+  const academicYears = useMemo(() => getAcademicYears(), []);
+  const currentYear = useMemo(() => getCurrentAcademicYear(), []);
+
+  // Multi-Year Promotion & Comparison Modals
+  const [promotionModalProg, setPromotionModalProg] = useState(null);
+  const [comparisonModalStudent, setComparisonModalStudent] = useState(null);
 
   // IEP Programs state
   const [programs, setPrograms] = useState([]);
@@ -112,7 +128,12 @@ export default function PillarPlans({ onDataChange }) {
   // IEP Programs Actions
   // ----------------------------------------------------
   function openNewProg() {
-    setProgForm({ ...EMPTY_PROG, startDate: todayStr() });
+    setProgForm({
+      ...EMPTY_PROG,
+      startDate: todayStr(),
+      academicYearId: currentYear?.id || '',
+      academicYear: currentYear?.name || 'السنة الحالية',
+    });
     setProgEditId(null);
     setProgModal(true);
   }
@@ -555,7 +576,8 @@ export default function PillarPlans({ onDataChange }) {
   const filteredPrograms = programs.filter(p => {
     const matchSearch = !searchTerm || (p.studentName && p.studentName.includes(searchTerm)) || (p.title && p.title.includes(searchTerm));
     const matchStu = !selectedStudentFilter || p.stuId === selectedStudentFilter;
-    return matchSearch && matchStu;
+    const matchYear = !selectedYearFilter || p.academicYearId === selectedYearFilter || p.academicYear === selectedYearFilter;
+    return matchSearch && matchStu && matchYear;
   });
 
   const filteredBips = bipList.filter(b => {
@@ -635,11 +657,31 @@ export default function PillarPlans({ onDataChange }) {
           </button>
         </div>
 
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {subTab === 'iep' && (
-            <button type="button" className="btn btn-p" onClick={openNewProg}>
-              ➕ إنشاء خطة فردية IEP
-            </button>
+            <>
+              <button
+                type="button"
+                className="btn btn-s"
+                onClick={() => {
+                  const targetStu = selectedStudentFilter
+                    ? students.find(s => s.id === selectedStudentFilter)
+                    : (students[0] || null);
+                  if (!targetStu) {
+                    toast('⚠️ يرجى إضافة طلاب أولاً لإجراء المقارنة التراكمية', 'er');
+                    return;
+                  }
+                  setComparisonModalStudent(targetStu);
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}
+                title="مقارنة التطور عبر السنوات والدورات التأهيلية"
+              >
+                📊 مقارنة التطور بين السنوات
+              </button>
+              <button type="button" className="btn btn-p" onClick={openNewProg}>
+                ➕ إنشاء خطة فردية IEP
+              </button>
+            </>
           )}
           {subTab === 'bank' && (
             <>
@@ -660,7 +702,7 @@ export default function PillarPlans({ onDataChange }) {
       </div>
 
       {/* Filter bar */}
-      <div className="prog-filter-bar">
+      <div className="prog-filter-bar" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <input
           type="text"
           className="prog-search-input"
@@ -676,8 +718,18 @@ export default function PillarPlans({ onDataChange }) {
           <option value="">— تصفية بكل الطلاب —</option>
           {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
-        {(searchTerm || selectedStudentFilter) && (
-          <button type="button" className="btn btn-sm btn-g" onClick={() => { setSearchTerm(''); setSelectedStudentFilter(''); }}>
+        <select
+          className="prog-select-filter"
+          value={selectedYearFilter}
+          onChange={e => setSelectedYearFilter(e.target.value)}
+        >
+          <option value="">— جميع السنوات / الدورات —</option>
+          {academicYears.map(y => (
+            <option key={y.id} value={y.id}>{y.name} {y.isCurrent ? '⭐' : ''}</option>
+          ))}
+        </select>
+        {(searchTerm || selectedStudentFilter || selectedYearFilter) && (
+          <button type="button" className="btn btn-sm btn-g" onClick={() => { setSearchTerm(''); setSelectedStudentFilter(''); setSelectedYearFilter(''); }}>
             إلغاء التصفية ✖
           </button>
         )}
@@ -770,6 +822,15 @@ export default function PillarPlans({ onDataChange }) {
                           {activeCount} نشطة
                         </span>
                       )}
+                      <button
+                        type="button"
+                        className="btn btn-xs btn-s"
+                        onClick={() => setComparisonModalStudent(students.find(s => s.id === group.studentId) || { id: group.studentId, name: group.studentName })}
+                        title="مقارنة تطور الطالب عبر السنوات والدورات"
+                        style={{ fontWeight: 700 }}
+                      >
+                        📊 مقارنة
+                      </button>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -792,9 +853,16 @@ export default function PillarPlans({ onDataChange }) {
                           >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <strong style={{ fontSize: '.86rem', color: 'var(--text-main)' }}>{item.title}</strong>
-                              <span className={`bdg ${item.status === 'completed' ? 'b-gr' : 'b-or'}`} style={{ fontSize: '.68rem' }}>
-                                {item.status === 'completed' ? 'مكتملة ✅' : 'نشطة ⏳'}
-                              </span>
+                              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                                {item.academicYear && (
+                                  <span className="bdg b-bl" style={{ fontSize: '.66rem' }}>
+                                    📅 {item.academicYear} {item.cycleNumber > 1 ? `(دورة ${item.cycleNumber})` : ''}
+                                  </span>
+                                )}
+                                <span className={`bdg ${item.status === 'completed' ? 'b-gr' : 'b-or'}`} style={{ fontSize: '.68rem' }}>
+                                  {item.status === 'completed' ? 'مكتملة ✅' : 'نشطة ⏳'}
+                                </span>
+                              </div>
                             </div>
                             
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '.75rem', color: 'var(--text-sub)', flexWrap: 'wrap', gap: 6 }}>
@@ -804,6 +872,14 @@ export default function PillarPlans({ onDataChange }) {
                               </div>
                               <div style={{ display: 'flex', gap: 4 }} onClick={e => e.stopPropagation()}>
                                 <button type="button" className="btn btn-xs btn-p" title="عرض التفاصيل" onClick={() => setViewProg(item)}>👁️ عرض</button>
+                                <button
+                                  type="button"
+                                  className="btn btn-xs btn-s"
+                                  title="ترقية الخطة للعام الدراسي التالي وتدوير الأهداف"
+                                  onClick={() => setPromotionModalProg(item)}
+                                >
+                                  🚀 ترقية
+                                </button>
                                 <button type="button" className="btn btn-xs btn-bl" title="طباعة" onClick={() => printIEP(item)}>🖨️</button>
                                 <button type="button" className="btn btn-xs btn-g" title="تعديل" onClick={() => openEditProg(item)}>✏️</button>
                                 <button type="button" className="btn btn-xs btn-d" title="حذف" onClick={() => delProg(item.id)}>🗑️</button>
@@ -846,9 +922,16 @@ export default function PillarPlans({ onDataChange }) {
                                 الطالب: <strong style={{ color: 'var(--text-main)' }}>{item.studentName}</strong> {item.diagnosis && `· (${item.diagnosis})`}
                               </div>
                             </div>
-                            <span className={`bdg ${item.status === 'completed' ? 'b-gr' : 'b-or'}`} style={{ flexShrink: 0 }}>
-                              {item.status === 'completed' ? 'مكتملة ✅' : 'نشطة ⏳'}
-                            </span>
+                            <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                              {item.academicYear && (
+                                <span className="bdg b-bl" style={{ fontSize: '.68rem' }}>
+                                  📅 {item.academicYear} {item.cycleNumber > 1 ? `(دورة ${item.cycleNumber})` : ''}
+                                </span>
+                              )}
+                              <span className={`bdg ${item.status === 'completed' ? 'b-gr' : 'b-or'}`} style={{ flexShrink: 0 }}>
+                                {item.status === 'completed' ? 'مكتملة ✅' : 'نشطة ⏳'}
+                              </span>
+                            </div>
                           </div>
 
                           <div style={{ display: 'flex', gap: 12, fontSize: '0.78rem', color: 'var(--text-sub)', background: 'var(--g0)', padding: '8px 10px', borderRadius: 'var(--r3)', flexWrap: 'wrap' }}>
@@ -899,6 +982,22 @@ export default function PillarPlans({ onDataChange }) {
                                 </button>
                               )}
                               <button type="button" className="btn btn-xs btn-p" title="عرض التفاصيل" onClick={() => setViewProg(item)}>👁️ عرض</button>
+                              <button
+                                type="button"
+                                className="btn btn-xs btn-s"
+                                title="ترقية الخطة للعام الدراسي التالي وتدوير الأهداف"
+                                onClick={() => setPromotionModalProg(item)}
+                              >
+                                🚀 ترقية
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-xs btn-s"
+                                title="مقارنة تطور الطالب عبر السنوات"
+                                onClick={() => setComparisonModalStudent(students.find(s => s.id === item.stuId) || { id: item.stuId, name: item.studentName })}
+                              >
+                                📊 مقارنة
+                              </button>
                               <button type="button" className="btn btn-xs btn-bl" title="طباعة A4" onClick={() => printIEP(item)}>🖨️</button>
                               <button type="button" className="btn btn-xs btn-g" title="تعديل" onClick={() => openEditProg(item)}>✏️</button>
                               <button type="button" className="btn btn-xs btn-d" title="حذف" onClick={() => delProg(item.id)}>🗑️</button>
@@ -929,9 +1028,16 @@ export default function PillarPlans({ onDataChange }) {
                           الطالب: <strong style={{ color: 'var(--text-main)' }}>{item.studentName}</strong> {item.diagnosis && `· (${item.diagnosis})`}
                         </div>
                       </div>
-                      <span className={`bdg ${item.status === 'completed' ? 'b-gr' : 'b-or'}`} style={{ flexShrink: 0 }}>
-                        {item.status === 'completed' ? 'مكتملة ✅' : 'نشطة ⏳'}
-                      </span>
+                      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                        {item.academicYear && (
+                          <span className="bdg b-bl" style={{ fontSize: '.68rem' }}>
+                            📅 {item.academicYear} {item.cycleNumber > 1 ? `(دورة ${item.cycleNumber})` : ''}
+                          </span>
+                        )}
+                        <span className={`bdg ${item.status === 'completed' ? 'b-gr' : 'b-or'}`} style={{ flexShrink: 0 }}>
+                          {item.status === 'completed' ? 'مكتملة ✅' : 'نشطة ⏳'}
+                        </span>
+                      </div>
                     </div>
 
                     <div style={{ display: 'flex', gap: 12, fontSize: '0.78rem', color: 'var(--text-sub)', background: 'var(--g0)', padding: '8px 10px', borderRadius: 'var(--r3)', flexWrap: 'wrap' }}>
@@ -982,6 +1088,22 @@ export default function PillarPlans({ onDataChange }) {
                           </button>
                         )}
                         <button type="button" className="btn btn-xs btn-p" title="عرض التفاصيل" onClick={() => setViewProg(item)}>👁️ عرض</button>
+                        <button
+                          type="button"
+                          className="btn btn-xs btn-s"
+                          title="ترقية الخطة للعام الدراسي التالي وتدوير الأهداف"
+                          onClick={() => setPromotionModalProg(item)}
+                        >
+                          🚀 ترقية
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-xs btn-s"
+                          title="مقارنة تطور الطالب عبر السنوات"
+                          onClick={() => setComparisonModalStudent(students.find(s => s.id === item.stuId) || { id: item.stuId, name: item.studentName })}
+                        >
+                          📊 مقارنة
+                        </button>
                         <button type="button" className="btn btn-xs btn-bl" title="طباعة A4" onClick={() => printIEP(item)}>🖨️</button>
                         <button type="button" className="btn btn-xs btn-g" title="تعديل" onClick={() => openEditProg(item)}>✏️</button>
                         <button type="button" className="btn btn-xs btn-d" title="حذف" onClick={() => delProg(item.id)}>🗑️</button>
@@ -1144,6 +1266,35 @@ export default function PillarPlans({ onDataChange }) {
                     <option value="completed">مكتملة ومحققة ✅</option>
                     <option value="review">تحت المراجعة 🔍</option>
                   </select>
+                </div>
+                <div className="fl">
+                  <label>العام الدراسي / الدورة التأهيلية</label>
+                  <select
+                    value={progForm.academicYearId || ''}
+                    onChange={e => {
+                      const sel = academicYears.find(y => y.id === e.target.value);
+                      setProgForm(f => ({
+                        ...f,
+                        academicYearId: e.target.value,
+                        academicYear: sel ? sel.name : '',
+                      }));
+                    }}
+                  >
+                    <option value="">— اختر العام / الدورة —</option>
+                    {academicYears.map(y => (
+                      <option key={y.id} value={y.id}>{y.name} {y.isCurrent ? '⭐ (العام النشط)' : ''}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="fl">
+                  <label>رقم الدورة / المرحلة التتابعية</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={progForm.cycleNumber || 1}
+                    onChange={e => setProgForm(f => ({ ...f, cycleNumber: Number(e.target.value) || 1 }))}
+                    placeholder="1"
+                  />
                 </div>
               </div>
 
@@ -1600,6 +1751,36 @@ export default function PillarPlans({ onDataChange }) {
             openEditProg(prog);
             setViewProg(null);
           }}
+          onPromote={(prog) => {
+            setPromotionModalProg(prog);
+            setViewProg(null);
+          }}
+          onCompare={(prog) => {
+            const targetStu = students.find(s => s.id === prog.stuId) || { id: prog.stuId, name: prog.studentName };
+            setComparisonModalStudent(targetStu);
+            setViewProg(null);
+          }}
+        />
+      )}
+
+      {/* MODAL: MULTI-YEAR IEP PROMOTION */}
+      {promotionModalProg && (
+        <IepPromotionModal
+          sourcePlan={promotionModalProg}
+          onClose={() => setPromotionModalProg(null)}
+          onSuccess={(newPlan) => {
+            setPromotionModalProg(null);
+            reload();
+            setViewProg(newPlan);
+          }}
+        />
+      )}
+
+      {/* MODAL: MULTI-YEAR IEP & ASSESSMENTS COMPARISON */}
+      {comparisonModalStudent && (
+        <IepComparisonModal
+          student={comparisonModalStudent}
+          onClose={() => setComparisonModalStudent(null)}
         />
       )}
 

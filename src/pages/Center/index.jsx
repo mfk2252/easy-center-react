@@ -9,6 +9,8 @@ import AttachmentField from '../../components/ui/AttachmentField';
 import { CUSTODY_CATEGORIES } from '../../utils/custodyCategories';
 import { getCurrencySymbol } from '../../utils/constants';
 import UnifiedPageHeader from '../../components/ui/UnifiedPageHeader';
+import AcademicYearsManager from './AcademicYearsManager';
+import { getAcademicYears } from '../../utils/academicYears';
 import {
   Handshake,
   DollarSign,
@@ -384,8 +386,11 @@ export default function CenterPage() {
   const netBalance = totalIncome - totalExpenses;
   const currSym = getCurrencySymbol(centerData.currency);
 
+  const academicYearsList = useMemo(() => getAcademicYears(), [tab]);
+
   const TABS = [
     { id: 'partners', label: 'الشراكات', count: partners.length, icon: <Handshake style={{ width: 16, height: 16 }} /> },
+    { id: 'academic', label: 'السنوات والدورات', count: academicYearsList.length, icon: <CalIcon style={{ width: 16, height: 16 }} /> },
     { id: 'finance', label: 'المالية', count: income.length + expenses.length, icon: <DollarSign style={{ width: 16, height: 16 }} />, managerOnly: true },
     { id: 'parents', label: 'أولياء الأمور', count: allParents.length, icon: <Users style={{ width: 16, height: 16 }} /> },
     { id: 'bus', label: 'خدمة الباص', count: buses.length, icon: <Bus style={{ width: 16, height: 16 }} />, managerOnly: true },
@@ -718,7 +723,14 @@ export default function CenterPage() {
       )}
 
       {/* ========================================================================= */}
-      {/* 2. تبويب المالية والتحصيلات (المدير فقط) */}
+      {/* 2. تبويب السنوات والدورات التأهيلية */}
+      {/* ========================================================================= */}
+      {tab === 'academic' && (
+        <AcademicYearsManager />
+      )}
+
+      {/* ========================================================================= */}
+      {/* 3. تبويب المالية والتحصيلات (المدير فقط) */}
       {/* ========================================================================= */}
       {tab === 'finance' && (
         <div>

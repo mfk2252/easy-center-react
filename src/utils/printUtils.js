@@ -218,6 +218,108 @@ export function printItem(itemData, itemType, centerLogo, centerName) {
       ${section('التوصيات', itemData.recommendations)}
       ${itemData.summary ? section('ملخص إضافي', itemData.summary) : ''}
     `;
+  } else if (itemType === 'iep_comparison') {
+    const s = itemData.student || {};
+    const pA = itemData.planA || {};
+    const pB = itemData.planB || {};
+    const stA = itemData.statsA || { pct: 0, mastered: 0, total: 0 };
+    const stB = itemData.statsB || { pct: 0, mastered: 0, total: 0 };
+    const domains = itemData.allDomains || [];
+
+    const domainRows = domains.map(dom => {
+      const da = (stA.domainStats && stA.domainStats[dom]) || { pct: 0, mastered: 0, total: 0 };
+      const db = (stB.domainStats && stB.domainStats[dom]) || { pct: 0, mastered: 0, total: 0 };
+      const diff = db.pct - da.pct;
+      return `
+        <tr>
+          <td style="padding:8px;border:1px solid #cbd5e1;font-weight:700;">${esc(dom)}</td>
+          <td style="padding:8px;border:1px solid #cbd5e1;text-align:center;">${da.pct}% (${da.mastered}/${da.total})</td>
+          <td style="padding:8px;border:1px solid #cbd5e1;text-align:center;">${db.pct}% (${db.mastered}/${db.total})</td>
+          <td style="padding:8px;border:1px solid #cbd5e1;text-align:center;font-weight:700;color:${diff >= 0 ? '#059669' : '#d97706'};">
+            ${diff >= 0 ? '+' : ''}${diff}%
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    contentHTML = `
+      <div style="text-align:center;margin-bottom:16px;">
+        <h2 style="color:#0f172a;margin:0 0 6px 0;font-size:18px;">📊 تقرير مقارنة التطور التراكمي للخطة التربوية الفردية (IEP)</h2>
+        <div style="font-size:12px;color:#64748b;">مقارنة مؤشرات الإنجاز والمقاييس عبر السنتين / الدورتين التأهيليتين</div>
+      </div>
+
+      <table style="margin-bottom:16px;">
+        <tr>
+          <td style="padding:8px;border:1px solid #cbd5e1;background:#f8fafc;width:20%;"><b>اسم الطالب</b></td>
+          <td style="padding:8px;border:1px solid #cbd5e1;"><b>${esc(s.name || pA.studentName || '—')}</b></td>
+          <td style="padding:8px;border:1px solid #cbd5e1;background:#f8fafc;width:20%;"><b>كود الطالب / الهوية</b></td>
+          <td style="padding:8px;border:1px solid #cbd5e1;">${esc(s.code || s.civilId || '—')}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px;border:1px solid #cbd5e1;background:#f8fafc;"><b>الخطة الأولى (السنة 1)</b></td>
+          <td style="padding:8px;border:1px solid #cbd5e1;">${esc(pA.academicYear || pA.title || 'الدورة الأولى')}</td>
+          <td style="padding:8px;border:1px solid #cbd5e1;background:#f8fafc;"><b>الخطة المقارنة (السنة 2)</b></td>
+          <td style="padding:8px;border:1px solid #cbd5e1;">${esc(pB.academicYear || pB.title || 'الدورة الثانية')}</td>
+        </tr>
+      </table>
+
+      <div style="display:flex;gap:12px;margin-bottom:16px;">
+        <div style="flex:1;padding:10px;border:1px solid #cbd5e1;border-radius:6px;text-align:center;background:#f8fafc;">
+          <div style="font-size:11px;color:#64748b;">نسبة إتقان السنة الأولى</div>
+          <div style="font-size:18px;font-weight:900;color:#2563eb;">${stA.pct}%</div>
+          <div style="font-size:10px;color:#64748b;">${stA.mastered} من ${stA.total} هدف مكتسب</div>
+        </div>
+        <div style="flex:1;padding:10px;border:1px solid #cbd5e1;border-radius:6px;text-align:center;background:#f8fafc;">
+          <div style="font-size:11px;color:#64748b;">نسبة إتقان السنة الثانية</div>
+          <div style="font-size:18px;font-weight:900;color:#059669;">${stB.pct}%</div>
+          <div style="font-size:10px;color:#64748b;">${stB.mastered} من ${stB.total} هدف مكتسب</div>
+        </div>
+        <div style="flex:1;padding:10px;border:1px solid #cbd5e1;border-radius:6px;text-align:center;background:#f8fafc;">
+          <div style="font-size:11px;color:#64748b;">فارق التطور والنمو العام</div>
+          <div style="font-size:18px;font-weight:900;color:${stB.pct >= stA.pct ? '#059669' : '#d97706'};">
+            ${stB.pct >= stA.pct ? '+' : ''}${stB.pct - stA.pct}%
+          </div>
+          <div style="font-size:10px;color:#64748b;">${stB.pct >= stA.pct ? 'تقدم إيجابي موثق' : 'متابعة مستمرة'}</div>
+        </div>
+      </div>
+
+      <h3 style="color:#0f172a;font-size:13px;margin:12px 0 6px;border-right:3px solid #2563eb;padding-right:6px;">مقارنة الإنجاز حسب المجالات النمائية والمهارية</h3>
+      <table style="margin-bottom:16px;">
+        <thead>
+          <tr style="background:#f1f5f9;">
+            <th style="padding:8px;border:1px solid #cbd5e1;text-align:right;">المجال</th>
+            <th style="padding:8px;border:1px solid #cbd5e1;text-align:center;">إنجاز الخطة 1</th>
+            <th style="padding:8px;border:1px solid #cbd5e1;text-align:center;">إنجاز الخطة 2</th>
+            <th style="padding:8px;border:1px solid #cbd5e1;text-align:center;">فارق النمو</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${domainRows || '<tr><td colspan="4" style="text-align:center;padding:10px;">لا توجد مجالات كافية للمقارنة</td></tr>'}
+        </tbody>
+      </table>
+
+      <div style="margin-top:20px;padding:12px;border:1px solid #cbd5e1;border-radius:6px;background:#f8fafc;">
+        <div style="font-weight:700;font-size:12px;margin-bottom:4px;">توصيات فريق الجودة والتأهيل:</div>
+        <div style="font-size:11px;color:#334155;line-height:1.6;">
+          أظهرت المقارنة التراكمية بين الخطتين مدى استجابة الطالب للبرامج التأهيلية الفردية، وتوصي لجنة التقييم باستمرار متابعة المهارات الاستقلالية والأكاديمية ونقل الأهداف المتقنة لمرحلة التعميم في البيئة المدرسية والمنزلية.
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;margin-top:28px;padding-top:14px;border-top:1px dashed #cbd5e1;font-size:11px;">
+        <div style="text-align:center;width:28%;">
+          <div><b>الأخصائي المشرف</b></div>
+          <div style="margin-top:30px;">.....................................</div>
+        </div>
+        <div style="text-align:center;width:28%;">
+          <div><b>منسق الجودة والخطط</b></div>
+          <div style="margin-top:30px;">.....................................</div>
+        </div>
+        <div style="text-align:center;width:28%;">
+          <div><b>اعتماد مدير المركز</b></div>
+          <div style="margin-top:30px;">.....................................</div>
+        </div>
+      </div>
+    `;
   } else if (itemType === 'generic') {
     contentHTML = itemData.html || `<p>${esc(itemData.text || '')}</p>`;
   } else {

@@ -11,6 +11,8 @@ export default function ProgramDetailModal({
   onUpdate,
   onPrint,
   onEdit,
+  onPromote,
+  onCompare,
 }) {
   const { toast, center } = useApp();
   const [activeTab, setActiveTab] = useState('goals'); // 'goals' | 'progress' | 'team' | 'notes'
@@ -131,6 +133,11 @@ export default function ProgramDetailModal({
                 <span className={`bdg ${currentProg.status === 'completed' ? 'b-gr' : 'b-or'}`} style={{ fontSize: '.7rem' }}>
                   {currentProg.status === 'completed' ? 'خطة مكتملة ✅' : 'خطة نشطة ⏳'}
                 </span>
+                {currentProg.academicYear && (
+                  <span className="bdg" style={{ fontSize: '.7rem', background: 'rgba(255,255,255,0.25)', color: '#fff' }}>
+                    📅 {currentProg.academicYear} {currentProg.cycleNumber > 1 ? `(دورة ${currentProg.cycleNumber})` : ''}
+                  </span>
+                )}
               </div>
               <div style={{ fontSize: '.78rem', opacity: 0.9, marginTop: 3 }}>
                 الطالب: <strong>{currentProg.studentName}</strong> {currentProg.diagnosis && `· (${currentProg.diagnosis})`} · الصف: {currentProg.className || 'غير محدد'}
@@ -138,7 +145,29 @@ export default function ProgramDetailModal({
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
+            {onPromote && (
+              <button
+                type="button"
+                className="btn btn-xs"
+                style={{ background: 'rgba(255,255,255,0.22)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', fontWeight: 700 }}
+                onClick={() => onPromote(currentProg)}
+                title="ترقية الخطة للعام الدراسي / الدورة التالية وتدوير الأهداف"
+              >
+                🚀 ترقية للسنة التالية
+              </button>
+            )}
+            {onCompare && (
+              <button
+                type="button"
+                className="btn btn-xs"
+                style={{ background: 'rgba(255,255,255,0.22)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', fontWeight: 700 }}
+                onClick={() => onCompare(currentProg)}
+                title="مقارنة التطور والمقاييس عبر السنوات"
+              >
+                📊 مقارنة التطور
+              </button>
+            )}
             {currentProg.parentPhone && (
               <button
                 type="button"
