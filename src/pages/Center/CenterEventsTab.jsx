@@ -84,6 +84,9 @@ export default function CenterEventsTab() {
   const [showModal, setShowModal] = useState(false);
   const [showIntDaysModal, setShowIntDaysModal] = useState(false);
   const [intDaysCategoryFilter, setIntDaysCategoryFilter] = useState('all');
+  const [intDaysMonthFilter, setIntDaysMonthFilter] = useState('all');
+  const [intDaysViewMode, setIntDaysViewMode] = useState('calendar'); // 'calendar' or 'table'
+  const [intDaysSearch, setIntDaysSearch] = useState('');
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState(EMPTY_EVENT_FORM);
   const [viewEvent, setViewEvent] = useState(null);
@@ -219,6 +222,145 @@ export default function CenterEventsTab() {
     setShowIntDaysModal(false);
     setShowModal(true);
     toast(`✨ تم تجهيز نموذج الاحتفال بـ (${dayObj.name})`, 'ok');
+  };
+
+  // Print International Days Schedule
+  const handlePrintInternationalDays = () => {
+    const currentYear = new Date().getFullYear();
+    const printItems = INTERNATIONAL_DAYS
+      .filter(d => intDaysCategoryFilter === 'all' || d.category === intDaysCategoryFilter)
+      .filter(d => intDaysMonthFilter === 'all' || d.month === Number(intDaysMonthFilter))
+      .filter(d => {
+        if (!intDaysSearch.trim()) return true;
+        const q = intDaysSearch.toLowerCase();
+        return (
+          d.name.toLowerCase().includes(q) ||
+          d.objectives.toLowerCase().includes(q) ||
+          d.categoryLabel.toLowerCase().includes(q)
+        );
+      });
+
+    const printWindow = window.open('', '_blank', 'width=980,height=820');
+    if (!printWindow) {
+      window.print();
+      return;
+    }
+
+    const logoHtml = center?.logo
+      ? `<img src="${center.logo}" alt="Logo" style="height: 60px; max-width: 160px; object-fit: contain; margin-bottom: 4px;" />`
+      : `<div style="font-size: 28px; font-weight: bold; color: #2563eb;">🏛️</div>`;
+    const centerName = center?.name || 'مركز التأهيل والتربية الخاصة';
+    const centerPhone = center?.phone || '';
+    const centerAddress = center?.address || '';
+
+    const rowsHtml = printItems.map((item, idx) => `
+      <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+        <td style="padding: 9px 8px; border: 1px solid #d1d5db; text-align: center; font-weight: bold; width: 45px;">${idx + 1}</td>
+        <td style="padding: 9px 8px; border: 1px solid #d1d5db; text-align: center; font-weight: 800; width: 100px; white-space: nowrap; color: #1e40af;">
+          📅 ${item.day} / ${item.month}
+        </td>
+        <td style="padding: 9px 10px; border: 1px solid #d1d5db; font-weight: 800; color: #111827;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span>${item.icon}</span>
+            <span>${item.name}</span>
+          </div>
+        </td>
+        <td style="padding: 9px 8px; border: 1px solid #d1d5db; text-align: center; width: 125px; font-size: 11.5px; color: #4b5563;">
+          ${item.categoryLabel}
+        </td>
+        <td style="padding: 9px 10px; border: 1px solid #d1d5db; font-size: 11.5px; color: #374151; line-height: 1.5;">
+          ${item.objectives}
+        </td>
+        <td style="padding: 9px 8px; border: 1px solid #d1d5db; text-align: center; width: 110px; font-size: 11px; color: #6b7280;">
+          ${item.suggestedLocation || 'الصالة الرئيسية'}
+        </td>
+      </tr>
+    `).join('');
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+      <head>
+        <meta charset="utf-8">
+        <title>التقويم السنوي للأيام والمناسبات العالمية والتربوية - ${centerName}</title>
+        <style>
+          @page { size: A4 landscape; margin: 12mm 10mm; }
+          body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; margin: 0; padding: 14px; color: #111827; background: #fff; }
+          .header-box { display: flex; justify-content: space-between; align-items: center; border-bottom: 2.5px solid #2563eb; padding-bottom: 12px; margin-bottom: 14px; }
+          .center-meta { text-align: right; min-width: 220px; }
+          .doc-title { text-align: center; flex: 1; padding: 0 15px; }
+          .doc-title h1 { margin: 0; font-size: 17px; font-weight: 900; color: #1e3a8a; }
+          .doc-title p { margin: 4px 0 0; font-size: 11.5px; color: #4b5563; }
+          table { width: 100%; border-collapse: collapse; font-size: 11.5px; margin-top: 8px; }
+          th { background: #1e40af; color: #ffffff; padding: 8px 10px; border: 1px solid #1e40af; font-size: 12px; font-weight: 800; }
+          .signatures { display: flex; justify-content: space-between; margin-top: 25px; padding: 10px 20px; page-break-inside: avoid; }
+          .sig-col { text-align: center; font-size: 11.5px; width: 210px; }
+          .sig-line { margin-top: 35px; border-top: 1px dashed #9ca3af; padding-top: 4px; color: #6b7280; font-size: 11px; }
+          @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header-box">
+          <div class="center-meta">
+            ${logoHtml}
+            <div style="font-size: 14px; font-weight: 800; color: #111827;">${centerName}</div>
+            <div style="font-size: 10.5px; color: #6b7280;">${centerAddress} ${centerPhone ? '· هاتف: ' + centerPhone : ''}</div>
+          </div>
+          <div class="doc-title">
+            <h1>الخطة والتقويم السنوي للأيام والمناسبات العالمية والتربوية</h1>
+            <p>دليل الفعاليات التوعوية والتأهيلية المعتمدة لتعزيز الدمج المجتمعي وتنمية مهارات المستفيدين للعام ${currentYear}</p>
+          </div>
+          <div style="text-align: left; font-size: 10.5px; color: #6b7280; min-width: 180px;">
+            <div>تاريخ الطباعة: ${todayStr()}</div>
+            <div>عدد المناسبات المدرجة: ${printItems.length} مناسبة</div>
+            <div style="margin-top: 4px; padding: 3px 8px; background: #e0e7ff; color: #3730a3; border-radius: 4px; display: inline-block; font-weight: bold;">معتمد وموثق</div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>التاريخ واليوم</th>
+              <th>المناسبة العالمية / التربوية</th>
+              <th>المجال / التصنيف</th>
+              <th>الأهداف التأهيلية والتوعوية</th>
+              <th>المكان المقترح</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+
+        <div class="signatures">
+          <div class="sig-col">
+            <div style="font-weight: 800;">إعداد / مسؤول الأنشطة والفعاليات</div>
+            <div class="sig-line">التوقيع: ................................</div>
+          </div>
+          <div class="sig-col">
+            <div style="font-weight: 800;">تدقيق / مسؤول الجودة والتأهيل</div>
+            <div class="sig-line">التوقيع: ................................</div>
+          </div>
+          <div class="sig-col">
+            <div style="font-weight: 800;">اعتماد / مدير المركز والختم الرسمي</div>
+            <div class="sig-line">التوقيع: ................................</div>
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          };
+        </script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   // Open Add Modal
@@ -1138,177 +1280,655 @@ export default function CenterEventsTab() {
         </div>
       )}
 
-      {/* 5. International & Educational Days Browser Modal (دليل الأيام والمناسبات العالمية) */}
+      {/* 5. International & Educational Days Browser Modal (نافذة التقويم السنوي للأيام والمناسبات العالمية والتربوية) */}
       {showIntDaysModal && (
-        <div className="modal-overlay" style={{ zIndex: 1100 }}>
-          <div className="modal-box" style={{ maxWidth: '820px', width: '95%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
-            
-            {/* Modal Header */}
-            <div className="modal-header" style={{
+        <div className="mbg" style={{ zIndex: 1200 }}>
+          <div
+            className="mb mb-xl"
+            style={{
+              maxWidth: 'min(1180px, 96vw)',
+              width: '100%',
+              maxHeight: 'min(94vh, 920px)',
               display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '16px 20px',
-              borderBottom: '1px solid var(--border-color)',
-              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1))'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
-                  background: '#6366f1',
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.2rem'
-                }}>
-                  🌍
-                </div>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                    دليل فعاليات الأيام العالمية والتربوية
-                  </h3>
-                  <div style={{ fontSize: '.76rem', color: 'var(--text-sub)' }}>
-                    قائمة معتمدة للأيام والمناسبات العالمية الخاصة بذوي الاحتياجات الخاصة والتربية مع إمكانية التنظيم المباشر
+              flexDirection: 'column',
+              borderRadius: 18,
+              overflow: 'hidden',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+              border: '1.5px solid var(--border-color)',
+            }}
+          >
+            {/* Modal Header with Center Identity & Print Action */}
+            <div
+              className="fhd"
+              style={{
+                padding: '16px 22px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 12,
+                background: 'linear-gradient(135deg, var(--pr), var(--pr-d))',
+                color: '#fff',
+                borderBottom: '1px solid rgba(255,255,255,0.15)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {center?.logo ? (
+                  <img
+                    src={center.logo}
+                    alt="Logo"
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 10,
+                      objectFit: 'contain',
+                      background: '#fff',
+                      padding: 3,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 10,
+                      background: 'rgba(255,255,255,0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.4rem',
+                      border: '1px solid rgba(255,255,255,0.3)',
+                    }}
+                  >
+                    🌍
                   </div>
+                )}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <h2 style={{ margin: 0, fontSize: '1.12rem', fontWeight: 800, color: '#fff' }}>
+                      التقويم والخطة السنوية للأيام العالمية والتربوية
+                    </h2>
+                    <span
+                      style={{
+                        background: 'rgba(255,255,255,0.22)',
+                        color: '#fff',
+                        fontSize: '.72rem',
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: 12,
+                        border: '1px solid rgba(255,255,255,0.3)',
+                      }}
+                    >
+                      {center?.name || 'المركز'}
+                    </span>
+                  </div>
+                  <p style={{ margin: '3px 0 0', fontSize: '.78rem', opacity: 0.92, color: 'rgba(255,255,255,0.9)' }}>
+                    دليل الفعاليات التوعوية والتأهيلية المعتمدة لتعزيز الدمج المجتمعي وتوثيق متطلبات الجودة والاعتماد
+                  </p>
                 </div>
               </div>
 
-              <button
-                type="button"
-                className="btn btn-g btn-sm"
-                onClick={() => setShowIntDaysModal(false)}
+              {/* Action Buttons in Header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={handlePrintInternationalDays}
+                  style={{
+                    background: '#10b981',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 8,
+                    padding: '6px 14px',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                    cursor: 'pointer',
+                  }}
+                  title="طباعة التقويم السنوي المنسق مع شعار المركز"
+                >
+                  <Printer style={{ width: 15, height: 15 }} />
+                  <span>🖨️ طباعة التقويم الرسمي</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => setShowIntDaysModal(false)}
+                  style={{
+                    background: 'rgba(255,255,255,0.18)',
+                    color: '#fff',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    borderRadius: 8,
+                    padding: '6px 12px',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <X style={{ width: 15, height: 15 }} />
+                  <span>إغلاق</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Sub-Header Toolbar: Search, View Switcher & Month Scroll */}
+            <div
+              style={{
+                padding: '12px 18px',
+                background: 'var(--bg-card)',
+                borderBottom: '1px solid var(--border-color)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+              }}
+            >
+              {/* Top Row: Search & View Modes */}
+              <div
                 style={{
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 8,
-                  padding: '5px 10px',
-                  fontWeight: 700,
-                  display: 'inline-flex',
+                  display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  gap: 4,
-                  cursor: 'pointer'
+                  flexWrap: 'wrap',
+                  gap: 10,
                 }}
               >
-                <X style={{ width: 15, height: 15 }} />
-                <span>إغلاق</span>
-              </button>
-            </div>
-
-            {/* Category Filter Tabs */}
-            <div style={{
-              padding: '12px 20px',
-              borderBottom: '1px solid var(--border-color)',
-              background: 'var(--bg-card)',
-              display: 'flex',
-              gap: 8,
-              flexWrap: 'wrap'
-            }}>
-              {[
-                { id: 'all', label: 'جميع المناسبات' },
-                { id: 'developmental', label: '🧩 اضطرابات النمو والتوحد' },
-                { id: 'sensory', label: '🦯 الإعاقات الحسية والسمعية' },
-                { id: 'rehab', label: '🏃 التأهيل والعلاج الطبيعي والوظيفي' },
-                { id: 'educational', label: '📚 التعليم والتربية الخاصة' },
-                { id: 'national', label: '🇸🇦 المناسبات الوطنية' }
-              ].map(cat => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  className={`btn btn-xs ${intDaysCategoryFilter === cat.id ? 'btn-p' : 'btn-g'}`}
-                  onClick={() => setIntDaysCategoryFilter(cat.id)}
-                  style={{ borderRadius: 16, padding: '4px 12px', fontWeight: 700 }}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Modal Body: Cards List */}
-            <div className="modal-body-scroll" style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {INTERNATIONAL_DAYS
-                .filter(d => intDaysCategoryFilter === 'all' || d.category === intDaysCategoryFilter)
-                .map(day => (
-                  <div
-                    key={day.id}
+                {/* Search Bar */}
+                <div style={{ position: 'relative', flex: 1, minWidth: 240, maxWidth: 420 }}>
+                  <Search
                     style={{
-                      background: 'var(--bg-card)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: 12,
-                      padding: '14px 16px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 8,
-                      transition: 'all 0.15s ease',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                      position: 'absolute',
+                      right: 12,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      width: 15,
+                      height: 15,
+                      color: 'var(--text-sub)',
                     }}
+                  />
+                  <input
+                    type="text"
+                    value={intDaysSearch}
+                    onChange={e => setIntDaysSearch(e.target.value)}
+                    placeholder="بحث في المناسبات، الأهداف، أو المجال..."
+                    style={{
+                      width: '100%',
+                      padding: '8px 36px 8px 12px',
+                      borderRadius: 10,
+                      border: '1.5px solid var(--border-color)',
+                      background: 'var(--g0)',
+                      color: 'var(--text-main)',
+                      fontSize: '.84rem',
+                      outline: 'none',
+                    }}
+                  />
+                  {intDaysSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setIntDaysSearch('')}
+                      style={{
+                        position: 'absolute',
+                        left: 10,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text-sub)',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* View Mode Switcher (Calendar Cards vs Table View) */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: 'var(--g0)',
+                    padding: 3,
+                    borderRadius: 10,
+                    border: '1px solid var(--border-color)',
+                  }}
+                >
+                  <button
+                    type="button"
+                    className={`btn btn-xs ${intDaysViewMode === 'calendar' ? 'btn-p' : 'btn-g'}`}
+                    onClick={() => setIntDaysViewMode('calendar')}
+                    style={{ borderRadius: 8, padding: '5px 12px', fontWeight: 700, border: 'none' }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ fontSize: '1.6rem' }}>{day.icon}</span>
-                        <div>
-                          <h4 style={{ margin: 0, fontSize: '.95rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                            {day.name}
-                          </h4>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
-                            <span style={{
-                              fontSize: '.72rem',
-                              fontWeight: 700,
-                              padding: '2px 8px',
-                              borderRadius: 6,
+                    <Calendar style={{ width: 13, height: 13 }} />
+                    <span>🗓️ محاكاة التقويم السنوي</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn btn-xs ${intDaysViewMode === 'table' ? 'btn-p' : 'btn-g'}`}
+                    onClick={() => setIntDaysViewMode('table')}
+                    style={{ borderRadius: 8, padding: '5px 12px', fontWeight: 700, border: 'none' }}
+                  >
+                    <FileText style={{ width: 13, height: 13 }} />
+                    <span>📊 الجدول التنفيذي الشامل</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Month Selector Tabs (الأشهر من 1 إلى 12) */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 6,
+                  overflowX: 'auto',
+                  scrollbarWidth: 'thin',
+                  paddingBottom: 4,
+                  alignItems: 'center',
+                }}
+              >
+                <span style={{ fontSize: '.76rem', fontWeight: 800, color: 'var(--text-sub)', whiteSpace: 'nowrap', paddingLeft: 6 }}>
+                  📅 الشهر:
+                </span>
+                {[
+                  { id: 'all', name: 'كامل العام' },
+                  { id: 1, name: 'يناير' },
+                  { id: 2, name: 'فبراير' },
+                  { id: 3, name: 'مارس' },
+                  { id: 4, name: 'أبريل' },
+                  { id: 5, name: 'مايو' },
+                  { id: 6, name: 'يونيو' },
+                  { id: 7, name: 'يوليو' },
+                  { id: 8, name: 'أغسطس' },
+                  { id: 9, name: 'سبتمبر' },
+                  { id: 10, name: 'أكتوبر' },
+                  { id: 11, name: 'نوفمبر' },
+                  { id: 12, name: 'ديسمبر' },
+                ].map(m => {
+                  const isSelected = String(intDaysMonthFilter) === String(m.id);
+                  const count = m.id === 'all'
+                    ? INTERNATIONAL_DAYS.length
+                    : INTERNATIONAL_DAYS.filter(d => d.month === m.id).length;
+
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setIntDaysMonthFilter(m.id)}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: 8,
+                        fontSize: '.76rem',
+                        fontWeight: isSelected ? 800 : 600,
+                        border: isSelected ? '1.5px solid var(--pr)' : '1px solid var(--border-color)',
+                        background: isSelected ? 'var(--pr-l)' : 'var(--bg-card)',
+                        color: isSelected ? 'var(--pr)' : 'var(--text-main)',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <span>{m.name}</span>
+                      <span
+                        style={{
+                          fontSize: '.66rem',
+                          padding: '1px 5px',
+                          borderRadius: 99,
+                          background: isSelected ? 'var(--pr)' : 'var(--g0)',
+                          color: isSelected ? '#fff' : 'var(--text-sub)',
+                        }}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Domain / Category Filter Badges */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ fontSize: '.76rem', fontWeight: 800, color: 'var(--text-sub)', whiteSpace: 'nowrap', paddingLeft: 6 }}>
+                  🏷️ المجال:
+                </span>
+                {[
+                  { id: 'all', label: 'جميع المجالات' },
+                  { id: 'developmental', label: '🧩 التوحد واضطرابات النمو' },
+                  { id: 'sensory', label: '🦯 الإعاقات الحسية والسمعية' },
+                  { id: 'rehab', label: '🏃 التأهيل والعلاج الطبيعي' },
+                  { id: 'educational', label: '📚 التعليم والتربية الخاصة' },
+                  { id: 'national', label: '🇸🇦 المناسبات الوطنية' },
+                ].map(cat => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    className={`btn btn-xs ${intDaysCategoryFilter === cat.id ? 'btn-p' : 'btn-g'}`}
+                    onClick={() => setIntDaysCategoryFilter(cat.id)}
+                    style={{ borderRadius: 16, padding: '3px 10px', fontWeight: 700, fontSize: '.74rem' }}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Body: Cards List OR Table View */}
+            <div
+              className="modal-body-scroll"
+              style={{
+                padding: '18px 22px',
+                background: 'var(--g0)',
+                flex: 1,
+                minHeight: 320,
+              }}
+            >
+              {(() => {
+                const filtered = INTERNATIONAL_DAYS
+                  .filter(d => intDaysCategoryFilter === 'all' || d.category === intDaysCategoryFilter)
+                  .filter(d => intDaysMonthFilter === 'all' || d.month === Number(intDaysMonthFilter))
+                  .filter(d => {
+                    if (!intDaysSearch.trim()) return true;
+                    const q = intDaysSearch.toLowerCase();
+                    return (
+                      d.name.toLowerCase().includes(q) ||
+                      d.objectives.toLowerCase().includes(q) ||
+                      d.categoryLabel.toLowerCase().includes(q)
+                    );
+                  });
+
+                if (filtered.length === 0) {
+                  return (
+                    <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-sub)' }}>
+                      <div style={{ fontSize: '2.5rem', marginBottom: 10 }}>🔍</div>
+                      <h4 style={{ margin: 0, fontWeight: 800, color: 'var(--text-main)' }}>
+                        لا توجد مناسبات مطابقة لمعايير البحث
+                      </h4>
+                      <p style={{ margin: '6px 0 0', fontSize: '.84rem' }}>
+                        جرّب اختيار شهر آخر أو إلغاء فلتر البحث لعرض كافة الأيام العالمية.
+                      </p>
+                    </div>
+                  );
+                }
+
+                // VIEW 1: Calendar Simulation Cards Grid
+                if (intDaysViewMode === 'calendar') {
+                  const monthsNames = ['', 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+
+                  return (
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 480px), 1fr))',
+                        gap: 14,
+                      }}
+                    >
+                      {filtered.map(day => (
+                        <div
+                          key={day.id}
+                          style={{
+                            background: 'var(--bg-card)',
+                            border: '1.5px solid var(--border-color)',
+                            borderRadius: 16,
+                            padding: '14px 16px',
+                            display: 'flex',
+                            gap: 14,
+                            alignItems: 'flex-start',
+                            transition: 'all 0.15s ease',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                          }}
+                        >
+                          {/* Calendar Date Block */}
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              minWidth: 70,
+                              borderRadius: 12,
+                              overflow: 'hidden',
+                              border: '1.5px solid var(--border-color)',
                               background: 'var(--g0)',
-                              color: 'var(--pr)',
-                              border: '1px solid var(--border-color)'
-                            }}>
-                              📅 {day.day} / {day.month}
-                            </span>
-                            <span style={{
-                              fontSize: '.72rem',
-                              fontWeight: 600,
-                              padding: '2px 8px',
-                              borderRadius: 6,
-                              background: 'var(--g0)',
-                              color: 'var(--text-sub)'
-                            }}>
-                              {day.categoryLabel}
-                            </span>
+                              flexShrink: 0,
+                              textAlign: 'center',
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: '100%',
+                                background: 'var(--pr)',
+                                color: '#fff',
+                                padding: '3px 6px',
+                                fontSize: '.68rem',
+                                fontWeight: 800,
+                              }}
+                            >
+                              {monthsNames[day.month]}
+                            </div>
+                            <div
+                              style={{
+                                padding: '6px 4px 4px',
+                                fontSize: '1.45rem',
+                                fontWeight: 900,
+                                color: 'var(--text-main)',
+                                lineHeight: 1,
+                              }}
+                            >
+                              {day.day}
+                            </div>
+                            <div style={{ fontSize: '.64rem', color: 'var(--text-sub)', paddingBottom: 4 }}>
+                              سنوي
+                            </div>
+                          </div>
+
+                          {/* Content Details */}
+                          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span style={{ fontSize: '1.25rem' }}>{day.icon}</span>
+                                <h4 style={{ margin: 0, fontSize: '.95rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.3 }}>
+                                  {day.name}
+                                </h4>
+                              </div>
+                            </div>
+
+                            {/* Tags */}
+                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                              <span
+                                style={{
+                                  fontSize: '.7rem',
+                                  fontWeight: 700,
+                                  padding: '2px 8px',
+                                  borderRadius: 6,
+                                  background: 'var(--pr-l)',
+                                  color: 'var(--pr)',
+                                }}
+                              >
+                                {day.categoryLabel}
+                              </span>
+                              {day.suggestedLocation && (
+                                <span
+                                  style={{
+                                    fontSize: '.7rem',
+                                    fontWeight: 600,
+                                    padding: '2px 8px',
+                                    borderRadius: 6,
+                                    background: 'var(--g0)',
+                                    color: 'var(--text-sub)',
+                                    border: '1px solid var(--border-color)',
+                                  }}
+                                >
+                                  📍 {day.suggestedLocation}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Objectives */}
+                            <p
+                              style={{
+                                margin: '2px 0 0',
+                                fontSize: '.8rem',
+                                color: 'var(--text-sub)',
+                                lineHeight: 1.55,
+                              }}
+                            >
+                              {day.objectives}
+                            </p>
+
+                            {/* Action Button */}
+                            {canEdit && (
+                              <div style={{ marginTop: 6, display: 'flex', justifyContent: 'flex-end' }}>
+                                <button
+                                  type="button"
+                                  className="btn btn-p btn-xs"
+                                  onClick={() => handleAdoptInternationalDay(day)}
+                                  style={{
+                                    borderRadius: 8,
+                                    padding: '5px 12px',
+                                    fontWeight: 700,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 5,
+                                  }}
+                                >
+                                  <PartyPopper style={{ width: 13, height: 13 }} />
+                                  <span>تنظيم احتفال بالفعالية</span>
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
-                      </div>
-
-                      {canEdit && (
-                        <button
-                          type="button"
-                          className="btn btn-p btn-sm"
-                          onClick={() => handleAdoptInternationalDay(day)}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700 }}
-                        >
-                          <PartyPopper style={{ width: 14, height: 14 }} />
-                          <span>تنظيم احتفال بالفعالية</span>
-                        </button>
-                      )}
+                      ))}
                     </div>
+                  );
+                }
 
-                    <p style={{ margin: 0, fontSize: '.82rem', color: 'var(--text-sub)', lineHeight: 1.6 }}>
-                      {day.objectives}
-                    </p>
+                // VIEW 2: Executive Table View
+                return (
+                  <div
+                    style={{
+                      background: 'var(--bg-card)',
+                      borderRadius: 14,
+                      border: '1px solid var(--border-color)',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div className="tbl-wrap" style={{ margin: 0 }}>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th style={{ width: 50, textAlign: 'center' }}>#</th>
+                            <th style={{ width: 110, textAlign: 'center' }}>التاريخ السنوي</th>
+                            <th>المناسبة العالمية / التربوية</th>
+                            <th style={{ width: 140, textAlign: 'center' }}>المجال والتصنيف</th>
+                            <th>الأهداف التأهيلية والتوعوية</th>
+                            <th style={{ width: 130, textAlign: 'center' }}>المكان المقترح</th>
+                            {canEdit && <th style={{ width: 140, textAlign: 'center' }}>الإجراء</th>}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filtered.map((day, idx) => (
+                            <tr key={day.id}>
+                              <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--text-sub)' }}>
+                                {idx + 1}
+                              </td>
+                              <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                                <span
+                                  style={{
+                                    fontSize: '.75rem',
+                                    fontWeight: 800,
+                                    padding: '3px 8px',
+                                    borderRadius: 6,
+                                    background: 'var(--pr-l)',
+                                    color: 'var(--pr)',
+                                  }}
+                                >
+                                  📅 {day.day} / {day.month}
+                                </span>
+                              </td>
+                              <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, color: 'var(--text-main)' }}>
+                                  <span style={{ fontSize: '1.2rem' }}>{day.icon}</span>
+                                  <span>{day.name}</span>
+                                </div>
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                <span style={{ fontSize: '.74rem', color: 'var(--text-sub)', fontWeight: 600 }}>
+                                  {day.categoryLabel}
+                                </span>
+                              </td>
+                              <td style={{ fontSize: '.8rem', color: 'var(--text-main)', lineHeight: 1.5 }}>
+                                {day.objectives}
+                              </td>
+                              <td style={{ textAlign: 'center', fontSize: '.75rem', color: 'var(--text-sub)' }}>
+                                {day.suggestedLocation || 'الصالة الرئيسية'}
+                              </td>
+                              {canEdit && (
+                                <td style={{ textAlign: 'center' }}>
+                                  <button
+                                    type="button"
+                                    className="btn btn-p btn-xs"
+                                    onClick={() => handleAdoptInternationalDay(day)}
+                                    style={{ borderRadius: 6, padding: '4px 10px', fontWeight: 700 }}
+                                  >
+                                    🎉 تنظيم
+                                  </button>
+                                </td>
+                              )}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                ))}
+                );
+              })()}
             </div>
 
             {/* Modal Footer */}
-            <div className="modal-footer" style={{ padding: '12px 20px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', background: 'var(--g0)' }}>
-              <button
-                type="button"
-                className="btn btn-g"
-                onClick={() => setShowIntDaysModal(false)}
-                style={{ fontWeight: 700 }}
-              >
-                إغلاق
-              </button>
-            </div>
+            <div
+              className="fa"
+              style={{
+                padding: '12px 22px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                background: 'var(--bg-card)',
+                borderTop: '1px solid var(--border-color)',
+                flexWrap: 'wrap',
+                gap: 10,
+              }}
+            >
+              <div style={{ fontSize: '.8rem', color: 'var(--text-sub)', fontWeight: 600 }}>
+                💡 إجمالي المناسبات المعتمدة بالنظام: <strong style={{ color: 'var(--text-main)' }}>{INTERNATIONAL_DAYS.length} مناسبة عالمية وتربوية</strong>
+              </div>
 
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  className="btn btn-s btn-sm"
+                  onClick={handlePrintInternationalDays}
+                  style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Printer style={{ width: 14, height: 14 }} />
+                  <span>طباعة التقويم</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-g btn-sm"
+                  onClick={() => setShowIntDaysModal(false)}
+                  style={{ fontWeight: 700 }}
+                >
+                  إغلاق
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
