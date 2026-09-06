@@ -4,6 +4,9 @@ import { lsGet, lsAdd, lsDel } from '../hooks/useStorage';
 import { todayStr, uid, formatHijriDate } from '../utils/dateHelpers';
 import { collectSystemAlerts } from '../utils/alertEngine';
 import UnifiedPageHeader from '../components/ui/UnifiedPageHeader';
+import LiveOperationsHub from '../components/dashboard/LiveOperationsHub';
+import RoleAdaptiveHub from '../components/dashboard/RoleAdaptiveHub';
+import VisualAnalyticsHub from '../components/dashboard/VisualAnalyticsHub';
 
 const EMPTY_MANUAL = { title: '', details: '', date: '', time: '', severity: 'info' };
 const SEV_LABEL = { urgent: 'عاجل', warn: 'تحذير', info: 'معلومة' };
@@ -303,6 +306,28 @@ export default function Dashboard() {
           <div className="stat-sub">صباحي + مسائي ←</div>
         </div>
       </div>
+
+      {/* 1. محور التخصيص بحسب دور المستخدم */}
+      <RoleAdaptiveHub
+        currentUser={currentUser}
+        data={data}
+        today={today}
+        go={go}
+      />
+
+      {/* 2. محور العمليات اللحظية وغرفة التحكم اليومية */}
+      <LiveOperationsHub
+        data={data}
+        today={today}
+        go={go}
+        currentTime={clockData.time}
+      />
+
+      {/* 3. محور ذكاء الأعمال والرسوم البيانية المصغرة */}
+      <VisualAnalyticsHub
+        data={data}
+        go={go}
+      />
 
       {/* التنبيهات */}
       <div className="wg" style={{ marginBottom: 14 }}>
