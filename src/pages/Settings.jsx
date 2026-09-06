@@ -13,6 +13,7 @@ import { useLang } from '../context/LanguageContext';
 import { handleFileInputChange, FILE_ACCEPT_IMAGE } from '../utils/fileUpload';
 import { getRoleLabel, getUserPermissionLabels, getCurrentUsername } from '../utils/userLabels';
 import UnifiedPageHeader from '../components/ui/UnifiedPageHeader';
+import AcademicYearsManager from './Center/AcademicYearsManager';
 
 const PRESET_COLORS = ['#1a56db', '#7c3aed', '#059669', '#dc2626', '#d97706', '#0891b2', '#db2777', '#0f172a'];
 const ROLE_OPTIONS = [
@@ -1030,6 +1031,9 @@ export default function Settings() {
               )}
             </div>
           </div>
+
+          {/* نظام ونمط العمل السنوي والتقويم المعتمد للمركز (معايير الجودة) */}
+          <AcademicYearsManager />
 
           {/* زر حفظ كافة الإعدادات */}
           <div style={{

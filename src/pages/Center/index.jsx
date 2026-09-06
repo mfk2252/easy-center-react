@@ -9,8 +9,8 @@ import AttachmentField from '../../components/ui/AttachmentField';
 import { CUSTODY_CATEGORIES } from '../../utils/custodyCategories';
 import { getCurrencySymbol } from '../../utils/constants';
 import UnifiedPageHeader from '../../components/ui/UnifiedPageHeader';
-import AcademicYearsManager from './AcademicYearsManager';
-import { getAcademicYears } from '../../utils/academicYears';
+import CenterEventsTab from './CenterEventsTab';
+import CenterActivitiesTab from './CenterActivitiesTab';
 import {
   Handshake,
   DollarSign,
@@ -19,6 +19,8 @@ import {
   FileText,
   Package,
   Landmark,
+  PartyPopper,
+  Activity,
   Search,
   Printer,
   Plus,
@@ -137,6 +139,8 @@ export default function CenterPage() {
   const [students, setStudents] = useState([]);
   const [parentLogs, setParentLogs] = useState([]);
   const [buses, setBuses] = useState([]);
+  const [eventsCount, setEventsCount] = useState(0);
+  const [activitiesCount, setActivitiesCount] = useState(0);
 
   // Form states
   const [showDocForm, setShowDocForm] = useState(false);
@@ -175,6 +179,8 @@ export default function CenterPage() {
     setStudents(lsGet('students'));
     setParentLogs(lsGet('parentInteractions'));
     setBuses(lsGet('buses'));
+    setEventsCount((lsGet('centerEvents') || []).length);
+    setActivitiesCount((lsGet('centerActivities') || []).length);
   }
 
   useEffect(() => { reload(); }, []);
@@ -386,11 +392,10 @@ export default function CenterPage() {
   const netBalance = totalIncome - totalExpenses;
   const currSym = getCurrencySymbol(centerData.currency);
 
-  const academicYearsList = useMemo(() => getAcademicYears(), [tab]);
-
   const TABS = [
     { id: 'partners', label: 'الشراكات', count: partners.length, icon: <Handshake style={{ width: 16, height: 16 }} /> },
-    { id: 'academic', label: 'السنوات والدورات', count: academicYearsList.length, icon: <CalIcon style={{ width: 16, height: 16 }} /> },
+    { id: 'events', label: 'الفعاليات', count: eventsCount, icon: <PartyPopper style={{ width: 16, height: 16 }} /> },
+    { id: 'activities', label: 'الأنشطة', count: activitiesCount, icon: <Activity style={{ width: 16, height: 16 }} /> },
     { id: 'finance', label: 'المالية', count: income.length + expenses.length, icon: <DollarSign style={{ width: 16, height: 16 }} />, managerOnly: true },
     { id: 'parents', label: 'أولياء الأمور', count: allParents.length, icon: <Users style={{ width: 16, height: 16 }} /> },
     { id: 'bus', label: 'خدمة الباص', count: buses.length, icon: <Bus style={{ width: 16, height: 16 }} />, managerOnly: true },
@@ -404,8 +409,8 @@ export default function CenterPage() {
       <UnifiedPageHeader
         icon="🏢"
         title="إدارة المركز والخدمات المساندة"
-        subtitle="الشراكات المؤسسية، الإدارة المالية، أولياء الأمور، النقل والباصات، العهدة والموجودات، والوثائق الرسمية"
-        badge={`${partners.length} شركاء · ${buses.length} باصات · ${docs.length} وثائق`}
+        subtitle="الشراكات المؤسسية، الفعاليات والأنشطة، الإدارة المالية، أولياء الأمور، النقل والباصات، والوثائق الرسمية"
+        badge={`${partners.length} شركاء · ${eventsCount} فعاليات · ${activitiesCount} أنشطة · ${buses.length} باصات`}
         actions={
           <button
             type="button"
@@ -723,14 +728,21 @@ export default function CenterPage() {
       )}
 
       {/* ========================================================================= */}
-      {/* 2. تبويب السنوات والدورات التأهيلية */}
+      {/* 2. تبويب الفعاليات والمناسبات الرسمية */}
       {/* ========================================================================= */}
-      {tab === 'academic' && (
-        <AcademicYearsManager />
+      {tab === 'events' && (
+        <CenterEventsTab />
       )}
 
       {/* ========================================================================= */}
-      {/* 3. تبويب المالية والتحصيلات (المدير فقط) */}
+      {/* 3. تبويب الأنشطة الميدانية والتأهيلية */}
+      {/* ========================================================================= */}
+      {tab === 'activities' && (
+        <CenterActivitiesTab />
+      )}
+
+      {/* ========================================================================= */}
+      {/* 4. تبويب المالية والتحصيلات (المدير فقط) */}
       {/* ========================================================================= */}
       {tab === 'finance' && (
         <div>

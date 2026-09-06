@@ -343,9 +343,9 @@ export default function IepComparisonModal({ student, initialPlanAId, initialPla
           )}
 
           {/* Recommendations for Next Cycle */}
-          <div style={{ background: '#f8fafc', padding: 14, borderRadius: 10, border: '1px solid #cbd5e1', fontSize: '0.82rem' }}>
-            <div style={{ fontWeight: 800, color: '#334155', marginBottom: 4 }}>📋 توصيات لجنة دراسة الحالة والجودة:</div>
-            <div style={{ color: '#475569', lineHeight: 1.6 }}>
+          <div style={{ background: 'var(--g0)', padding: 14, borderRadius: 10, border: '1px solid var(--border-color)', fontSize: '0.82rem' }}>
+            <div style={{ fontWeight: 800, color: 'var(--text-main)', marginBottom: 4 }}>📋 توصيات لجنة دراسة الحالة والجودة:</div>
+            <div style={{ color: 'var(--text-sub)', lineHeight: 1.6 }}>
               بناءً على نتائج المقارنة التراكمية، يُوصى بالتركيز في الدورة القادمة على تدعيم المهارات التي أظهر فيها الطفل استجابة نمائية إيجابية، وإعادة صياغة مؤشرات الأداء للأهداف الممتدة لضمان وصول الطفل إلى أقصى طاقاته الاستقلالية والأكاديمية.
             </div>
           </div>

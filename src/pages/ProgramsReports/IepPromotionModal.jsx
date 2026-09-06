@@ -252,7 +252,7 @@ export default function IepPromotionModal({ program, student, onClose, onPromote
                         padding: '8px 12px',
                         borderRadius: 8,
                         marginBottom: 4,
-                        background: isSelected ? 'var(--card-bg, #fff)' : 'transparent',
+                        background: isSelected ? 'var(--pr-l)' : 'transparent',
                         border: isSelected ? '1px solid var(--pr)' : '1px solid transparent',
                         cursor: 'pointer',
                         transition: '0.15s ease'
@@ -297,7 +297,7 @@ export default function IepPromotionModal({ program, student, onClose, onPromote
             </div>
           </div>
 
-          <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: 12, fontSize: '0.82rem', color: '#1e40af', lineHeight: 1.5 }}>
+          <div style={{ background: 'var(--g0)', border: '1px solid var(--border-color)', borderRadius: 10, padding: 12, fontSize: '0.82rem', color: 'var(--text-main)', lineHeight: 1.5 }}>
             ℹ️ <strong>ملاحظة للمنظومة:</strong> عند النقر على ترقية، ستظل الخطة السابقة محفوظة بالكامل بكل أهدافها وسجلاتها في الأرشيف التراكمي للطالب، وسيمكنك استخدام ميزة <strong>«مقارنة التطور بين السنتين»</strong> في أي وقت لمقارنة النتائج والتقييمات.
           </div>
         </div>
