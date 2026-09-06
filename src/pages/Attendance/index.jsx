@@ -479,8 +479,6 @@ export default function AttendancePage() {
             </button>
           </div>
         }
-        onBack={() => go('hr')}
-        backLabel="العودة للوحة الموظفين"
       />
 
       {/* تبويبات الأقسام */}
