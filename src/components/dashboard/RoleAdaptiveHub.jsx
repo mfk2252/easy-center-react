@@ -3,7 +3,7 @@ import { lsGet } from '../../hooks/useStorage';
 
 /**
  * محور التخصيص بحسب دور المستخدم (Role-Adaptive Dashboard)
- * يكيف لوحة التحكم لتُبرز ما يحتاجه المدير، الأخصائي، موظف الاستقبال، أو ولي الأمر
+ * متوافق بنسبة 100% مع الوضع الليلي، الوضع النهاري، والخطوط النظامية
  */
 export default function RoleAdaptiveHub({ currentUser, data, today, go }) {
   const role = currentUser?.role || 'specialist';
@@ -40,7 +40,6 @@ export default function RoleAdaptiveHub({ currentUser, data, today, go }) {
     if (currentUser?.name && (s.specialistName === currentUser.name || s.empName === currentUser.name)) return true;
     return false;
   });
-  const myDoneSessions = myTodaySessions.filter(s => s.status === 'done');
 
   // حسابات خاصة بمكتب الاستقبال
   const todayAppointments = appts.filter(a => a.date === today);
@@ -56,286 +55,245 @@ export default function RoleAdaptiveHub({ currentUser, data, today, go }) {
   }[role] || 'المستخدم';
 
   return (
-    <div id="role-adaptive-hub" style={{ marginBottom: 16 }}>
-      {/* شريط التعريف بالدور ومفتاح التبديل */}
-      <div
-        style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-          borderRadius: 'var(--r)',
-          padding: '12px 18px',
-          boxShadow: 'var(--sh)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 10,
-          marginBottom: 14,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: '50%',
-              background: 'var(--pr-l)',
-              color: 'var(--pr)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.1rem',
-              fontWeight: 800,
-            }}
-          >
-            {isManager ? '👑' : isSpecialist ? '🩺' : isReception ? '🛎️' : isParent ? '👨‍👩‍👦' : '👤'}
-          </div>
-          <div>
-            <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main)' }}>
-              {currentUser?.name || 'مرحباً بك'} — <span style={{ color: 'var(--pr)' }}>{roleNameArabic}</span>
+    <div id="role-adaptive-hub" style={{ marginBottom: 14 }}>
+      {/* شريط التعريف بالدور ومفتاح التبديل المتوافق بالكامل مع الوضع الليلي */}
+      <div className="wg" style={{ marginBottom: 14 }}>
+        <div
+          className="wg-h"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 12,
+            borderBottom: 'none',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                background: 'var(--pr-l)',
+                color: 'var(--pr)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.25rem',
+                fontWeight: 800,
+                flexShrink: 0,
+              }}
+            >
+              {isManager ? '👑' : isSpecialist ? '🩺' : isReception ? '🛎️' : isParent ? '👨‍👩‍👦' : '👤'}
             </div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>
-              تم تكييف الأدوات والمؤشرات المعروضة أدناه تلقائياً لتناسب طبيعة مهامك اليومية
+            <div>
+              <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                {currentUser?.name || 'مرحباً بك'} — <span style={{ color: 'var(--pr)' }}>{roleNameArabic}</span>
+              </div>
+              <div style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>
+                أدوات ومؤشرات تشغيلية مكيّفة بحسب طبيعة مهامك اليومية في المركز
+              </div>
             </div>
           </div>
-        </div>
 
-        <div style={{ display: 'flex', gap: 6, background: 'var(--bg-main, #f1f5f9)', padding: 3, borderRadius: 8 }}>
-          <button
-            type="button"
-            onClick={() => setViewMode('role')}
-            style={{
-              border: 'none',
-              padding: '5px 12px',
-              borderRadius: 6,
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              background: viewMode === 'role' ? 'var(--bg-card)' : 'transparent',
-              color: viewMode === 'role' ? 'var(--pr)' : 'var(--text-sub)',
-              boxShadow: viewMode === 'role' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            🎯 أدوات دوري
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode('all')}
-            style={{
-              border: 'none',
-              padding: '5px 12px',
-              borderRadius: 6,
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              background: viewMode === 'all' ? 'var(--bg-card)' : 'transparent',
-              color: viewMode === 'all' ? 'var(--pr)' : 'var(--text-sub)',
-              boxShadow: viewMode === 'all' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            🌐 نظرة عامة
-          </button>
+          {/* أزرار التبديل باستخدام كلاسات النظام .tabs و .tab لضمان التوافق التام مع الوضع الليلي */}
+          <div className="tabs" style={{ marginBottom: 0, padding: 3 }}>
+            <button
+              type="button"
+              className={`tab ${viewMode === 'role' ? 'on' : ''}`}
+              onClick={() => setViewMode('role')}
+            >
+              🎯 أدوات دوري
+            </button>
+            <button
+              type="button"
+              className={`tab ${viewMode === 'all' ? 'on' : ''}`}
+              onClick={() => setViewMode('all')}
+            >
+              🌐 نظرة عامة
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* محتوى مخصص للمدير والوكيل */}
+      {/* 1. حاوية غرفة الإدارة التنفيذية واعتمادات المركز */}
       {(isManager || viewMode === 'all') && (
-        <div
-          style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-color)',
-            borderRadius: 'var(--r)',
-            padding: 'clamp(14px, 2.5vw, 18px)',
-            boxShadow: 'var(--sh)',
-            marginBottom: 14,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div className="wg" style={{ marginBottom: 14 }}>
+          <div className="wg-h">
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: '1.2rem' }}>💼</span>
-              <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)' }}>
+              <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)' }}>
                 غرفة الإدارة التنفيذية واعتمادات المركز
-              </h4>
+              </h3>
             </div>
-            {pendingLeaves.length > 0 && (
-              <span style={{ fontSize: '0.74rem', background: 'var(--err-l)', color: 'var(--err)', padding: '2px 8px', borderRadius: 4, fontWeight: 800 }}>
+            {pendingLeaves.length > 0 ? (
+              <span style={{ fontSize: '0.74rem', background: 'var(--warn-l)', color: 'var(--warn)', border: '1px solid var(--warn)', padding: '3px 8px', borderRadius: 'var(--r3)', fontWeight: 800 }}>
                 {pendingLeaves.length} طلب إجازة معلق
+              </span>
+            ) : (
+              <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>
+                جميع الاعتمادات محدثة
               </span>
             )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
-            {/* بطاقة حضور الكادر */}
-            <div
-              onClick={() => go('hr')}
-              style={{
-                padding: '12px 14px',
-                borderRadius: 'var(--r2)',
-                background: 'var(--bg-main, #f8fafc)',
-                border: '1px solid var(--border-color)',
-                cursor: 'pointer',
-                transition: 'transform 0.15s ease',
-              }}
-            >
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>👥 انضباط الكادر اليوم</div>
-              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', marginTop: 2 }}>
-                {staffPresentToday} / {emps.length}
+          <div className="wg-b">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+              {/* بطاقة حضور الكادر */}
+              <div
+                onClick={() => go('hr')}
+                style={{
+                  padding: '14px 16px',
+                  borderRadius: 'var(--r2)',
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border-color)',
+                  cursor: 'pointer',
+                  transition: 'transform 0.15s ease, border-color 0.15s ease',
+                }}
+              >
+                <div style={{ fontSize: '0.74rem', color: 'var(--text-sub)', fontWeight: 600 }}>👥 انضباط الكادر اليوم</div>
+                <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', marginTop: 4 }}>
+                  {staffPresentToday} / {emps.length}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: staffAttendanceRate >= 80 ? 'var(--ok)' : 'var(--warn)', fontWeight: 700, marginTop: 4 }}>
+                  {staffAttendanceRate}% نسبة حضور الموظفين
+                </div>
               </div>
-              <div style={{ fontSize: '0.68rem', color: staffAttendanceRate >= 80 ? 'var(--ok)' : 'var(--warn)', fontWeight: 700 }}>
-                {staffAttendanceRate}% نسبة الحضور الإجمالية
-              </div>
-            </div>
 
-            {/* بطاقة الإجازات المعلقة */}
-            <div
-              onClick={() => go('hr-leaves')}
-              style={{
-                padding: '12px 14px',
-                borderRadius: 'var(--r2)',
-                background: pendingLeaves.length > 0 ? 'var(--warn-l)' : 'var(--bg-main, #f8fafc)',
-                border: `1px solid ${pendingLeaves.length > 0 ? 'rgba(245,158,11,0.3)' : 'var(--border-color)'}`,
-                cursor: 'pointer',
-              }}
-            >
-              <div style={{ fontSize: '0.72rem', color: pendingLeaves.length > 0 ? 'var(--warn)' : 'var(--text-sub)' }}>
-                🌴 طلبات الإجازات المعلقة
+              {/* بطاقة الإجازات المعلقة */}
+              <div
+                onClick={() => go('hr-leaves')}
+                style={{
+                  padding: '14px 16px',
+                  borderRadius: 'var(--r2)',
+                  background: pendingLeaves.length > 0 ? 'var(--warn-l)' : 'var(--bg-input)',
+                  border: `1px solid ${pendingLeaves.length > 0 ? 'var(--warn)' : 'var(--border-color)'}`,
+                  cursor: 'pointer',
+                  transition: 'transform 0.15s ease',
+                }}
+              >
+                <div style={{ fontSize: '0.74rem', color: pendingLeaves.length > 0 ? 'var(--warn)' : 'var(--text-sub)', fontWeight: 600 }}>
+                  🌴 طلبات الإجازات المعلقة
+                </div>
+                <div style={{ fontSize: '1.35rem', fontWeight: 800, color: pendingLeaves.length > 0 ? 'var(--warn)' : 'var(--text-main)', marginTop: 4 }}>
+                  {pendingLeaves.length}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: pendingLeaves.length > 0 ? 'var(--warn)' : 'var(--text-sub)', fontWeight: 700, marginTop: 4 }}>
+                  {pendingLeaves.length > 0 ? 'اضغط للمراجعة والاعتماد ←' : 'لا توجد طلبات معلقة'}
+                </div>
               </div>
-              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: pendingLeaves.length > 0 ? 'var(--warn)' : 'var(--text-main)', marginTop: 2 }}>
-                {pendingLeaves.length}
-              </div>
-              <div style={{ fontSize: '0.68rem', color: pendingLeaves.length > 0 ? 'var(--warn)' : 'var(--text-sub)', fontWeight: 700 }}>
-                {pendingLeaves.length > 0 ? 'اضغط للمراجعة والاعتماد ←' : 'لا توجد طلبات معلقة'}
-              </div>
-            </div>
 
-            {/* بطاقة الطاقة الاستيعابية والطلاب */}
-            <div
-              onClick={() => go('students')}
-              style={{
-                padding: '12px 14px',
-                borderRadius: 'var(--r2)',
-                background: 'var(--bg-main, #f8fafc)',
-                border: '1px solid var(--border-color)',
-                cursor: 'pointer',
-              }}
-            >
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>🎓 الطلاب المسجلين</div>
-              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', marginTop: 2 }}>
-                {students.filter(s => s.status !== 'inactive').length}
-              </div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--pr)', fontWeight: 700 }}>
-                عرض ملفات الطلاب والخطط ←
+              {/* بطاقة الطاقة الاستيعابية والطلاب */}
+              <div
+                onClick={() => go('students')}
+                style={{
+                  padding: '14px 16px',
+                  borderRadius: 'var(--r2)',
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border-color)',
+                  cursor: 'pointer',
+                  transition: 'transform 0.15s ease',
+                }}
+              >
+                <div style={{ fontSize: '0.74rem', color: 'var(--text-sub)', fontWeight: 600 }}>🎓 الطلاب المسجلين</div>
+                <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', marginTop: 4 }}>
+                  {students.filter(s => s.status !== 'inactive').length}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--pr)', fontWeight: 700, marginTop: 4 }}>
+                  عرض ملفات الطلاب والخطط ←
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* محتوى مخصص للأخصائي */}
+      {/* 2. كشف مهامي وجلساتي العلاجية للأخصائي */}
       {(isSpecialist || (viewMode === 'role' && !isManager)) && (
-        <div
-          style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-color)',
-            borderRadius: 'var(--r)',
-            padding: 'clamp(14px, 2.5vw, 18px)',
-            boxShadow: 'var(--sh)',
-            marginBottom: 14,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div className="wg" style={{ marginBottom: 14 }}>
+          <div className="wg-h">
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: '1.2rem' }}>🩺</span>
               <div>
-                <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)' }}>
                   كشف مهامي وجلساتي العلاجية لليوم
-                </h4>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>
-                  متابعة الطلاب المسندين إليك وإنجاز التقارير التأهيلية
-                </div>
+                </h3>
               </div>
             </div>
-            <span style={{ fontSize: '0.78rem', background: 'var(--pr-l)', color: 'var(--pr)', padding: '2px 8px', borderRadius: 4, fontWeight: 800 }}>
+            <span style={{ fontSize: '0.76rem', background: 'var(--pr-l)', color: 'var(--pr)', border: '1px solid var(--pr)', padding: '3px 8px', borderRadius: 'var(--r3)', fontWeight: 800 }}>
               {myTodaySessions.length} جلسة مسندة اليوم
             </span>
           </div>
 
-          {myTodaySessions.length === 0 ? (
-            <div style={{ padding: '14px', background: 'var(--bg-main, #f8fafc)', borderRadius: 'var(--r2)', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-sub)' }}>
-              🎉 لا توجد جلسات فردية محددة باسمك اليوم، أو يمكنك استعراض الجلسات العامة من تبويب الجلسات.
-              <div style={{ marginTop: 8 }}>
-                <button type="button" className="btn btn-p btn-xs" onClick={() => go('sessions')}>
-                  الانتقال لسجل الجلسات وتوثيق جلسة ←
-                </button>
+          <div className="wg-b">
+            {myTodaySessions.length === 0 ? (
+              <div style={{ padding: '16px', background: 'var(--bg-input)', borderRadius: 'var(--r2)', border: '1px solid var(--border-color)', textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-sub)' }}>
+                🎉 لا توجد جلسات فردية مسجلة باسمك اليوم، أو يمكنك استعراض الجلسات العامة للمركز.
+                <div style={{ marginTop: 10 }}>
+                  <button type="button" className="btn btn-p btn-xs" onClick={() => go('sessions')}>
+                    الانتقال لسجل الجلسات وتوثيق جلسة ←
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {myTodaySessions.map(s => {
-                const stu = students.find(x => x.id === s.stuId);
-                return (
-                  <div
-                    key={s.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '8px 12px',
-                      background: s.status === 'done' ? 'var(--ok-l, #e6f9f0)' : 'var(--bg-main, #f8fafc)',
-                      border: `1px solid ${s.status === 'done' ? 'rgba(16,185,129,0.3)' : 'var(--border-color)'}`,
-                      borderRadius: 'var(--r2)',
-                      fontSize: '0.8rem',
-                      flexWrap: 'wrap',
-                      gap: 6,
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>{stu?.name || 'طالب'}</span>
-                      <span style={{ margin: '0 6px', opacity: 0.5 }}>·</span>
-                      <span style={{ color: 'var(--pr)', fontWeight: 600 }}>{s.type}</span>
-                      {s.time && <span style={{ marginRight: 6, color: 'var(--text-sub)' }}>({s.time})</span>}
-                    </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {myTodaySessions.map(s => {
+                  const stu = students.find(x => x.id === s.stuId);
+                  const isDone = s.status === 'done';
+                  return (
+                    <div
+                      key={s.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '10px 14px',
+                        background: isDone ? 'var(--ok-l)' : 'var(--bg-input)',
+                        border: `1px solid ${isDone ? 'var(--ok)' : 'var(--border-color)'}`,
+                        borderRadius: 'var(--r2)',
+                        fontSize: '0.82rem',
+                        flexWrap: 'wrap',
+                        gap: 8,
+                      }}
+                    >
+                      <div>
+                        <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>{stu?.name || 'طالب'}</span>
+                        <span style={{ margin: '0 6px', color: 'var(--text-sub)' }}>·</span>
+                        <span style={{ color: 'var(--pr)', fontWeight: 700 }}>{s.type}</span>
+                        {s.time && <span style={{ marginRight: 6, color: 'var(--text-sub)' }}>({s.time})</span>}
+                      </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: '0.72rem', fontWeight: 700, color: s.status === 'done' ? 'var(--ok)' : 'var(--warn)' }}>
-                        {s.status === 'done' ? '✅ منجزة' : '⏳ بانتظار التوثيق'}
-                      </span>
-                      <button
-                        type="button"
-                        className="btn btn-g btn-xs"
-                        onClick={() => go('sessions')}
-                      >
-                        توثيق ←
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: '0.74rem', fontWeight: 800, color: isDone ? 'var(--ok)' : 'var(--warn)' }}>
+                          {isDone ? '✅ منجزة وموثقة' : '⏳ بانتظار التوثيق'}
+                        </span>
+                        <button
+                          type="button"
+                          className="btn btn-g btn-xs"
+                          onClick={() => go('sessions')}
+                        >
+                          توثيق ←
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      {/* محتوى موظف الاستقبال */}
+      {/* 3. حاوية مكتب الاستقبال، البوابة، والمواعيد اليومية */}
       {(isReception || viewMode === 'all') && (
-        <div
-          style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-color)',
-            borderRadius: 'var(--r)',
-            padding: 'clamp(14px, 2.5vw, 18px)',
-            boxShadow: 'var(--sh)',
-            marginBottom: 14,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div className="wg" style={{ marginBottom: 14 }}>
+          <div className="wg-h">
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: '1.2rem' }}>🛎️</span>
-              <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)' }}>
+              <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)' }}>
                 مكتب الاستقبال، البوابة، والمواعيد اليومية
-              </h4>
+              </h3>
             </div>
             <button
               type="button"
@@ -349,33 +307,36 @@ export default function RoleAdaptiveHub({ currentUser, data, today, go }) {
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
-            <div style={{ padding: '10px 12px', background: 'var(--bg-main, #f8fafc)', borderRadius: 'var(--r2)', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>📅 مواعيد وتقييمات اليوم</div>
-              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', marginTop: 2 }}>
-                {todayAppointments.length}
+          <div className="wg-b">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+              <div style={{ padding: '14px 16px', background: 'var(--bg-input)', borderRadius: 'var(--r2)', border: '1px solid var(--border-color)' }}>
+                <div style={{ fontSize: '0.74rem', color: 'var(--text-sub)', fontWeight: 600 }}>📅 مواعيد وتقييمات اليوم</div>
+                <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', marginTop: 4 }}>
+                  {todayAppointments.length}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--pr)', fontWeight: 700, marginTop: 4 }}>
+                  {todayAppointments.length > 0 ? 'يوجد مواعيد مسجلة اليوم' : 'لا توجد مواعيد جديدة اليوم'}
+                </div>
               </div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--pr)', fontWeight: 600 }}>
-                {todayAppointments.length > 0 ? 'يوجد مواعيد مسجلة اليوم' : 'لا توجد مواعيد جديدة اليوم'}
-              </div>
-            </div>
 
-            <div
-              onClick={() => go('calendar')}
-              style={{
-                padding: '10px 12px',
-                background: 'var(--bg-main, #f8fafc)',
-                borderRadius: 'var(--r2)',
-                border: '1px solid var(--border-color)',
-                cursor: 'pointer',
-              }}
-            >
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>🗓️ تقويم المركز والزيارات</div>
-              <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-main)', marginTop: 4 }}>
-                فتح التقويم العام للمركز ←
-              </div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--text-sub)', marginTop: 2 }}>
-                إضافة وحجز موعد جديد
+              <div
+                onClick={() => go('calendar')}
+                style={{
+                  padding: '14px 16px',
+                  background: 'var(--bg-input)',
+                  borderRadius: 'var(--r2)',
+                  border: '1px solid var(--border-color)',
+                  cursor: 'pointer',
+                  transition: 'transform 0.15s ease',
+                }}
+              >
+                <div style={{ fontSize: '0.74rem', color: 'var(--text-sub)', fontWeight: 600 }}>🗓️ تقويم المركز والزيارات</div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-main)', marginTop: 6 }}>
+                  فتح التقويم العام للمركز ←
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)', marginTop: 2 }}>
+                  حجز وإضافة موعد جديد
+                </div>
               </div>
             </div>
           </div>
