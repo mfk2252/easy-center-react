@@ -1,17 +1,21 @@
 import {
   collection, doc, getDocs, getDoc,
   addDoc, setDoc, updateDoc, deleteDoc,
-  query, where, serverTimestamp
+  query, where, serverTimestamp, writeBatch, limit
 } from 'firebase/firestore';
 import { db } from './config';
 
 // مسار البيانات: centers/{centerId}/{collection}/{docId}
-const centerCol = (cId, col) => collection(db, 'centers', cId, col);
-const centerDoc = (cId, col, dId) => doc(db, 'centers', cId, col, dId);
+export const centerCol = (cId, col) => collection(db, 'centers', cId, col);
+export const centerDoc = (cId, col, dId) => doc(db, 'centers', cId, col, dId);
 
-export async function fbGetAll(centerId, col) {
+export async function fbGetAll(centerId, col, maxLimit = null) {
   try {
-    const snap = await getDocs(centerCol(centerId, col));
+    let q = centerCol(centerId, col);
+    if (maxLimit && typeof maxLimit === 'number' && maxLimit > 0) {
+      q = query(q, limit(maxLimit));
+    }
+    const snap = await getDocs(q);
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch(e) { return []; }
 }
@@ -33,6 +37,31 @@ export async function fbSet(centerId, col, docId, data) {
   await setDoc(centerDoc(centerId, col, docId), {
     ...data, updatedAt: serverTimestamp()
   }, { merge: true });
+}
+
+/**
+ * عمليات الكتابة المجمعة الذرية (Batch Writes)
+ * يقسم المستندات إلى حزم لا تتجاوز 450 مستند لكل طلب بدلاً من الإرسال الفردي
+ */
+export async function fbBatchSet(centerId, col, items) {
+  if (!centerId || !col || !Array.isArray(items) || items.length === 0) return;
+
+  const CHUNK_SIZE = 450;
+  for (let i = 0; i < items.length; i += CHUNK_SIZE) {
+    const chunk = items.slice(i, i + CHUNK_SIZE);
+    const batch = writeBatch(db);
+
+    for (const item of chunk) {
+      if (!item || !item.id) continue;
+      const ref = centerDoc(centerId, col, String(item.id));
+      batch.set(ref, {
+        ...item,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+    }
+
+    await batch.commit();
+  }
 }
 
 export async function fbUpdate(centerId, col, docId, data) {

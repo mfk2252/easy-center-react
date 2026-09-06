@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { collection, getDocs, doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, serverTimestamp, Timestamp, query, limit } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { isPlatformAdminEmail } from '../firebase/auth';
 import UnifiedPageHeader from '../components/ui/UnifiedPageHeader';
@@ -30,7 +30,8 @@ export default function AdminSubscriptions() {
   async function loadCenters() {
     setLoading(true);
     try {
-      const snap = await getDocs(collection(db, 'centers'));
+      const q = query(collection(db, 'centers'), limit(150));
+      const snap = await getDocs(q);
       const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       setCenters(data);
@@ -48,14 +49,30 @@ export default function AdminSubscriptions() {
       const expiry = new Date();
       expiry.setMonth(expiry.getMonth() + (isPermanent ? 1200 : months));
 
+      const subData = {
+        status: 'active',
+        expiryDate: Timestamp.fromDate(expiry),
+        months: isPermanent ? null : months,
+        isPermanent: isPermanent,
+      };
+
       await updateDoc(doc(db, 'centers', centerId), {
         'subscription.status': 'active',
-        'subscription.expiryDate': Timestamp.fromDate(expiry),
+        'subscription.expiryDate': subData.expiryDate,
         'subscription.activatedAt': serverTimestamp(),
-        'subscription.months': isPermanent ? null : months,
-        'subscription.isPermanent': isPermanent,
+        'subscription.months': subData.months,
+        'subscription.isPermanent': subData.isPermanent,
       });
-      loadCenters();
+
+      // تحديث الحالة محلياً لتوفير استعلام كامل لكل المراكز
+      setCenters(prev => prev.map(c => c.id === centerId ? {
+        ...c,
+        subscription: {
+          ...(c.subscription || {}),
+          ...subData,
+        }
+      } : c));
+
       alert(isPermanent ? '✅ تم تفعيل اشتراك دائم' : '✅ تم التفعيل بنجاح');
     } catch(e) {
       alert('❌ خطأ: ' + e.message);
@@ -75,7 +92,10 @@ export default function AdminSubscriptions() {
     setUpdating(centerId);
     try {
       await updateDoc(doc(db, 'centers', centerId), { 'subscription.status': 'suspended' });
-      loadCenters();
+      setCenters(prev => prev.map(c => c.id === centerId ? {
+        ...c,
+        subscription: { ...(c.subscription || {}), status: 'suspended' }
+      } : c));
     } catch(e) {
       alert('❌ خطأ: ' + e.message);
     } finally {

@@ -248,30 +248,34 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     const centerId = currentUser?.centerId;
-    if (!centerId || screen !== 'app' || currentUser?.isPlatformAdmin) return;
+    if (!centerId || currentUser?.isPlatformAdmin) return;
 
     async function refreshSub() {
-      const centerData = await getCenterSettings(centerId);
-      const subStatus = checkSubscriptionStatus(centerData);
-      setSubscriptionStatus(subStatus);
-      setCurrentUser(prev => {
-        if (!prev) return prev;
-        const next = { ...prev, subscription: subStatus };
-        try {
-          const s = JSON.parse(localStorage.getItem('scs_session') || 'null');
-          if (s?.centerId === centerId) {
-            localStorage.setItem('scs_session', JSON.stringify({ ...s, subscription: subStatus }));
-          }
-        } catch (_) { /* ignore */ }
-        return next;
-      });
-      if (!subStatus.allowed) setScreen('subscription');
+      try {
+        const centerData = await getCenterSettings(centerId);
+        const subStatus = checkSubscriptionStatus(centerData);
+        setSubscriptionStatus(subStatus);
+        setCurrentUser(prev => {
+          if (!prev) return prev;
+          const next = { ...prev, subscription: subStatus };
+          try {
+            const s = JSON.parse(localStorage.getItem('scs_session') || 'null');
+            if (s?.centerId === centerId) {
+              localStorage.setItem('scs_session', JSON.stringify({ ...s, subscription: subStatus }));
+            }
+          } catch (_) { /* ignore */ }
+          return next;
+        });
+        if (!subStatus.allowed) setScreen('subscription');
+      } catch (e) {
+        console.warn('Subscription refresh error:', e);
+      }
     }
 
-    refreshSub();
+    // فحص دوري هادئ كل ساعة دون استدعاء فوري مكرر عند الانتقال بين الشاشات
     const timer = setInterval(refreshSub, 60 * 60 * 1000);
     return () => clearInterval(timer);
-  }, [currentUser?.centerId, screen, currentUser?.isPlatformAdmin]);
+  }, [currentUser?.centerId, currentUser?.isPlatformAdmin]);
 
   function needsCenterSetup(data) {
     if (!data) return true;

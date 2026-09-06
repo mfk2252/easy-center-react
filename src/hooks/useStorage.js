@@ -3,7 +3,7 @@
  * المزامنة تلقائية عند تسجيل الدخول
  */
 import { uid } from '../utils/dateHelpers';
-import { fbGetAll, fbSet, fbUpdate, fbDelete } from '../firebase/db';
+import { fbGetAll, fbSet, fbUpdate, fbDelete, fbBatchSet } from '../firebase/db';
 
 export function getCenterId() {
   try {
@@ -104,40 +104,57 @@ export const SYSTEM_DATA_KEYS = [
   'invoices', 'financialAccounts',
 ];
 
-/** تحديث شامل: جلب كل البيانات من Firestore + إعدادات المركز */
+// فترة صلاحية الكاش المحلي قبل السماح بمزامنة شاملة جديدة (10 دقائق)
+const SYNC_COOLDOWN_MS = 10 * 60 * 1000;
+
+/** تحديث شامل: جلب كل البيانات من Firestore + إعدادات المركز (مع إجبار تخطي الكاش) */
 export async function refreshAllSystemData(centerId) {
   if (!centerId) throw new Error('لم يتم تحديد المركز');
   const { getCenterSettings } = await import('../firebase/db');
-  await syncFromFirebase(centerId, SYSTEM_DATA_KEYS);
+  await syncFromFirebase(centerId, SYSTEM_DATA_KEYS, true);
   const centerData = await getCenterSettings(centerId);
   return centerData;
 }
 
-export async function syncFromFirebase(centerId, keys) {
+export async function syncFromFirebase(centerId, keys, force = false) {
   if (!centerId) return;
-  await Promise.all(keys.map(async (key) => {
-    try {
-      const data = await fbGetAll(centerId, key);
-      if (Array.isArray(data) && data.length > 0) {
-        localStorage.setItem(`${centerId}_${key}`, JSON.stringify(data));
-      } else {
-        const localRaw = localStorage.getItem(`${centerId}_${key}`) || localStorage.getItem(`local_${key}`) || localStorage.getItem(key);
-        if (localRaw) {
-          try {
-            const parsed = JSON.parse(localRaw);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              localStorage.setItem(`${centerId}_${key}`, JSON.stringify(parsed));
-              for (const itm of parsed) {
-                if (itm && itm.id) {
-                  fbSet(centerId, key, itm.id, itm).catch(() => {});
-                }
+
+  const lastSyncKey = `scs_last_sync_${centerId}`;
+  const lastSyncTime = Number(localStorage.getItem(lastSyncKey) || '0');
+  const now = Date.now();
+
+  // منع الاستعلامات المكررة إذا تمت المزامنة قبل أقل من 10 دقائق ولم يتم طلب إجبار المزامنة
+  if (!force && (now - lastSyncTime < SYNC_COOLDOWN_MS)) {
+    return;
+  }
+
+  // معالجة المجموعات في دفعات (Chunks) تجنباً لإرسال 43 استعلاماً متزامناً في نفس اللحظة
+  const CHUNK_SIZE = 8;
+  for (let i = 0; i < keys.length; i += CHUNK_SIZE) {
+    const chunk = keys.slice(i, i + CHUNK_SIZE);
+    await Promise.all(chunk.map(async (key) => {
+      try {
+        const data = await fbGetAll(centerId, key);
+        if (Array.isArray(data) && data.length > 0) {
+          localStorage.setItem(`${centerId}_${key}`, JSON.stringify(data));
+        } else {
+          const localRaw = localStorage.getItem(`${centerId}_${key}`) || localStorage.getItem(`local_${key}`) || localStorage.getItem(key);
+          if (localRaw) {
+            try {
+              const parsed = JSON.parse(localRaw);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                localStorage.setItem(`${centerId}_${key}`, JSON.stringify(parsed));
+                // استخدام الكتابة المجمعة بدلاً من الحلقات الفردية
+                await fbBatchSet(centerId, key, parsed).catch(() => {});
               }
-            }
-          } catch (_) {}
+            } catch (_) {}
+          }
         }
-      }
-    } catch(e) { console.warn(`sync ${key}:`, e); }
-  }));
+      } catch(e) { console.warn(`sync ${key}:`, e); }
+    }));
+  }
+
+  localStorage.setItem(lastSyncKey, String(now));
 }
 
 export async function pushToFirebase(centerId) {
@@ -155,6 +172,8 @@ export async function pushToFirebase(centerId) {
     'measurements','measureItems','studentAssessments',
     'bonuses',
     'progGoalsBank',
+    'partners', 'custody', 'centerVisits', 'buses', 'centerDocs',
+    'invoices', 'financialAccounts',
   ];
 
   for (const key of keys) {
@@ -166,11 +185,8 @@ export async function pushToFirebase(centerId) {
       const data = JSON.parse(raw);
       if (!Array.isArray(data) || data.length === 0) continue;
 
-      for (const item of data) {
-        if (item.id) {
-          await fbSet(centerId, key, item.id, item);
-        }
-      }
+      // كتابة مجمعة سريعة وذرية عبر Batch
+      await fbBatchSet(centerId, key, data);
     } catch(e) { console.warn(`push ${key}:`, e); }
   }
 }
