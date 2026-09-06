@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   Users, Plus, Search, School, Stethoscope, User, 
   CheckCircle2, AlertCircle, MessageCircle, Edit3, Eye, Trash2, X, Filter,
   ArrowRight, FolderPlus, Building2, Calendar, FileText, ChevronLeft, ArrowUpDown, Tag
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
+import { lsGet, lsSet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { DIAGNOSES, SPECIALIST_ROLES } from '../../utils/constants';
 import { calcAge, todayStr, uid, nowTimeStr } from '../../utils/dateHelpers';
 import StudentDetail from './StudentDetail';
@@ -125,25 +125,48 @@ export default function StudentsPage() {
   const centerWa = centerWhatsAppUrl(center?.whatsapp, center?.phoneCode, center?.phone);
   const specialists = emps.filter(e => SPECIALIST_ROLES.includes(e.role) || ['manager','vice','admin'].includes(e.role));
 
+  // Safe loaders ensuring classes and categories are always loaded and initialized
+  const getLoadedSections = useCallback(() => {
+    let secs = lsGet('sections');
+    if (!Array.isArray(secs) || secs.length === 0) {
+      try {
+        const legacy = JSON.parse(localStorage.getItem('scs_sections') || '[]');
+        if (Array.isArray(legacy) && legacy.length > 0) secs = legacy;
+      } catch(_) {}
+    }
+    if (!Array.isArray(secs) || secs.length === 0) {
+      secs = DEFAULT_SECTIONS;
+      lsSet('sections', secs);
+    }
+    return secs;
+  }, []);
+
+  const getLoadedCategories = useCallback(() => {
+    let cats = lsGet('categories');
+    if (!Array.isArray(cats) || cats.length === 0) {
+      try {
+        const legacy = JSON.parse(localStorage.getItem('scs_categories') || '[]');
+        if (Array.isArray(legacy) && legacy.length > 0) cats = legacy;
+      } catch(_) {}
+    }
+    if (!Array.isArray(cats) || cats.length === 0) {
+      cats = DEFAULT_CATEGORIES;
+      lsSet('categories', cats);
+    }
+    return cats;
+  }, []);
+
   // Initialize Data
   useEffect(() => {
     setStudents(lsGet('students'));
     setEmps(lsGet('employees'));
 
     // Sections (Classes)
-    let storedSecs = lsGet('sections');
-    if (!storedSecs || storedSecs.length === 0) {
-      storedSecs = DEFAULT_SECTIONS;
-      localStorage.setItem('scs_sections', JSON.stringify(storedSecs));
-    }
+    const storedSecs = getLoadedSections();
     setSections(storedSecs);
 
-    // Categories (Fئات)
-    let storedCats = lsGet('categories');
-    if (!storedCats || storedCats.length === 0) {
-      storedCats = DEFAULT_CATEGORIES;
-      localStorage.setItem('scs_categories', JSON.stringify(storedCats));
-    }
+    // Categories (فئات)
+    const storedCats = getLoadedCategories();
     setCategories(storedCats);
 
     // التحقق من وجود طالب محدد مسبقاً من لوحة التحكم أو الإشعارات
@@ -152,7 +175,7 @@ export default function StudentsPage() {
       sessionStorage.removeItem('scs_selected_student');
       setDetailId(directStuId);
     }
-  }, [activeView]);
+  }, [activeView, getLoadedSections, getLoadedCategories]);
 
   useEffect(() => {
     if (!isParent || detailId) return;
@@ -162,8 +185,8 @@ export default function StudentsPage() {
 
   function reload() {
     setStudents(lsGet('students'));
-    setSections(lsGet('sections') || DEFAULT_SECTIONS);
-    setCategories(lsGet('categories') || DEFAULT_CATEGORIES);
+    setSections(getLoadedSections());
+    setCategories(getLoadedCategories());
   }
 
   useEffect(() => {
@@ -339,7 +362,17 @@ export default function StudentsPage() {
     const oldSec = sections.find(s => s.id === secEditId);
     const oldName = oldSec?.name;
 
+    let currentSecs = getLoadedSections();
+
     if (secEditId) {
+      const idx = currentSecs.findIndex(s => s.id === secEditId);
+      const updatedItem = { ...(idx !== -1 ? currentSecs[idx] : {}), ...secForm, id: secEditId, updatedAt: new Date().toISOString() };
+      if (idx !== -1) {
+        currentSecs[idx] = updatedItem;
+      } else {
+        currentSecs.push(updatedItem);
+      }
+      lsSet('sections', currentSecs);
       lsUpd('sections', secEditId, secForm);
       toast('✅ تم تحديث بيانات الصف بنجاح', 'ok');
 
@@ -355,7 +388,7 @@ export default function StudentsPage() {
           return s;
         });
         if (updatedCount > 0) {
-          localStorage.setItem('scs_students', JSON.stringify(updatedStus));
+          lsSet('students', updatedStus);
         }
       }
 
@@ -364,7 +397,10 @@ export default function StudentsPage() {
       }
     } else {
       const newId = uid();
-      lsAdd('sections', { ...secForm, id: newId });
+      const newSec = { ...secForm, id: newId, createdAt: new Date().toISOString() };
+      currentSecs.push(newSec);
+      lsSet('sections', currentSecs);
+      lsAdd('sections', newSec);
       toast('✅ تم إضافة الصف الجديد بنجاح', 'ok');
     }
     setShowSecModal(false);
@@ -373,6 +409,8 @@ export default function StudentsPage() {
 
   function deleteSec(secId, secName) {
     if (!window.confirm(`⚠️ هل أنت متأكد من حذف الصف "${secName}"؟`)) return;
+    const currentSecs = getLoadedSections().filter(s => s.id !== secId);
+    lsSet('sections', currentSecs);
     lsDel('sections', secId);
     toast('🗑️ تم حذف الصف بنجاح', 'ok');
     if (activeFolder?.id === secId) setActiveFolder(null);
@@ -412,7 +450,17 @@ export default function StudentsPage() {
     const oldCat = categories.find(c => c.id === catEditId || c.name === catForm.name);
     const oldName = oldCat?.name || catForm.name;
 
+    let currentCats = getLoadedCategories();
+
     if (catEditId) {
+      const idx = currentCats.findIndex(c => c.id === catEditId);
+      const updatedItem = { ...(idx !== -1 ? currentCats[idx] : {}), ...catForm, id: catEditId, updatedAt: new Date().toISOString() };
+      if (idx !== -1) {
+        currentCats[idx] = updatedItem;
+      } else {
+        currentCats.push(updatedItem);
+      }
+      lsSet('categories', currentCats);
       lsUpd('categories', catEditId, catForm);
       toast('✅ تم تحديث بيانات الفئة بنجاح', 'ok');
 
@@ -428,7 +476,7 @@ export default function StudentsPage() {
           return s;
         });
         if (updatedCount > 0) {
-          localStorage.setItem('scs_students', JSON.stringify(updatedStus));
+          lsSet('students', updatedStus);
         }
       }
 
@@ -437,7 +485,10 @@ export default function StudentsPage() {
       }
     } else {
       const newId = uid();
-      lsAdd('categories', { ...catForm, id: newId });
+      const newCat = { ...catForm, id: newId, createdAt: new Date().toISOString() };
+      currentCats.push(newCat);
+      lsSet('categories', currentCats);
+      lsAdd('categories', newCat);
       toast('✅ تم إضافة القسم / الفئة بنجاح', 'ok');
     }
     setShowCatModal(false);
@@ -446,6 +497,8 @@ export default function StudentsPage() {
 
   function deleteCat(catId, catName) {
     if (!window.confirm(`⚠️ هل أنت متأكد من حذف القسم / الفئة "${catName}"؟`)) return;
+    const currentCats = getLoadedCategories().filter(c => c.id !== catId);
+    lsSet('categories', currentCats);
     lsDel('categories', catId);
     toast('🗑️ تم حذف الفئة بنجاح', 'ok');
     if (activeFolder?.id === catId || activeFolder?.name === catName) setActiveFolder(null);

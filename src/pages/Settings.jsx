@@ -419,11 +419,23 @@ export default function Settings() {
     }
   }
 
-  function applyActiveFontSettings(size, weight, family) {
+  function applyActiveFontSettings(size, weight, family, persist = true) {
     const activeFamily = family || fontFamily;
     applyFontVariables(size, weight);
     if (activeFamily) {
       applyFontFamily(activeFamily);
+    }
+    if (persist) {
+      localStorage.setItem('scs_fontsize', String(size));
+      localStorage.setItem('scs_fontweight', String(weight));
+      if (activeFamily) localStorage.setItem('scs_fontfamily', activeFamily);
+      if (centerId) {
+        updateCenterSettings(centerId, {
+          fontSize: size,
+          fontWeight: weight,
+          fontFamily: activeFamily,
+        }).catch((err) => console.warn('Could not save to remote center settings:', err));
+      }
     }
   }
 

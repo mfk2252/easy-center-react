@@ -22,32 +22,48 @@ function cKey(key) {
 export function lsGet(key) {
   try {
     const r = localStorage.getItem(cKey(key));
-    if (r) return JSON.parse(r);
+    if (r) {
+      const parsed = JSON.parse(r);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (!Array.isArray(parsed) && parsed !== null && parsed !== undefined) return parsed;
+    }
     const cId = getCenterId();
-    if (cId) {
-      const fallback = localStorage.getItem(`local_${key}`) || localStorage.getItem(key);
-      if (fallback) {
-        try {
-          const parsed = JSON.parse(fallback);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            localStorage.setItem(`${cId}_${key}`, fallback);
-            return parsed;
-          }
-        } catch(_) {}
-      }
+    const fallback = (cId ? localStorage.getItem(`local_${key}`) : null)
+      || localStorage.getItem(`scs_${key}`)
+      || localStorage.getItem(key);
+    if (fallback) {
+      try {
+        const parsed = JSON.parse(fallback);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          if (cId) localStorage.setItem(`${cId}_${key}`, fallback);
+          return parsed;
+        } else if (!Array.isArray(parsed) && parsed !== null && parsed !== undefined) {
+          if (cId) localStorage.setItem(`${cId}_${key}`, fallback);
+          return parsed;
+        }
+      } catch(_) {}
     }
     return [];
   } catch(e) { return []; }
 }
 
-function lsWrite(key, data) {
+export function lsWrite(key, data) {
   try {
     localStorage.setItem(cKey(key), JSON.stringify(data));
+    localStorage.setItem(`scs_${key}`, JSON.stringify(data));
     const cId = getCenterId();
     if (cId) {
       localStorage.setItem(`local_${key}`, JSON.stringify(data));
     }
   } catch(e) {}
+}
+
+export function lsSet(key, data) {
+  const cId = getCenterId();
+  lsWrite(key, data);
+  if (cId && Array.isArray(data)) {
+    fbBatchSet(cId, key, data).catch(e => console.warn(`fbBatchSet ${key}:`, e));
+  }
 }
 
 export function lsAdd(key, item) {
@@ -71,8 +87,15 @@ export function lsUpd(key, id, data) {
   const idx = list.findIndex(x => x.id === id);
   if (idx !== -1) {
     list[idx] = { ...list[idx], ...data, id, updatedAt: new Date().toISOString() };
-    lsWrite(key, list);
+  } else {
+    const nameIdx = data.name ? list.findIndex(x => x.name === data.name) : -1;
+    if (nameIdx !== -1) {
+      list[nameIdx] = { ...list[nameIdx], ...data, id, updatedAt: new Date().toISOString() };
+    } else {
+      list.push({ ...data, id, updatedAt: new Date().toISOString() });
+    }
   }
+  lsWrite(key, list);
   if (cId) {
     fbSet(cId, key, id, { ...data, updatedAt: new Date().toISOString() }).catch(e => console.warn(`fbUpd ${key}:`, e));
   }
@@ -102,6 +125,7 @@ export const SYSTEM_DATA_KEYS = [
   'progGoalsBank',
   'partners', 'custody', 'centerVisits', 'buses', 'centerDocs',
   'invoices', 'financialAccounts',
+  'sections', 'categories',
 ];
 
 // فترة صلاحية الكاش المحلي قبل السماح بمزامنة شاملة جديدة (10 دقائق)
@@ -159,27 +183,13 @@ export async function syncFromFirebase(centerId, keys, force = false) {
 
 export async function pushToFirebase(centerId) {
   if (!centerId) return;
-  const keys = [
-    'students','employees','sessions','appointments','iepGoals',
-    'attStu','attEmp','income','expenses','salaries','leaves',
-    'calEvents','centerActivities','parentInteractions','consultations',
-    'evaluations','warnings','stuReports','behaviorPlans',
-    'studentFees','payments','notifs','manualAlerts','users',
-    'progEvaluations','progPrograms','progReports',
-    'progWeeklyReports','progMonthlyReports','progParentMeetings',
-    'progSemiAnnualReports','progAnnualReports','progBehaviorReports',
-    'progLearningDifficultyReports',
-    'measurements','measureItems','studentAssessments',
-    'bonuses',
-    'progGoalsBank',
-    'partners', 'custody', 'centerVisits', 'buses', 'centerDocs',
-    'invoices', 'financialAccounts',
-  ];
+  const keys = SYSTEM_DATA_KEYS;
 
   for (const key of keys) {
     try {
       const raw = localStorage.getItem(`${centerId}_${key}`)
                || localStorage.getItem(`local_${key}`)
+               || localStorage.getItem(`scs_${key}`)
                || localStorage.getItem(key);
       if (!raw) continue;
       const data = JSON.parse(raw);

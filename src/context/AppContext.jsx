@@ -340,11 +340,14 @@ export function AppProvider({ children }) {
       shifts: c.shifts,
     });
     if (c.color) localStorage.setItem('scs_color', c.color);
-    const centerFs = data.fontSize || localStorage.getItem('scs_fontsize') || '15';
-    const centerFw = data.fontWeight || localStorage.getItem('scs_fontweight') || '400';
-    const centerFf = data.fontFamily || localStorage.getItem('scs_fontfamily') || 'arabicui';
+    const centerFs = localStorage.getItem('scs_fontsize') || data.fontSize || '15';
+    const centerFw = localStorage.getItem('scs_fontweight') || data.fontWeight || '400';
+    const centerFf = localStorage.getItem('scs_fontfamily') || data.fontFamily || 'arabicui';
     applyFontVariables(centerFs, centerFw);
     applyFontFamily(centerFf);
+    if (data.fontSize && !localStorage.getItem('scs_fontsize')) localStorage.setItem('scs_fontsize', String(data.fontSize));
+    if (data.fontWeight && !localStorage.getItem('scs_fontweight')) localStorage.setItem('scs_fontweight', String(data.fontWeight));
+    if (data.fontFamily && !localStorage.getItem('scs_fontfamily')) localStorage.setItem('scs_fontfamily', data.fontFamily);
     if (data.platformLang) localStorage.setItem('scs_lang', data.platformLang);
     applyTheme(c.color);
     document.title = c.name || 'نظام إدارة المركز';
