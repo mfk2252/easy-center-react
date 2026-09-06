@@ -98,6 +98,15 @@ export default function ProgramsReportsHub() {
 
   useEffect(() => {
     refreshCounts();
+    const directView = sessionStorage.getItem('scs_prog_active_view');
+    if (directView && directView !== currentView) {
+      setCurrentView(directView);
+      const directCat = sessionStorage.getItem('scs_prog_active_category');
+      if (directCat) {
+        setAssessmentCategory(directCat);
+        sessionStorage.removeItem('scs_prog_active_category');
+      }
+    }
   }, [currentView]);
 
   function navigateTo(viewId) {

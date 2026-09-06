@@ -2,6 +2,7 @@ import React from 'react';
 
 /**
  * محور العمليات اللحظية وغرفة التحكم اليومية (Live Operations Hub)
+ * مربوط مباشرة بنظام الطلاب، العيادات، وسجلات الحضور والجلسات
  * متوافق بنسبة 100% مع الوضع الليلي والنهاري واستخدام متغيرات الثيم القياسية
  */
 export default function LiveOperationsHub({ data, today, go, currentTime }) {
@@ -32,6 +33,13 @@ export default function LiveOperationsHub({ data, today, go, currentTime }) {
     const hasSafetyNote = !!(s.safetyNotes || s.pickupNotes || s.dietNotes);
     return hasAllergy || hasMedicalAlert || hasSafetyNote;
   });
+
+  // فتح ملف الطالب مباشرة في قسم الطلاب
+  const openStudent = (stuId) => {
+    if (!stuId) return;
+    sessionStorage.setItem('scs_selected_student', stuId);
+    go('students');
+  };
 
   // العيادات والمرافق التخصصية ورصد نشاطها اليوم
   const CLINIC_DEFS = [
@@ -88,33 +96,29 @@ export default function LiveOperationsHub({ data, today, go, currentTime }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: '1.25rem' }}>⚡</span>
             <div>
-              <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: 'var(--text-main)' }}>
+              <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)' }}>
                 غرفة العمليات ونبض اليوم اللحظي
               </h3>
               <p style={{ margin: '2px 0 0', fontSize: '0.74rem', color: 'var(--text-sub)' }}>
-                متابعة دقيقة لحالة الجلسات المقررة، إشغال العيادات، وسير برامج اليوم
+                متابعة حركة الجلسات التأهيلية وحضور الطلاب لحظة بلحظة
               </p>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span
-              style={{
-                background: completionRate === 100 ? 'var(--ok-l)' : 'var(--pr-l)',
-                color: completionRate === 100 ? 'var(--ok)' : 'var(--pr)',
-                border: `1px solid ${completionRate === 100 ? 'var(--ok)' : 'var(--pr)'}`,
-                padding: '3px 10px',
-                borderRadius: 'var(--r3)',
-                fontSize: '0.78rem',
-                fontWeight: 800,
-              }}
-            >
-              {completionRate}% منجز اليوم
-            </span>
             <button
               type="button"
               className="btn btn-g btn-xs"
+              onClick={() => {
+                sessionStorage.setItem('scs_attendance_tab', 'morning');
+                go('attendance');
+              }}
+            >
+              سجل الحضور ←
+            </button>
+            <button
+              type="button"
+              className="btn btn-p btn-xs"
               onClick={() => go('sessions')}
-              title="عرض جدول الجلسات التفصيلي"
             >
               جدول الجلسات ←
             </button>
@@ -122,74 +126,148 @@ export default function LiveOperationsHub({ data, today, go, currentTime }) {
         </div>
 
         <div className="wg-b">
-          {/* شريط التقدم المرئي */}
-          <div
-            style={{
-              height: 8,
-              background: 'var(--border-color)',
-              borderRadius: 4,
-              overflow: 'hidden',
-              display: 'flex',
-              marginBottom: 14,
-            }}
-          >
-            <div
-              style={{
-                width: `${completionRate}%`,
-                background: 'linear-gradient(90deg, var(--pr), var(--ok))',
-                transition: 'width 0.4s ease',
-                borderRadius: 4,
-              }}
-            />
-          </div>
-
-          {/* كروت المقاييس السريعة لليوم */}
+          {/* كروت المقاييس الأربعة */}
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-              gap: 10,
+              gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+              gap: 12,
+              marginBottom: 14,
             }}
           >
-            <div style={{ padding: '10px 14px', background: 'var(--bg-input)', borderRadius: 'var(--r2)', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)', fontWeight: 600 }}>🎯 إجمالي الجلسات</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', marginTop: 2 }}>{totalSessionsCount}</div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--text-sub)' }}>جلسة مقررة اليوم</div>
+            {/* 1. إجمالي جلسات اليوم */}
+            <div
+              onClick={() => go('sessions')}
+              style={{
+                padding: '12px 14px',
+                borderRadius: 'var(--r2)',
+                background: 'var(--bg-input)',
+                border: '1px solid var(--border-color)',
+                cursor: 'pointer',
+              }}
+            >
+              <div style={{ fontSize: '0.74rem', color: 'var(--text-sub)', fontWeight: 600 }}>إجمالي جلسات اليوم</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', marginTop: 4 }}>
+                {totalSessionsCount}
+              </div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--pr)', fontWeight: 700, marginTop: 4 }}>
+                {totalSessionsCount > 0 ? 'مجدولة في العيادات' : 'لا توجد جلسات اليوم'}
+              </div>
             </div>
 
-            <div style={{ padding: '10px 14px', background: 'var(--ok-l)', borderRadius: 'var(--r2)', border: '1px solid var(--ok)' }}>
-              <div style={{ fontSize: '0.72rem', color: 'var(--ok)', fontWeight: 700 }}>✅ أنجزت بنجاح</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--ok)', marginTop: 2 }}>{doneSessions.length}</div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--ok)' }}>جلسة مكتملة وموثقة</div>
+            {/* 2. جلسات تم إنجازها */}
+            <div
+              onClick={() => go('sessions')}
+              style={{
+                padding: '12px 14px',
+                borderRadius: 'var(--r2)',
+                background: 'var(--ok-l)',
+                border: '1px solid var(--ok)',
+                cursor: 'pointer',
+              }}
+            >
+              <div style={{ fontSize: '0.74rem', color: 'var(--ok)', fontWeight: 600 }}>جلسات أُنجزت</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--ok)', marginTop: 4 }}>
+                {doneSessions.length}
+              </div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--ok)', fontWeight: 700, marginTop: 4 }}>
+                نسبة الإنجاز: {completionRate}%
+              </div>
             </div>
 
-            <div style={{ padding: '10px 14px', background: 'var(--pr-l)', borderRadius: 'var(--r2)', border: '1px solid var(--pr)' }}>
-              <div style={{ fontSize: '0.72rem', color: 'var(--pr)', fontWeight: 700 }}>⏳ قيد التنفيذ / قادمة</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--pr)', marginTop: 2 }}>{pendingSessions.length}</div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--pr)' }}>بانتظار الإنجاز والتوثيق</div>
+            {/* 3. جلسات متبقية */}
+            <div
+              onClick={() => go('sessions')}
+              style={{
+                padding: '12px 14px',
+                borderRadius: 'var(--r2)',
+                background: 'var(--pr-l)',
+                border: '1px solid var(--pr)',
+                cursor: 'pointer',
+              }}
+            >
+              <div style={{ fontSize: '0.74rem', color: 'var(--pr)', fontWeight: 600 }}>جلسات متبقية</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--pr)', marginTop: 4 }}>
+                {pendingSessions.length}
+              </div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--pr)', fontWeight: 700, marginTop: 4 }}>
+                قيد التنفيذ والانتظار
+              </div>
             </div>
 
-            <div style={{ padding: '10px 14px', background: 'var(--bg-input)', borderRadius: 'var(--r2)', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)', fontWeight: 600 }}>🏫 حضور الطلاب الفعلي</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', marginTop: 2 }}>{presentStudentsToday.length}</div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--text-sub)' }}>طالب متواجد بالمركز</div>
+            {/* 4. الحضور الفعلي للطلاب */}
+            <div
+              onClick={() => {
+                sessionStorage.setItem('scs_attendance_tab', 'morning');
+                go('attendance');
+              }}
+              style={{
+                padding: '12px 14px',
+                borderRadius: 'var(--r2)',
+                background: 'var(--bg-input)',
+                border: '1px solid var(--border-color)',
+                cursor: 'pointer',
+              }}
+            >
+              <div style={{ fontSize: '0.74rem', color: 'var(--text-sub)', fontWeight: 600 }}>الطلاب الحاضرين اليوم</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', marginTop: 4 }}>
+                {presentStudentsToday.length}
+              </div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-sub)', fontWeight: 700, marginTop: 4 }}>
+                في الفصول والعيادات
+              </div>
+            </div>
+          </div>
+
+          {/* شريط الإنجاز المتدرج */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.76rem', marginBottom: 6 }}>
+              <span style={{ color: 'var(--text-sub)', fontWeight: 600 }}>نسبة تنفيذ الخطط العلاجية لليوم</span>
+              <span style={{ fontWeight: 800, color: 'var(--ok)' }}>{completionRate}% مكتمل</span>
+            </div>
+            <div
+              style={{
+                height: 8,
+                borderRadius: 4,
+                background: 'var(--border-color)',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  height: '100%',
+                  width: `${completionRate}%`,
+                  background: 'var(--ok)',
+                  borderRadius: 4,
+                  transition: 'width 0.4s ease',
+                }}
+              />
             </div>
           </div>
         </div>
       </div>
 
-      {/* 2. حاوية حالة العيادات والغرف التأهيلية اليوم */}
+      {/* 2. حالة العيادات والغرف التأهيلية اليوم */}
       <div className="wg" style={{ marginBottom: 14 }}>
         <div className="wg-h">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: '1.2rem' }}>🏥</span>
-            <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)' }}>
-              حالة العيادات والغرف التأهيلية اليوم
-            </h3>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                حالة العيادات والغرف التأهيلية اليوم
+              </h3>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>
+                إشغال الغرف التخصصية وربط مباشر بالطلاب المعالجين
+              </div>
+            </div>
           </div>
-          <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>
-            رصد زمني لحظي
-          </span>
+          <button
+            type="button"
+            className="btn btn-g btn-xs"
+            onClick={() => go('sessions')}
+          >
+            جدول الجلسات الكامل ←
+          </button>
         </div>
 
         <div className="wg-b">
@@ -201,7 +279,8 @@ export default function LiveOperationsHub({ data, today, go, currentTime }) {
             }}
           >
             {clinicStatusList.map(c => {
-              const stu = c.currentSession ? students.find(s => s.id === c.currentSession.stuId) : null;
+              const currentStu = c.currentSession ? students.find(s => s.id === c.currentSession.stuId) : null;
+              const nextStu = c.nextSession ? students.find(s => s.id === c.nextSession.stuId) : null;
               const emp = c.currentSession ? emps.find(e => e.id === (c.currentSession.empId || c.currentSession.specialistId)) : null;
 
               return (
@@ -250,12 +329,28 @@ export default function LiveOperationsHub({ data, today, go, currentTime }) {
 
                   {c.currentSession ? (
                     <div style={{ fontSize: '0.76rem', color: 'var(--text-main)', fontWeight: 600 }}>
-                      مع الطالب: <b style={{ color: 'var(--pr)' }}>{stu?.name || 'طالب'}</b>
+                      مع الطالب:{' '}
+                      <span
+                        onClick={() => openStudent(c.currentSession.stuId)}
+                        style={{ color: 'var(--pr)', cursor: 'pointer', textDecoration: 'underline', fontWeight: 800 }}
+                        title="اضغط لفتح ملف الطالب"
+                      >
+                        {currentStu?.name || 'طالب'}
+                      </span>
                       {emp && <span style={{ color: 'var(--text-sub)' }}> · {emp.name}</span>}
                     </div>
                   ) : c.nextSession ? (
                     <div style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>
-                      الجلسة القادمة: {c.nextSession.time || 'لاحقاً'} ({students.find(s => s.id === c.nextSession.stuId)?.name || 'طالب'})
+                      الجلسة القادمة: {c.nextSession.time || 'لاحقاً'}{' '}
+                      {nextStu && (
+                        <span
+                          onClick={() => openStudent(c.nextSession.stuId)}
+                          style={{ color: 'var(--text-main)', cursor: 'pointer', textDecoration: 'underline', fontWeight: 700 }}
+                          title="اضغط لفتح ملف الطالب"
+                        >
+                          ({nextStu.name})
+                        </span>
+                      )}
                     </div>
                   ) : (
                     <div style={{ fontSize: '0.74rem', color: 'var(--text-sub)', opacity: 0.8 }}>
@@ -269,7 +364,7 @@ export default function LiveOperationsHub({ data, today, go, currentTime }) {
         </div>
       </div>
 
-      {/* 3. رادار السلامة وملاحظات اليوم الحرجة للطلاب المتواجدين */}
+      {/* 3. رادار السلامة وملاحظات اليوم الحرجة للطلاب المتواجدين - مربوط مباشرة بملفات الطلاب */}
       {criticalWatchlist.length > 0 && (
         <div className="wg" style={{ marginBottom: 14, borderColor: 'var(--warn)' }}>
           <div className="wg-h" style={{ background: 'var(--warn-l)', borderBottom: '1px solid var(--warn)' }}>
@@ -280,32 +375,46 @@ export default function LiveOperationsHub({ data, today, go, currentTime }) {
                   ملاحظات السلامة والرعاية الحرجة لطلاب اليوم الحاضرين ({criticalWatchlist.length})
                 </h3>
                 <p style={{ margin: '2px 0 0', fontSize: '0.72rem', color: 'var(--text-sub)' }}>
-                  تنبيهات صحية وغذائية هامة تخص الطلاب المتواجدين حالياً في المركز
+                  تنبيهات صحية وغذائية هامة (اضغط على اسم الطالب لفتح ملفه الطبي والتأهيلي)
                 </p>
               </div>
             </div>
+            <button
+              type="button"
+              className="btn btn-g btn-xs"
+              onClick={() => go('students')}
+            >
+              دليل الطلاب الكامل ←
+            </button>
           </div>
 
           <div className="wg-b">
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {criticalWatchlist.slice(0, 6).map(s => (
+              {criticalWatchlist.map(s => (
                 <div
                   key={s.id}
+                  onClick={() => openStudent(s.id)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: 6,
-                    padding: '6px 12px',
+                    padding: '8px 12px',
                     background: 'var(--bg-input)',
                     borderRadius: 'var(--r2)',
                     fontSize: '0.78rem',
                     border: '1px solid var(--border-color)',
+                    cursor: 'pointer',
+                    transition: 'border-color 0.15s ease',
                   }}
+                  title="اضغط لفتح الملف الشامل للطالب وملاحظاته الطبية"
                 >
-                  <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>{s.name}:</span>
+                  <span style={{ fontWeight: 800, color: 'var(--text-main)', textDecoration: 'underline' }}>
+                    👤 {s.name}:
+                  </span>
                   <span style={{ color: 'var(--warn)', fontWeight: 700 }}>
                     {s.allergies || s.medicalNotes || s.safetyNotes || 'متابعة خاصة'}
                   </span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--pr)' }}>←</span>
                 </div>
               ))}
             </div>

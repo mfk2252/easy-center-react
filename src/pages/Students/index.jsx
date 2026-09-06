@@ -145,6 +145,13 @@ export default function StudentsPage() {
       localStorage.setItem('scs_categories', JSON.stringify(storedCats));
     }
     setCategories(storedCats);
+
+    // التحقق من وجود طالب محدد مسبقاً من لوحة التحكم أو الإشعارات
+    const directStuId = sessionStorage.getItem('scs_selected_student');
+    if (directStuId) {
+      sessionStorage.removeItem('scs_selected_student');
+      setDetailId(directStuId);
+    }
   }, [activeView]);
 
   useEffect(() => {
