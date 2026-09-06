@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
-import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
+import { lsGet, lsSet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { todayStr, uid } from '../../utils/dateHelpers';
 import { getAcademicYears } from '../../utils/academicYears';
 import EmptyState from '../../components/ui/EmptyState';
@@ -36,84 +36,6 @@ const EVENT_CATEGORIES = [
   { id: 'exhibition', label: '🎨 معارض وبازارات إنتاجية', color: 'b-pr' },
   { id: 'entertainment', label: '🌟 مهرجانات وأيام مفتوحة', color: 'b-gr' },
   { id: 'other', label: '📌 فعاليات ومناسبات أخرى', color: 'b-g' },
-];
-
-const DEFAULT_SAMPLE_EVENTS = [
-  {
-    id: 'evt_sample_1',
-    name: 'الاحتفال باليوم الوطني السعودي 95',
-    category: 'national',
-    academicYearId: '',
-    academicYear: '2025 / 2026',
-    date: '2025-09-23',
-    time: '09:00 ص - 12:30 م',
-    locationType: 'internal',
-    location: 'المسرح الرئيسي والصالة متعددة الأغراض بالمركز',
-    partnerId: '',
-    partnerName: 'جمعية رعاية وتأهيل ذوي الإعاقة',
-    targetAudience: 'all',
-    participantStudentIds: [],
-    participantCountEst: 65,
-    supervisorEmpIds: [],
-    parentsInvited: true,
-    budgetEst: 3500,
-    budgetActual: 3200,
-    status: 'completed',
-    objectives: 'تعزيز الانتماء الوطني والدمج المجتمعي للطلاب، وإبراز مواهبهم في العروض الفلكلورية والمسرحية.',
-    qualityNotes: 'تم تحقيق معايير الجودة بنسبة 96% ومشاركة 100% من كوادر المركز وأولياء الأمور.',
-    images: [],
-    notes: 'تخلل الحفل معرض لرسومات الطلاب وعروض وطنية تفاعلية.'
-  },
-  {
-    id: 'evt_sample_2',
-    name: 'المهرجان التوعوي لليوم العالمي لذوي الإعاقة 2025',
-    category: 'awareness',
-    academicYearId: '',
-    academicYear: '2025 / 2026',
-    date: '2025-12-03',
-    time: '10:00 ص - 01:00 م',
-    locationType: 'external',
-    location: 'مركز المؤتمرات والمعارض الدولي',
-    partnerId: '',
-    partnerName: 'وزارة الموارد البشرية والتنمية الاجتماعية',
-    targetAudience: 'special',
-    participantStudentIds: [],
-    participantCountEst: 45,
-    supervisorEmpIds: [],
-    parentsInvited: true,
-    budgetEst: 5000,
-    budgetActual: 4800,
-    status: 'completed',
-    objectives: 'نشر الوعي بحقوق الأشخاص ذوي الإعاقة واستعراض قصص نجاح البرامج الفردية والتأهيل المهني.',
-    qualityNotes: 'تغطية إعلامية متميزة وتكريم الشركاء الداعمين من قبل إدارة الجودة بالوزارة.',
-    images: [],
-    notes: 'شارك الطلاب بأجنحة تفاعلية لتعريف المجتمع بالوسائل التعليمية المساعدة.'
-  },
-  {
-    id: 'evt_sample_3',
-    name: 'حفل ختام العام وتكريم الخريجين والشركاء 2026',
-    category: 'graduation',
-    academicYearId: '',
-    academicYear: '2025 / 2026',
-    date: '2026-05-28',
-    time: '05:00 م - 08:30 م',
-    locationType: 'internal',
-    location: 'قاعة الاحتفالات الكبرى بالمركز',
-    partnerId: '',
-    partnerName: '',
-    targetAudience: 'all',
-    participantStudentIds: [],
-    participantCountEst: 80,
-    supervisorEmpIds: [],
-    parentsInvited: true,
-    budgetEst: 7000,
-    budgetActual: 0,
-    status: 'upcoming',
-    objectives: 'تسليم شهادات إتمام الخطط التربوية الفردية وتكريم الطلاب المتميزين والجهات الشريكة.',
-    qualityNotes: 'مدرج ضمن الخطة التشغيلية السنوية لملف الاعتماد المؤسسي.',
-    images: [],
-    notes: 'قيد التجهيز والتنسيق مع أولياء الأمور والجهات الراعية.'
-  }
 ];
 
 const EMPTY_EVENT_FORM = {
@@ -165,12 +87,12 @@ export default function CenterEventsTab() {
 
   function reload() {
     let list = lsGet('centerEvents');
-    if (!Array.isArray(list) || list.length === 0) {
-      // Seed with default events
-      list = DEFAULT_SAMPLE_EVENTS;
-      lsAdd('centerEvents', list[0]);
-      lsAdd('centerEvents', list[1]);
-      lsAdd('centerEvents', list[2]);
+    if (!Array.isArray(list)) list = [];
+    // Purge any old sample entries if they existed
+    const cleanList = list.filter(e => !e.id?.startsWith('evt_sample_'));
+    if (cleanList.length !== list.length) {
+      list = cleanList;
+      lsSet('centerEvents', cleanList);
     }
     setEvents(list);
     setStudents(lsGet('students') || []);

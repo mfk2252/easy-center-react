@@ -30,17 +30,35 @@ const MODE_PRESETS = {
     badge: 'تقويم أكاديمي معتمد',
     desc: 'يُقسّم العام إلى 3 فصول دراسية منتظمة (أو فصلين) مع فترات إجازة مدرسية، متوافق كلياً مع تقويم وزارة التعليم لتأهيل الطلاب بالتوازي مع المدارس.',
     defaultTerms: 'الفصل الدراسي الأول, الفصل الدراسي الثاني, الفصل الدراسي الثالث',
-    namePlaceholder: 'مثال: 2025 / 2026',
+    namePlaceholder: 'مثال: 2028 / 2029',
     durationLabel: 'الفترة الدراسية السنوية',
     termTypeLabel: 'الفصول الدراسية',
     cycleNamePrefix: 'العام الدراسي',
-    generatorLabel: '⚡ توليد العام الدراسي الجديد بنظام 3 فصول',
-    generateName: () => {
-      const currentYear = new Date().getFullYear();
-      return `${currentYear} / ${currentYear + 1}`;
-    },
-    generateStartDate: () => `${new Date().getFullYear()}-09-01`,
-    generateEndDate: () => `${new Date().getFullYear() + 1}-06-30`,
+    generatorLabel: '⚡ توليد العام الدراسي التالي تلقائياً',
+    generateNext: (existingYears = []) => {
+      let maxEndYear = 2026;
+      existingYears.forEach(y => {
+        const matches = (y.name || '').match(/\b(20\d\d)\b/g);
+        if (matches && matches.length >= 2) {
+          const endY = parseInt(matches[1], 10);
+          if (endY > maxEndYear) maxEndYear = endY;
+        } else if (matches && matches.length === 1) {
+          const yNum = parseInt(matches[0], 10);
+          if (yNum >= maxEndYear) maxEndYear = yNum + 1;
+        }
+        if (y.endDate) {
+          const ey = parseInt(y.endDate.slice(0, 4), 10);
+          if (!isNaN(ey) && ey > maxEndYear) maxEndYear = ey;
+        }
+      });
+      const nextStart = maxEndYear;
+      const nextEnd = maxEndYear + 1;
+      return {
+        name: `${nextStart} / ${nextEnd}`,
+        startDate: `${nextStart}-09-01`,
+        endDate: `${nextEnd}-06-30`
+      };
+    }
   },
   continuous: {
     title: 'نظام العمل والتشغيل المستمر طوال العام',
@@ -48,14 +66,33 @@ const MODE_PRESETS = {
     badge: 'تشغيل مستمر 12 شهراً',
     desc: 'يعمل المركز على مدار 12 شهراً سنوياً بدون انقطاع، مع تقسيم السنة إلى 4 محطات تقييمية ربع سنوية (Q1, Q2, Q3, Q4) لتقييم تطور المستفيدين بشكل مستمر.',
     defaultTerms: 'الربع الأول (Q1: يناير - مارس), الربع الثاني (Q2: أبريل - يونيو), الربع الثالث (Q3: يوليو - سبتمبر), الربع الرابع (Q4: أكتوبر - ديسمبر)',
-    namePlaceholder: 'مثال: دورة العام التشغيلي والتأهيلي 2026',
+    namePlaceholder: 'مثال: دورة العام التشغيلي والتأهيلي 2028',
     durationLabel: 'السنة التشغيلية',
     termTypeLabel: 'الأرباع السنوية للتقييم (Quarters)',
     cycleNamePrefix: 'العام التشغيلي المستمر',
-    generatorLabel: '⚡ توليد دورة سنوية مستمرة للعام الجديد (4 أرباع)',
-    generateName: () => `العام التشغيلي والتأهيلي ${new Date().getFullYear() + 1}`,
-    generateStartDate: () => `${new Date().getFullYear() + 1}-01-01`,
-    generateEndDate: () => `${new Date().getFullYear() + 1}-12-31`,
+    generatorLabel: '⚡ توليد السنة التشغيلية التالية (4 أرباع)',
+    generateNext: (existingYears = []) => {
+      let maxYear = 2026;
+      existingYears.forEach(y => {
+        const matches = (y.name || '').match(/\b(20\d\d)\b/g);
+        if (matches) {
+          matches.forEach(m => {
+            const num = parseInt(m, 10);
+            if (num > maxYear) maxYear = num;
+          });
+        }
+        if (y.endDate) {
+          const ey = parseInt(y.endDate.slice(0, 4), 10);
+          if (!isNaN(ey) && ey > maxYear) maxYear = ey;
+        }
+      });
+      const nextYear = maxYear + 1;
+      return {
+        name: `العام التشغيلي والتأهيلي ${nextYear}`,
+        startDate: `${nextYear}-01-01`,
+        endDate: `${nextYear}-12-31`
+      };
+    }
   },
   flexible: {
     title: 'نظام الدورات التأهيلية المرنة والبرامج المكثفة',
@@ -63,18 +100,33 @@ const MODE_PRESETS = {
     badge: 'نظام الدفعات التأهيلية (موصى به)',
     desc: 'نظام دورات علاجية وبرامج مكثفة محددة المدة (3 إلى 6 أشهر لكل دورة). يتيح قياس الأهداف القبلية والبعدية بدقة وتدوير الخطط الفردية مع كل دفعة للمركز.',
     defaultTerms: 'المرحلة التأسيسية والتقييم القبلي, المرحلة التدريبية المكثفة, مرحلة التمكين والتقييم البعدي',
-    namePlaceholder: 'مثال: الدورة التأهيلية الأولى - 2026 (3 أشهر)',
+    namePlaceholder: 'مثال: الدورة التأهيلية (4) - 2028',
     durationLabel: 'فترة الدورة التأهيلية',
     termTypeLabel: 'المراحل التتابعية للدورة',
     cycleNamePrefix: 'الدورة التأهيلية',
-    generatorLabel: '⚡ إضافة دورة تأهيلية جديدة (3 أشهر)',
-    generateName: () => `الدورة التأهيلية المكثفة ${new Date().getFullYear()} - دفعة ${new Date().getMonth() < 6 ? 'الربيع' : 'الخريف'}`,
-    generateStartDate: () => todayStr(),
-    generateEndDate: () => {
-      const d = new Date();
-      d.setMonth(d.getMonth() + 3);
-      return d.toISOString().split('T')[0];
-    },
+    generatorLabel: '⚡ إضافة وتوليد دورة تأهيلية تالية (3 أشهر)',
+    generateNext: (existingYears = []) => {
+      let latestDate = new Date();
+      existingYears.forEach(y => {
+        if (y.endDate) {
+          const d = new Date(y.endDate);
+          if (!isNaN(d.getTime()) && d > latestDate) {
+            latestDate = d;
+          }
+        }
+      });
+      const start = new Date(latestDate.getTime() + 86400000);
+      const end = new Date(start);
+      end.setMonth(end.getMonth() + 3);
+      const startStr = start.toISOString().split('T')[0];
+      const endStr = end.toISOString().split('T')[0];
+      const count = existingYears.length + 1;
+      return {
+        name: `الدورة التأهيلية (${count}) - ${start.getFullYear()}`,
+        startDate: startStr,
+        endDate: endStr
+      };
+    }
   }
 };
 
@@ -134,11 +186,12 @@ export default function AcademicYearsManager() {
 
   const handleOpenNew = () => {
     const preset = MODE_PRESETS[activeModeKey];
+    const generated = preset.generateNext ? preset.generateNext(years) : {};
     setForm({
-      name: preset.generateName ? preset.generateName() : '',
-      code: '',
-      startDate: preset.generateStartDate ? preset.generateStartDate() : todayStr(),
-      endDate: preset.generateEndDate ? preset.generateEndDate() : '',
+      name: generated.name || '',
+      code: generated.code || '',
+      startDate: generated.startDate || todayStr(),
+      endDate: generated.endDate || '',
       isCurrent: years.length === 0,
       status: 'active',
       terms: preset.defaultTerms || 'الفصل الأول, الفصل الثاني, الفصل الثالث'
@@ -149,9 +202,14 @@ export default function AcademicYearsManager() {
 
   const handleQuickGenerate = () => {
     const preset = MODE_PRESETS[activeModeKey];
-    const generatedName = preset.generateName();
-    const startDate = preset.generateStartDate();
-    const endDate = preset.generateEndDate();
+    const generated = preset.generateNext ? preset.generateNext(years) : {
+      name: `دورة جديدة ${new Date().getFullYear()}`,
+      startDate: todayStr(),
+      endDate: ''
+    };
+    const generatedName = generated.name;
+    const startDate = generated.startDate;
+    const endDate = generated.endDate;
     const termsArray = preset.defaultTerms.split(',').map(t => t.trim());
 
     // Check if duplicate name
@@ -163,7 +221,7 @@ export default function AcademicYearsManager() {
     const newYearObj = {
       id: `ay_${Date.now()}`,
       name: generatedName,
-      code: generatedName.replace(/\s+/g, '-'),
+      code: generated.code || generatedName.replace(/\s+/g, '-'),
       startDate,
       endDate,
       isCurrent: false,

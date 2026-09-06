@@ -22,22 +22,18 @@ function cKey(key) {
 export function lsGet(key) {
   try {
     const r = localStorage.getItem(cKey(key));
-    if (r) {
+    if (r !== null) {
       const parsed = JSON.parse(r);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      if (!Array.isArray(parsed) && parsed !== null && parsed !== undefined) return parsed;
+      if (parsed !== null && parsed !== undefined) return parsed;
     }
     const cId = getCenterId();
     const fallback = (cId ? localStorage.getItem(`local_${key}`) : null)
       || localStorage.getItem(`scs_${key}`)
       || localStorage.getItem(key);
-    if (fallback) {
+    if (fallback !== null) {
       try {
         const parsed = JSON.parse(fallback);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          if (cId) localStorage.setItem(`${cId}_${key}`, fallback);
-          return parsed;
-        } else if (!Array.isArray(parsed) && parsed !== null && parsed !== undefined) {
+        if (parsed !== null && parsed !== undefined) {
           if (cId) localStorage.setItem(`${cId}_${key}`, fallback);
           return parsed;
         }
@@ -113,7 +109,8 @@ export function lsDel(key, id) {
 export const SYSTEM_DATA_KEYS = [
   'students', 'employees', 'sessions', 'appointments', 'iepGoals',
   'attStu', 'attEmp', 'income', 'expenses', 'salaries', 'leaves',
-  'calEvents', 'centerActivities', 'parentInteractions', 'consultations',
+  'calEvents', 'centerEvents', 'centerActivities', 'centerPartners', 'parentInteractions', 'consultations',
+  'academicYears', 'centerCalendarConfig',
   'evaluations', 'warnings', 'stuReports', 'behaviorPlans',
   'studentFees', 'payments', 'notifs', 'manualAlerts', 'users',
   'progEvaluations', 'progPrograms', 'progReports',

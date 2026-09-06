@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
-import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
+import { lsGet, lsSet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { todayStr, uid } from '../../utils/dateHelpers';
 import { getAcademicYears } from '../../utils/academicYears';
 import EmptyState from '../../components/ui/EmptyState';
@@ -38,78 +38,6 @@ const ACTIVITY_CATEGORIES = [
   { id: 'sensory', label: '🧩 ورش حسية وإدراكية وتفاعلية', color: 'b-bl' },
   { id: 'competition', label: '🏆 مسابقات وتحديات ترفيهية', color: 'b-yl' },
   { id: 'other', label: '📌 أنشطة تأهيلية أخرى', color: 'b-g' }
-];
-
-const DEFAULT_SAMPLE_ACTIVITIES = [
-  {
-    id: 'act_sample_1',
-    name: 'رحلة حديقة الحيوان والتعرف على البيئة الطبيعية',
-    category: 'trip',
-    academicYearId: '',
-    academicYear: '2025 / 2026',
-    date: '2025-10-15',
-    time: '08:30 ص - 11:30 ص',
-    location: 'حديقة الحيوان الوطنية بالرياض',
-    locationType: 'external',
-    busRequired: true,
-    busId: '',
-    busNumber: 'باص المركز رقم 1',
-    supervisorEmpIds: [],
-    supervisorNames: 'أ. سارة الأحمد، أ. فهد المطيري',
-    participantStudentIds: [],
-    participantCountEst: 18,
-    targetSkills: 'تطوير المهارات الاجتماعية الاستكشافية، التواصل البصري، والتعرف على أصوات وحركات الحيوانات.',
-    parentApprovalNeeded: true,
-    status: 'completed',
-    outcomeRating: 'ممتاز (95%)',
-    notes: 'تمت الرحلة بأعلى درجات السلامة والتفاعل من الطلاب مع توثيق مصور رائع.'
-  },
-  {
-    id: 'act_sample_2',
-    name: 'ورشة إعداد الوجبات الخفيفة والتدبير المنزلي',
-    category: 'lifeskills',
-    academicYearId: '',
-    academicYear: '2025 / 2026',
-    date: '2025-11-20',
-    time: '09:30 ص - 11:00 ص',
-    location: 'مطبخ التأهيل المهني بالمركز',
-    locationType: 'internal',
-    busRequired: false,
-    busId: '',
-    busNumber: '',
-    supervisorEmpIds: [],
-    supervisorNames: 'أ. نورة الشمري (أخصائية علاج وظيفي)',
-    participantStudentIds: [],
-    participantCountEst: 12,
-    targetSkills: 'التآزر الحركي البصري، استخدام أدوات المطبخ الآمنة، مهارات النظافة الذاتية، ومشاركة الأقران.',
-    parentApprovalNeeded: false,
-    status: 'completed',
-    outcomeRating: 'ممتاز (92%)',
-    notes: 'أظهر الطلاب تقدماً كبيراً في تقطيع الخضار اللينة وفرد العجين باستقلالية.'
-  },
-  {
-    id: 'act_sample_3',
-    name: 'برنامج العلاج بركوب الخيل (الهيبوثيرابي)',
-    category: 'horse',
-    academicYearId: '',
-    academicYear: '2025 / 2026',
-    date: '2026-03-12',
-    time: '09:00 ص - 12:00 م',
-    location: 'مربط الفروسية للتأهيل الحركي',
-    locationType: 'external',
-    busRequired: true,
-    busId: '',
-    busNumber: 'باص النقل المخصص رقم 2',
-    supervisorEmpIds: [],
-    supervisorNames: 'د. طارق المنصور، أ. هدى خالد',
-    participantStudentIds: [],
-    participantCountEst: 15,
-    targetSkills: 'تحسين التوازن العضلي الجذعي، خفض التوتر الحركي، وتنمية الثقة بالنفس للمستفيدين.',
-    parentApprovalNeeded: true,
-    status: 'upcoming',
-    outcomeRating: 'قيد التنفيذ',
-    notes: 'تم أخذ موافقات أولياء الأمور وتجهيز معدات السلامة والخوذات للطلاب.'
-  }
 ];
 
 const EMPTY_ACTIVITY_FORM = {
@@ -159,11 +87,12 @@ export default function CenterActivitiesTab() {
 
   function reload() {
     let list = lsGet('centerActivities');
-    if (!Array.isArray(list) || list.length === 0) {
-      list = DEFAULT_SAMPLE_ACTIVITIES;
-      lsAdd('centerActivities', list[0]);
-      lsAdd('centerActivities', list[1]);
-      lsAdd('centerActivities', list[2]);
+    if (!Array.isArray(list)) list = [];
+    // Purge any old sample entries if they existed
+    const cleanList = list.filter(a => !a.id?.startsWith('act_sample_'));
+    if (cleanList.length !== list.length) {
+      list = cleanList;
+      lsSet('centerActivities', cleanList);
     }
     setActivities(list);
     setStudents(lsGet('students') || []);
