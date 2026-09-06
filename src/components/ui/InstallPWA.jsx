@@ -24,9 +24,13 @@ export default function InstallPWA() {
     window.addEventListener('beforeinstallprompt', handler);
     
     // iOS - لا يدعم beforeinstallprompt
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    if (isIOS && !isInstalled) {
-      setTimeout(() => setShowBanner(true), 3000);
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOSDevice && !window.matchMedia('(display-mode: standalone)').matches) {
+      const timer = setTimeout(() => setShowBanner(true), 3000);
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener('beforeinstallprompt', handler);
+      };
     }
 
     return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -69,7 +73,7 @@ export default function InstallPWA() {
       <div style={{fontSize: '2rem'}}>📱</div>
       <div style={{flex: 1}}>
         <div style={{fontWeight: 700, fontSize: '.9rem', marginBottom: 4}}>
-          ثبّت التطبيق على هاتفك!
+          تثبيت التطبيق على جهازك أو هاتفك!
         </div>
         {isIOS ? (
           <div style={{fontSize: '.75rem', color: 'var(--g5)', lineHeight: 1.6}}>
@@ -77,7 +81,7 @@ export default function InstallPWA() {
           </div>
         ) : (
           <div style={{fontSize: '.75rem', color: 'var(--g5)'}}>
-            استخدمه كتطبيق بدون متصفح
+            تجربة تطبيق سريع ومستقل على الكمبيوتر والجوال
           </div>
         )}
       </div>

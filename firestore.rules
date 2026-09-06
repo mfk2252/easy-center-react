@@ -1,9 +1,88 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      // وضع التطوير: السماح لأي مستخدم مسجل بالدخول بقراءة وكتابة البيانات
-      allow read, write: if request.auth != null;
+
+    // ===============================================================
+    // دوال الأمان المساعدة (Helper Functions)
+    // ===============================================================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // هل المستخدم هو مالك المنصة (Super Admin)
+    function isPlatformAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'mfk2252@gmail.com' ||
+        request.auth.token.email == 'mfekry225@gmail.com' ||
+        request.auth.token.email == 'admin.owner@easycenter.local'
+      );
+    }
+
+    // هل المستخدم هو مدير المركز صاحب الوثيقة (UID يطابق centerId)
+    function isCenterManager(centerId) {
+      return isSignedIn() && request.auth.uid == centerId;
+    }
+
+    // هل المستخدم موظف تابع لهذا المركز ومسجل في كولكشن users
+    function isCenterStaff(centerId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.centerId == centerId;
+    }
+
+    // هل للمستخدم صلاحية كاملة على بيانات المركز (مدير المركز أو موظف فيه أو مدير المنصة)
+    function canAccessCenter(centerId) {
+      return isPlatformAdmin() || isCenterManager(centerId) || isCenterStaff(centerId);
+    }
+
+    // ===============================================================
+    // 1. قواعد عزْل بيانات المراكز ومجموعاتها الفرعية (Multi-Tenant Isolation)
+    // ===============================================================
+    match /centers/{centerId} {
+      // قراءة بيانات المركز: مسموحة فقط للمدير أو منسوبي المركز أو مدير المنصة
+      allow read: if canAccessCenter(centerId);
+
+      // إنشاء مركز جديد: مسموح عند التسجيل للمدير نفسه (uid == centerId) أو لمدير المنصة
+      allow create: if isSignedIn() && (request.auth.uid == centerId || isPlatformAdmin());
+
+      // تعديل بيانات المركز: محصورة بمدير المركز نفسه أو مالك المنصة
+      allow update, delete: if isPlatformAdmin() || isCenterManager(centerId);
+
+      // 🛡️ المجموعات الفرعية للبيانات (الطلاب، الموظفون، الحضور، الجلسات، الخطط، السندات...)
+      match /{collection}/{docId} {
+        allow read: if canAccessCenter(centerId);
+        allow write: if canAccessCenter(centerId);
+      }
+    }
+
+    // ===============================================================
+    // 2. كولكشن حسابات المستخدمين والمنسوبين (users)
+    // ===============================================================
+    match /users/{userId} {
+      // قراءة الملف الشخصي: للمستخدم نفسه، أو مدير مركزه، أو مدير المنصة
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId ||
+        isPlatformAdmin() ||
+        (resource != null && isCenterManager(resource.data.centerId))
+      );
+
+      // تعديل أو إنشاء الحساب:
+      allow write: if isSignedIn() && (
+        request.auth.uid == userId ||
+        isPlatformAdmin() ||
+        (request.resource != null && isCenterManager(request.resource.data.centerId)) ||
+        (resource != null && isCenterManager(resource.data.centerId))
+      );
+    }
+
+    // ===============================================================
+    // 3. فهرس تسجيل الدخول لأسماء المستخدمين (staffLoginIndex)
+    // ===============================================================
+    match /staffLoginIndex/{username} {
+      // قراءة الفهرس مسموحة للتحقق من هوية المستخدم عند تسجيل الدخول
+      allow read: if true;
+      // حجز اسم المستخدم مسموح فقط للمستخدمين المسجلين
+      allow create, update, delete: if isSignedIn();
     }
   }
 }
