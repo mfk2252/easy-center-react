@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { lsGet, lsAdd, lsUpd, lsDel } from '../hooks/useStorage';
+import { lsGet, lsSet, lsAdd, lsUpd, lsDel } from '../hooks/useStorage';
 import { todayStr, uid, daysUntilDate, nextAnnualOccurrenceDate, nowTimeStr } from '../utils/dateHelpers';
 import { SPECIALIST_ROLES } from '../utils/constants';
+import { INTERNATIONAL_DAYS, getInternationalDayDate, getInternationalDaysForDate } from '../data/internationalDays';
 import UnifiedPageHeader from '../components/ui/UnifiedPageHeader';
 
 const DAYS_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
@@ -174,6 +175,50 @@ function buildCalendarItems() {
     });
   });
 
+  // Official Center Events (فعاليات المركز الرسمية)
+  lsGet('centerEvents').forEach(evt => {
+    if (!evt.date) return;
+    items.push({
+      id: `cevt-${evt.id}`,
+      source: 'فعالية المركز 🎉',
+      date: evt.date,
+      time: evt.time || '',
+      title: `🎉 ${evt.name || 'فعالية المركز'}`,
+      detail: [evt.academicYear && `العام: ${evt.academicYear}`, evt.location, evt.objectives].filter(Boolean).join(' · '),
+      color: 'gr',
+      raw: evt,
+      isCenterEvent: true,
+      editable: false,
+    });
+  });
+
+  // International & Specialized Awareness Days (الأيام والمناسبات العالمية والتربوية)
+  const currentYear = new Date().getFullYear();
+  // Include past, current, and future academic/calendar years (2024 up to 2035)
+  const yearsRange = [];
+  for (let y = currentYear - 2; y <= currentYear + 8; y++) {
+    yearsRange.push(y);
+  }
+
+  INTERNATIONAL_DAYS.forEach(iday => {
+    yearsRange.forEach(y => {
+      const dIso = getInternationalDayDate(iday, y);
+      items.push({
+        id: `intday-${iday.id}-${y}`,
+        source: 'يوم عالمي 🌍',
+        date: dIso,
+        time: '',
+        title: `${iday.icon} ${iday.name}`,
+        detail: `${iday.categoryLabel} · ${iday.objectives}`,
+        color: 'pu',
+        raw: iday,
+        isInternationalDay: true,
+        year: y,
+        editable: false,
+      });
+    });
+  });
+
   return items;
 }
 
@@ -314,6 +359,32 @@ export default function Calendar() {
 
   const selDateStr = selDay ? dateStr(selDay) : null;
   const dayItems = selDay ? itemsOnDay(selDay) : [];
+  const intDaysOnSelDay = selDateStr ? getInternationalDaysForDate(selDateStr) : [];
+
+  function adoptInternationalDayAsCenterEvent(iday, targetDate) {
+    const evtYear = targetDate ? targetDate.slice(0, 4) : String(new Date().getFullYear());
+    const newEvt = {
+      id: `evt_${Date.now()}_${uid()}`,
+      name: iday.name,
+      category: iday.category === 'sensory' || iday.category === 'developmental' || iday.category === 'rehab' ? 'awareness' : iday.category === 'national' ? 'national' : 'other',
+      date: targetDate || todayStr(),
+      time: '09:00 ص - 12:30 م',
+      location: iday.suggestedLocation || 'مسرح الاحتفالات والصالة الرئيسية بالمركز',
+      locationType: 'internal',
+      academicYear: evtYear,
+      targetAudience: iday.targetAudience || 'all',
+      parentsInvited: true,
+      objectives: iday.objectives || '',
+      qualityNotes: `تم اعتماد وتوثيق الفعالية تزامناً مع (${iday.name}) لتحقيق معايير الدمج المجتمعي وتنمية مهارات المستفيدين وفق متطلبات الجودة والاعتماد.`,
+      status: 'upcoming',
+      participantStudentIds: [],
+      supervisorEmpIds: [],
+      notes: ''
+    };
+    lsAdd('centerEvents', newEvt);
+    toast(`🎉 تم اعتماد (${iday.name}) وإضافتها لفعاليات المركز بنجاح!`, 'ok');
+    reload();
+  }
 
   function openEval(d = null) {
     setEvalForm({ childName:'', parentName:'', diagnosis:'', date: d ? dateStr(d) : todayStr(), time:'', notes:'' });
@@ -651,6 +722,23 @@ export default function Calendar() {
                     </div>
                   )}
 
+                  {selItem.isInternationalDay && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4, borderTop: '1px solid var(--border-color)', paddingTop: 12 }}>
+                      <div style={{ fontSize: '.78rem', color: 'var(--text-sub)' }}>
+                        يمكنك اعتماد هذه المناسبة العالمية كفعالية رسمية بالمركز لتضمينها في الخطة التشغيلية وملف الجودة والاعتماد:
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-p btn-sm"
+                        style={{ borderRadius: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                        onClick={() => adoptInternationalDayAsCenterEvent(selItem.raw, selItem.date)}
+                      >
+                        <span>🎉</span>
+                        <span>اعتماد وتنظيم كفعالية للمركز</span>
+                      </button>
+                    </div>
+                  )}
+
                   {selItem.editable && selItem.raw?.id && (
                     <div style={{ display: 'flex', gap: 8, marginTop: 4, borderTop: '1px solid var(--border-color)', paddingTop: 12 }}>
                       <button type="button" className="btn btn-g btn-sm" style={{ flex: 1, borderRadius: 10 }} onClick={() => { setForm({ ...selItem.raw }); setEditId(selItem.raw.id); setShowForm(true); }}>
@@ -682,7 +770,32 @@ export default function Calendar() {
               </div>
             </div>
 
-            <div className="wg-b" style={{ padding: 14, maxHeight: 320, overflowY: 'auto', background: 'var(--bg-card)' }}>
+            <div className="wg-b" style={{ padding: 14, maxHeight: 340, overflowY: 'auto', background: 'var(--bg-card)' }}>
+              
+              {/* International Day Highlight Banner on Selected Day */}
+              {intDaysOnSelDay.length > 0 && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.12))',
+                  border: '1.5px solid rgba(99, 102, 241, 0.3)',
+                  borderRadius: 12,
+                  padding: '10px 12px',
+                  marginBottom: 10,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 6
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, fontSize: '.84rem', color: 'var(--text-main)' }}>
+                      <span>🌍 مناسبة اليوم:</span>
+                      <span>{intDaysOnSelDay.map(d => `${d.icon} ${d.name}`).join(' · ')}</span>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '.75rem', color: 'var(--text-sub)', lineHeight: 1.4 }}>
+                    {intDaysOnSelDay[0].objectives}
+                  </div>
+                </div>
+              )}
+
               {dayItems.length === 0 ? (
                 <div style={{ color: 'var(--text-sub)', textAlign: 'center', padding: '28px 10px' }}>
                   <p style={{ fontSize: '1.5rem', margin: 0 }}>☕</p>

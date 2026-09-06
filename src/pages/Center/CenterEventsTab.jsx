@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { lsGet, lsSet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { todayStr, uid } from '../../utils/dateHelpers';
 import { getAcademicYears } from '../../utils/academicYears';
+import { INTERNATIONAL_DAYS, getInternationalDayDate } from '../../data/internationalDays';
 import EmptyState from '../../components/ui/EmptyState';
 import {
   PartyPopper,
@@ -25,7 +26,9 @@ import {
   Handshake,
   UserCheck,
   HelpCircle,
-  Clock
+  Clock,
+  Globe,
+  Tag
 } from 'lucide-react';
 
 const EVENT_CATEGORIES = [
@@ -79,6 +82,8 @@ export default function CenterEventsTab() {
 
   // Modals
   const [showModal, setShowModal] = useState(false);
+  const [showIntDaysModal, setShowIntDaysModal] = useState(false);
+  const [intDaysCategoryFilter, setIntDaysCategoryFilter] = useState('all');
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState(EMPTY_EVENT_FORM);
   const [viewEvent, setViewEvent] = useState(null);
@@ -150,6 +155,71 @@ export default function CenterEventsTab() {
 
     return { total, completed, upcoming, totalParticipants };
   }, [filteredEvents]);
+
+  // Select & Autofill from International Days Dropdown
+  const handleSelectInternationalDay = (dayId) => {
+    if (!dayId) return;
+    const selected = INTERNATIONAL_DAYS.find(d => d.id === dayId);
+    if (!selected) return;
+
+    // Determine target year from current form academic year or current system date
+    let targetYear = new Date().getFullYear();
+    if (form.academicYear) {
+      const yrMatch = form.academicYear.match(/\b(20\d\d)\b/);
+      if (yrMatch) targetYear = parseInt(yrMatch[1], 10);
+    }
+    const computedDate = getInternationalDayDate(selected, targetYear);
+
+    setForm(f => ({
+      ...f,
+      name: selected.name,
+      category: selected.category === 'sensory' || selected.category === 'developmental' || selected.category === 'rehab' ? 'awareness' : selected.category === 'national' ? 'national' : 'other',
+      date: computedDate,
+      time: '09:00 ص - 12:30 م',
+      location: selected.suggestedLocation || 'مسرح الاحتفالات والصالة الرئيسية بالمركز',
+      locationType: 'internal',
+      targetAudience: selected.targetAudience || 'all',
+      parentsInvited: true,
+      objectives: selected.objectives || '',
+      qualityNotes: `تم اعتماد وتوثيق الفعالية تزامناً مع (${selected.name}) لتحقيق معايير الدمج المجتمعي وتنمية مهارات المستفيدين وفق متطلبات الجودة والاعتماد.`,
+    }));
+
+    toast(`✨ تم اختيار (${selected.name}) وتعبئة البيانات والأهداف تلقائياً`, 'ok');
+  };
+
+  // Adopt directly from the International Days Browser Modal
+  const handleAdoptInternationalDay = (dayObj) => {
+    const activeYr = academicYears.find(y => y.isCurrent)?.name || (availableYears[0] || '2025 / 2026');
+    const activeYrId = academicYears.find(y => y.isCurrent)?.id || '';
+    
+    let targetYear = new Date().getFullYear();
+    if (activeYr) {
+      const yrMatch = activeYr.match(/\b(20\d\d)\b/);
+      if (yrMatch) targetYear = parseInt(yrMatch[1], 10);
+    }
+    const computedDate = getInternationalDayDate(dayObj, targetYear);
+
+    setForm({
+      ...EMPTY_EVENT_FORM,
+      academicYear: activeYr,
+      academicYearId: activeYrId,
+      name: dayObj.name,
+      category: dayObj.category === 'sensory' || dayObj.category === 'developmental' || dayObj.category === 'rehab' ? 'awareness' : dayObj.category === 'national' ? 'national' : 'other',
+      date: computedDate,
+      time: '09:00 ص - 12:30 م',
+      location: dayObj.suggestedLocation || 'مسرح الاحتفالات والصالة الرئيسية بالمركز',
+      locationType: 'internal',
+      targetAudience: dayObj.targetAudience || 'all',
+      parentsInvited: true,
+      objectives: dayObj.objectives || '',
+      qualityNotes: `تم اعتماد وتوثيق الفعالية تزامناً مع (${dayObj.name}) لتحقيق معايير الدمج المجتمعي وتنمية مهارات المستفيدين وفق متطلبات الجودة والاعتماد.`,
+    });
+
+    setEditId(null);
+    setShowIntDaysModal(false);
+    setShowModal(true);
+    toast(`✨ تم تجهيز نموذج الاحتفال بـ (${dayObj.name})`, 'ok');
+  };
 
   // Open Add Modal
   const handleOpenNew = () => {
@@ -353,15 +423,36 @@ export default function CenterEventsTab() {
             </div>
 
             {canEdit && (
-              <button
-                type="button"
-                className="btn btn-p"
-                onClick={handleOpenNew}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}
-              >
-                <Plus style={{ width: 16, height: 16 }} />
-                <span>إضافة فعالية جديدة</span>
-              </button>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn btn-s"
+                  onClick={() => setShowIntDaysModal(true)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontWeight: 700,
+                    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15))',
+                    border: '1px solid rgba(99, 102, 241, 0.35)',
+                    color: 'var(--text-main)'
+                  }}
+                  title="استعراض دليل الأيام العالمية لذوي الاحتياجات الخاصة والتربية"
+                >
+                  <Globe style={{ width: 16, height: 16, color: '#6366f1' }} />
+                  <span>🌍 فعاليات الاحتفال بالأيام العالمية ({INTERNATIONAL_DAYS.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-p"
+                  onClick={handleOpenNew}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}
+                >
+                  <Plus style={{ width: 16, height: 16 }} />
+                  <span>إضافة فعالية جديدة</span>
+                </button>
+              </div>
             )}
           </div>
 
@@ -802,6 +893,51 @@ export default function CenterEventsTab() {
             {/* Modal Body */}
             <div className="modal-body-scroll" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
               
+              {/* International & Special Days Autofill Selector */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(168, 85, 247, 0.08))',
+                border: '1.5px solid rgba(99, 102, 241, 0.28)',
+                borderRadius: 12,
+                padding: '12px 14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                  <label style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '.86rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Sparkles style={{ width: 16, height: 16, color: '#6366f1' }} />
+                    <span>🌍 اختيار وتعبئة من الأيام والمناسبات العالمية والتربوية</span>
+                  </label>
+                  <span style={{ fontSize: '.72rem', color: 'var(--text-sub)' }}>
+                    (اختياري) تعبئة تلقائية لاسم الفعالية، التاريخ، والأهداف
+                  </span>
+                </div>
+
+                <select
+                  defaultValue=""
+                  onChange={(e) => {
+                    handleSelectInternationalDay(e.target.value);
+                    e.target.value = '';
+                  }}
+                  style={{
+                    background: 'var(--bg-card)',
+                    color: 'var(--text-main)',
+                    fontWeight: 600,
+                    fontSize: '.85rem',
+                    borderColor: 'rgba(99, 102, 241, 0.35)',
+                    padding: '8px 12px',
+                    borderRadius: 8
+                  }}
+                >
+                  <option value="">— اضغط هنا للاختيار من قائمة الأيام العالمية والمناسبات التربوية —</option>
+                  {INTERNATIONAL_DAYS.map(day => (
+                    <option key={day.id} value={day.id}>
+                      {day.icon} {day.day}/{day.month} — {day.name} ({day.categoryLabel})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="fl">
                 <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem' }}>
                   اسم الفعالية / المناسبة <span style={{ color: 'var(--err)' }}>*</span>
@@ -998,6 +1134,181 @@ export default function CenterEventsTab() {
                 💾 حفظ وتوثيق الفعالية
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. International & Educational Days Browser Modal (دليل الأيام والمناسبات العالمية) */}
+      {showIntDaysModal && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-box" style={{ maxWidth: '820px', width: '95%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+            
+            {/* Modal Header */}
+            <div className="modal-header" style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '16px 20px',
+              borderBottom: '1px solid var(--border-color)',
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1))'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  background: '#6366f1',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.2rem'
+                }}>
+                  🌍
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                    دليل فعاليات الأيام العالمية والتربوية
+                  </h3>
+                  <div style={{ fontSize: '.76rem', color: 'var(--text-sub)' }}>
+                    قائمة معتمدة للأيام والمناسبات العالمية الخاصة بذوي الاحتياجات الخاصة والتربية مع إمكانية التنظيم المباشر
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-g btn-sm"
+                onClick={() => setShowIntDaysModal(false)}
+                style={{
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 8,
+                  padding: '5px 10px',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  cursor: 'pointer'
+                }}
+              >
+                <X style={{ width: 15, height: 15 }} />
+                <span>إغلاق</span>
+              </button>
+            </div>
+
+            {/* Category Filter Tabs */}
+            <div style={{
+              padding: '12px 20px',
+              borderBottom: '1px solid var(--border-color)',
+              background: 'var(--bg-card)',
+              display: 'flex',
+              gap: 8,
+              flexWrap: 'wrap'
+            }}>
+              {[
+                { id: 'all', label: 'جميع المناسبات' },
+                { id: 'developmental', label: '🧩 اضطرابات النمو والتوحد' },
+                { id: 'sensory', label: '🦯 الإعاقات الحسية والسمعية' },
+                { id: 'rehab', label: '🏃 التأهيل والعلاج الطبيعي والوظيفي' },
+                { id: 'educational', label: '📚 التعليم والتربية الخاصة' },
+                { id: 'national', label: '🇸🇦 المناسبات الوطنية' }
+              ].map(cat => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  className={`btn btn-xs ${intDaysCategoryFilter === cat.id ? 'btn-p' : 'btn-g'}`}
+                  onClick={() => setIntDaysCategoryFilter(cat.id)}
+                  style={{ borderRadius: 16, padding: '4px 12px', fontWeight: 700 }}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Modal Body: Cards List */}
+            <div className="modal-body-scroll" style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {INTERNATIONAL_DAYS
+                .filter(d => intDaysCategoryFilter === 'all' || d.category === intDaysCategoryFilter)
+                .map(day => (
+                  <div
+                    key={day.id}
+                    style={{
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: 12,
+                      padding: '14px 16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 8,
+                      transition: 'all 0.15s ease',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: '1.6rem' }}>{day.icon}</span>
+                        <div>
+                          <h4 style={{ margin: 0, fontSize: '.95rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                            {day.name}
+                          </h4>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
+                            <span style={{
+                              fontSize: '.72rem',
+                              fontWeight: 700,
+                              padding: '2px 8px',
+                              borderRadius: 6,
+                              background: 'var(--g0)',
+                              color: 'var(--pr)',
+                              border: '1px solid var(--border-color)'
+                            }}>
+                              📅 {day.day} / {day.month}
+                            </span>
+                            <span style={{
+                              fontSize: '.72rem',
+                              fontWeight: 600,
+                              padding: '2px 8px',
+                              borderRadius: 6,
+                              background: 'var(--g0)',
+                              color: 'var(--text-sub)'
+                            }}>
+                              {day.categoryLabel}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {canEdit && (
+                        <button
+                          type="button"
+                          className="btn btn-p btn-sm"
+                          onClick={() => handleAdoptInternationalDay(day)}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700 }}
+                        >
+                          <PartyPopper style={{ width: 14, height: 14 }} />
+                          <span>تنظيم احتفال بالفعالية</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <p style={{ margin: 0, fontSize: '.82rem', color: 'var(--text-sub)', lineHeight: 1.6 }}>
+                      {day.objectives}
+                    </p>
+                  </div>
+                ))}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="modal-footer" style={{ padding: '12px 20px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', background: 'var(--g0)' }}>
+              <button
+                type="button"
+                className="btn btn-g"
+                onClick={() => setShowIntDaysModal(false)}
+                style={{ fontWeight: 700 }}
+              >
+                إغلاق
+              </button>
+            </div>
+
           </div>
         </div>
       )}
