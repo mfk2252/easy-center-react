@@ -94,15 +94,66 @@ export default function LoginScreen() {
   return (
     <div className="login-overlay">
       <div className="login-shell">
-        {/* اللوحة الجانبية — الهوية والقيمة */}
+        {/* اللوحة الجانبية — الهوية والقيمة مع تأثيرات مكعبات الليغو والبناء المعرفي */}
         <div className="login-hero">
           <div className="login-orbit" aria-hidden="true">
             <span/><span/><span/><span/>
           </div>
 
-          <div className="login-hero-badge">🏥 منصة إدارة مراكز التأهيل</div>
-          <h1>مركزك، طلابك، وفريقك — في مكان واحد وآمن</h1>
-          <p>نظام متكامل لإدارة الطلاب والموظفين والجلسات والحضور، مبني خصيصاً لمراكز التربية الخاصة والتأهيل.</p>
+          {/* خلفية مكعبات الليغو العائمة الذكية ذات المظهر ثلاثي الأبعاد الخفيف */}
+          <div className="login-lego-backdrop" aria-hidden="true">
+            <div className="lego-cube cube-1" title="التأهيل والنمو">
+              <div className="cube-face top"><span className="stud"/><span className="stud"/></div>
+              <div className="cube-face front"></div>
+              <div className="cube-face side"></div>
+            </div>
+            <div className="lego-cube cube-2" title="التربية الخاصة">
+              <div className="cube-face top"><span className="stud"/><span className="stud"/></div>
+              <div className="cube-face front"></div>
+              <div className="cube-face side"></div>
+            </div>
+            <div className="lego-cube cube-3" title="التكامل الحسي">
+              <div className="cube-face top"><span className="stud"/></div>
+              <div className="cube-face front"></div>
+              <div className="cube-face side"></div>
+            </div>
+            <div className="lego-cube cube-4" title="النطق والتخاطب">
+              <div className="cube-face top"><span className="stud"/><span className="stud"/></div>
+              <div className="cube-face front"></div>
+              <div className="cube-face side"></div>
+            </div>
+          </div>
+
+          <div className="login-hero-badge">
+            <span className="badge-pulse"></span>
+            <span>🏥 منصة إدارة مراكز التأهيل والتربية الخاصة</span>
+          </div>
+
+          {/* العنوان الرئيسي مع تأثير مسار مكعب الليغو التفاعلي الرايح جاي */}
+          <div className="login-headline-wrapper">
+            <h1 className="login-hero-title">
+              <span className="title-word">مركزك،</span>{' '}
+              <span className="title-word highlight">طلابك،</span>{' '}
+              <span className="title-word">وفريقك</span>
+              <span className="title-subline">— في مكان واحد وآمن 🛡️</span>
+            </h1>
+
+            {/* مسار مكعب الليغو المتحرك جيئة وذهاباً (رايح جاي) ليضفي إشراقة وتفاعلية جذابة */}
+            <div className="lego-patrol-track" aria-hidden="true">
+              <div className="lego-track-line"></div>
+              <div className="lego-patrol-vehicle">
+                <div className="lego-mini-brick">
+                  <span className="stud"></span>
+                  <span className="stud"></span>
+                </div>
+                <div className="lego-beam-glow"></div>
+              </div>
+            </div>
+          </div>
+
+          <p className="login-hero-desc">
+            نظام سحابي متكامل ومصمم خصيصاً لمراكز التربية الخاصة والتأهيل، لبناء خطط الرعاية ودمج المستفيدين خطوة بخطوة كقطع البناء المتكاملة.
+          </p>
 
           <div className="login-hero-features">
             {FEATURES.map(f => (
@@ -111,6 +162,13 @@ export default function LoginScreen() {
                 <span>{f.text}</span>
               </div>
             ))}
+          </div>
+
+          {/* شريط المرتكزات التأهيلية السريع */}
+          <div className="login-lego-tags">
+            <span className="lego-tag tag-blue">🧩 خطط تربوية فردية (IEP)</span>
+            <span className="lego-tag tag-green">🎯 بنك الأهداف والمقاييس</span>
+            <span className="lego-tag tag-amber">⚡ تقارير فورية ودقيقة</span>
           </div>
         </div>
 

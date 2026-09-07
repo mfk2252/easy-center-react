@@ -118,17 +118,87 @@
 .sw-btn-p{background:var(--pr);color:white}.sw-btn-p:hover{background:var(--pr-d);transform:translateY(-1px)}
 .sw-btn-s{background:var(--g2);color:var(--g6)}.sw-btn-s:hover{background:var(--g3)}
 .sw-btn-g{background:var(--ok-l);color:var(--ok-d);border:1.5px solid #a7f3d0}.sw-btn-g:hover{background:var(--ok);color:white}
-.login-overlay{position:fixed;inset:0;z-index:8888;display:flex;align-items:stretch;justify-content:center;padding:0;overflow-y:auto;-webkit-overflow-scrolling:touch;background:linear-gradient(145deg,#0c1929 0%,var(--pr-d) 45%,#1e1b4b 100%)}
-.login-shell{display:flex;width:100%;min-height:100dvh;min-height:100vh;max-width:1200px;margin:0 auto;flex-direction:row;flex-wrap:wrap;align-items:stretch}
-.login-hero{flex:1 1 320px;min-height:220px;padding:clamp(20px,4vw,40px);display:flex;flex-direction:column;justify-content:center;gap:16px;color:#fff;box-sizing:border-box}
-.login-hero-badge{display:inline-flex;align-items:center;gap:8px;font-size:.75rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;opacity:.9;background:rgba(255,255,255,.12);padding:6px 12px;border-radius:999px;width:fit-content}
-.login-hero h1{font-size:clamp(1.35rem,3.5vw,1.85rem);font-weight:800;line-height:1.35;margin:0;text-shadow:0 2px 24px rgba(0,0,0,.25)}
-.login-hero p{font-size:.88rem;line-height:1.75;opacity:.88;margin:0;max-width:36ch}
-.login-hero-dots{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
-.login-hero-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.35)}
+/* ===== Login Screen & Dynamic Lego Animations ===== */
+.login-overlay{position:fixed;inset:0;z-index:8888;display:flex;align-items:stretch;justify-content:center;padding:0;overflow-y:auto;-webkit-overflow-scrolling:touch;background:radial-gradient(ellipse at 15% 30%, #1e3a8a 0%, #0f172a 45%, #090d16 100%);}
+.login-shell{display:flex;width:100%;min-height:100dvh;min-height:100vh;max-width:1240px;margin:0 auto;flex-direction:row;flex-wrap:wrap;align-items:stretch}
+.login-hero{flex:1 1 360px;min-height:280px;padding:clamp(24px,4.5vw,48px);display:flex;flex-direction:column;justify-content:center;gap:18px;color:#ffffff !important;box-sizing:border-box;position:relative;overflow:hidden;}
+.login-hero *{color:inherit}
+
+/* شارة الهوية */
+.login-hero-badge{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;font-weight:700;color:#ffffff !important;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(10px);padding:6px 14px;border-radius:999px;width:fit-content;box-shadow:0 4px 14px rgba(0,0,0,.15)}
+.badge-pulse{width:8px;height:8px;border-radius:50%;background:#38bdf8;box-shadow:0 0 8px #38bdf8;animation:pulseLego 2s infinite}
+@keyframes pulseLego{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.25)}}
+
+/* العنوان الرئيسي الفائق الوضوح في كافة الأنماط */
+.login-headline-wrapper{position:relative;margin:4px 0 6px;}
+.login-hero-title{font-size:clamp(1.45rem,3.8vw,2.15rem) !important;font-weight:900 !important;line-height:1.35 !important;margin:0 !important;color:#ffffff !important;text-shadow:0 2px 20px rgba(0,0,0,.45);letter-spacing:-.02em;}
+.login-hero-title .title-word{color:#ffffff !important;display:inline-block;}
+.login-hero-title .title-word.highlight{color:#fde047 !important;text-shadow:0 0 20px rgba(253,224,71,.45);}
+.login-hero-title .title-subline{display:block;font-size:clamp(1.1rem,2.8vw,1.45rem);font-weight:700;color:#93c5fd !important;margin-top:6px;}
+
+/* مسار مكعب الليغو المتحرك جيئة وذهاباً (رايح جاي) */
+.lego-patrol-track{position:relative;width:100%;max-width:340px;height:24px;margin-top:10px;}
+.lego-track-line{position:absolute;top:50%;left:0;right:0;height:2px;background:linear-gradient(90deg,rgba(56,189,248,0) 0%,rgba(56,189,248,.6) 50%,rgba(56,189,248,0) 100%);transform:translateY(-50%);border-radius:2px;}
+.lego-patrol-vehicle{position:absolute;top:50%;right:0;transform:translate(0,-50%);animation:legoPatrol 4.2s cubic-bezier(.45,0,.55,1) infinite alternate;display:flex;align-items:center;justify-content:center;}
+.lego-mini-brick{width:28px;height:16px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:4px;border:1px solid #fef3c7;box-shadow:0 0 14px rgba(245,158,11,.8), 0 3px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:space-around;padding:0 3px;position:relative;z-index:2;}
+.lego-mini-brick .stud{width:5px;height:5px;border-radius:50%;background:#fef08a;box-shadow:inset 0 1px 1px rgba(0,0,0,.2), 0 1px 2px rgba(255,255,255,.6);}
+.lego-beam-glow{position:absolute;width:40px;height:12px;background:radial-gradient(ellipse,rgba(253,224,71,.7) 0%,rgba(253,224,71,0) 70%);pointer-events:none;filter:blur(3px);}
+
+@keyframes legoPatrol{
+  0%{right:0%;transform:translate(0,-50%) scale(1);}
+  50%{transform:translate(0,-50%) scale(1.08);}
+  100%{right:calc(100% - 32px);transform:translate(0,-50%) scale(1);}
+}
+
+/* الوصف والميزات */
+.login-hero-desc{font-size:.92rem !important;line-height:1.75 !important;color:rgba(241,245,249,.92) !important;margin:0 !important;max-width:44ch;}
+.login-hero-features{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+.login-hero-feature{display:flex;align-items:center;gap:12px;font-size:.86rem !important;line-height:1.5 !important;color:#f8fafc !important;}
+.login-hero-feature span{color:#f8fafc !important;}
+.login-hero-feature .lf-ico{width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:.92rem;flex-shrink:0}
+
+/* تاغات المرتكزات بأسلوب مكعبات البناء */
+.login-lego-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.lego-tag{display:inline-flex;align-items:center;gap:6px;font-size:.76rem !important;font-weight:700 !important;padding:5px 11px;border-radius:8px;backdrop-filter:blur(6px);box-shadow:0 2px 6px rgba(0,0,0,.12);transition:transform .15s;}
+.lego-tag:hover{transform:translateY(-2px);}
+.lego-tag.tag-blue{background:rgba(37,99,235,.35);border:1px solid rgba(96,165,250,.5);color:#dbeafe !important;}
+.lego-tag.tag-green{background:rgba(5,150,105,.35);border:1px solid rgba(52,211,153,.5);color:#d1fae5 !important;}
+.lego-tag.tag-amber{background:rgba(217,119,6,.35);border:1px solid rgba(251,191,36,.5);color:#fef3c7 !important;}
+
+/* خلفية المكعبات العائمة الخفيفة (Isometric Lego Cubes) */
+.login-lego-backdrop{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.lego-cube{position:absolute;width:44px;height:34px;opacity:.28;transition:opacity .3s;}
+.lego-cube .top{position:absolute;top:0;left:0;right:0;height:14px;border-radius:4px 4px 0 0;display:flex;align-items:center;justify-content:center;gap:6px;}
+.lego-cube .front{position:absolute;bottom:0;left:0;right:0;height:20px;border-radius:0 0 4px 4px;}
+.lego-cube .stud{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.7);box-shadow:0 1px 2px rgba(0,0,0,.2);}
+
+.lego-cube.cube-1{top:12%;left:8%;animation:floatLego1 14s ease-in-out infinite alternate;}
+.lego-cube.cube-1 .top{background:#60a5fa;}
+.lego-cube.cube-1 .front{background:#2563eb;}
+
+.lego-cube.cube-2{bottom:15%;left:12%;width:52px;animation:floatLego2 16s ease-in-out infinite alternate;}
+.lego-cube.cube-2 .top{background:#34d399;}
+.lego-cube.cube-2 .front{background:#059669;}
+
+.lego-cube.cube-3{top:24%;right:8%;width:32px;animation:floatLego3 12s ease-in-out infinite alternate;}
+.lego-cube.cube-3 .top{background:#f472b6;}
+.lego-cube.cube-3 .front{background:#db2777;}
+
+.lego-cube.cube-4{bottom:8%;right:15%;animation:floatLego1 18s ease-in-out infinite alternate reverse;}
+.lego-cube.cube-4 .top{background:#fbbf24;}
+.lego-cube.cube-4 .front{background:#d97706;}
+
+@keyframes floatLego1{0%{transform:translate(0,0) rotate(0deg)}100%{transform:translate(18px,-22px) rotate(8deg)}}
+@keyframes floatLego2{0%{transform:translate(0,0) rotate(0deg)}100%{transform:translate(-16px,-18px) rotate(-6deg)}}
+@keyframes floatLego3{0%{transform:translate(0,0) rotate(0deg)}100%{transform:translate(14px,20px) rotate(12deg)}}
+
+@media(prefers-reduced-motion:reduce){
+  .lego-patrol-vehicle, .lego-cube, .login-orbit span, .badge-pulse{animation:none !important;}
+}
+
 .login-panel{flex:1 1 360px;max-width:100%;display:flex;align-items:center;justify-content:center;padding:clamp(16px,3vw,28px);box-sizing:border-box}
 .login-box{background:var(--bg-card);border-radius:20px;width:100%;max-width:440px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.35)}
-@media(max-width:720px){.login-shell{flex-direction:column}.login-hero{min-height:auto;text-align:center;align-items:center}.login-hero p{max-width:100%}}
+@media(max-width:720px){.login-shell{flex-direction:column}.login-hero{min-height:auto;text-align:center;align-items:center}.login-hero-desc{max-width:100%}.lego-patrol-track{margin-left:auto;margin-right:auto}}
 .login-hd{background:linear-gradient(135deg,var(--pr),var(--pr-d));color:white;padding:26px;text-align:center}
 .login-logo{width:68px;height:68px;border-radius:16px;border:3px solid rgba(255,255,255,.3);object-fit:cover;margin:0 auto 12px;display:block}
 .login-logo-ph{width:68px;height:68px;border-radius:16px;border:3px solid rgba(255,255,255,.3);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:2rem}
