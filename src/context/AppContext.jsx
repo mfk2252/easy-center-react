@@ -117,6 +117,7 @@ export function AppProvider({ children }) {
   });
   const [currentUser, setCurrentUser] = useState(null);
   const [activeView, setActiveView] = useState('dash');
+  const [viewParams, setViewParams] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -437,7 +438,10 @@ export function AppProvider({ children }) {
     setScreen('login');
   }, []);
 
-  const go = useCallback((view) => setActiveView(view), []);
+  const go = useCallback((view, params = null) => {
+    setActiveView(view);
+    setViewParams(params);
+  }, []);
 
   const updateCenterData = useCallback((c) => {
     setCenter(c);
@@ -487,7 +491,7 @@ export function AppProvider({ children }) {
 
   return (
     <AppContext.Provider value={{
-      screen, center, currentUser, activeView, darkMode,
+      screen, center, currentUser, activeView, viewParams, setViewParams, darkMode,
       toasts, searchOpen, syncing, subscriptionStatus,
       fbCfg:{}, fbReady:true,
       setScreen, persistConfig, login, logout, go, toast,

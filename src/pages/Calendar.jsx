@@ -223,7 +223,7 @@ function buildCalendarItems() {
 }
 
 export default function Calendar() {
-  const { toast, activeView } = useApp();
+  const { toast, activeView, viewParams } = useApp();
   const [cur, setCur] = useState(new Date());
   const [allItems, setAllItems] = useState([]);
   const [students, setStudents] = useState([]);
@@ -249,6 +249,30 @@ export default function Calendar() {
   useEffect(() => {
     reload();
   }, [activeView]);
+
+  // استجابة لتمرير تاريخ محدد من التنبيهات والإشعارات (مثل النقر على إشعار يوم عالمي)
+  useEffect(() => {
+    if (viewParams && (viewParams.targetDate || viewParams.date)) {
+      const target = viewParams.targetDate || viewParams.date;
+      const parts = target.split('-');
+      if (parts.length === 3) {
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const d = parseInt(parts[2], 10);
+        setCur(new Date(y, m, 1));
+        setSelDay(d);
+
+        // تحديد العنصر تلقائياً لعرض بطاقة تفاصيله
+        setTimeout(() => {
+          const items = buildCalendarItems();
+          const matched = items.find(it => it.date === target && (viewParams.intDayId ? (it.raw?.id === viewParams.intDayId || it.id?.includes(viewParams.intDayId)) : true));
+          if (matched) {
+            setSelItem(matched);
+          }
+        }, 80);
+      }
+    }
+  }, [viewParams, activeView]);
 
   const year = cur.getFullYear();
   const month = cur.getMonth();
@@ -778,21 +802,51 @@ export default function Calendar() {
                   background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.12))',
                   border: '1.5px solid rgba(99, 102, 241, 0.3)',
                   borderRadius: 12,
-                  padding: '10px 12px',
-                  marginBottom: 10,
+                  padding: '12px 14px',
+                  marginBottom: 12,
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 6
+                  gap: 8
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, fontSize: '.84rem', color: 'var(--text-main)' }}>
-                      <span>🌍 مناسبة اليوم:</span>
-                      <span>{intDaysOnSelDay.map(d => `${d.icon} ${d.name}`).join(' · ')}</span>
-                    </div>
-                  </div>
-                  <div style={{ fontSize: '.75rem', color: 'var(--text-sub)', lineHeight: 1.4 }}>
-                    {intDaysOnSelDay[0].objectives}
-                  </div>
+                  {intDaysOnSelDay.map(iday => {
+                    const isAdopted = (lsGet('centerEvents') || []).some(e => e.date === selDateStr && (e.name === iday.name || e.name?.includes(iday.name)));
+                    return (
+                      <div key={iday.id} style={{ display: 'flex', flexDirection: 'column', gap: 6, borderBottom: intDaysOnSelDay.length > 1 ? '1px dashed rgba(99, 102, 241, 0.2)' : 'none', paddingBottom: intDaysOnSelDay.length > 1 ? 8 : 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, fontSize: '.86rem', color: 'var(--text-main)' }}>
+                            <span>{iday.icon}</span>
+                            <span>{iday.name}</span>
+                          </div>
+                          <span style={{ fontSize: '.72rem', background: 'rgba(99, 102, 241, 0.18)', color: 'var(--text-main)', padding: '2px 8px', borderRadius: 999, fontWeight: 700 }}>
+                            {iday.categoryLabel}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '.76rem', color: 'var(--text-sub)', lineHeight: 1.5 }}>
+                          {iday.objectives}
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4, flexWrap: 'wrap', gap: 6 }}>
+                          <span style={{ fontSize: '.72rem', color: 'var(--text-sub)' }}>
+                            📍 المقترح: {iday.suggestedLocation || 'مقر المركز'}
+                          </span>
+                          {isAdopted ? (
+                            <span style={{ fontSize: '.76rem', fontWeight: 700, color: '#16a34a', display: 'flex', alignItems: 'center', gap: 4 }}>
+                              ✅ معتمدة كفعالية للمركز
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="btn btn-p btn-xs"
+                              style={{ borderRadius: 8, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px' }}
+                              onClick={() => adoptInternationalDayAsCenterEvent(iday, selDateStr)}
+                            >
+                              <span>🎉</span>
+                              <span>اعتماد وتنظيم الفعالية</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 

@@ -1,5 +1,6 @@
 import { lsGet, lsAdd, lsUpd } from '../hooks/useStorage';
 import { todayStr, addDays, daysFromToday, daysUntilDate, nextAnnualOccurrenceDate, uid } from '../utils/dateHelpers';
+import { INTERNATIONAL_DAYS, getInternationalDayDate } from '../data/internationalDays';
 
 /**
  * دالة مساعدة لتحديد مفتاح التخزين الخاص بقائمة الإشعارات المقروءة للمستخدم
@@ -443,7 +444,7 @@ export function fetchGlobalNotifications(currentUser) {
     });
   });
 
-  // 2) فعاليات ونشاطات المركز القادمة
+  // 2) فعاليات ونشاطات المركز القادمة (من جدول فعاليات المركز والأنشطة)
   activities.forEach(act => {
     if (act.date && (act.date === today || act.date === tomorrow || (act.date >= today && act.date <= in7Days))) {
       rawList.push({
@@ -461,6 +462,68 @@ export function fetchGlobalNotifications(currentUser) {
         targetRoles: ['manager', 'vice', 'specialist', 'reception'],
       });
     }
+  });
+
+  // 2.1) فعاليات المركز المعتمدة (Center Events)
+  const centerEventsList = lsGet('centerEvents') || [];
+  centerEventsList.forEach(evt => {
+    if (!evt.date) return;
+    const df = daysFromToday(evt.date);
+    if (df != null && df >= 0 && df <= 10) {
+      const isToday = df === 0;
+      const isTomorrow = df === 1;
+      rawList.push({
+        id: `cevt-notif-${evt.id}`,
+        category: 'general',
+        categoryLabel: 'فعاليات المركز 🎉',
+        categoryIcon: '🎉',
+        title: isToday ? `🎉 فعالية المركز اليوم: ${evt.name}` : (isTomorrow ? `🎉 فعالية المركز غداً: ${evt.name}` : `🎉 فعالية قادمة: ${evt.name}`),
+        detail: [evt.location && `المكان: ${evt.location}`, evt.time && `الوقت: ${evt.time}`, evt.objectives].filter(Boolean).join(' · '),
+        time: isToday ? 'اليوم' : (isTomorrow ? 'غداً' : `خلال ${df} أيام`),
+        rawDate: evt.date,
+        actionView: 'calendar',
+        actionDate: evt.date,
+        targetDate: evt.date,
+        severity: isToday ? 'urgent' : (isTomorrow ? 'warn' : 'info'),
+        targetRoles: ['all'],
+      });
+    }
+  });
+
+  // 2.2) تنبيهات الأيام والمناسبات العالمية والتربوية (International Days Alerts)
+  const curYear = new Date().getFullYear();
+  const yearsToCheck = [curYear, curYear + 1];
+
+  INTERNATIONAL_DAYS.forEach(iday => {
+    yearsToCheck.forEach(y => {
+      const targetIsoDate = getInternationalDayDate(iday, y);
+      const df = daysFromToday(targetIsoDate);
+      // التنبيه للمناسبات التي تصادف اليوم، غداً، أو خلال الـ 10 أيام القادمة
+      if (df != null && df >= 0 && df <= 10) {
+        const isToday = df === 0;
+        const isTomorrow = df === 1;
+        const notifTitle = isToday
+          ? `🌍 يصادف اليوم: ${iday.name}`
+          : (isTomorrow ? `🌍 يصادف غداً: ${iday.name}` : `🌍 قريباً: ${iday.name} (خلال ${df} أيام)`);
+
+        rawList.push({
+          id: `intday-notif-${iday.id}-${targetIsoDate}`,
+          category: 'general',
+          categoryLabel: 'الأيام العالمية 🌍',
+          categoryIcon: iday.icon || '🌍',
+          title: notifTitle,
+          detail: `${iday.categoryLabel} · ${iday.objectives} — انقر لعرض اليوم في التقويم واعتماد الفعالية بالمركز`,
+          time: isToday ? 'اليوم' : (isTomorrow ? 'غداً' : `خلال ${df} أيام`),
+          rawDate: targetIsoDate,
+          actionView: 'calendar',
+          actionDate: targetIsoDate,
+          targetDate: targetIsoDate,
+          intDayId: iday.id,
+          severity: isToday ? 'urgent' : (df <= 2 ? 'warn' : 'info'),
+          targetRoles: ['all'],
+        });
+      }
+    });
   });
 
   // 3) التنبيهات اليدوية المخزنة (Manual Alerts)

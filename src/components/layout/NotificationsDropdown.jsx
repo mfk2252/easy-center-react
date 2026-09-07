@@ -97,6 +97,9 @@ export default function NotificationsDropdown() {
     if (activeFilter === 'attendance') {
       return items.filter(n => n.category === 'attendance' || n.category === 'iep');
     }
+    if (activeFilter === 'events') {
+      return items.filter(n => n.id?.startsWith('intday') || n.id?.startsWith('cevt') || n.id?.startsWith('act-') || n.categoryLabel?.includes('الأيام') || n.categoryLabel?.includes('فعاليات'));
+    }
     if (activeFilter === 'general') {
       return items.filter(n => n.category === 'general' || n.category === 'hr');
     }
@@ -109,7 +112,14 @@ export default function NotificationsDropdown() {
     refreshNotifications();
     setIsOpen(false);
     if (item.actionView) {
-      go(item.actionView);
+      go(item.actionView, {
+        date: item.actionDate || item.targetDate || item.rawDate,
+        targetDate: item.actionDate || item.targetDate || item.rawDate,
+        tab: item.actionTab,
+        category: item.category,
+        intDayId: item.intDayId,
+        source: 'notification',
+      });
     }
   };
 
@@ -353,6 +363,7 @@ export default function NotificationsDropdown() {
             {[
               { id: 'all', label: 'الكل', count: notifData.totalCount },
               { id: 'unread', label: 'غير المقروء', count: notifData.unreadCount },
+              { id: 'events', label: '🌍 الأيام والفعاليات' },
               { id: 'sessions', label: '⏱️ الجلسات' },
               { id: 'appointments', label: '🗓️ المواعيد' },
               { id: 'finance', label: '💰 المالية' },

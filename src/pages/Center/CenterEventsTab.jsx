@@ -176,7 +176,7 @@ export default function CenterEventsTab() {
     setForm(f => ({
       ...f,
       name: selected.name,
-      category: selected.category === 'sensory' || selected.category === 'developmental' || selected.category === 'rehab' ? 'awareness' : selected.category === 'national' ? 'national' : 'other',
+      category: 'awareness',
       date: computedDate,
       time: '09:00 ص - 12:30 م',
       location: selected.suggestedLocation || 'مسرح الاحتفالات والصالة الرئيسية بالمركز',
@@ -207,7 +207,7 @@ export default function CenterEventsTab() {
       academicYear: activeYr,
       academicYearId: activeYrId,
       name: dayObj.name,
-      category: dayObj.category === 'sensory' || dayObj.category === 'developmental' || dayObj.category === 'rehab' ? 'awareness' : dayObj.category === 'national' ? 'national' : 'other',
+      category: 'awareness',
       date: computedDate,
       time: '09:00 ص - 12:30 م',
       location: dayObj.suggestedLocation || 'مسرح الاحتفالات والصالة الرئيسية بالمركز',
@@ -1035,71 +1035,19 @@ export default function CenterEventsTab() {
             {/* Modal Body */}
             <div className="modal-body-scroll" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
               
-              {/* International & Special Days Autofill Selector */}
-              <div style={{
-                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(168, 85, 247, 0.08))',
-                border: '1.5px solid rgba(99, 102, 241, 0.28)',
-                borderRadius: 12,
-                padding: '12px 14px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 8
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-                  <label style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '.86rem', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Sparkles style={{ width: 16, height: 16, color: '#6366f1' }} />
-                    <span>🌍 اختيار وتعبئة من الأيام والمناسبات العالمية والتربوية</span>
-                  </label>
-                  <span style={{ fontSize: '.72rem', color: 'var(--text-sub)' }}>
-                    (اختياري) تعبئة تلقائية لاسم الفعالية، التاريخ، والأهداف
-                  </span>
-                </div>
-
-                <select
-                  defaultValue=""
-                  onChange={(e) => {
-                    handleSelectInternationalDay(e.target.value);
-                    e.target.value = '';
-                  }}
-                  style={{
-                    background: 'var(--bg-card)',
-                    color: 'var(--text-main)',
-                    fontWeight: 600,
-                    fontSize: '.85rem',
-                    borderColor: 'rgba(99, 102, 241, 0.35)',
-                    padding: '8px 12px',
-                    borderRadius: 8
-                  }}
-                >
-                  <option value="">— اضغط هنا للاختيار من قائمة الأيام العالمية والمناسبات التربوية —</option>
-                  {INTERNATIONAL_DAYS.map(day => (
-                    <option key={day.id} value={day.id}>
-                      {day.icon} {day.day}/{day.month} — {day.name} ({day.categoryLabel})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="fl">
-                <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem' }}>
-                  اسم الفعالية / المناسبة <span style={{ color: 'var(--err)' }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder="مثال: الاحتفال باليوم الوطني السعودي، حفل التخرج السنوي..."
-                  style={{ background: 'var(--bg-input)', color: 'var(--text-main)' }}
-                />
-              </div>
-
+              {/* Category & Academic Year Selection */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
                 <div className="fl">
-                  <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem' }}>تصنيف الفعالية</label>
+                  <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem' }}>
+                    تصنيف ونوع الفعالية <span style={{ color: 'var(--err)' }}>*</span>
+                  </label>
                   <select
                     value={form.category}
-                    onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                    style={{ background: 'var(--bg-input)', color: 'var(--text-main)' }}
+                    onChange={e => {
+                      const newCat = e.target.value;
+                      setForm(f => ({ ...f, category: newCat }));
+                    }}
+                    style={{ background: 'var(--bg-input)', color: 'var(--text-main)', fontWeight: 600 }}
                   >
                     {EVENT_CATEGORIES.map(c => (
                       <option key={c.id} value={c.id}>{c.label}</option>
@@ -1119,6 +1067,83 @@ export default function CenterEventsTab() {
                     ))}
                   </select>
                 </div>
+              </div>
+
+              {/* Conditional Container: If category is International & Awareness Days */}
+              {form.category === 'awareness' && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.09), rgba(168, 85, 247, 0.09))',
+                  border: '1.5px solid rgba(99, 102, 241, 0.35)',
+                  borderRadius: 12,
+                  padding: '14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                  animation: 'fadeIn 0.2s ease'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                    <label style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '.86rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Sparkles style={{ width: 16, height: 16, color: '#6366f1' }} />
+                      <span>🌍 تحديد اليوم العالمي المراد تسجيله كفعالية للمركز:</span>
+                    </label>
+                    <span style={{ fontSize: '.72rem', color: '#6366f1', fontWeight: 700 }}>
+                      ✨ تعبئة تلقائية للاسم والتاريخ والمكان والأهداف
+                    </span>
+                  </div>
+
+                  <select
+                    defaultValue=""
+                    onChange={(e) => {
+                      handleSelectInternationalDay(e.target.value);
+                      e.target.value = '';
+                    }}
+                    style={{
+                      background: 'var(--bg-card)',
+                      color: 'var(--text-main)',
+                      fontWeight: 700,
+                      fontSize: '.85rem',
+                      borderColor: 'rgba(99, 102, 241, 0.45)',
+                      padding: '10px 12px',
+                      borderRadius: 8
+                    }}
+                  >
+                    <option value="">— اضغط هنا لاختيار اليوم العالمي من القائمة المعتمدة —</option>
+                    {INTERNATIONAL_DAYS.map(day => (
+                      <option key={day.id} value={day.id}>
+                        {day.icon} {day.day}/{day.month} — {day.name} ({day.categoryLabel})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Event Name Input (Custom or autofilled) */}
+              <div className="fl">
+                <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>اسم الفعالية / المناسبة <span style={{ color: 'var(--err)' }}>*</span></span>
+                  <span style={{ fontSize: '.72rem', color: 'var(--text-sub)', fontWeight: 400 }}>
+                    (يمكنك كتابة أو تعديل اسم الفعالية بحرية)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  placeholder={
+                    form.category === 'awareness'
+                      ? 'اسم الفعالية أو اليوم العالمي (مثال: الاحتفال باليوم العالمي للتوحد)...'
+                      : form.category === 'national'
+                      ? 'مثال: الاحتفال باليوم الوطني السعودي 96، يوم التأسيس...'
+                      : form.category === 'graduation'
+                      ? 'مثال: حفل تخرج وتكريم أبطال التأهيل 2026...'
+                      : form.category === 'community'
+                      ? 'مثال: ملتقى التوظيف والدمج المهني لذوي الإعاقة...'
+                      : form.category === 'exhibition'
+                      ? 'مثال: بازار ومعرض أنامل مبدعة لمنتجات المستفيدين...'
+                      : 'اكتب اسم الفعالية أو النشاط المطلوب تسجيله...'
+                  }
+                  style={{ background: 'var(--bg-input)', color: 'var(--text-main)', fontWeight: 600 }}
+                />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
