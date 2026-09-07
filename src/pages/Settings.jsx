@@ -420,30 +420,11 @@ export default function Settings() {
     }
   }
 
-  function applyActiveFontSettings(size, weight, family, persist = true) {
-    const activeFamily = family || fontFamily;
-    applyFontVariables(size, weight);
-    if (activeFamily) {
-      applyFontFamily(activeFamily);
-    }
-    if (persist) {
-      localStorage.setItem('scs_fontsize', String(size));
-      localStorage.setItem('scs_fontweight', String(weight));
-      if (activeFamily) localStorage.setItem('scs_fontfamily', activeFamily);
-      if (centerId) {
-        updateCenterSettings(centerId, {
-          fontSize: size,
-          fontWeight: weight,
-          fontFamily: activeFamily,
-        }).catch((err) => console.warn('Could not save to remote center settings:', err));
-      }
-    }
-  }
-
   async function saveAppearance() {
     setSavingAppearance(true);
     try {
-      applyActiveFontSettings(fontSize, fontWeight, fontFamily);
+      applyFontVariables(fontSize, fontWeight);
+      applyFontFamily(fontFamily);
       updateCenterColor(selColor);
       localStorage.setItem('scs_fontsize', String(fontSize));
       localStorage.setItem('scs_fontweight', String(fontWeight));
@@ -459,7 +440,7 @@ export default function Settings() {
         }).catch((err) => console.warn('Could not save to remote center settings:', err));
       }
       persistConfig({ ...center, color: selColor, fontSize, fontWeight, fontFamily });
-      toast('✅ تم حفظ وتطبيق إعدادات المظهر بنجاح', 'ok');
+      toast('✅ تم حفظ وتطبيق إعدادات المظهر بنجاح على كامل النظام', 'ok');
     } catch (e) {
       console.error('Error saving appearance:', e);
       toast('❌ تعذّر حفظ إعدادات المظهر', 'er');
