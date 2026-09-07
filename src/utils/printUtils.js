@@ -4,7 +4,7 @@ const PRINT_CSS = `
   * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0;
-    font-family: 'Tajawal', 'Arial', sans-serif;
+    font-family: 'Dubai', 'Dubai-Regular', 'Tajawal', 'Arial', sans-serif;
     background: #fff !important;
     color: #0f172a !important;
     line-height: 1.6;

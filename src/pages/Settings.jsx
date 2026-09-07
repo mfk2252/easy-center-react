@@ -86,7 +86,7 @@ export default function Settings() {
   const { t } = useLang();
   const [fontSize, setFontSize] = useState(() => Number(localStorage.getItem('scs_fontsize')) || 15);
   const [fontWeight, setFontWeight] = useState(() => localStorage.getItem('scs_fontweight') || '600');
-  const [fontFamily, setFontFamily] = useState(() => localStorage.getItem('scs_fontfamily') || center.fontFamily || 'arabicui');
+  const [fontFamily, setFontFamily] = useState(() => localStorage.getItem('scs_fontfamily') || center.fontFamily || 'dubai');
   const [tab, setTab] = useState('center');
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -1142,14 +1142,14 @@ export default function Settings() {
                   type="button"
                   className="btn btn-g"
                   onClick={() => {
-                    setFontFamily('tajawal');
-                    setFontSize(16);
-                    setFontWeight('400');
-                    applyActiveFontSettings(16, '400', 'tajawal');
+                    setFontFamily('dubai');
+                    setFontSize(15);
+                    setFontWeight('600');
+                    applyActiveFontSettings(15, '600', 'dubai');
                   }}
                   style={{ padding: '8px 16px', fontSize: '.85rem' }}
                 >
-                  🔄 استعادة إعدادات الخط الافتراضية
+                  🔄 استعادة إعدادات الخط الافتراضية (خط دبي)
                 </button>
               </div>
 

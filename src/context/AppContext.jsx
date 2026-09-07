@@ -22,6 +22,7 @@ function applyTheme(color) {
 }
 
 export const FONT_OPTIONS = [
+  { id: 'dubai', name: 'خط دبي (Dubai Font) ⭐ الافتراضي', family: "'Dubai', 'Dubai-Regular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
   { id: 'arabicui', name: 'خط ون يو آي (Arabic UI One UI)', family: "'Arabic UI One UI', 'ArabicUIOneUI', 'ArabicUI', 'MainFont', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
   { id: 'tajawal', name: 'خط تجوال (Tajawal)', family: "'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
   { id: 'cairo', name: 'خط كايرو (Cairo)', family: "'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
@@ -130,7 +131,7 @@ export function AppProvider({ children }) {
     if (dm) { document.body.classList.add('dark'); setDarkMode(true); }
     const fs = localStorage.getItem('scs_fontsize') || '15';
     const fw = localStorage.getItem('scs_fontweight') || '400';
-    const ff = localStorage.getItem('scs_fontfamily') || 'arabicui';
+    const ff = localStorage.getItem('scs_fontfamily') || center.fontFamily || 'dubai';
     const col = localStorage.getItem('scs_color') || center.color || '#1a56db';
     applyFontVariables(fs, fw);
     applyFontFamily(ff);
