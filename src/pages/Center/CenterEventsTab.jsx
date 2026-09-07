@@ -175,19 +175,19 @@ export default function CenterEventsTab() {
 
     setForm(f => ({
       ...f,
-      name: selected.name,
+      name: f.name?.trim() ? f.name : `فعالية بمناسبة ${selected.name}`,
       category: 'awareness',
       date: computedDate,
-      time: '09:00 ص - 12:30 م',
-      location: selected.suggestedLocation || 'مسرح الاحتفالات والصالة الرئيسية بالمركز',
-      locationType: 'internal',
-      targetAudience: selected.targetAudience || 'all',
+      time: f.time || '',
+      location: f.location || '',
+      locationType: f.locationType || 'internal',
+      targetAudience: f.targetAudience || selected.targetAudience || 'all',
       parentsInvited: true,
-      objectives: selected.objectives || '',
-      qualityNotes: `تم اعتماد وتوثيق الفعالية تزامناً مع (${selected.name}) لتحقيق معايير الدمج المجتمعي وتنمية مهارات المستفيدين وفق متطلبات الجودة والاعتماد.`,
+      objectives: f.objectives?.trim() ? f.objectives : (selected.objectives || ''),
+      qualityNotes: f.qualityNotes || `تم توثيق وتنظيم الفعالية تزامناً مع (${selected.name}) لتحقيق معايير الدمج وتنمية مهارات المستفيدين وفق خطة المركز.`,
     }));
 
-    toast(`✨ تم اختيار (${selected.name}) وتعبئة البيانات والأهداف تلقائياً`, 'ok');
+    toast(`✨ تم استيراد بيانات (${selected.name}) كدليل استرشادي، يرجى مراجعة وتحديد العنوان والوقت والمكان والأهداف الخاصة بالمركز`, 'ok');
   };
 
   // Adopt directly from the International Days Browser Modal
@@ -206,22 +206,22 @@ export default function CenterEventsTab() {
       ...EMPTY_EVENT_FORM,
       academicYear: activeYr,
       academicYearId: activeYrId,
-      name: dayObj.name,
+      name: `فعالية بمناسبة ${dayObj.name}`,
       category: 'awareness',
       date: computedDate,
-      time: '09:00 ص - 12:30 م',
-      location: dayObj.suggestedLocation || 'مسرح الاحتفالات والصالة الرئيسية بالمركز',
+      time: '',
+      location: '',
       locationType: 'internal',
       targetAudience: dayObj.targetAudience || 'all',
       parentsInvited: true,
       objectives: dayObj.objectives || '',
-      qualityNotes: `تم اعتماد وتوثيق الفعالية تزامناً مع (${dayObj.name}) لتحقيق معايير الدمج المجتمعي وتنمية مهارات المستفيدين وفق متطلبات الجودة والاعتماد.`,
+      qualityNotes: `تم توثيق وتنظيم الفعالية تزامناً مع (${dayObj.name}) لتحقيق معايير الدمج وتنمية مهارات المستفيدين وفق خطة المركز.`,
     });
 
     setEditId(null);
     setShowIntDaysModal(false);
     setShowModal(true);
-    toast(`✨ تم تجهيز نموذج الاحتفال بـ (${dayObj.name})`, 'ok');
+    toast(`✨ تم فتح نموذج الفعالية المستندة إلى (${dayObj.name}) لتخصيص العنوان والتوقيت والمكان والأهداف من قبل الأخصائيين`, 'ok');
   };
 
   // Print International Days Schedule
@@ -1084,10 +1084,10 @@ export default function CenterEventsTab() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
                     <label style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '.86rem', display: 'flex', alignItems: 'center', gap: 6 }}>
                       <Sparkles style={{ width: 16, height: 16, color: '#6366f1' }} />
-                      <span>🌍 تحديد اليوم العالمي المراد تسجيله كفعالية للمركز:</span>
+                      <span>🌍 الاسترشاد بمناسبة عالمية أو توعوية:</span>
                     </label>
                     <span style={{ fontSize: '.72rem', color: '#6366f1', fontWeight: 700 }}>
-                      ✨ تعبئة تلقائية للاسم والتاريخ والمكان والأهداف
+                      💡 استيراد استرشادي مع إمكانية التخصيص الكامل للعنوان والمكان والوقت والأهداف
                     </span>
                   </div>
 
@@ -1107,7 +1107,7 @@ export default function CenterEventsTab() {
                       borderRadius: 8
                     }}
                   >
-                    <option value="">— اضغط هنا لاختيار اليوم العالمي من القائمة المعتمدة —</option>
+                    <option value="">— اضغط هنا لاختيار المناسبة للاسترشاد بها في الفعالية —</option>
                     {INTERNATIONAL_DAYS.map(day => (
                       <option key={day.id} value={day.id}>
                         {day.icon} {day.day}/{day.month} — {day.name} ({day.categoryLabel})

@@ -1043,222 +1043,358 @@ export default function Settings() {
       {/* ─────────────────────────────────────────────────────────────
           تبويب: المظهر والخطوط (Appearance & Typography)
       ────────────────────────────────────────────────────────────── */}
-      {tab === 'appearance' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div className="wg" style={{ margin: 0 }}>
-            <div className="wg-h">
-              <h3>🎨 تخصيص المظهر ونمط الخطوط</h3>
-            </div>
-            <div className="wg-b" style={{ padding: '22px' }}>
-              
-              {/* اختيار الخط */}
-              <div style={{ marginBottom: 24, padding: '18px', background: 'var(--g0)', borderRadius: 14, border: '1px solid var(--border-color)' }}>
-                <label style={{ fontWeight: 800, display: 'block', marginBottom: 6, fontSize: '.98rem', color: 'var(--text-main)' }}>
-                  🔤 نوع الخط المعتمد للواجهة والتقارير
-                </label>
-                <p style={{ fontSize: '.84rem', color: 'var(--text-sub)', marginBottom: 16 }}>
-                  اختر نمط الخط المناسب، وسيتم تطبيقه فوراً على كافة صفحات النظام والنماذج المطبوعة
-                </p>
+      {tab === 'appearance' && (() => {
+        const activeSavedFont = localStorage.getItem('scs_fontfamily') || center.fontFamily || 'dubai';
+        const activeSavedSize = Number(localStorage.getItem('scs_fontsize')) || 15;
+        const activeSavedWeight = localStorage.getItem('scs_fontweight') || '600';
+        const activeSavedColor = localStorage.getItem('scs_color') || center.color || '#1a56db';
 
+        const hasUnsavedChanges = (
+          fontFamily !== activeSavedFont ||
+          fontSize !== activeSavedSize ||
+          fontWeight !== activeSavedWeight ||
+          selColor !== activeSavedColor
+        );
+
+        const selectedFontObj = FONT_OPTIONS.find(f => f.id === fontFamily) || FONT_OPTIONS[0];
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div className="wg" style={{ margin: 0 }}>
+              <div className="wg-h" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                <h3>🎨 تخصيص المظهر ونمط الخطوط</h3>
+                {hasUnsavedChanges ? (
+                  <span className="bdg b-am" style={{ fontSize: '.8rem', padding: '4px 10px' }}>
+                    ⚠️ توجد تعديلات قيد التجربة (اضغط حفظ للتطبيق)
+                  </span>
+                ) : (
+                  <span className="bdg b-gr" style={{ fontSize: '.8rem', padding: '4px 10px' }}>
+                    ✅ الإعدادات الحالية مطبقة
+                  </span>
+                )}
+              </div>
+              <div className="wg-b" style={{ padding: '22px' }}>
+                
+                {/* تنبيه توضيحي */}
                 <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
-                  gap: 12
+                  padding: '12px 16px',
+                  background: 'rgba(26, 86, 219, 0.06)',
+                  border: '1px solid rgba(26, 86, 219, 0.18)',
+                  borderRadius: 12,
+                  marginBottom: 20,
+                  fontSize: '.86rem',
+                  lineHeight: 1.6,
+                  color: 'var(--text-main)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10
                 }}>
-                  {FONT_OPTIONS.map(f => {
-                    const isSelected = fontFamily === f.id;
-                    return (
-                      <button
-                        key={f.id}
-                        type="button"
-                        onClick={() => {
-                          setFontFamily(f.id);
-                          applyActiveFontSettings(fontSize, fontWeight, f.id);
-                        }}
-                        style={{
-                          padding: '14px 16px',
-                          borderRadius: 12,
-                          border: isSelected ? '2px solid var(--pr)' : '1.5px solid var(--border-color)',
-                          background: isSelected ? 'var(--pr-l)' : 'var(--bg-card)',
-                          color: isSelected ? 'var(--pr-d)' : 'var(--text-main)',
-                          textAlign: 'right',
-                          cursor: 'pointer',
-                          transition: 'all 0.18s ease',
-                          fontFamily: f.family,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          boxShadow: isSelected ? 'var(--sh2)' : 'none',
-                        }}
-                      >
-                        <div>
-                          <div style={{ fontWeight: 800, fontSize: '1rem' }}>{f.name}</div>
-                          <div style={{ fontSize: '.8rem', opacity: 0.85, marginTop: 4 }}>أبجد هوز 123 - عينة الخط</div>
-                        </div>
-                        {isSelected && (
-                          <span style={{
-                            width: 24,
-                            height: 24,
-                            borderRadius: '50%',
-                            background: 'var(--pr)',
-                            color: 'white',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '.85rem',
-                            fontWeight: 900
-                          }}>
-                            ✓
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* أزرار استعادة الافتراضي */}
-              <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 16 }}>
-                <button
-                  type="button"
-                  className="btn btn-g"
-                  onClick={() => {
-                    setFontFamily('dubai');
-                    setFontSize(15);
-                    setFontWeight('600');
-                    applyActiveFontSettings(15, '600', 'dubai');
-                  }}
-                  style={{ padding: '8px 16px', fontSize: '.85rem' }}
-                >
-                  🔄 استعادة إعدادات الخط الافتراضية (خط دبي)
-                </button>
-              </div>
-
-              {/* تحكم الحجم والوزن */}
-              <div className="fg c2" style={{ marginBottom: 24 }}>
-                <div style={{ padding: '16px', background: 'var(--g0)', borderRadius: 12, border: '1px solid var(--border-color)' }}>
-                  <label style={{ fontWeight: 700, fontSize: '.86rem', color: 'var(--text-main)', marginBottom: 10, display: 'block' }}>
-                    📏 {t('settings.fontSize')}
-                  </label>
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                    <button
-                      type="button"
-                      className="btn btn-g"
-                      onClick={() => {
-                        const n = Math.max(12, fontSize - 1);
-                        setFontSize(n);
-                        applyActiveFontSettings(n, fontWeight, fontFamily);
-                      }}
-                      style={{ padding: '8px 14px' }}
-                    >
-                      {t('settings.fontSmaller')} A-
-                    </button>
-
-                    <div style={{
-                      flex: 1,
-                      textAlign: 'center',
-                      fontWeight: 900,
-                      fontSize: '1.2rem',
-                      color: 'var(--pr)',
-                      background: 'var(--bg-card)',
-                      padding: '6px 12px',
-                      borderRadius: 8,
-                      border: '1px solid var(--border-color)'
-                    }}>
-                      {fontSize}px
-                    </div>
-
-                    <button
-                      type="button"
-                      className="btn btn-g"
-                      onClick={() => {
-                        const n = Math.min(22, fontSize + 1);
-                        setFontSize(n);
-                        applyActiveFontSettings(n, fontWeight, fontFamily);
-                      }}
-                      style={{ padding: '8px 14px' }}
-                    >
-                      {t('settings.fontLarger')} A+
-                    </button>
+                  <span style={{ fontSize: '1.2rem' }}>💡</span>
+                  <div>
+                    <strong>ملاحظة هامة:</strong> يمكنك تجربة تغيير نوع الخط والحجم والوزن والألوان بحرية تامة دون أن تتأثر صفحات المنصة، ولن يتم اعتماد وتطبيق أي تعديل على النظام إلا بعد الضغط على زر <strong>"💾 حفظ وتطبيق إعدادات المظهر"</strong> بالأسفل.
                   </div>
                 </div>
 
-                <div style={{ padding: '16px', background: 'var(--g0)', borderRadius: 12, border: '1px solid var(--border-color)' }}>
-                  <label style={{ fontWeight: 700, fontSize: '.86rem', color: 'var(--text-main)', marginBottom: 10, display: 'block' }}>
-                    ⚖️ {t('settings.fontWeight')}
+                {/* اختيار الخط */}
+                <div style={{ marginBottom: 24, padding: '18px', background: 'var(--g0)', borderRadius: 14, border: '1px solid var(--border-color)' }}>
+                  <label style={{ fontWeight: 800, display: 'block', marginBottom: 6, fontSize: '.98rem', color: 'var(--text-main)' }}>
+                    🔤 نوع الخط المعتمد للواجهة والتقارير
                   </label>
-                  <select
-                    value={fontWeight}
-                    onChange={e => {
-                      setFontWeight(e.target.value);
-                      applyActiveFontSettings(fontSize, e.target.value, fontFamily);
+                  <p style={{ fontSize: '.84rem', color: 'var(--text-sub)', marginBottom: 16 }}>
+                    اختر الخط المطلوب لتجربته، وسيتم تفعيله رسمياً لكافة المستخدمين والتقارير بعد الحفظ
+                  </p>
+
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
+                    gap: 12
+                  }}>
+                    {FONT_OPTIONS.map(f => {
+                      const isSelected = fontFamily === f.id;
+                      return (
+                        <button
+                          key={f.id}
+                          type="button"
+                          onClick={() => setFontFamily(f.id)}
+                          style={{
+                            padding: '14px 16px',
+                            borderRadius: 12,
+                            border: isSelected ? '2px solid var(--pr)' : '1.5px solid var(--border-color)',
+                            background: isSelected ? 'var(--pr-l)' : 'var(--bg-card)',
+                            color: isSelected ? 'var(--pr-d)' : 'var(--text-main)',
+                            textAlign: 'right',
+                            cursor: 'pointer',
+                            transition: 'all 0.18s ease',
+                            fontFamily: f.family,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            boxShadow: isSelected ? 'var(--sh2)' : 'none',
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontWeight: 800, fontSize: '1rem' }}>{f.name}</div>
+                            <div style={{ fontSize: '.8rem', opacity: 0.85, marginTop: 4 }}>أبجد هوز 123 - عينة الخط</div>
+                          </div>
+                          {isSelected && (
+                            <span style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: '50%',
+                              background: 'var(--pr)',
+                              color: 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '.85rem',
+                              fontWeight: 900
+                            }}>
+                              ✓
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* أزرار استعادة الافتراضي وإلغاء التغييرات */}
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 18 }}>
+                  <button
+                    type="button"
+                    className="btn btn-g"
+                    onClick={() => {
+                      setFontFamily('dubai');
+                      setFontSize(15);
+                      setFontWeight('600');
+                      setSelColor('#1a56db');
                     }}
-                    style={{ height: 42 }}
+                    style={{ padding: '8px 16px', fontSize: '.85rem' }}
                   >
-                    <option value="400">{t('settings.fontNormal')} (400)</option>
-                    <option value="600">متوسط (600)</option>
-                    <option value="700">{t('settings.fontBold')} (700)</option>
-                    <option value="900">عريض جداً (900)</option>
-                  </select>
+                    🔄 ضبط النموذج على الإعدادات الافتراضية (خط دبي)
+                  </button>
+
+                  {hasUnsavedChanges && (
+                    <button
+                      type="button"
+                      className="btn btn-s"
+                      onClick={() => {
+                        setFontFamily(activeSavedFont);
+                        setFontSize(activeSavedSize);
+                        setFontWeight(activeSavedWeight);
+                        setSelColor(activeSavedColor);
+                        toast('↩️ تم استرجاع الإعدادات المحفوظة حالياً', 'ok');
+                      }}
+                      style={{ padding: '8px 16px', fontSize: '.85rem' }}
+                    >
+                      ↩️ تراجع عن التعديلات غير المحفوظة
+                    </button>
+                  )}
                 </div>
-              </div>
 
-              {/* ألوان السمة الأساسية */}
-              <div style={{ marginBottom: 24, padding: '18px', background: 'var(--g0)', borderRadius: 14, border: '1px solid var(--border-color)' }}>
-                <label style={{ fontWeight: 800, display: 'block', marginBottom: 6, fontSize: '.95rem', color: 'var(--text-main)' }}>
-                  🎨 {t('settings.mainColor')}
-                </label>
-                <p style={{ fontSize: '.82rem', color: 'var(--g5)', marginBottom: 14 }}>
-                  اللون المعتمد للأزرار والتبويبات والعناصر النشطة في المركز
-                </p>
-
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-                  {PRESET_COLORS.map(c => {
-                    const isSel = selColor === c;
-                    return (
+                {/* تحكم الحجم والوزن */}
+                <div className="fg c2" style={{ marginBottom: 24 }}>
+                  <div style={{ padding: '16px', background: 'var(--g0)', borderRadius: 12, border: '1px solid var(--border-color)' }}>
+                    <label style={{ fontWeight: 700, fontSize: '.86rem', color: 'var(--text-main)', marginBottom: 10, display: 'block' }}>
+                      📏 {t('settings.fontSize')}
+                    </label>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                       <button
-                        key={c}
                         type="button"
-                        onClick={() => {
-                          setSelColor(c);
-                          updateCenterColor(c);
-                        }}
-                        style={{
-                          width: 42,
-                          height: 42,
-                          borderRadius: '50%',
-                          background: c,
-                          border: '3px solid white',
-                          cursor: 'pointer',
-                          outline: isSel ? `3px solid ${c}` : '1px solid rgba(0,0,0,0.1)',
-                          outlineOffset: 2,
-                          transform: isSel ? 'scale(1.15)' : 'scale(1)',
-                          transition: 'all 0.18s ease',
-                          boxShadow: isSel ? 'var(--sh2)' : 'none'
-                        }}
-                      />
-                    );
-                  })}
+                        className="btn btn-g"
+                        onClick={() => setFontSize(prev => Math.max(12, prev - 1))}
+                        style={{ padding: '8px 14px' }}
+                      >
+                        {t('settings.fontSmaller')} A-
+                      </button>
+
+                      <div style={{
+                        flex: 1,
+                        textAlign: 'center',
+                        fontWeight: 900,
+                        fontSize: '1.2rem',
+                        color: 'var(--pr)',
+                        background: 'var(--bg-card)',
+                        padding: '6px 12px',
+                        borderRadius: 8,
+                        border: '1px solid var(--border-color)'
+                      }}>
+                        {fontSize}px
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn btn-g"
+                        onClick={() => setFontSize(prev => Math.min(22, prev + 1))}
+                        style={{ padding: '8px 14px' }}
+                      >
+                        {t('settings.fontLarger')} A+
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '16px', background: 'var(--g0)', borderRadius: 12, border: '1px solid var(--border-color)' }}>
+                    <label style={{ fontWeight: 700, fontSize: '.86rem', color: 'var(--text-main)', marginBottom: 10, display: 'block' }}>
+                      ⚖️ {t('settings.fontWeight')}
+                    </label>
+                    <select
+                      value={fontWeight}
+                      onChange={e => setFontWeight(e.target.value)}
+                      style={{ height: 42 }}
+                    >
+                      <option value="400">{t('settings.fontNormal')} (400)</option>
+                      <option value="600">متوسط (600)</option>
+                      <option value="700">{t('settings.fontBold')} (700)</option>
+                      <option value="900">عريض جداً (900)</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
 
-              {/* زر حفظ المظهر */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <button
-                  type="button"
-                  className="btn btn-p btn-lg"
-                  onClick={saveAppearance}
-                  disabled={savingAppearance}
-                  style={{ minWidth: 220, justifyContent: 'center' }}
-                >
-                  {savingAppearance ? '⏳ جارٍ الحفظ...' : '💾 حفظ وتطبيق إعدادات المظهر'}
-                </button>
-              </div>
+                {/* ألوان السمة الأساسية */}
+                <div style={{ marginBottom: 24, padding: '18px', background: 'var(--g0)', borderRadius: 14, border: '1px solid var(--border-color)' }}>
+                  <label style={{ fontWeight: 800, display: 'block', marginBottom: 6, fontSize: '.95rem', color: 'var(--text-main)' }}>
+                    🎨 {t('settings.mainColor')}
+                  </label>
+                  <p style={{ fontSize: '.82rem', color: 'var(--g5)', marginBottom: 14 }}>
+                    اللون المعتمد للأزرار والتبويبات والعناصر النشطة في المركز (يتم تطبيقه عند الحفظ)
+                  </p>
 
+                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {PRESET_COLORS.map(c => {
+                      const isSel = selColor === c;
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setSelColor(c)}
+                          style={{
+                            width: 42,
+                            height: 42,
+                            borderRadius: '50%',
+                            background: c,
+                            border: '3px solid white',
+                            cursor: 'pointer',
+                            outline: isSel ? `3px solid ${c}` : '1px solid rgba(0,0,0,0.1)',
+                            outlineOffset: 2,
+                            transform: isSel ? 'scale(1.15)' : 'scale(1)',
+                            transition: 'all 0.18s ease',
+                            boxShadow: isSel ? 'var(--sh2)' : 'none'
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* لوحة المعاينة التفاعلية الحية قبل الحفظ */}
+                <div style={{
+                  marginBottom: 24,
+                  padding: '20px',
+                  background: 'var(--bg-card)',
+                  borderRadius: 16,
+                  border: '2px dashed var(--border-color)',
+                  position: 'relative'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, borderBottom: '1px solid var(--border-color)', paddingBottom: 10 }}>
+                    <div style={{ fontWeight: 800, fontSize: '.92rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span>🖼️ معاينة حية لاختياراتك الحالية (داخل هذا الإطار فقط):</span>
+                    </div>
+                    <div style={{ fontSize: '.78rem', color: 'var(--text-sub)' }}>
+                      الخط: <strong>{selectedFontObj.name}</strong> | الحجم: <strong>{fontSize}px</strong> | الوزن: <strong>{fontWeight}</strong>
+                    </div>
+                  </div>
+
+                  {/* الحاوية التي تطبق الإعدادات المختارة حصراً للمعاينة */}
+                  <div style={{
+                    fontFamily: selectedFontObj.family,
+                    fontSize: `${fontSize}px`,
+                    fontWeight: fontWeight,
+                    lineHeight: 1.6,
+                    padding: '16px',
+                    borderRadius: 12,
+                    background: 'var(--g0)',
+                    border: '1px solid var(--border-color)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 12
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                      <h4 style={{ margin: 0, fontSize: `${Math.round(fontSize * 1.25)}px`, fontWeight: 'bold', color: selColor }}>
+                        🏥 {center.name || 'مركز التأهيل والتربية الخاصة'}
+                      </h4>
+                      <span style={{
+                        background: `${selColor}18`,
+                        color: selColor,
+                        border: `1px solid ${selColor}40`,
+                        padding: '4px 12px',
+                        borderRadius: 20,
+                        fontSize: `${Math.max(11, Math.round(fontSize * 0.8))}px`,
+                        fontWeight: 'bold'
+                      }}>
+                        ⭐ خطة فردية معتمدة
+                      </span>
+                    </div>
+
+                    <p style={{ margin: 0, color: 'var(--text-main)' }}>
+                      هذا النص يوضح شكل الخط وحجمه وسماكته وتناسقه مع ألوان وهوية المركز قبل الاعتماد النهائي (أبجد هوز حطي كلمن 1234567890).
+                    </p>
+
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginTop: 4 }}>
+                      <button
+                        type="button"
+                        style={{
+                          background: selColor,
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: 8,
+                          padding: '8px 18px',
+                          fontSize: `${fontSize}px`,
+                          fontWeight: 'bold',
+                          cursor: 'default'
+                        }}
+                      >
+                        زر تجريبي باللون المختار
+                      </button>
+                      <button
+                        type="button"
+                        style={{
+                          background: 'transparent',
+                          color: selColor,
+                          border: `1.5px solid ${selColor}`,
+                          borderRadius: 8,
+                          padding: '7px 16px',
+                          fontSize: `${fontSize}px`,
+                          fontWeight: 'bold',
+                          cursor: 'default'
+                        }}
+                      >
+                        زر ثانوي
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* زر حفظ المظهر */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, borderTop: '1px solid var(--border-color)', paddingTop: 18 }}>
+                  <div style={{ fontSize: '.84rem', color: hasUnsavedChanges ? 'var(--warn)' : 'var(--g5)' }}>
+                    {hasUnsavedChanges ? '⚠️ يرجى الضغط على زر الحفظ لاعتماد وتطبيق هذه التعديلات على صفحات المنصة.' : '✔️ إعدادات المظهر متزامنة ومحفوظة بالكامل.'}
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-p btn-lg"
+                    onClick={saveAppearance}
+                    disabled={savingAppearance}
+                    style={{ minWidth: 240, justifyContent: 'center', background: hasUnsavedChanges ? selColor : undefined }}
+                  >
+                    {savingAppearance ? '⏳ جارٍ الحفظ والتطبيق...' : '💾 حفظ وتطبيق إعدادات المظهر'}
+                  </button>
+                </div>
+
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ─────────────────────────────────────────────────────────────
           تبويب: المستخدمون والصلاحيات (Users & Staff Management)

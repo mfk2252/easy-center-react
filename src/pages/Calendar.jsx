@@ -25,6 +25,24 @@ const getColorStyles = (colorKey) => {
 const EMPTY_EV = { title: '', date: '', time: '', color: 'bl', type: 'event', notes: '' };
 const EMPTY_STU_APPT = { stuId: '', type: 'تخاطب ونطق', date: '', time: '', duration: '45 دقيقة', mode: 'inperson', link: '', empId: '', notes: '' };
 const EMPTY_STU_SESS = { stuId: '', type: 'تخاطب ونطق', date: '', time: '', duration: 45, empId: '', status: 'done', notes: '', goals: '', attachData: '', attachName: '' };
+const EMPTY_ADOPT_EVENT = {
+  name: '',
+  date: '',
+  time: '',
+  location: '',
+  locationType: 'internal',
+  academicYear: '',
+  targetAudience: 'all',
+  supervisorEmpIds: [],
+  objectives: '',
+  qualityNotes: '',
+  notes: '',
+  internationalDayName: '',
+  internationalDayIcon: '',
+  internationalDayCategoryLabel: '',
+  suggestedObjectives: '',
+  suggestedLocation: '',
+};
 const SESS_TYPES = ['تخاطب ونطق', 'تعديل سلوك', 'علاج فيزيائي', 'علاج وظيفي', 'تكامل حسي', 'تعليمي وتربوي', 'مهارات اجتماعية', 'أخرى'];
 
 function isEvalType(type) {
@@ -239,6 +257,8 @@ export default function Calendar() {
   const [evalForm, setEvalForm] = useState({ childName:'', parentName:'', diagnosis:'', date:'', time:'', notes:'' });
   const [selDay, setSelDay] = useState(null);
   const [selItem, setSelItem] = useState(null);
+  const [showAdoptModal, setShowAdoptModal] = useState(false);
+  const [adoptForm, setAdoptForm] = useState(EMPTY_ADOPT_EVENT);
 
   function reload() {
     setStudents(lsGet('students'));
@@ -385,28 +405,56 @@ export default function Calendar() {
   const dayItems = selDay ? itemsOnDay(selDay) : [];
   const intDaysOnSelDay = selDateStr ? getInternationalDaysForDate(selDateStr) : [];
 
-  function adoptInternationalDayAsCenterEvent(iday, targetDate) {
+  function openAdoptInternationalDayModal(iday, targetDate) {
+    if (!iday) return;
     const evtYear = targetDate ? targetDate.slice(0, 4) : String(new Date().getFullYear());
-    const newEvt = {
-      id: `evt_${Date.now()}_${uid()}`,
-      name: iday.name,
-      category: iday.category === 'sensory' || iday.category === 'developmental' || iday.category === 'rehab' ? 'awareness' : iday.category === 'national' ? 'national' : 'other',
+    setAdoptForm({
+      name: `فعالية بمناسبة ${iday.name}`,
       date: targetDate || todayStr(),
-      time: '09:00 ص - 12:30 م',
-      location: iday.suggestedLocation || 'مسرح الاحتفالات والصالة الرئيسية بالمركز',
+      time: '',
+      location: '',
       locationType: 'internal',
       academicYear: evtYear,
       targetAudience: iday.targetAudience || 'all',
-      parentsInvited: true,
+      supervisorEmpIds: [],
       objectives: iday.objectives || '',
-      qualityNotes: `تم اعتماد وتوثيق الفعالية تزامناً مع (${iday.name}) لتحقيق معايير الدمج المجتمعي وتنمية مهارات المستفيدين وفق متطلبات الجودة والاعتماد.`,
+      qualityNotes: `تم تنظيم وتوثيق الفعالية تزامناً مع (${iday.name}) لتحقيق معايير الدمج وتنمية مهارات المستفيدين وفق خطة المركز.`,
+      notes: '',
+      internationalDayName: iday.name,
+      internationalDayIcon: iday.icon || '🌍',
+      internationalDayCategoryLabel: iday.categoryLabel || '',
+      suggestedObjectives: iday.objectives || '',
+      suggestedLocation: iday.suggestedLocation || '',
+    });
+    setShowAdoptModal(true);
+  }
+
+  function saveAdoptedEvent() {
+    if (!adoptForm.name || !adoptForm.name.trim() || !adoptForm.date) {
+      toast('⚠️ يرجى كتابة عنوان الفعالية وتحديد تاريخ إقامتها', 'er');
+      return;
+    }
+    const newEvt = {
+      id: `evt_${Date.now()}_${uid()}`,
+      name: adoptForm.name.trim(),
+      category: 'awareness',
+      date: adoptForm.date,
+      time: adoptForm.time?.trim() || '',
+      location: adoptForm.location?.trim() || 'مقر المركز',
+      locationType: adoptForm.locationType || 'internal',
+      academicYear: adoptForm.academicYear || String(new Date().getFullYear()),
+      targetAudience: adoptForm.targetAudience || 'all',
+      parentsInvited: true,
+      objectives: adoptForm.objectives?.trim() || '',
+      qualityNotes: adoptForm.qualityNotes?.trim() || '',
       status: 'upcoming',
       participantStudentIds: [],
-      supervisorEmpIds: [],
-      notes: ''
+      supervisorEmpIds: adoptForm.supervisorEmpIds || [],
+      notes: adoptForm.notes?.trim() || ''
     };
     lsAdd('centerEvents', newEvt);
-    toast(`🎉 تم اعتماد (${iday.name}) وإضافتها لفعاليات المركز بنجاح!`, 'ok');
+    toast(`🎉 تم اعتماد وتوثيق فعالية (${newEvt.name}) بنجاح وتضمينها بالخطة!`, 'ok');
+    setShowAdoptModal(false);
     reload();
   }
 
@@ -749,16 +797,16 @@ export default function Calendar() {
                   {selItem.isInternationalDay && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4, borderTop: '1px solid var(--border-color)', paddingTop: 12 }}>
                       <div style={{ fontSize: '.78rem', color: 'var(--text-sub)' }}>
-                        يمكنك اعتماد هذه المناسبة العالمية كفعالية رسمية بالمركز لتضمينها في الخطة التشغيلية وملف الجودة والاعتماد:
+                        يمكن للأخصائيين توجيه وتنظيم فعالية خاصة بالمركز مستندة إلى هذه المناسبة وتحديد اسمها وتوقيتها ومكانها وأهدافها:
                       </div>
                       <button
                         type="button"
                         className="btn btn-p btn-sm"
                         style={{ borderRadius: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                        onClick={() => adoptInternationalDayAsCenterEvent(selItem.raw, selItem.date)}
+                        onClick={() => openAdoptInternationalDayModal(selItem.raw, selItem.date)}
                       >
                         <span>🎉</span>
-                        <span>اعتماد وتنظيم كفعالية للمركز</span>
+                        <span>توجيه وتنظيم فعالية للمركز</span>
                       </button>
                     </div>
                   )}
@@ -837,10 +885,10 @@ export default function Calendar() {
                               type="button"
                               className="btn btn-p btn-xs"
                               style={{ borderRadius: 8, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px' }}
-                              onClick={() => adoptInternationalDayAsCenterEvent(iday, selDateStr)}
+                              onClick={() => openAdoptInternationalDayModal(iday, selDateStr)}
                             >
                               <span>🎉</span>
-                              <span>اعتماد وتنظيم الفعالية</span>
+                              <span>توجيه وتنظيم الفعالية</span>
                             </button>
                           )}
                         </div>
@@ -1157,6 +1205,221 @@ export default function Calendar() {
             <div className="fa" style={{ padding: '12px 20px', background: 'var(--g0)' }}>
               <button type="button" className="btn btn-p" style={{ background: 'var(--or)', borderColor: 'var(--or)' }} onClick={saveEval}>💾 تسجيل موعد التقييم</button>
               <button type="button" className="btn btn-g" onClick={() => setShowEval(false)}>إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Specialist-directed International Day Center Event Adoption */}
+      {showAdoptModal && (
+        <div className="mbg">
+          <div className="mb mb-large" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
+            <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0, background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}>
+              <div>
+                <h2 style={{ color: '#fff', margin: 0, fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>{adoptForm.internationalDayIcon || '🌍'}</span>
+                  <span>توجيه وتنظيم فعالية للمركز مستندة لمناسبة عالمية</span>
+                </h2>
+                <p style={{ margin: '4px 0 0', color: 'rgba(255,255,255,0.85)', fontSize: '.78rem' }}>
+                  تحديد اسم الفعالية وموعدها ومكانها وأهدافها الخاصة بتوجيه من إدارة المركز والأخصائيين
+                </p>
+              </div>
+            </div>
+
+            <div className="modal-body-scroll" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* Inspiration Reference Banner */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(168, 85, 247, 0.08))',
+                border: '1.5px solid rgba(99, 102, 241, 0.25)',
+                borderRadius: 12,
+                padding: '12px 14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                  <span style={{ fontWeight: 800, fontSize: '.86rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>💡 المناسبة المستند إليها كدليل استرشادي:</span>
+                    <strong style={{ color: 'var(--pr)' }}>{adoptForm.internationalDayName}</strong>
+                  </span>
+                  {adoptForm.internationalDayCategoryLabel && (
+                    <span style={{ fontSize: '.72rem', background: 'var(--pr-l)', color: 'var(--pr)', padding: '2px 8px', borderRadius: 999, fontWeight: 700 }}>
+                      {adoptForm.internationalDayCategoryLabel}
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: '.78rem', color: 'var(--text-sub)', lineHeight: 1.5 }}>
+                  المعلومات التالية قابلة للتخصيص الكامل من قبل الأخصائيين لاختيار عنوان الفعالية الأنسب للمركز ومكانها وتوقيتها وأهدافها المحددة.
+                </div>
+              </div>
+
+              {/* Form Fields */}
+              <div className="fg c2">
+                <div className="fl full">
+                  <label style={{ fontWeight: 700, fontSize: '.84rem', color: 'var(--text-main)' }}>
+                    عنوان الفعالية المعتمد بالمركز <span className="req">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={adoptForm.name}
+                    onChange={e => setAdoptForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="اكتب اسم أو عنوان الفعالية الخاص بالمركز (مثال: مهرجان أبطال التحدي بمناسبة...)"
+                    style={{ background: 'var(--bg-input)', fontWeight: 600 }}
+                    autoFocus
+                  />
+                </div>
+
+                <div className="fl">
+                  <label style={{ fontWeight: 700, fontSize: '.84rem', color: 'var(--text-main)' }}>
+                    تاريخ إقامة الفعالية <span className="req">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={adoptForm.date}
+                    onChange={e => setAdoptForm(f => ({ ...f, date: e.target.value }))}
+                    style={{ background: 'var(--bg-input)' }}
+                  />
+                </div>
+
+                <div className="fl">
+                  <label style={{ fontWeight: 700, fontSize: '.84rem', color: 'var(--text-main)' }}>
+                    توقيت وساعات الفعالية
+                  </label>
+                  <input
+                    type="text"
+                    value={adoptForm.time}
+                    onChange={e => setAdoptForm(f => ({ ...f, time: e.target.value }))}
+                    placeholder="مثال: 09:30 ص - 12:00 م"
+                    style={{ background: 'var(--bg-input)' }}
+                  />
+                </div>
+
+                <div className="fl">
+                  <label style={{ fontWeight: 700, fontSize: '.84rem', color: 'var(--text-main)' }}>
+                    مكان إقامة الفعالية بالمركز / خارجه
+                  </label>
+                  <input
+                    type="text"
+                    value={adoptForm.location}
+                    onChange={e => setAdoptForm(f => ({ ...f, location: e.target.value }))}
+                    placeholder="مثال: الصالة متعددة الأغراض، المسرح، حديقة المركز..."
+                    style={{ background: 'var(--bg-input)' }}
+                  />
+                </div>
+
+                <div className="fl">
+                  <label style={{ fontWeight: 700, fontSize: '.84rem', color: 'var(--text-main)' }}>
+                    نوع الموقع
+                  </label>
+                  <select
+                    value={adoptForm.locationType}
+                    onChange={e => setAdoptForm(f => ({ ...f, locationType: e.target.value }))}
+                    style={{ background: 'var(--bg-input)' }}
+                  >
+                    <option value="internal">داخلي (ضمن مرافق المركز)</option>
+                    <option value="external">خارجي (ميداني / مجتمعي)</option>
+                  </select>
+                </div>
+
+                <div className="fl full">
+                  <label style={{ fontWeight: 700, fontSize: '.84rem', color: 'var(--text-main)' }}>
+                    الفئة المستهدفة من الفعالية
+                  </label>
+                  <select
+                    value={adoptForm.targetAudience}
+                    onChange={e => setAdoptForm(f => ({ ...f, targetAudience: e.target.value }))}
+                    style={{ background: 'var(--bg-input)' }}
+                  >
+                    <option value="all">جميع المستفيدين والطلاب</option>
+                    <option value="autism">مستفيدي طيف التوحد</option>
+                    <option value="down">مستفيدي متلازمة داون</option>
+                    <option value="cp">مستفيدي الشلل الدماغي والإعاقات الحركية</option>
+                    <option value="parents">أولياء الأمور والأسر</option>
+                    <option value="specialists">الكادر التعليمي والتأهيلي</option>
+                    <option value="community">المجتمع المحلي والشركاء</option>
+                  </select>
+                </div>
+
+                <div className="fl full">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <label style={{ fontWeight: 700, fontSize: '.84rem', color: 'var(--text-main)' }}>
+                      الأهداف التأهيلية والتربوية الموجهة من الأخصائيين
+                    </label>
+                    {adoptForm.suggestedObjectives && (
+                      <button
+                        type="button"
+                        className="btn btn-xs btn-g"
+                        style={{ fontSize: '.72rem', borderRadius: 6, padding: '2px 8px' }}
+                        onClick={() => setAdoptForm(f => ({ ...f, objectives: f.suggestedObjectives }))}
+                      >
+                        💡 استعادة الأهداف المقترحة استرشادياً
+                      </button>
+                    )}
+                  </div>
+                  <textarea
+                    rows={3}
+                    value={adoptForm.objectives}
+                    onChange={e => setAdoptForm(f => ({ ...f, objectives: e.target.value }))}
+                    placeholder="اكتب أهداف الفعالية المحددة من قبل الفريق التأهيلي والمخرجات المرجوة..."
+                    style={{ background: 'var(--bg-input)', lineHeight: 1.6 }}
+                  />
+                </div>
+
+                <div className="fl full">
+                  <label style={{ fontWeight: 700, fontSize: '.84rem', color: 'var(--text-main)' }}>
+                    المشرفون والمنسقون من الكادر
+                  </label>
+                  <select
+                    multiple
+                    value={adoptForm.supervisorEmpIds}
+                    onChange={e => {
+                      const selectedValues = Array.from(e.target.selectedOptions, opt => opt.value);
+                      setAdoptForm(f => ({ ...f, supervisorEmpIds: selectedValues }));
+                    }}
+                    style={{ background: 'var(--bg-input)', minHeight: 70 }}
+                  >
+                    {specialists.map(sp => (
+                      <option key={sp.id} value={sp.id}>
+                        {sp.name} — ({sp.role})
+                      </option>
+                    ))}
+                  </select>
+                  <small style={{ fontSize: '.72rem', color: 'var(--text-sub)' }}>
+                    (يمكنك الضغط مع زر Ctrl/Cmd لتحديد أكثر من أخصائي مشرف)
+                  </small>
+                </div>
+
+                <div className="fl full">
+                  <label style={{ fontWeight: 700, fontSize: '.84rem', color: 'var(--text-main)' }}>
+                    ملاحظات وتوجيهات تنظيمية
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={adoptForm.notes}
+                    onChange={e => setAdoptForm(f => ({ ...f, notes: e.target.value }))}
+                    placeholder="أي ترتيبات لوجستية أو ملاحظات إضافية خاصة بالمؤسسة..."
+                    style={{ background: 'var(--bg-input)' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="fa" style={{ padding: '12px 20px', background: 'var(--g0)' }}>
+              <button
+                type="button"
+                className="btn btn-p"
+                style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', borderColor: '#4f46e5', fontWeight: 700 }}
+                onClick={saveAdoptedEvent}
+              >
+                💾 حفظ واعتماد الفعالية في الخطة والتقويم
+              </button>
+              <button
+                type="button"
+                className="btn btn-g"
+                onClick={() => setShowAdoptModal(false)}
+              >
+                إلغاء
+              </button>
             </div>
           </div>
         </div>
