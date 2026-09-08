@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { useLang, getWelcomeMessage } from '../../context/LanguageContext';
 import {
   signInWithGoogle, signInWithEmailPassword, signInStaffOrParent,
-  signUpManagerWithEmailPassword,
+  signUpManagerWithEmailPassword, startDemoSession,
 } from '../../firebase/auth';
 
 const FEATURES = [
@@ -17,13 +17,24 @@ export default function LoginScreen() {
   const { t } = useLang();
 
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
-  const [identifier, setIdentifier] = useState(''); // بريد أو اسم مستخدم (دخول) / بريد فقط (تسجيل)
+  const [identifier, setIdentifier] = useState(''); // بريد أو اسم مستخدم
+  const [managerName, setManagerName] = useState(''); // اسم المدير عند التسجيل
+  const [centerName, setCenterName] = useState(''); // اسم المركز عند التسجيل
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  // حالة نافذة طلب الديمو التفاعلي (Lead Capture Modal)
+  const [showDemoModal, setShowDemoModal] = useState(false);
+  const [demoName, setDemoName] = useState('');
+  const [demoEmail, setDemoEmail] = useState('');
+  const [demoPhone, setDemoPhone] = useState('');
+  const [demoOrg, setDemoOrg] = useState('');
+  const [demoErr, setDemoErr] = useState('');
+  const [demoLoading, setDemoLoading] = useState(false);
 
   function switchMode(next) {
     setMode(next);
@@ -72,17 +83,54 @@ export default function LoginScreen() {
   async function handleSignup() {
     setErr('');
     if (!identifier.trim() || !identifier.includes('@')) { setErr('أدخل بريداً إلكترونياً صحيحاً'); return; }
+    if (!managerName.trim()) { setErr('يرجى إدخال اسم مدير المركز'); return; }
+    if (!centerName.trim()) { setErr('يرجى إدخال اسم المركز'); return; }
     if (!password || password.length < 6) { setErr('كلمة المرور يجب أن تكون 6 أحرف على الأقل'); return; }
     if (password !== confirmPassword) { setErr('كلمتا المرور غير متطابقتين'); return; }
     setLoading(true);
     try {
-      const user = await signUpManagerWithEmailPassword(identifier, password);
-      toast('✅ تم إنشاء حسابك! لنكمل إعداد مركزك', 'ok');
+      const user = await signUpManagerWithEmailPassword({
+        email: identifier,
+        password,
+        managerName: managerName.trim(),
+        centerName: centerName.trim(),
+      });
+      toast('🎉 تم إنشاء حساب المركز وتفعيل تجربة مجانية لمدة 5 أيام!', 'ok');
       login(user);
     } catch (e) {
       setErr(e.message || 'تعذّر إنشاء الحساب');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleStartDemo(e) {
+    if (e) e.preventDefault();
+    setDemoErr('');
+    if (!demoEmail.trim() || !demoEmail.includes('@')) {
+      setDemoErr('يرجى إدخال بريد إلكتروني صحيح لتمكين التجربة والتواصل');
+      return;
+    }
+    if (!demoName.trim()) {
+      setDemoErr('يرجى إدخال الاسم الكريم');
+      return;
+    }
+
+    setDemoLoading(true);
+    try {
+      const demoUser = await startDemoSession({
+        name: demoName.trim(),
+        email: demoEmail.trim(),
+        phone: demoPhone.trim(),
+        org: demoOrg.trim(),
+      });
+      setShowDemoModal(false);
+      login(demoUser);
+    } catch (err) {
+      console.error(err);
+      setDemoErr('تعذر بدء الجلسة التجريبية، يرجى المحاولة ثانية');
+    } finally {
+      setDemoLoading(false);
     }
   }
 
@@ -253,25 +301,46 @@ export default function LoginScreen() {
                   </>
                 ) : (
                   <>
+                    <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 9, padding: '9px 12px', marginBottom: 12, fontSize: '.78rem', color: '#065f46', lineHeight: 1.5 }}>
+                      ✨ <strong>فترة تجريبية 5 أيام مجاناً:</strong> وصول كامل لكافة الصلاحيات وإدارة الطلاب والخطط بدون أي التزام مالي.
+                    </div>
                     <div className="lf">
-                      <label>البريد الإلكتروني</label>
+                      <label>اسم مدير المركز</label>
+                      <input
+                        value={managerName}
+                        onChange={e => setManagerName(e.target.value)}
+                        placeholder="مثال: د. ماجد السعيد"
+                        onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+                      />
+                    </div>
+                    <div className="lf">
+                      <label>اسم المركز أو المنشأة</label>
+                      <input
+                        value={centerName}
+                        onChange={e => setCenterName(e.target.value)}
+                        placeholder="مثال: مركز الأمل للتأهيل"
+                        onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+                      />
+                    </div>
+                    <div className="lf">
+                      <label>البريد الإلكتروني الرسمي للمركز</label>
                       <input
                         value={identifier}
                         onChange={e => setIdentifier(e.target.value)}
                         type="email"
-                        placeholder="you@example.com"
+                        placeholder="manager@center.com"
                         autoComplete="email"
                         dir="ltr"
                         onKeyDown={e => e.key === 'Enter' && handleSubmit()}
                       />
                     </div>
                     <div className="lf">
-                      <label>كلمة المرور</label>
+                      <label>كلمة المرور (6 خانات فأكثر)</label>
                       <input
                         value={password}
                         onChange={e => setPassword(e.target.value)}
                         type={showPass ? 'text' : 'password'}
-                        placeholder="6 أحرف على الأقل"
+                        placeholder="••••••••"
                         autoComplete="new-password"
                         dir="ltr"
                         onKeyDown={e => e.key === 'Enter' && handleSubmit()}
@@ -299,7 +368,7 @@ export default function LoginScreen() {
                 <button className="login-btn" onClick={handleSubmit} disabled={loading}>
                   {loading
                     ? t('loginLoading')
-                    : mode === 'login' ? `${t('login')} ←` : 'إنشاء الحساب والبدء ←'}
+                    : mode === 'login' ? `${t('login')} ←` : 'إنشاء الحساب وبدء التجربة (5 أيام) ←'}
                 </button>
 
                 <div className="login-footer">
@@ -308,10 +377,122 @@ export default function LoginScreen() {
                     : <>لديك حساب بالفعل؟ <a href="#" onClick={e => { e.preventDefault(); switchMode('login'); }}>سجّل الدخول</a></>}
                 </div>
               </div>
+
+              {/* بطاقة الديمو التفاعلي للزوار والعملاء المحتملين */}
+              <div className="login-demo-box">
+                <h4>🎮 تجربة سريعة للنظام بحساب ديمو</h4>
+                <p>استكشف ملفات الطلاب، الجلسات، المقاييس والتقارير الفورية ببيانات حقيقية جاهزة دون الحاجة لتسجيل حساب جديد.</p>
+                <button
+                  type="button"
+                  className="login-demo-btn"
+                  onClick={() => setShowDemoModal(true)}
+                >
+                  <span>🚀 بدء التجربة التفاعلية (ديمو فوري)</span>
+                </button>
+              </div>
+
             </div>
           </div>
         </div>
       </div>
+
+      {/* نافذة طلب الديمو وجمع بيانات العميل المحتمل (Lead Capture Modal) */}
+      {showDemoModal && (
+        <div className="demo-modal-overlay" onClick={() => !demoLoading && setShowDemoModal(false)}>
+          <div className="demo-modal-card" onClick={e => e.stopPropagation()}>
+            <div className="demo-modal-hd">
+              <button
+                type="button"
+                className="demo-modal-close"
+                onClick={() => setShowDemoModal(false)}
+                disabled={demoLoading}
+                aria-label="إغلاق"
+              >
+                ✕
+              </button>
+              <h3>🚀 تجربة مجانية فورية للنظام (وضع الديمو)</h3>
+              <p>يرجى كتابة بريدك الإلكتروني وبياناتك للتواصل وتقديم العرض المناسب لمركزك، وسننقلك فوراً للبيئة التفاعلية المجهزة بالبيانات.</p>
+            </div>
+
+            <form className="demo-modal-body" onSubmit={handleStartDemo}>
+              {demoErr && <div className="login-err">⚠️ {demoErr}</div>}
+
+              <div className="lf">
+                <label>الاسم الكريم *</label>
+                <input
+                  required
+                  value={demoName}
+                  onChange={e => setDemoName(e.target.value)}
+                  placeholder="مثال: د. عبدالرحمن أو أ. فاطمة"
+                  disabled={demoLoading}
+                />
+              </div>
+
+              <div className="lf">
+                <label>البريد الإلكتروني الخاص بك * (للتواصل وإرسال العروض)</label>
+                <input
+                  required
+                  type="email"
+                  value={demoEmail}
+                  onChange={e => setDemoEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  dir="ltr"
+                  disabled={demoLoading}
+                />
+              </div>
+
+              <div className="lf">
+                <label>رقم الجوال أو الواتساب (للتواصل السريع)</label>
+                <input
+                  type="tel"
+                  value={demoPhone}
+                  onChange={e => setDemoPhone(e.target.value)}
+                  placeholder="05xxxxxxxx أو +966..."
+                  dir="ltr"
+                  disabled={demoLoading}
+                />
+              </div>
+
+              <div className="lf">
+                <label>اسم المركز أو الجمعية (إن وجد)</label>
+                <input
+                  value={demoOrg}
+                  onChange={e => setDemoOrg(e.target.value)}
+                  placeholder="مثال: مركز الأمل لتنمية المهارات"
+                  disabled={demoLoading}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                <button
+                  type="submit"
+                  className="login-btn"
+                  style={{ flex: 1, background: 'linear-gradient(135deg,#0284c7,#0369a1)' }}
+                  disabled={demoLoading}
+                >
+                  {demoLoading ? 'جاري تهيئة بيئة الديمو...' : 'بدء التجربة المباشرة الآن 🚀'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDemoModal(false)}
+                  disabled={demoLoading}
+                  style={{
+                    padding: '10px 16px',
+                    border: '1px solid var(--border-color)',
+                    background: 'transparent',
+                    borderRadius: 10,
+                    cursor: 'pointer',
+                    color: 'var(--text-sub)',
+                    fontWeight: 600,
+                  }}
+                >
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

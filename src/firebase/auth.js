@@ -280,10 +280,24 @@ export async function signInWithEmailPassword(email, password) {
 
 // ============================================================
 // تسجيل ذاتي لمدير مركز جديد عبر Email/Password (بديل لتسجيل Google الأول).
-// نفس منطق إنشاء المركز في signInWithGoogle بالضبط، لكن بدون Google.
+// نفس منطق إنشاء المركز في signInWithGoogle بالضبط، مع فترة 5 أيام تجريبية كاملة.
 // ============================================================
-export async function signUpManagerWithEmailPassword(email, password) {
-  const trimmedEmail = email.trim();
+export async function signUpManagerWithEmailPassword(emailOrOptions, passwordArg, managerNameArg, centerNameArg) {
+  let email, password, managerName, centerName;
+  if (typeof emailOrOptions === 'object' && emailOrOptions !== null) {
+    email = emailOrOptions.email;
+    password = emailOrOptions.password;
+    managerName = emailOrOptions.managerName;
+    centerName = emailOrOptions.centerName;
+  } else {
+    email = emailOrOptions;
+    password = passwordArg;
+    managerName = managerNameArg;
+    centerName = centerNameArg;
+  }
+
+  const trimmedEmail = (email || '').trim();
+  if (!trimmedEmail) throw new Error('يرجى إدخال بريد إلكتروني صحيح');
   if (isPlatformAdminEmail(trimmedEmail)) {
     throw new Error('هذا البريد محجوز، لا يمكن استخدامه لإنشاء حساب مركز');
   }
@@ -296,20 +310,27 @@ export async function signUpManagerWithEmailPassword(email, password) {
   }
 
   const user = result.user;
+  const cName = (centerName || '').trim();
+  const mName = (managerName || '').trim();
 
   await setDoc(doc(db, 'centers', user.uid), {
     centerId: user.uid,
     managerId: user.uid,
     managerEmail: user.email,
     ownerEmail: user.email,
-    managerName: '',
-    name: '', centerName: '', type: '', phone: '', logo: '', logoUrl: '',
+    managerName: mName,
+    name: cName,
+    centerName: cName,
+    type: 'مركز تأهيل وتربية خاصة',
+    phone: '',
+    logo: '',
+    logoUrl: '',
     color: '#1a56db',
     currency: 'SAR',
     createdAt: serverTimestamp(),
-    isSetup: false,
-    setupCompleted: false,
-    status: 'pending_setup',
+    isSetup: Boolean(cName),
+    setupCompleted: Boolean(cName),
+    status: 'active',
     subscription: {
       status: 'trial',
       trialExpiry: getTrialExpiry(),
@@ -317,15 +338,26 @@ export async function signUpManagerWithEmailPassword(email, password) {
     },
   });
 
+  // حفظ العميل المحتمل في سجلات المنصة للمتابعة والتواصل
+  try {
+    saveTrialLead({
+      name: mName || 'مدير جديد',
+      email: user.email,
+      org: cName || 'مركز جديد',
+      type: 'registered_trial',
+      note: 'تسجيل حساب مركز جديد تجريبي (5 أيام)',
+    }).catch(() => {});
+  } catch (_) {}
+
   return {
     uid: user.uid,
     email: user.email,
-    name: 'المدير',
+    name: mName || 'المدير',
     role: 'manager',
     centerId: user.uid,
-    isNewCenter: true,
-    needsSetup: true,
-    subscription: { allowed: true, reason: 'trial', daysLeft: TRIAL_DAYS },
+    isNewCenter: !cName,
+    needsSetup: !cName,
+    subscription: { allowed: true, reason: 'trial', status: 'trial', daysLeft: TRIAL_DAYS },
   };
 }
 
@@ -464,3 +496,164 @@ export async function signOutUser() {
 export function onAuthChange(callback) {
   return onAuthStateChanged(auth, callback);
 }
+
+// ============================================================
+// إدارة طلبات تجربة الديمو والعملاء المحتملين (Trial Leads)
+// ============================================================
+
+/**
+ * حفظ بيانات العميل المحتمل عند طلب تجربة ديمو أو تسجيل تجريبي
+ */
+export async function saveTrialLead({ name, email, phone, org, note = '', type = 'demo_request' }) {
+  const cleanEmail = (email || '').trim().toLowerCase();
+  const cleanName = (name || '').trim();
+  const cleanPhone = (phone || '').trim();
+  const cleanOrg = (org || '').trim();
+
+  const leadData = {
+    id: 'lead_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+    name: cleanName,
+    email: cleanEmail,
+    phone: cleanPhone,
+    org: cleanOrg,
+    note,
+    type,
+    status: 'new', // new | contacted | converted | closed
+    createdAt: new Date().toISOString(),
+    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+  };
+
+  // 1) حفظ محلي كنسخة احتياطية سريعة وموثوقة دائماً
+  try {
+    const localLeads = JSON.parse(localStorage.getItem('scs_trial_leads_backup') || '[]');
+    localLeads.unshift(leadData);
+    localStorage.setItem('scs_trial_leads_backup', JSON.stringify(localLeads.slice(0, 200)));
+  } catch (_) {}
+
+  // 2) حفظ في سحابة Firestore في كولكشن trialLeads
+  try {
+    await setDoc(doc(db, 'trialLeads', leadData.id), {
+      ...leadData,
+      serverTime: serverTimestamp(),
+    });
+  } catch (err) {
+    console.warn('Could not write lead to Firestore, saved to local backup:', err);
+  }
+
+  return leadData;
+}
+
+/**
+ * جلب قائمة العملاء المحتملين لمالك المنصة من السحابة والنسخ الاحتياطية
+ */
+export async function getTrialLeads() {
+  const leadsMap = new Map();
+
+  // جلب النسخة المحلية أولاً
+  try {
+    const localLeads = JSON.parse(localStorage.getItem('scs_trial_leads_backup') || '[]');
+    for (const item of localLeads) {
+      if (item.id) leadsMap.set(item.id, item);
+    }
+  } catch (_) {}
+
+  // جلب من Firestore
+  try {
+    const snap = await getDocs(collection(db, 'trialLeads'));
+    snap.forEach(d => {
+      const data = d.data();
+      leadsMap.set(d.id, { id: d.id, ...data });
+    });
+  } catch (err) {
+    console.warn('getTrialLeads Firestore read note:', err);
+  }
+
+  const allLeads = Array.from(leadsMap.values());
+  allLeads.sort((a, b) => {
+    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : (a.serverTime?.seconds ? a.serverTime.seconds * 1000 : 0);
+    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : (b.serverTime?.seconds ? b.serverTime.seconds * 1000 : 0);
+    return dateB - dateA;
+  });
+
+  return allLeads;
+}
+
+/**
+ * تحديث حالة متابعة العميل المحتمل (مثلاً: تم التواصل أو تم التحويل)
+ */
+export async function updateTrialLeadStatus(leadId, status, notes = '') {
+  try {
+    const localLeads = JSON.parse(localStorage.getItem('scs_trial_leads_backup') || '[]');
+    const updated = localLeads.map(l => l.id === leadId ? { ...l, status, adminNotes: notes, updatedAt: new Date().toISOString() } : l);
+    localStorage.setItem('scs_trial_leads_backup', JSON.stringify(updated));
+  } catch (_) {}
+
+  try {
+    await setDoc(doc(db, 'trialLeads', leadId), {
+      status,
+      adminNotes: notes,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+  } catch (e) {
+    console.warn('updateTrialLeadStatus firestore note:', e);
+  }
+}
+
+/**
+ * حذف عميل محتمل من القائمة
+ */
+export async function deleteTrialLead(leadId) {
+  try {
+    const localLeads = JSON.parse(localStorage.getItem('scs_trial_leads_backup') || '[]');
+    const filtered = localLeads.filter(l => l.id !== leadId);
+    localStorage.setItem('scs_trial_leads_backup', JSON.stringify(filtered));
+  } catch (_) {}
+
+  try {
+    await deleteDoc(doc(db, 'trialLeads', leadId));
+  } catch (e) {
+    console.warn('deleteTrialLead firestore note:', e);
+  }
+}
+
+/**
+ * بدء جلسة ديمو تفاعلية فورية للعميل المحتمل مع تهيئة البيانات النموذجية
+ */
+export async function startDemoSession({ name, email, phone, org }) {
+  // 1) حفظ العميل فوراً لمتابعة المبيعات
+  await saveTrialLead({
+    name: name || 'زائر تجريبي',
+    email,
+    phone,
+    org,
+    type: 'interactive_demo',
+    note: 'بدء تجربة تفاعلية سريعة للديمو',
+  });
+
+  // 2) تهيئة البيانات التجريبية الغنية
+  const { initDemoData } = await import('../utils/demoData');
+  initDemoData('demo_center', name || org);
+
+  // 3) كائن المستخدم التجريبي
+  const demoUser = {
+    uid: 'demo_user_' + Date.now(),
+    email: email || 'demo@easycenter.local',
+    name: name || 'زائر تجريبي',
+    role: 'manager',
+    centerId: 'demo_center',
+    isDemo: true,
+    demoVisitor: { name, email, phone, org },
+    needsSetup: false,
+    isNewCenter: false,
+    subscription: {
+      allowed: true,
+      reason: 'demo',
+      status: 'trial',
+      daysLeft: 5,
+      isDemo: true,
+    },
+  };
+
+  return demoUser;
+}
+

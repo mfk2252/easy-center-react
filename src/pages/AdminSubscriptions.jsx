@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, doc, updateDoc, serverTimestamp, Timestamp, query, limit } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { isPlatformAdminEmail } from '../firebase/auth';
+import { isPlatformAdminEmail, getTrialLeads, updateTrialLeadStatus, deleteTrialLead, saveTrialLead } from '../firebase/auth';
 import UnifiedPageHeader from '../components/ui/UnifiedPageHeader';
 
 const COUNTRY_BY_CODE = {
@@ -17,7 +17,9 @@ function tsToDate(ts) { return ts?.toDate ? ts.toDate() : (ts ? new Date(ts.seco
 function fmtDate(d) { return d ? d.toLocaleDateString('ar-SA', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'; }
 
 export default function AdminSubscriptions() {
+  const [activeTab, setActiveTab] = useState('centers'); // 'centers' | 'leads'
   const [centers, setCenters] = useState([]);
+  const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,10 +27,23 @@ export default function AdminSubscriptions() {
   const [customMonths, setCustomMonths] = useState({});
   const [expandedId, setExpandedId] = useState(null);
 
-  useEffect(() => { loadCenters(); }, []);
+  // فلاتر وميزات تبويب العملاء المحتملين (Leads)
+  const [leadSearch, setLeadSearch] = useState('');
+  const [leadFilterStatus, setLeadFilterStatus] = useState('all');
+  const [showAddLeadModal, setShowAddLeadModal] = useState(false);
+  const [newLeadForm, setNewLeadForm] = useState({ name: '', email: '', phone: '', org: '', note: '' });
+
+  useEffect(() => {
+    loadAllData();
+  }, []);
+
+  async function loadAllData() {
+    setLoading(true);
+    await Promise.all([loadCenters(), loadLeads()]);
+    setLoading(false);
+  }
 
   async function loadCenters() {
-    setLoading(true);
     try {
       const q = query(collection(db, 'centers'), limit(150));
       const snap = await getDocs(q);
@@ -36,9 +51,55 @@ export default function AdminSubscriptions() {
       data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       setCenters(data);
     } catch(e) {
-      console.error("خطأ جلب البيانات:", e);
-    } finally {
-      setLoading(false);
+      console.error("خطأ جلب المراكز:", e);
+    }
+  }
+
+  async function loadLeads() {
+    try {
+      const items = await getTrialLeads();
+      setLeads(items);
+    } catch (e) {
+      console.error("خطأ جلب العملاء المحتملين:", e);
+    }
+  }
+
+  async function handleUpdateLeadStatus(leadId, status) {
+    try {
+      await updateTrialLeadStatus(leadId, status);
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status } : l));
+    } catch (e) {
+      alert('تعذر تحديث حالة العميل: ' + e.message);
+    }
+  }
+
+  async function handleDeleteLead(leadId) {
+    if (!window.confirm('هل أنت متأكد من حذف هذا العميل من القائمة؟')) return;
+    try {
+      await deleteTrialLead(leadId);
+      setLeads(prev => prev.filter(l => l.id !== leadId));
+    } catch (e) {
+      alert('تعذر الحذف: ' + e.message);
+    }
+  }
+
+  async function handleAddManualLead(e) {
+    e.preventDefault();
+    if (!newLeadForm.email || !newLeadForm.name) {
+      alert('يرجى كتابة الاسم والبريد الإلكتروني على الأقل');
+      return;
+    }
+    try {
+      const saved = await saveTrialLead({
+        ...newLeadForm,
+        type: 'manual_lead',
+      });
+      setLeads(prev => [saved, ...prev]);
+      setShowAddLeadModal(false);
+      setNewLeadForm({ name: '', email: '', phone: '', org: '', note: '' });
+      alert('✅ تم إضافة العميل المحتمل بنجاح');
+    } catch (err) {
+      alert('حدث خطأ أثناء الإضافة: ' + err.message);
     }
   }
 
@@ -161,6 +222,26 @@ export default function AdminSubscriptions() {
     suspended: enriched.filter(c => c.subscription?.status === 'suspended').length,
   }), [enriched]);
 
+  const leadStats = useMemo(() => ({
+    total: leads.length,
+    newCount: leads.filter(l => !l.status || l.status === 'new').length,
+    contacted: leads.filter(l => l.status === 'contacted').length,
+    converted: leads.filter(l => l.status === 'converted').length,
+    demoTrials: leads.filter(l => l.type === 'interactive_demo' || l.type === 'demo_request').length,
+    registeredTrials: leads.filter(l => l.type === 'registered_trial').length,
+  }), [leads]);
+
+  const filteredLeads = useMemo(() => leads.filter(l => {
+    const term = leadSearch.toLowerCase();
+    const matchSearch =
+      (l.name || '').toLowerCase().includes(term) ||
+      (l.email || '').toLowerCase().includes(term) ||
+      (l.phone || '').toLowerCase().includes(term) ||
+      (l.org || '').toLowerCase().includes(term);
+    const matchStatus = leadFilterStatus === 'all' || (l.status || 'new') === leadFilterStatus;
+    return matchSearch && matchStatus;
+  }), [leads, leadSearch, leadFilterStatus]);
+
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-main)' }}>⏳ جارٍ تحميل البيانات...</div>;
 
   const DURATION_BTNS = [
@@ -172,21 +253,118 @@ export default function AdminSubscriptions() {
       <UnifiedPageHeader
         icon="🔐"
         title="إدارة اشتراكات المنصة والمراكز"
-        subtitle="إدارة وتفعيل تراخيص المراكز المشتركة، تمديد الفترات، ومتابعة حالات الاشتراكات السحابية"
-        badge={`${centers.length} مراكز مسجلة`}
+        subtitle="إدارة تراخيص المراكز، تمديد الفترات، ومتابعة طلبات الديمو والعملاء المحتملين للتواصل والمبيعات"
+        badge={`${centers.length} مراكز · ${leads.length} عملاء مهتمين`}
         actions={
-          <button
-            type="button"
-            className="btn btn-g btn-sm"
-            onClick={loadCenters}
-            title="تحديث قائمة المراكز من السحابة"
-          >
-            🔄 تحديث البيانات
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {activeTab === 'leads' && (
+              <button
+                type="button"
+                className="btn btn-sm"
+                style={{ background: 'var(--pr)', color: '#fff' }}
+                onClick={() => setShowAddLeadModal(true)}
+              >
+                ➕ إضافة عميل يدوياً
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn btn-g btn-sm"
+              onClick={loadAllData}
+              title="تحديث البيانات من السحابة"
+            >
+              🔄 تحديث البيانات
+            </button>
+          </div>
         }
       />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
+      {/* شريط التبديل بين المراكز والعملاء المحتملين */}
+      <div style={{
+        display: 'flex',
+        gap: 10,
+        margin: '18px 0 22px',
+        background: 'var(--bg-card)',
+        padding: '6px',
+        borderRadius: 14,
+        border: '1px solid var(--border-color)',
+        width: 'fit-content',
+      }}>
+        <button
+          type="button"
+          onClick={() => setActiveTab('centers')}
+          style={{
+            padding: '9px 20px',
+            borderRadius: 10,
+            border: 'none',
+            background: activeTab === 'centers' ? 'var(--pr)' : 'transparent',
+            color: activeTab === 'centers' ? '#fff' : 'var(--text-main)',
+            fontWeight: 800,
+            cursor: 'pointer',
+            fontSize: '0.92rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            transition: 'all .15s',
+          }}
+        >
+          <span>🏢 المراكز والاشتراكات</span>
+          <span style={{
+            fontSize: '.76rem',
+            background: activeTab === 'centers' ? 'rgba(255,255,255,.25)' : 'var(--g1)',
+            padding: '2px 8px',
+            borderRadius: 999,
+          }}>
+            {centers.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('leads')}
+          style={{
+            padding: '9px 20px',
+            borderRadius: 10,
+            border: 'none',
+            background: activeTab === 'leads' ? 'var(--pr)' : 'transparent',
+            color: activeTab === 'leads' ? '#fff' : 'var(--text-main)',
+            fontWeight: 800,
+            cursor: 'pointer',
+            fontSize: '0.92rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            transition: 'all .15s',
+          }}
+        >
+          <span>🎯 العملاء المحتملين وطلبات الديمو</span>
+          {leadStats.newCount > 0 ? (
+            <span style={{
+              fontSize: '.76rem',
+              background: '#ef4444',
+              color: '#fff',
+              padding: '2px 8px',
+              borderRadius: 999,
+              fontWeight: 900,
+            }}>
+              {leadStats.newCount} جديد
+            </span>
+          ) : (
+            <span style={{
+              fontSize: '.76rem',
+              background: activeTab === 'leads' ? 'rgba(255,255,255,.25)' : 'var(--g1)',
+              padding: '2px 8px',
+              borderRadius: 999,
+            }}>
+              {leads.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {activeTab === 'centers' ? (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
         <div className="unified-stat-box">
           <div className="stat-label">✅ نشط (مؤقت)</div>
           <div className="stat-val" style={{ color: '#10b981' }}>{stats.active}</div>
@@ -357,7 +535,292 @@ export default function AdminSubscriptions() {
             );
           })
         )}
-      </div>
+          </div>
+        </>
+      ) : (
+        /* تبويب العملاء المحتملين وطلبات الديمو (Trial Leads) */
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, marginBottom: 20 }}>
+            <div className="unified-stat-box">
+              <div className="stat-label">🎯 إجمالي المهتمين</div>
+              <div className="stat-val" style={{ color: 'var(--pr)' }}>{leadStats.total}</div>
+              <div className="stat-sub">كافة طلبات الديمو والتجربة</div>
+            </div>
+            <div className="unified-stat-box">
+              <div className="stat-label">🔥 بحاجة لمتابعة (جديد)</div>
+              <div className="stat-val" style={{ color: '#ef4444' }}>{leadStats.newCount}</div>
+              <div className="stat-sub">تواصل معهم لتقديم عروض</div>
+            </div>
+            <div className="unified-stat-box">
+              <div className="stat-label">🎮 طلبات ديمو تفاعلي</div>
+              <div className="stat-val" style={{ color: '#0284c7' }}>{leadStats.demoTrials}</div>
+              <div className="stat-sub">جرّبوا الحساب التجريبي</div>
+            </div>
+            <div className="unified-stat-box">
+              <div className="stat-label">✨ مراكز تجريبية (5 أيام)</div>
+              <div className="stat-val" style={{ color: '#f59e0b' }}>{leadStats.registeredTrials}</div>
+              <div className="stat-sub">أنشأوا حسابات مراكز جديدة</div>
+            </div>
+            <div className="unified-stat-box">
+              <div className="stat-label">🏆 تم التحويل لاشتراك</div>
+              <div className="stat-val" style={{ color: '#10b981' }}>{leadStats.converted}</div>
+              <div className="stat-sub">أصبحوا عملاء فعليين</div>
+            </div>
+          </div>
+
+          <div style={{
+            display: 'flex', gap: 12, marginBottom: 20, background: 'var(--bg-card)', padding: 14,
+            borderRadius: 12, border: '1px solid var(--border-color)', flexWrap: 'wrap', alignItems: 'center',
+          }}>
+            <input
+              type="text"
+              placeholder="🔍 ابحث بالاسم، البريد، الجوال، أو اسم المركز..."
+              value={leadSearch}
+              onChange={(e) => setLeadSearch(e.target.value)}
+              style={{
+                flex: 1, minWidth: 260, padding: '8px 14px', borderRadius: 8,
+                border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-main)',
+              }}
+            />
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {[
+                { id: 'all', label: 'الكل' },
+                { id: 'new', label: 'جديد 🔴' },
+                { id: 'contacted', label: 'تم التواصل 💬' },
+                { id: 'converted', label: 'تم التحويل 🏆' },
+                { id: 'closed', label: 'مغلقة' },
+              ].map(btn => (
+                <button
+                  key={btn.id}
+                  onClick={() => setLeadFilterStatus(btn.id)}
+                  style={{
+                    padding: '6px 12px', borderRadius: 6, border: '1px solid var(--border-color)',
+                    background: leadFilterStatus === btn.id ? 'var(--pr)' : 'transparent',
+                    color: leadFilterStatus === btn.id ? '#fff' : 'var(--text-main)',
+                    cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold',
+                  }}
+                >
+                  {btn.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {filteredLeads.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 40, background: 'var(--bg-card)', borderRadius: 14, border: '1px solid var(--border-color)', color: 'var(--g4)' }}>
+                ℹ️ لا يوجد عملاء محتملين مسجلين وفق هذا الفلتر حالياً. بمجرد أن يطلب زائر ديمو أو ينشئ مركزاً تجريبياً، ستظهر بياناته هنا فوراً للتواصل معه.
+              </div>
+            ) : (
+              filteredLeads.map(lead => {
+                const isNew = !lead.status || lead.status === 'new';
+                const isContacted = lead.status === 'contacted';
+                const isConverted = lead.status === 'converted';
+
+                const createdStr = lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('ar-SA', {
+                  year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                }) : '—';
+
+                const leadMsg = encodeURIComponent(
+                  `السلام عليكم ورحمة الله وبركاته، أهلاً بك أستاذ/ة ${lead.name || ''} 🌸\nمعك إدارة نظام Easy Center لإدارة وتأهيل ذوي الإعاقة.\nلاحظنا اهتمامكم وتجربتكم للنظام${lead.org ? ` بخصوص (${lead.org})` : ''}، ويسعدنا جداً تقديم الدعم أو الإجابة على أي استفسار، وترتيب العرض الأنسب لمركزكم. هل يناسبكم التواصل الآن؟`
+                );
+                const leadPhoneClean = (lead.phone || '').replace(/[^0-9]/g, '');
+                const waUrl = leadPhoneClean ? `https://wa.me/${leadPhoneClean}?text=${leadMsg}` : null;
+                const mailtoUrl = lead.email ? `mailto:${lead.email}?subject=${encodeURIComponent('بخصوص تجربتكم لنظام Easy Center لإدارة مراكز التأهيل')}` : null;
+
+                return (
+                  <div key={lead.id} style={{
+                    background: 'var(--bg-card)', border: isNew ? '1.5px solid #f87171' : '1px solid var(--border-color)',
+                    borderRadius: 14, padding: 18, boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: 260 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                          <h3 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 800 }}>{lead.name || 'عميل بدون اسم'}</h3>
+                          {lead.type === 'interactive_demo' && (
+                            <span style={{ fontSize: '.72rem', background: '#e0f2fe', color: '#0284c7', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>
+                              🎮 ديمو تفاعلي
+                            </span>
+                          )}
+                          {lead.type === 'registered_trial' && (
+                            <span style={{ fontSize: '.72rem', background: '#fef3c7', color: '#d97706', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>
+                              ✨ تسجيل مركز تجريبي (5 أيام)
+                            </span>
+                          )}
+                          {lead.type === 'manual_lead' && (
+                            <span style={{ fontSize: '.72rem', background: '#f3e8ff', color: '#7c3aed', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>
+                              👤 مدخل يدوياً
+                            </span>
+                          )}
+                          <span style={{
+                            fontSize: '.72rem', padding: '2px 8px', borderRadius: 6, fontWeight: 800,
+                            background: isNew ? '#fee2e2' : isContacted ? '#dbeafe' : isConverted ? '#d1fae5' : '#f1f5f9',
+                            color: isNew ? '#ef4444' : isContacted ? '#2563eb' : isConverted ? '#059669' : '#64748b',
+                          }}>
+                            {isNew ? '🔴 جديد (بحاجة لتواصل)' : isContacted ? '💬 تم التواصل' : isConverted ? '🏆 تم التحويل لمشترك' : 'مغلقة'}
+                          </span>
+                        </div>
+
+                        <div style={{ fontSize: '0.86rem', color: 'var(--text-sub)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          {lead.org && <div>🏢 <strong>المركز / الجهة:</strong> {lead.org}</div>}
+                          <div>📧 <strong>البريد:</strong> <a href={mailtoUrl} style={{ color: 'var(--pr)', textDecoration: 'none' }}>{lead.email}</a></div>
+                          {lead.phone && <div>📱 <strong>الجوال:</strong> {lead.phone}</div>}
+                          {lead.note && <div>📝 <strong>ملاحظة:</strong> {lead.note}</div>}
+                          <div style={{ fontSize: '0.74rem', color: 'var(--g4)', marginTop: 4 }}>🕒 تاريخ الطلب: {createdStr}</div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          {waUrl && (
+                            <a
+                              href={waUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-xs"
+                              style={{ background: '#25D366', color: '#fff', fontWeight: 800, padding: '6px 12px' }}
+                            >
+                              💬 مراسلة واتساب
+                            </a>
+                          )}
+                          {mailtoUrl && (
+                            <a
+                              href={mailtoUrl}
+                              className="btn btn-xs btn-g"
+                              style={{ padding: '6px 12px' }}
+                            >
+                              ✉️ مراسلة بريد
+                            </a>
+                          )}
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-d"
+                            onClick={() => handleDeleteLead(lead.id)}
+                            title="حذف العميل"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+
+                        {/* تغيير الحالة */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                          <span style={{ fontSize: '.75rem', color: 'var(--text-sub)' }}>الحالة:</span>
+                          <select
+                            value={lead.status || 'new'}
+                            onChange={e => handleUpdateLeadStatus(lead.id, e.target.value)}
+                            style={{
+                              padding: '4px 8px', borderRadius: 6, fontSize: '.78rem',
+                              border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-main)',
+                              fontWeight: 700,
+                            }}
+                          >
+                            <option value="new">🔴 جديد</option>
+                            <option value="contacted">💬 تم التواصل</option>
+                            <option value="converted">🏆 تم التحويل لمشترك</option>
+                            <option value="closed">⚪ مغلقة / غير مهتم</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </>
+      )}
+
+      {/* نافذة إضافة عميل محتمل يدوياً */}
+      {showAddLeadModal && (
+        <div className="demo-modal-overlay" onClick={() => setShowAddLeadModal(false)}>
+          <div className="demo-modal-card" onClick={e => e.stopPropagation()}>
+            <div className="demo-modal-hd">
+              <button
+                type="button"
+                className="demo-modal-close"
+                onClick={() => setShowAddLeadModal(false)}
+              >
+                ✕
+              </button>
+              <h3>➕ إضافة عميل محتمل للمتابعة</h3>
+              <p>سجّل بيانات مهتم أو اتصال هاتفي أو زيارة معرض لتتذكره وتتواصل معه لاحقاً عبر الواتساب أو البريد.</p>
+            </div>
+
+            <form className="demo-modal-body" onSubmit={handleAddManualLead}>
+              <div className="lf">
+                <label>اسم العميل / المسؤول *</label>
+                <input
+                  required
+                  value={newLeadForm.name}
+                  onChange={e => setNewLeadForm({ ...newLeadForm, name: e.target.value })}
+                  placeholder="مثال: د. عبدالعزيز السالم"
+                />
+              </div>
+
+              <div className="lf">
+                <label>البريد الإلكتروني *</label>
+                <input
+                  required
+                  type="email"
+                  value={newLeadForm.email}
+                  onChange={e => setNewLeadForm({ ...newLeadForm, email: e.target.value })}
+                  placeholder="contact@center.com"
+                  dir="ltr"
+                />
+              </div>
+
+              <div className="lf">
+                <label>رقم الجوال / واتساب</label>
+                <input
+                  type="tel"
+                  value={newLeadForm.phone}
+                  onChange={e => setNewLeadForm({ ...newLeadForm, phone: e.target.value })}
+                  placeholder="050xxxxxxx"
+                  dir="ltr"
+                />
+              </div>
+
+              <div className="lf">
+                <label>اسم المركز أو المؤسسة</label>
+                <input
+                  value={newLeadForm.org}
+                  onChange={e => setNewLeadForm({ ...newLeadForm, org: e.target.value })}
+                  placeholder="مثال: مدرسة التميز للتوحد"
+                />
+              </div>
+
+              <div className="lf">
+                <label>ملاحظات إضافية</label>
+                <input
+                  value={newLeadForm.note}
+                  onChange={e => setNewLeadForm({ ...newLeadForm, note: e.target.value })}
+                  placeholder="مثال: تم الاتصال به في مؤتمر الرياض، طلب تجربة لمدة أسبوع"
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+                <button type="submit" className="login-btn" style={{ flex: 1 }}>
+                  حفظ العميل في السجلات ✓
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddLeadModal(false)}
+                  style={{
+                    padding: '10px 16px',
+                    border: '1px solid var(--border-color)',
+                    background: 'transparent',
+                    borderRadius: 10,
+                    cursor: 'pointer',
+                    color: 'var(--text-sub)',
+                  }}
+                >
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

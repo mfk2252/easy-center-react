@@ -154,6 +154,25 @@ export function AppProvider({ children }) {
       catch(e) { return null; }
     })();
 
+    if (savedSession?.isDemo) {
+      clearTimeout(loadingTimeout);
+      localStorage.setItem('scs_current_uid', savedSession.centerId || 'demo_center');
+      setCurrentUser(savedSession);
+      setSubscriptionStatus(savedSession.subscription || { allowed: true, reason: 'demo', daysLeft: 5, status: 'trial' });
+      const localDemoCenter = JSON.parse(localStorage.getItem(`scs_center_settings_${savedSession.centerId}`) || 'null');
+      applyCenter(localDemoCenter || {
+        name: 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)',
+        centerName: 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)',
+        color: '#1a56db',
+        configured: true,
+        isSetup: true,
+        setupCompleted: true,
+      });
+      setScreen('app');
+      setActiveView('dash');
+      return;
+    }
+
     if (savedSession?.centerId) {
       clearTimeout(loadingTimeout);
       localStorage.setItem('scs_current_uid', savedSession.centerId);
@@ -394,6 +413,22 @@ export function AppProvider({ children }) {
     localStorage.setItem('scs_current_uid', user.centerId || user.uid);
     setCurrentUser(user);
     setSubscriptionStatus(user.subscription);
+
+    if (user.isDemo) {
+      const localDemoCenter = JSON.parse(localStorage.getItem(`scs_center_settings_${user.centerId}`) || 'null');
+      applyCenter(localDemoCenter || {
+        name: 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)',
+        centerName: 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)',
+        color: '#1a56db',
+        configured: true,
+        isSetup: true,
+        setupCompleted: true,
+      });
+      toast(`🎉 مرحباً بك أستاذ/ة ${user.name || ''} في وضع الديمو التجريبي`, 'ok');
+      setScreen('app');
+      setActiveView('dash');
+      return;
+    }
 
     if (user.isPlatformAdmin) {
       const centerData = await getCenterSettings(user.centerId || user.uid);

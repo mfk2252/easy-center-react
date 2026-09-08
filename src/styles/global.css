@@ -284,22 +284,23 @@ body.dark .sw-sec{background:var(--bg-input);border-color:var(--border-color);}
   .sc .vl { font-size: 1.6rem; }
   
   /* Forms */
-  .fl label { font-size: .8rem; }
-  .fl input, .fl select, .fl textarea { font-size: .88rem; padding: 8px 10px; }
+  .fl label { font-size: .78rem; }
+  .fl input, .fl select, .fl textarea { font-size: .88rem; padding: 9px 12px; width: 100%; box-sizing: border-box; }
   
   /* Modals */
-  .mbg { align-items: flex-end; padding: 0; }
+  .mbg { align-items: flex-end !important; padding: 0 !important; }
   .mb, .mb-sm, .mb-large, .mb-xl { 
     width: 100vw !important;
     max-width: 100vw !important;
-    border-radius: 16px 16px 0 0 !important;
+    border-radius: 18px 18px 0 0 !important;
     margin: 0 !important;
+    max-height: calc(100dvh - env(safe-area-inset-top, 0px)) !important;
   }
   
   /* Buttons */
-  .btn { padding: 7px 12px; font-size: .8rem; }
-  .fa { padding: 12px 14px; gap: 8px; }
-  .fa .btn { flex: 1; justify-content: center; }
+  .btn { padding: 8px 14px; font-size: .84rem; }
+  .fa { padding: 10px 14px max(12px, env(safe-area-inset-bottom, 12px)) 14px; gap: 8px; flex-direction: column-reverse; }
+  .fa .btn, .fa button { width: 100% !important; justify-content: center; min-height: 42px; }
   
   /* Nav */
   .nav { 

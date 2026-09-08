@@ -410,3 +410,55 @@
   }
 }
 
+/* ==========================================================================
+   ASSESSMENT MODALS & REPORT SHEETS RESPONSIVE ENHANCEMENTS
+   ========================================================================== */
+
+.assessment-question-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-card);
+  transition: background 0.15s ease;
+}
+.assessment-question-row:hover {
+  background: var(--g0);
+}
+
+.assessment-report-preview-container {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .assessment-question-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px 10px;
+  }
+
+  .assessment-options-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 75px), 1fr)) !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+
+  .assessment-options-grid button {
+    min-height: 38px !important;
+    padding: 6px 8px !important;
+    font-size: 0.8rem !important;
+    width: 100% !important;
+  }
+}
+
+

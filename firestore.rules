@@ -84,5 +84,15 @@ service cloud.firestore {
       // حجز اسم المستخدم مسموح فقط للمستخدمين المسجلين
       allow create, update, delete: if isSignedIn();
     }
+
+    // ===============================================================
+    // 4. طلبات تجربة الديمو والعملاء المحتملين (trialLeads)
+    // ===============================================================
+    match /trialLeads/{leadId} {
+      // يُسمح لأي زائر بإرسال بياناته لطلب تجربة ديمو (Lead Capture)
+      allow create: if true;
+      // قراءة وإدارة وتعديل العملاء المحتملين محصورة بمالك المنصة
+      allow read, update, delete: if isPlatformAdmin();
+    }
   }
 }
