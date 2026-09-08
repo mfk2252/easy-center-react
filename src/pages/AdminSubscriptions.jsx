@@ -1,8 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, doc, updateDoc, serverTimestamp, Timestamp, query, limit } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { isPlatformAdminEmail, getTrialLeads, updateTrialLeadStatus, deleteTrialLead, saveTrialLead } from '../firebase/auth';
+import {
+  isPlatformAdminEmail, getTrialLeads, updateTrialLeadStatus, deleteTrialLead, saveTrialLead,
+  createAdminDemoAccount, getAdminDemoAccounts, extendAdminDemoAccount,
+  updateAdminDemoAccountStatus, deleteAdminDemoAccount
+} from '../firebase/auth';
 import UnifiedPageHeader from '../components/ui/UnifiedPageHeader';
+import { useApp } from '../context/AppContext';
 
 const COUNTRY_BY_CODE = {
   '+966': 'السعودية', '+971': 'الإمارات', '+973': 'البحرين', '+974': 'قطر',
@@ -17,15 +22,37 @@ function tsToDate(ts) { return ts?.toDate ? ts.toDate() : (ts ? new Date(ts.seco
 function fmtDate(d) { return d ? d.toLocaleDateString('ar-SA', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'; }
 
 export default function AdminSubscriptions() {
-  const [activeTab, setActiveTab] = useState('centers'); // 'centers' | 'leads'
+  const { login } = useApp();
+  const [activeTab, setActiveTab] = useState('centers'); // 'centers' | 'demoAccounts' | 'leads'
   const [centers, setCenters] = useState([]);
   const [leads, setLeads] = useState([]);
+  const [demoAccounts, setDemoAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [customMonths, setCustomMonths] = useState({});
   const [expandedId, setExpandedId] = useState(null);
+
+  // إدارة حسابات الديمو المؤقتة (Demo Accounts)
+  const [showCreateDemoModal, setShowCreateDemoModal] = useState(false);
+  const [createdDemoSuccess, setCreatedDemoSuccess] = useState(null);
+  const [demoSearch, setDemoSearch] = useState('');
+  const [demoFilterStatus, setDemoFilterStatus] = useState('all');
+  const [showExtendModal, setShowExtendModal] = useState(false);
+  const [selectedDemoToExtend, setSelectedDemoToExtend] = useState(null);
+  const [extendDaysCount, setExtendDaysCount] = useState(3);
+  const [creatingDemo, setCreatingDemo] = useState(false);
+  const [createDemoForm, setCreateDemoForm] = useState({
+    centerName: '',
+    managerName: '',
+    username: 'admin',
+    password: '123',
+    durationDays: 3,
+    phone: '',
+    notes: '',
+    seedData: true,
+  });
 
   // فلاتر وميزات تبويب العملاء المحتملين (Leads)
   const [leadSearch, setLeadSearch] = useState('');
@@ -39,7 +66,7 @@ export default function AdminSubscriptions() {
 
   async function loadAllData() {
     setLoading(true);
-    await Promise.all([loadCenters(), loadLeads()]);
+    await Promise.all([loadCenters(), loadDemoAccounts(), loadLeads()]);
     setLoading(false);
   }
 
@@ -55,6 +82,15 @@ export default function AdminSubscriptions() {
     }
   }
 
+  async function loadDemoAccounts() {
+    try {
+      const items = await getAdminDemoAccounts();
+      setDemoAccounts(items);
+    } catch (e) {
+      console.error("خطأ جلب حسابات الديمو:", e);
+    }
+  }
+
   async function loadLeads() {
     try {
       const items = await getTrialLeads();
@@ -62,6 +98,110 @@ export default function AdminSubscriptions() {
     } catch (e) {
       console.error("خطأ جلب العملاء المحتملين:", e);
     }
+  }
+
+  async function handleCreateDemoSubmit(e) {
+    if (e) e.preventDefault();
+    if (!createDemoForm.username.trim()) {
+      alert('يرجى كتابة اسم مستخدم للديمو');
+      return;
+    }
+    if (!createDemoForm.password.trim()) {
+      alert('يرجى كتابة كلمة مرور للديمو');
+      return;
+    }
+    setCreatingDemo(true);
+    try {
+      const demo = await createAdminDemoAccount({
+        centerName: createDemoForm.centerName || 'مركز تجريبي للعرض',
+        managerName: createDemoForm.managerName || 'مدير تجريبي',
+        username: createDemoForm.username,
+        password: createDemoForm.password,
+        durationDays: createDemoForm.durationDays || 3,
+        phone: createDemoForm.phone,
+        notes: createDemoForm.notes,
+        seedData: createDemoForm.seedData,
+      });
+
+      setDemoAccounts(prev => [demo, ...prev.filter(d => d.username !== demo.username)]);
+      setShowCreateDemoModal(false);
+      setCreatedDemoSuccess(demo);
+      setCreateDemoForm({
+        centerName: '',
+        managerName: '',
+        username: 'admin',
+        password: '123',
+        durationDays: 3,
+        phone: '',
+        notes: '',
+        seedData: true,
+      });
+    } catch (err) {
+      alert('تعذر إنشاء حساب الديمو: ' + err.message);
+    } finally {
+      setCreatingDemo(false);
+    }
+  }
+
+  async function handleExtendDemoSubmit(e) {
+    if (e) e.preventDefault();
+    if (!selectedDemoToExtend) return;
+    try {
+      const updated = await extendAdminDemoAccount(selectedDemoToExtend.username, extendDaysCount);
+      setDemoAccounts(prev => prev.map(d => d.username === updated.username ? updated : d));
+      setShowExtendModal(false);
+      setSelectedDemoToExtend(null);
+      alert(`✅ تم تمديد صلاحية الديمو لمدة ${extendDaysCount} أيام بنجاح`);
+    } catch (err) {
+      alert('تعذر تمديد الصلاحية: ' + err.message);
+    }
+  }
+
+  async function handleToggleDemoStatus(username, currentStatus) {
+    const nextStatus = currentStatus === 'active' ? 'suspended' : 'active';
+    try {
+      const updated = await updateAdminDemoAccountStatus(username, nextStatus);
+      setDemoAccounts(prev => prev.map(d => d.username === username ? updated : d));
+    } catch (err) {
+      alert('تعذر تغيير الحالة: ' + err.message);
+    }
+  }
+
+  async function handleDeleteDemo(username) {
+    if (!window.confirm(`هل أنت متأكد من حذف حساب الديمو (${username}) وبياناته؟`)) return;
+    try {
+      await deleteAdminDemoAccount(username);
+      setDemoAccounts(prev => prev.filter(d => d.username !== username));
+    } catch (err) {
+      alert('تعذر الحذف: ' + err.message);
+    }
+  }
+
+  async function handleLaunchDemoDirectly(demo) {
+    const { initDemoData } = await import('../utils/demoData');
+    const expiry = new Date(demo.expiryDate);
+    const now = new Date();
+    const daysLeft = Math.max(0, Math.ceil((expiry - now) / 86400000));
+    initDemoData(demo.centerId, demo.managerName, demo.centerName, daysLeft);
+
+    const demoUser = {
+      uid: demo.centerId,
+      email: demo.username.includes('@') ? demo.username : `${demo.username}@easycenter.demo`,
+      name: demo.managerName || 'مدير تجريبي',
+      role: 'manager',
+      centerId: demo.centerId,
+      isDemo: true,
+      demoAccount: { ...demo, daysLeft },
+      subscription: {
+        allowed: true,
+        status: 'trial',
+        reason: 'admin_demo',
+        daysLeft,
+        isDemo: true,
+        expiryDate: demo.expiryDate,
+      },
+    };
+    login(demoUser);
   }
 
   async function handleUpdateLeadStatus(leadId, status) {
@@ -242,6 +382,40 @@ export default function AdminSubscriptions() {
     return matchSearch && matchStatus;
   }), [leads, leadSearch, leadFilterStatus]);
 
+  const demoStats = useMemo(() => {
+    const now = new Date();
+    return {
+      total: demoAccounts.length,
+      active: demoAccounts.filter(d => d.status !== 'suspended' && new Date(d.expiryDate) > now).length,
+      expired: demoAccounts.filter(d => d.status === 'expired' || new Date(d.expiryDate) <= now).length,
+      suspended: demoAccounts.filter(d => d.status === 'suspended').length,
+    };
+  }, [demoAccounts]);
+
+  const filteredDemoAccounts = useMemo(() => {
+    const term = demoSearch.toLowerCase().trim();
+    const now = new Date();
+    return demoAccounts.filter(d => {
+      const matchSearch =
+        (d.centerName || '').toLowerCase().includes(term) ||
+        (d.managerName || '').toLowerCase().includes(term) ||
+        (d.username || '').toLowerCase().includes(term) ||
+        (d.phone || '').toLowerCase().includes(term) ||
+        (d.notes || '').toLowerCase().includes(term);
+
+      const isExpired = new Date(d.expiryDate) <= now || d.status === 'expired';
+      const isSuspended = d.status === 'suspended';
+      const isActive = !isExpired && !isSuspended;
+
+      let matchStatus = true;
+      if (demoFilterStatus === 'active') matchStatus = isActive;
+      else if (demoFilterStatus === 'expired') matchStatus = isExpired;
+      else if (demoFilterStatus === 'suspended') matchStatus = isSuspended;
+
+      return matchSearch && matchStatus;
+    });
+  }, [demoAccounts, demoSearch, demoFilterStatus]);
+
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-main)' }}>⏳ جارٍ تحميل البيانات...</div>;
 
   const DURATION_BTNS = [
@@ -253,10 +427,20 @@ export default function AdminSubscriptions() {
       <UnifiedPageHeader
         icon="🔐"
         title="إدارة اشتراكات المنصة والمراكز"
-        subtitle="إدارة تراخيص المراكز، تمديد الفترات، ومتابعة طلبات الديمو والعملاء المحتملين للتواصل والمبيعات"
-        badge={`${centers.length} مراكز · ${leads.length} عملاء مهتمين`}
+        subtitle="إدارة تراخيص المراكز، تمديد الفترات، وإنشاء حسابات الديمو المؤقتة للعروض والزيارات"
+        badge={`${centers.length} مراكز · ${demoAccounts.length} حسابات ديمو · ${leads.length} عملاء مهتمين`}
         actions={
           <div style={{ display: 'flex', gap: 8 }}>
+            {activeTab === 'demoAccounts' && (
+              <button
+                type="button"
+                className="btn btn-sm"
+                style={{ background: 'linear-gradient(135deg,#0284c7,#0369a1)', color: '#fff', fontWeight: 800 }}
+                onClick={() => setShowCreateDemoModal(true)}
+              >
+                ➕ إنشاء حساب ديمو تجريبي جديد
+              </button>
+            )}
             {activeTab === 'leads' && (
               <button
                 type="button"
@@ -279,7 +463,7 @@ export default function AdminSubscriptions() {
         }
       />
 
-      {/* شريط التبديل بين المراكز والعملاء المحتملين */}
+      {/* شريط التبديل بين المراكز والحسابات التجريبية والعملاء المحتملين */}
       <div style={{
         display: 'flex',
         gap: 10,
@@ -289,6 +473,7 @@ export default function AdminSubscriptions() {
         borderRadius: 14,
         border: '1px solid var(--border-color)',
         width: 'fit-content',
+        flexWrap: 'wrap',
       }}>
         <button
           type="button"
@@ -321,6 +506,35 @@ export default function AdminSubscriptions() {
 
         <button
           type="button"
+          onClick={() => setActiveTab('demoAccounts')}
+          style={{
+            padding: '9px 20px',
+            borderRadius: 10,
+            border: 'none',
+            background: activeTab === 'demoAccounts' ? '#0284c7' : 'transparent',
+            color: activeTab === 'demoAccounts' ? '#fff' : 'var(--text-main)',
+            fontWeight: 800,
+            cursor: 'pointer',
+            fontSize: '0.92rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            transition: 'all .15s',
+          }}
+        >
+          <span>🎮 الحسابات التجريبية (ديمو مؤقت)</span>
+          <span style={{
+            fontSize: '.76rem',
+            background: activeTab === 'demoAccounts' ? 'rgba(255,255,255,.25)' : 'var(--g1)',
+            padding: '2px 8px',
+            borderRadius: 999,
+          }}>
+            {demoAccounts.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab('leads')}
           style={{
             padding: '9px 20px',
@@ -337,7 +551,7 @@ export default function AdminSubscriptions() {
             transition: 'all .15s',
           }}
         >
-          <span>🎯 العملاء المحتملين وطلبات الديمو</span>
+          <span>🎯 العملاء المهتمين والمتابعة</span>
           {leadStats.newCount > 0 ? (
             <span style={{
               fontSize: '.76rem',
@@ -537,6 +751,251 @@ export default function AdminSubscriptions() {
         )}
           </div>
         </>
+      ) : activeTab === 'demoAccounts' ? (
+        /* تبويب حسابات الديمو المؤقتة (Demo Accounts) */
+        <>
+          {/* إحصائيات حسابات الديمو */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, marginBottom: 20 }}>
+            <div className="unified-stat-box">
+              <div className="stat-label">🎮 إجمالي حسابات الديمو</div>
+              <div className="stat-val" style={{ color: '#0284c7' }}>{demoStats.total}</div>
+              <div className="stat-sub">حسابات منشأة للعروض والزيارات</div>
+            </div>
+            <div className="unified-stat-box">
+              <div className="stat-label">🟢 نشطة وسارية المفعول</div>
+              <div className="stat-val" style={{ color: '#10b981' }}>{demoStats.active}</div>
+              <div className="stat-sub">يمكن تسجيل الدخول بها حالياً</div>
+            </div>
+            <div className="unified-stat-box">
+              <div className="stat-label">🔴 منتهية الصلاحية</div>
+              <div className="stat-val" style={{ color: '#ef4444' }}>{demoStats.expired}</div>
+              <div className="stat-sub">انتهت مدتها (تتطلب تمديد أو اشتراك)</div>
+            </div>
+            <div className="unified-stat-box">
+              <div className="stat-label">⏸️ موقوفة يدوياً</div>
+              <div className="stat-val" style={{ color: '#64748b' }}>{demoStats.suspended}</div>
+              <div className="stat-sub">تم إيقافها من لوحة التحكم</div>
+            </div>
+          </div>
+
+          {/* شريط البحث والفلترة وأزرار الإجراءات */}
+          <div style={{
+            display: 'flex', gap: 12, marginBottom: 20, background: 'var(--bg-card)', padding: 14,
+            borderRadius: 12, border: '1px solid var(--border-color)', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <input
+              type="text"
+              placeholder="🔍 ابحث بالمركز، اسم المسؤول، اسم المستخدم، الجوال، الملاحظات..."
+              value={demoSearch}
+              onChange={(e) => setDemoSearch(e.target.value)}
+              style={{
+                flex: 1, minWidth: 260, padding: '8px 14px', borderRadius: 8,
+                border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-main)',
+              }}
+            />
+
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {[
+                { id: 'all', label: 'الكل' },
+                { id: 'active', label: 'ساري المفعول 🟢' },
+                { id: 'expired', label: 'منتهي الصلاحية 🔴' },
+                { id: 'suspended', label: 'موقوف ⏸️' },
+              ].map(btn => (
+                <button
+                  key={btn.id}
+                  onClick={() => setDemoFilterStatus(btn.id)}
+                  style={{
+                    padding: '6px 12px', borderRadius: 6, border: '1px solid var(--border-color)',
+                    background: demoFilterStatus === btn.id ? '#0284c7' : 'transparent',
+                    color: demoFilterStatus === btn.id ? '#fff' : 'var(--text-main)',
+                    cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold',
+                  }}
+                >
+                  {btn.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              className="btn btn-sm"
+              style={{ background: 'linear-gradient(135deg,#0284c7,#0369a1)', color: '#fff', fontWeight: 800 }}
+              onClick={() => setShowCreateDemoModal(true)}
+            >
+              ➕ إنشاء ديمو جديد
+            </button>
+          </div>
+
+          {/* قائمة كروت حسابات الديمو */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {filteredDemoAccounts.length === 0 ? (
+              <div style={{
+                textAlign: 'center', padding: 48, background: 'var(--bg-card)', borderRadius: 16,
+                border: '1px dashed var(--border-color)', color: 'var(--text-sub)',
+              }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>🎮</div>
+                <h3 style={{ margin: '0 0 8px', fontSize: '1.2rem', color: 'var(--text-main)' }}>لا توجد حسابات ديمو تجريبية حالياً</h3>
+                <p style={{ maxWidth: 480, margin: '0 auto 18px', fontSize: '0.9rem' }}>
+                  يمكنك إنشاء حساب تجريبي مؤقت بمدة مخصصة (3، 4، 5 أيام...) لتقديمه للمؤسسات والعملاء كعرض حي ومباشر للنظام.
+                </p>
+                <button
+                  type="button"
+                  className="btn"
+                  style={{ background: '#0284c7', color: '#fff', fontWeight: 800, padding: '10px 24px' }}
+                  onClick={() => setShowCreateDemoModal(true)}
+                >
+                  ➕ إنشاء أول حساب ديمو الآن
+                </button>
+              </div>
+            ) : (
+              filteredDemoAccounts.map(demo => {
+                const now = new Date();
+                const expiry = new Date(demo.expiryDate);
+                const isExpired = expiry <= now || demo.status === 'expired';
+                const isSuspended = demo.status === 'suspended';
+                const daysLeft = Math.max(0, Math.ceil((expiry - now) / (1000 * 60 * 60 * 24)));
+                const hoursLeft = Math.max(0, Math.ceil((expiry - now) / (1000 * 60 * 60)));
+
+                const shareText = `السلام عليكم ورحمة الله وبركاته 🌸\nيسعدنا تزويدكم ببيانات الحساب التجريبي المخصص لـ (${demo.centerName}) على نظام Easy Center لإدارة وتأهيل ذوي الإعاقة:\n\n🌐 رابط المنصة: ${window.location.origin}\n👤 اسم المستخدم: ${demo.username}\n🔑 كلمة المرور: ${demo.password}\n⏳ صلاحية الحساب: ${demo.durationDays || 3} أيام (حتى ${expiry.toLocaleDateString('ar-SA', { year: 'numeric', month: 'short', day: 'numeric' })})\n\nنتمنى لكم تجربة موفقة ومميزة، ونحن على أتم الاستعداد لأي استفسار! 🌟`;
+                const cleanPhone = (demo.phone || '').replace(/[^0-9]/g, '');
+                const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(shareText)}` : `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+
+                return (
+                  <div key={demo.username} style={{
+                    background: 'var(--bg-card)',
+                    border: isExpired ? '1.5px solid #f87171' : isSuspended ? '1px solid var(--g4)' : '1.5px solid #38bdf8',
+                    borderRadius: 16, padding: 20, boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: 280 }}>
+                        {/* العنوان والحالة */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '1.4rem' }}>🎮</span>
+                          <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>{demo.centerName}</h3>
+                          <span style={{
+                            fontSize: '.75rem', padding: '3px 10px', borderRadius: 999, fontWeight: 800,
+                            background: isExpired ? '#fee2e2' : isSuspended ? '#f1f5f9' : '#dcfce7',
+                            color: isExpired ? '#ef4444' : isSuspended ? '#64748b' : '#15803d',
+                          }}>
+                            {isExpired ? '🔴 منتهي الصلاحية' : isSuspended ? '⏸️ موقوف' : `🟢 ساري (متبقي ${daysLeft > 0 ? `${daysLeft} يوم` : `${hoursLeft} ساعة`})`}
+                          </span>
+                        </div>
+
+                        {/* صندوق بيانات الاعتماد المباشرة */}
+                        <div style={{
+                          background: 'var(--bg-main)', border: '1px solid var(--border-color)',
+                          borderRadius: 10, padding: '10px 14px', margin: '10px 0',
+                          display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center',
+                        }}>
+                          <div>
+                            <span style={{ fontSize: '.76rem', color: 'var(--text-sub)' }}>اسم المسؤول: </span>
+                            <strong style={{ fontSize: '.88rem' }}>{demo.managerName || 'مدير تجريبي'}</strong>
+                          </div>
+                          <div>
+                            <span style={{ fontSize: '.76rem', color: 'var(--text-sub)' }}>اسم المستخدم: </span>
+                            <code style={{ fontSize: '.9rem', color: '#0284c7', fontWeight: 800, background: 'rgba(2,132,199,0.08)', padding: '2px 6px', borderRadius: 4 }}>
+                              {demo.username}
+                            </code>
+                          </div>
+                          <div>
+                            <span style={{ fontSize: '.76rem', color: 'var(--text-sub)' }}>كلمة المرور: </span>
+                            <code style={{ fontSize: '.9rem', color: '#059669', fontWeight: 800, background: 'rgba(5,150,105,0.08)', padding: '2px 6px', borderRadius: 4 }}>
+                              {demo.password}
+                            </code>
+                          </div>
+                        </div>
+
+                        {/* التفاصيل الإضافية */}
+                        <div style={{ fontSize: '0.84rem', color: 'var(--text-sub)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          {demo.phone && <div>📱 <strong>الهاتف / واتساب:</strong> {demo.phone}</div>}
+                          {demo.notes && <div>📝 <strong>ملاحظات العرض:</strong> {demo.notes}</div>}
+                          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 4, fontSize: '.76rem', color: 'var(--g4)' }}>
+                            <span>📅 تاريخ الإنشاء: {new Date(demo.createdAt).toLocaleDateString('ar-SA', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                            <span>⏳ تاريخ الانتهاء: {expiry.toLocaleDateString('ar-SA', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} ({demo.durationDays || 3} أيام)</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* أزرار الإجراءات */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            style={{ background: '#0284c7', color: '#fff', fontWeight: 800, padding: '6px 12px' }}
+                            onClick={() => {
+                              navigator.clipboard.writeText(shareText);
+                              alert('✅ تم نسخ بيانات الدخول المنسقة كاملة للحافظة جاهزة للإرسال!');
+                            }}
+                          >
+                            📋 نسخ بيانات الدخول
+                          </button>
+
+                          <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-xs"
+                            style={{ background: '#25D366', color: '#fff', fontWeight: 800, padding: '6px 12px' }}
+                          >
+                            💬 إرسال عبر واتساب
+                          </a>
+
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            style={{ padding: '6px 12px', fontWeight: 700 }}
+                            onClick={() => {
+                              setSelectedDemoToExtend(demo);
+                              setExtendDaysCount(3);
+                              setShowExtendModal(true);
+                            }}
+                          >
+                            ⏱️ تمديد الصلاحية
+                          </button>
+
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            style={{ background: 'linear-gradient(135deg,#8b5cf6,#6d28d9)', color: '#fff', fontWeight: 800, padding: '6px 12px' }}
+                            onClick={() => handleLaunchDemoDirectly(demo)}
+                            title="فتح الديمو واستعراضه فوراً"
+                          >
+                            🚀 تجربة الديمو الآن
+                          </button>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 4 }}>
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            style={{
+                              background: isSuspended ? '#dcfce7' : '#fee2e2',
+                              color: isSuspended ? '#15803d' : '#b91c1c',
+                              fontWeight: 700,
+                            }}
+                            onClick={() => handleToggleDemoStatus(demo.username, demo.status)}
+                          >
+                            {isSuspended ? '▶️ تنشيط الحساب' : '⏸️ إيقاف مؤقت'}
+                          </button>
+
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-d"
+                            onClick={() => handleDeleteDemo(demo.username)}
+                            title="حذف حساب الديمو نهائياً"
+                          >
+                            🗑️ حذف
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </>
       ) : (
         /* تبويب العملاء المحتملين وطلبات الديمو (Trial Leads) */
         <>
@@ -728,6 +1187,316 @@ export default function AdminSubscriptions() {
             )}
           </div>
         </>
+      )}
+
+      {/* نافذة إنشاء حساب ديمو تجريبي جديد */}
+      {showCreateDemoModal && (
+        <div className="demo-modal-overlay" onClick={() => !creatingDemo && setShowCreateDemoModal(false)}>
+          <div className="demo-modal-card" onClick={e => e.stopPropagation()}>
+            <div className="demo-modal-hd">
+              <button
+                type="button"
+                className="demo-modal-close"
+                onClick={() => setShowCreateDemoModal(false)}
+                disabled={creatingDemo}
+              >
+                ✕
+              </button>
+              <h3>🎮 إنشاء حساب ديمو تجريبي مؤقت</h3>
+              <p>أنشئ حساب ديمو فوري لمؤسسة أو عميل، مع تحديد اسم المستخدم وكلمة المرور وصلاحية الأيام (3، 4، 5 أيام...) يدوياً.</p>
+            </div>
+
+            <form className="demo-modal-body" onSubmit={handleCreateDemoSubmit}>
+              <div className="lf">
+                <label>اسم المركز أو المؤسسة *</label>
+                <input
+                  required
+                  value={createDemoForm.centerName}
+                  onChange={e => setCreateDemoForm({ ...createDemoForm, centerName: e.target.value })}
+                  placeholder="مثال: مركز الأمل للتأهيل والعلاج الطبيعي"
+                  disabled={creatingDemo}
+                />
+              </div>
+
+              <div className="lf">
+                <label>اسم الشخص المسؤول / المدير التجريبي</label>
+                <input
+                  value={createDemoForm.managerName}
+                  onChange={e => setCreateDemoForm({ ...createDemoForm, managerName: e.target.value })}
+                  placeholder="مثال: د. عبدالرحمن أو أ. فاطمة"
+                  disabled={creatingDemo}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="lf">
+                  <label>اسم المستخدم للدخول (Username) *</label>
+                  <input
+                    required
+                    value={createDemoForm.username}
+                    onChange={e => setCreateDemoForm({ ...createDemoForm, username: e.target.value })}
+                    placeholder="admin أو amal-demo"
+                    dir="ltr"
+                    disabled={creatingDemo}
+                  />
+                  <span style={{ fontSize: '.72rem', color: 'var(--text-sub)' }}>اسم بسيط للدخول دون تعقيد</span>
+                </div>
+
+                <div className="lf">
+                  <label>كلمة المرور للدخول (Password) *</label>
+                  <input
+                    required
+                    value={createDemoForm.password}
+                    onChange={e => setCreateDemoForm({ ...createDemoForm, password: e.target.value })}
+                    placeholder="123 أو easy123"
+                    dir="ltr"
+                    disabled={creatingDemo}
+                  />
+                  <span style={{ fontSize: '.72rem', color: 'var(--text-sub)' }}>كلمة مرور سهلة للمعاينة</span>
+                </div>
+              </div>
+
+              <div className="lf">
+                <label>مدة الصلاحية بالأيام (Duration in Days) *</label>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    required
+                    type="number"
+                    min="1"
+                    max="60"
+                    value={createDemoForm.durationDays}
+                    onChange={e => setCreateDemoForm({ ...createDemoForm, durationDays: parseInt(e.target.value, 10) || 1 })}
+                    style={{ width: 100 }}
+                    disabled={creatingDemo}
+                  />
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {[3, 4, 5, 7, 10, 14].map(days => (
+                      <button
+                        key={days}
+                        type="button"
+                        onClick={() => setCreateDemoForm({ ...createDemoForm, durationDays: days })}
+                        style={{
+                          padding: '4px 10px', borderRadius: 6, fontSize: '.78rem',
+                          border: '1px solid var(--border-color)',
+                          background: createDemoForm.durationDays === days ? '#0284c7' : 'var(--bg-main)',
+                          color: createDemoForm.durationDays === days ? '#fff' : 'var(--text-main)',
+                          cursor: 'pointer', fontWeight: 700,
+                        }}
+                      >
+                        {days} أيام
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <span style={{ fontSize: '.72rem', color: 'var(--text-sub)' }}>
+                  سيتم إغلاق الحساب التجريبي تلقائياً بعد انقضاء هذه المدة وإظهار رسالة انتهاء الصلاحية للمستخدم
+                </span>
+              </div>
+
+              <div className="lf">
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: 700 }}>
+                  <input
+                    type="checkbox"
+                    checked={createDemoForm.seedData}
+                    onChange={e => setCreateDemoForm({ ...createDemoForm, seedData: e.target.checked })}
+                    disabled={creatingDemo}
+                  />
+                  <span>🌟 تعبئة المركز ببيانات نموذجية جاهزة (طلاب، جلسات، خطط علاجية، مقاييس، وتقارير فورية)</span>
+                </label>
+              </div>
+
+              <div className="lf">
+                <label>رقم الجوال / واتساب العميل (اختياري)</label>
+                <input
+                  type="tel"
+                  value={createDemoForm.phone}
+                  onChange={e => setCreateDemoForm({ ...createDemoForm, phone: e.target.value })}
+                  placeholder="05xxxxxxxx أو +966..."
+                  dir="ltr"
+                  disabled={creatingDemo}
+                />
+              </div>
+
+              <div className="lf">
+                <label>ملاحظات داخلية</label>
+                <input
+                  value={createDemoForm.notes}
+                  onChange={e => setCreateDemoForm({ ...createDemoForm, notes: e.target.value })}
+                  placeholder="مثال: ديمو مخصص لعرض برنامج التوحد في جمعية رعاية..."
+                  disabled={creatingDemo}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+                <button
+                  type="submit"
+                  className="login-btn"
+                  style={{ flex: 1, background: 'linear-gradient(135deg,#0284c7,#0369a1)' }}
+                  disabled={creatingDemo}
+                >
+                  {creatingDemo ? 'جاري تجهيز وإنشاء حساب الديمو...' : 'إنشاء وتفعيل حساب الديمو الآن 🚀'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateDemoModal(false)}
+                  disabled={creatingDemo}
+                  style={{
+                    padding: '10px 16px', border: '1px solid var(--border-color)',
+                    background: 'transparent', borderRadius: 10, cursor: 'pointer', color: 'var(--text-sub)',
+                  }}
+                >
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* نافذة نجاح إنشاء الديمو وتوفير رسالة المشاركة الفورية */}
+      {createdDemoSuccess && (
+        <div className="demo-modal-overlay" onClick={() => setCreatedDemoSuccess(null)}>
+          <div className="demo-modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
+            <div className="demo-modal-hd" style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '3rem', marginBottom: 6 }}>🎉</div>
+              <h3 style={{ color: '#059669' }}>تم إنشاء حساب الديمو بنجاح!</h3>
+              <p>بيانات الدخول جاهزة الآن ويمكنك مشاركتها فوراً مع العميل عبر الواتساب أو نسخها للحافظة:</p>
+            </div>
+
+            <div style={{
+              background: 'var(--bg-main)', border: '1.5px solid #38bdf8',
+              borderRadius: 12, padding: 16, margin: '14px 0', fontSize: '0.9rem',
+              lineHeight: 1.7,
+            }}>
+              <div>🏢 <strong>المركز:</strong> {createdDemoSuccess.centerName}</div>
+              <div>👤 <strong>اسم المستخدم:</strong> <code style={{ color: '#0284c7', fontWeight: 800 }}>{createdDemoSuccess.username}</code></div>
+              <div>🔑 <strong>كلمة المرور:</strong> <code style={{ color: '#059669', fontWeight: 800 }}>{createdDemoSuccess.password}</code></div>
+              <div>⏳ <strong>مدة الصلاحية:</strong> {createdDemoSuccess.durationDays} أيام (حتى {new Date(createdDemoSuccess.expiryDate).toLocaleDateString('ar-SA', { year: 'numeric', month: 'short', day: 'numeric' })})</div>
+              <div>🌐 <strong>رابط تسجيل الدخول:</strong> {window.location.origin}</div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  className="login-btn"
+                  style={{ flex: 1, background: '#0284c7' }}
+                  onClick={() => {
+                    const shareText = `السلام عليكم ورحمة الله وبركاته 🌸\nيسعدنا تزويدكم ببيانات الحساب التجريبي المخصص لـ (${createdDemoSuccess.centerName}) على نظام Easy Center لإدارة وتأهيل ذوي الإعاقة:\n\n🌐 رابط المنصة: ${window.location.origin}\n👤 اسم المستخدم: ${createdDemoSuccess.username}\n🔑 كلمة المرور: ${createdDemoSuccess.password}\n⏳ صلاحية الحساب: ${createdDemoSuccess.durationDays} أيام\n\nنتمنى لكم تجربة موفقة ومميزة، ونحن على أتم الاستعداد لأي استفسار! 🌟`;
+                    navigator.clipboard.writeText(shareText);
+                    alert('✅ تم نسخ بيانات الدخول المنسقة كاملة للحافظة!');
+                  }}
+                >
+                  📋 نسخ الرسالة كاملة
+                </button>
+
+                <a
+                  href={`https://wa.me/${(createdDemoSuccess.phone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`السلام عليكم ورحمة الله وبركاته 🌸\nيسعدنا تزويدكم ببيانات الحساب التجريبي المخصص لـ (${createdDemoSuccess.centerName}) على نظام Easy Center لإدارة وتأهيل ذوي الإعاقة:\n\n🌐 رابط المنصة: ${window.location.origin}\n👤 اسم المستخدم: ${createdDemoSuccess.username}\n🔑 كلمة المرور: ${createdDemoSuccess.password}\n⏳ صلاحية الحساب: ${createdDemoSuccess.durationDays} أيام\n\nنتمنى لكم تجربة موفقة ومميزة! 🌟`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn"
+                  style={{ background: '#25D366', color: '#fff', fontWeight: 800, padding: '10px 18px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  💬 واتساب
+                </a>
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-g"
+                style={{ padding: '10px', fontWeight: 800 }}
+                onClick={() => {
+                  const demo = createdDemoSuccess;
+                  setCreatedDemoSuccess(null);
+                  handleLaunchDemoDirectly(demo);
+                }}
+              >
+                🚀 فتح الديمو وتجربته الآن
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCreatedDemoSuccess(null)}
+                style={{
+                  padding: '8px', border: 'none', background: 'transparent',
+                  color: 'var(--text-sub)', cursor: 'pointer', textAlign: 'center', fontSize: '0.85rem',
+                }}
+              >
+                إغلاق والعودة للقائمة
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* نافذة تمديد صلاحية الديمو */}
+      {showExtendModal && selectedDemoToExtend && (
+        <div className="demo-modal-overlay" onClick={() => setShowExtendModal(false)}>
+          <div className="demo-modal-card" onClick={e => e.stopPropagation()}>
+            <div className="demo-modal-hd">
+              <button
+                type="button"
+                className="demo-modal-close"
+                onClick={() => setShowExtendModal(false)}
+              >
+                ✕
+              </button>
+              <h3>⏱️ تمديد صلاحية الحساب التجريبي</h3>
+              <p>تمديد مدة تجربة مركز: <strong>{selectedDemoToExtend.centerName}</strong> ({selectedDemoToExtend.username})</p>
+            </div>
+
+            <form className="demo-modal-body" onSubmit={handleExtendDemoSubmit}>
+              <div className="lf">
+                <label>عدد الأيام الإضافية للتمديد:</label>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    required
+                    type="number"
+                    min="1"
+                    max="60"
+                    value={extendDaysCount}
+                    onChange={e => setExtendDaysCount(parseInt(e.target.value, 10) || 1)}
+                    style={{ width: 100 }}
+                  />
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {[3, 5, 7, 10, 14, 30].map(days => (
+                      <button
+                        key={days}
+                        type="button"
+                        onClick={() => setExtendDaysCount(days)}
+                        style={{
+                          padding: '4px 10px', borderRadius: 6, fontSize: '.78rem',
+                          border: '1px solid var(--border-color)',
+                          background: extendDaysCount === days ? '#0284c7' : 'var(--bg-main)',
+                          color: extendDaysCount === days ? '#fff' : 'var(--text-main)',
+                          cursor: 'pointer', fontWeight: 700,
+                        }}
+                      >
+                        +{days} أيام
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+                <button type="submit" className="login-btn" style={{ flex: 1, background: '#0284c7' }}>
+                  تأكيد تمديد الصلاحية ✓
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowExtendModal(false)}
+                  style={{
+                    padding: '10px 16px', border: '1px solid var(--border-color)',
+                    background: 'transparent', borderRadius: 10, cursor: 'pointer', color: 'var(--text-sub)',
+                  }}
+                >
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       {/* نافذة إضافة عميل محتمل يدوياً */}

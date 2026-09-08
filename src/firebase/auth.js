@@ -632,7 +632,7 @@ export async function startDemoSession({ name, email, phone, org }) {
 
   // 2) تهيئة البيانات التجريبية الغنية
   const { initDemoData } = await import('../utils/demoData');
-  initDemoData('demo_center', name || org);
+  initDemoData('demo_center', name || org, org || 'مركز الأمل للتأهيل', 5);
 
   // 3) كائن المستخدم التجريبي
   const demoUser = {
@@ -656,4 +656,242 @@ export async function startDemoSession({ name, email, phone, org }) {
 
   return demoUser;
 }
+
+// ============================================================
+// إدارة الحسابات التجريبية المؤقتة (Admin Created Demo Accounts)
+// يُنشئها مالك المنصة للمؤسسات أو العملاء مع تحديد اسم المستخدم،
+// كلمة المرور، ومدة الصلاحية بالأيام (3، 4، 5 أيام ...إلخ) يدوياً.
+// ============================================================
+
+export async function createAdminDemoAccount({
+  centerName,
+  managerName,
+  username,
+  password,
+  durationDays = 3,
+  phone = '',
+  notes = '',
+  seedData = true,
+}) {
+  const cleanUsername = (username || '').trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
+  if (!cleanUsername) throw new Error('يرجى إدخال اسم مستخدم صحيح باللغة الإنجليزية أو بريد إلكتروني');
+  if (!password || password.length < 3) throw new Error('يرجى إدخال كلمة مرور (3 أحرف على الأقل)');
+  const days = Math.max(1, parseInt(durationDays, 10) || 3);
+
+  const now = new Date();
+  const expiryDate = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+  const demoCenterId = `demo_ctr_${cleanUsername}`;
+  const demoId = `demo_${cleanUsername}`;
+
+  const demoDoc = {
+    id: demoId,
+    demoId,
+    centerId: demoCenterId,
+    username: cleanUsername,
+    password: password.trim(),
+    centerName: (centerName || 'مركز تجريبي').trim(),
+    managerName: (managerName || 'مدير تجريبي').trim(),
+    phone: (phone || '').trim(),
+    notes: (notes || '').trim(),
+    durationDays: days,
+    createdAt: now.toISOString(),
+    expiryDate: expiryDate.toISOString(),
+    status: 'active', // 'active' | 'suspended' | 'expired'
+  };
+
+  // 1) حفظ محلياً في localStorage كنسخة فورية
+  try {
+    const existing = JSON.parse(localStorage.getItem('scs_demo_accounts') || '[]');
+    const filtered = existing.filter(d => d.username !== cleanUsername);
+    localStorage.setItem('scs_demo_accounts', JSON.stringify([demoDoc, ...filtered]));
+  } catch (_) {}
+
+  // 2) حفظ في Firestore في كولكشن demoAccounts
+  try {
+    await setDoc(doc(db, 'demoAccounts', cleanUsername), {
+      ...demoDoc,
+      createdAtServer: serverTimestamp(),
+    });
+  } catch (e) {
+    console.warn('createAdminDemoAccount firestore note:', e);
+  }
+
+  // 3) تجهيز البيانات النموذجية للمركز إذا طُلب ذلك
+  if (seedData) {
+    const { initDemoData } = await import('../utils/demoData');
+    initDemoData(demoCenterId, managerName, centerName, days);
+  }
+
+  return demoDoc;
+}
+
+export async function getAdminDemoAccounts() {
+  const accountsMap = new Map();
+
+  // 1. جلب من localStorage
+  try {
+    const local = JSON.parse(localStorage.getItem('scs_demo_accounts') || '[]');
+    local.forEach(item => {
+      if (item && item.username) accountsMap.set(item.username, item);
+    });
+  } catch (_) {}
+
+  // 2. جلب من Firestore
+  try {
+    const snap = await getDocs(collection(db, 'demoAccounts'));
+    snap.docs.forEach(d => {
+      const data = d.data();
+      if (data && data.username) accountsMap.set(data.username, { id: d.id, ...data });
+    });
+  } catch (e) {
+    console.warn('getAdminDemoAccounts firestore error:', e);
+  }
+
+  const list = Array.from(accountsMap.values());
+  // فرز حسب تاريخ الإنشاء (الأحدث أولاً)
+  list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  return list;
+}
+
+export async function extendAdminDemoAccount(usernameOrId, additionalDays) {
+  const daysToAdd = parseInt(additionalDays, 10) || 3;
+  const accounts = await getAdminDemoAccounts();
+  const acc = accounts.find(a => a.username === usernameOrId || a.id === usernameOrId);
+  if (!acc) throw new Error('الحساب التجريبي غير موجود');
+
+  // حساب تاريخ الانتهاء الجديد
+  const currentExpiry = new Date(acc.expiryDate);
+  const baseDate = currentExpiry > new Date() ? currentExpiry : new Date();
+  const newExpiry = new Date(baseDate.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
+
+  const updated = {
+    ...acc,
+    expiryDate: newExpiry.toISOString(),
+    status: 'active',
+    durationDays: (acc.durationDays || 0) + daysToAdd,
+    updatedAt: new Date().toISOString(),
+  };
+
+  // تحديث محلي
+  try {
+    const local = JSON.parse(localStorage.getItem('scs_demo_accounts') || '[]');
+    const newLocal = local.map(a => a.username === acc.username ? updated : a);
+    localStorage.setItem('scs_demo_accounts', JSON.stringify(newLocal));
+  } catch (_) {}
+
+  // تحديث Firestore
+  try {
+    await setDoc(doc(db, 'demoAccounts', acc.username), {
+      ...updated,
+      updatedAtServer: serverTimestamp(),
+    }, { merge: true });
+  } catch (e) {
+    console.warn('extendAdminDemoAccount firestore note:', e);
+  }
+
+  return updated;
+}
+
+export async function updateAdminDemoAccountStatus(usernameOrId, status) {
+  const accounts = await getAdminDemoAccounts();
+  const acc = accounts.find(a => a.username === usernameOrId || a.id === usernameOrId);
+  if (!acc) throw new Error('الحساب غير موجود');
+
+  const updated = { ...acc, status, updatedAt: new Date().toISOString() };
+
+  try {
+    const local = JSON.parse(localStorage.getItem('scs_demo_accounts') || '[]');
+    const newLocal = local.map(a => a.username === acc.username ? updated : a);
+    localStorage.setItem('scs_demo_accounts', JSON.stringify(newLocal));
+  } catch (_) {}
+
+  try {
+    await setDoc(doc(db, 'demoAccounts', acc.username), {
+      status,
+      updatedAtServer: serverTimestamp(),
+    }, { merge: true });
+  } catch (_) {}
+
+  return updated;
+}
+
+export async function deleteAdminDemoAccount(usernameOrId) {
+  try {
+    const local = JSON.parse(localStorage.getItem('scs_demo_accounts') || '[]');
+    const filtered = local.filter(a => a.username !== usernameOrId && a.id !== usernameOrId);
+    localStorage.setItem('scs_demo_accounts', JSON.stringify(filtered));
+  } catch (_) {}
+
+  try {
+    await deleteDoc(doc(db, 'demoAccounts', usernameOrId));
+  } catch (_) {}
+}
+
+export async function authenticateDemoAccount(usernameOrEmail, password) {
+  const clean = (usernameOrEmail || '').trim().toLowerCase();
+  const pass = (password || '').trim();
+  if (!clean || !pass) return null;
+
+  // جلب الحساب من الكولكشن أو الكاش المحلي
+  let demoDoc = null;
+  try {
+    const snap = await getDoc(doc(db, 'demoAccounts', clean));
+    if (snap.exists()) {
+      demoDoc = snap.data();
+    }
+  } catch (_) {}
+
+  if (!demoDoc) {
+    const local = JSON.parse(localStorage.getItem('scs_demo_accounts') || '[]');
+    demoDoc = local.find(a => (a.username || '').toLowerCase() === clean);
+  }
+
+  if (!demoDoc) return null; // ليس حساب ديمو
+
+  // فحص كلمة المرور
+  if (demoDoc.password !== pass) {
+    throw new Error('كلمة المرور غير صحيحة لهذا الحساب التجريبي');
+  }
+
+  // فحص حالة الحساب والصلاحية الزمنية (3 أيام، 5 أيام...)
+  const expiry = new Date(demoDoc.expiryDate);
+  const now = new Date();
+  const isExpired = expiry <= now || demoDoc.status === 'expired';
+
+  if (demoDoc.status === 'suspended') {
+    throw new Error('تم إيقاف هذا الحساب التجريبي المؤقت من قبل إدارة المنصة.');
+  }
+
+  if (isExpired) {
+    throw new Error(`انتهت فترة صلاحية هذا الحساب التجريبي المؤقت (المحددة بـ ${demoDoc.durationDays || 3} أيام من إدارة المنصة). يرجى التواصل مع الإدارة للاشتراك وتجديد الحساب.`);
+  }
+
+  const daysLeft = Math.max(0, Math.ceil((expiry - now) / (1000 * 60 * 60 * 24)));
+
+  // تهيئة وتأكيد وجود بيانات الديمو
+  const { initDemoData } = await import('../utils/demoData');
+  initDemoData(demoDoc.centerId, demoDoc.managerName, demoDoc.centerName, daysLeft);
+
+  return {
+    uid: demoDoc.centerId,
+    email: demoDoc.username.includes('@') ? demoDoc.username : `${demoDoc.username}@easycenter.demo`,
+    name: demoDoc.managerName || 'مدير تجريبي',
+    role: 'manager',
+    centerId: demoDoc.centerId,
+    isDemo: true,
+    demoAccount: {
+      ...demoDoc,
+      daysLeft,
+    },
+    subscription: {
+      allowed: true,
+      status: 'trial',
+      reason: 'admin_demo',
+      daysLeft,
+      isDemo: true,
+      expiryDate: demoDoc.expiryDate,
+    },
+  };
+}
+
 

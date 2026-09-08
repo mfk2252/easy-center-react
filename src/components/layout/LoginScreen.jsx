@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { useLang, getWelcomeMessage } from '../../context/LanguageContext';
 import {
   signInWithGoogle, signInWithEmailPassword, signInStaffOrParent,
-  signUpManagerWithEmailPassword, startDemoSession,
+  signUpManagerWithEmailPassword, authenticateDemoAccount,
 } from '../../firebase/auth';
 
 const FEATURES = [
@@ -26,15 +26,6 @@ export default function LoginScreen() {
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-
-  // حالة نافذة طلب الديمو التفاعلي (Lead Capture Modal)
-  const [showDemoModal, setShowDemoModal] = useState(false);
-  const [demoName, setDemoName] = useState('');
-  const [demoEmail, setDemoEmail] = useState('');
-  const [demoPhone, setDemoPhone] = useState('');
-  const [demoOrg, setDemoOrg] = useState('');
-  const [demoErr, setDemoErr] = useState('');
-  const [demoLoading, setDemoLoading] = useState(false);
 
   function switchMode(next) {
     setMode(next);
@@ -63,6 +54,15 @@ export default function LoginScreen() {
     if (!password) { setErr(t('loginErrPass')); return; }
     setLoading(true);
     try {
+      // 1. التحقق إن كان حساب ديمو تجريبي مؤقت أنشأه المدير
+      const demoUser = await authenticateDemoAccount(identifier, password);
+      if (demoUser) {
+        toast(`🎮 مرحباً بك في الحساب التجريبي لـ ${demoUser.demoAccount?.centerName || 'المركز'} (متبقي ${demoUser.subscription?.daysLeft} يوم)`, 'ok');
+        login(demoUser);
+        return;
+      }
+
+      // 2. تسجيل دخول مدير مركز ببريد/كلمة مرور أو موظف باسم مستخدم
       const isEmailFormat = identifier.includes('@');
       const user = isEmailFormat
         ? await signInWithEmailPassword(identifier, password)
@@ -101,36 +101,6 @@ export default function LoginScreen() {
       setErr(e.message || 'تعذّر إنشاء الحساب');
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function handleStartDemo(e) {
-    if (e) e.preventDefault();
-    setDemoErr('');
-    if (!demoEmail.trim() || !demoEmail.includes('@')) {
-      setDemoErr('يرجى إدخال بريد إلكتروني صحيح لتمكين التجربة والتواصل');
-      return;
-    }
-    if (!demoName.trim()) {
-      setDemoErr('يرجى إدخال الاسم الكريم');
-      return;
-    }
-
-    setDemoLoading(true);
-    try {
-      const demoUser = await startDemoSession({
-        name: demoName.trim(),
-        email: demoEmail.trim(),
-        phone: demoPhone.trim(),
-        org: demoOrg.trim(),
-      });
-      setShowDemoModal(false);
-      login(demoUser);
-    } catch (err) {
-      console.error(err);
-      setDemoErr('تعذر بدء الجلسة التجريبية، يرجى المحاولة ثانية');
-    } finally {
-      setDemoLoading(false);
     }
   }
 
@@ -378,121 +348,10 @@ export default function LoginScreen() {
                 </div>
               </div>
 
-              {/* بطاقة الديمو التفاعلي للزوار والعملاء المحتملين */}
-              <div className="login-demo-box">
-                <h4>🎮 تجربة سريعة للنظام بحساب ديمو</h4>
-                <p>استكشف ملفات الطلاب، الجلسات، المقاييس والتقارير الفورية ببيانات حقيقية جاهزة دون الحاجة لتسجيل حساب جديد.</p>
-                <button
-                  type="button"
-                  className="login-demo-btn"
-                  onClick={() => setShowDemoModal(true)}
-                >
-                  <span>🚀 بدء التجربة التفاعلية (ديمو فوري)</span>
-                </button>
-              </div>
-
             </div>
           </div>
         </div>
       </div>
-
-      {/* نافذة طلب الديمو وجمع بيانات العميل المحتمل (Lead Capture Modal) */}
-      {showDemoModal && (
-        <div className="demo-modal-overlay" onClick={() => !demoLoading && setShowDemoModal(false)}>
-          <div className="demo-modal-card" onClick={e => e.stopPropagation()}>
-            <div className="demo-modal-hd">
-              <button
-                type="button"
-                className="demo-modal-close"
-                onClick={() => setShowDemoModal(false)}
-                disabled={demoLoading}
-                aria-label="إغلاق"
-              >
-                ✕
-              </button>
-              <h3>🚀 تجربة مجانية فورية للنظام (وضع الديمو)</h3>
-              <p>يرجى كتابة بريدك الإلكتروني وبياناتك للتواصل وتقديم العرض المناسب لمركزك، وسننقلك فوراً للبيئة التفاعلية المجهزة بالبيانات.</p>
-            </div>
-
-            <form className="demo-modal-body" onSubmit={handleStartDemo}>
-              {demoErr && <div className="login-err">⚠️ {demoErr}</div>}
-
-              <div className="lf">
-                <label>الاسم الكريم *</label>
-                <input
-                  required
-                  value={demoName}
-                  onChange={e => setDemoName(e.target.value)}
-                  placeholder="مثال: د. عبدالرحمن أو أ. فاطمة"
-                  disabled={demoLoading}
-                />
-              </div>
-
-              <div className="lf">
-                <label>البريد الإلكتروني الخاص بك * (للتواصل وإرسال العروض)</label>
-                <input
-                  required
-                  type="email"
-                  value={demoEmail}
-                  onChange={e => setDemoEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  dir="ltr"
-                  disabled={demoLoading}
-                />
-              </div>
-
-              <div className="lf">
-                <label>رقم الجوال أو الواتساب (للتواصل السريع)</label>
-                <input
-                  type="tel"
-                  value={demoPhone}
-                  onChange={e => setDemoPhone(e.target.value)}
-                  placeholder="05xxxxxxxx أو +966..."
-                  dir="ltr"
-                  disabled={demoLoading}
-                />
-              </div>
-
-              <div className="lf">
-                <label>اسم المركز أو الجمعية (إن وجد)</label>
-                <input
-                  value={demoOrg}
-                  onChange={e => setDemoOrg(e.target.value)}
-                  placeholder="مثال: مركز الأمل لتنمية المهارات"
-                  disabled={demoLoading}
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-                <button
-                  type="submit"
-                  className="login-btn"
-                  style={{ flex: 1, background: 'linear-gradient(135deg,#0284c7,#0369a1)' }}
-                  disabled={demoLoading}
-                >
-                  {demoLoading ? 'جاري تهيئة بيئة الديمو...' : 'بدء التجربة المباشرة الآن 🚀'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowDemoModal(false)}
-                  disabled={demoLoading}
-                  style={{
-                    padding: '10px 16px',
-                    border: '1px solid var(--border-color)',
-                    background: 'transparent',
-                    borderRadius: 10,
-                    cursor: 'pointer',
-                    color: 'var(--text-sub)',
-                    fontWeight: 600,
-                  }}
-                >
-                  إلغاء
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

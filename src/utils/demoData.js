@@ -3,16 +3,17 @@
  * يُهيئ بيئة تجريبية واقعية وكاملة لمراكز التربية الخاصة والتأهيل عند تصفح النظام بحساب الديمو التفاعلي
  */
 
-export function initDemoData(centerId = 'demo_center', visitorName = '') {
+export function initDemoData(centerId = 'demo_center', visitorName = '', customCenterName = '', daysLeft = 3) {
   try {
     const prefix = `${centerId}_`;
+    const resolvedCenterName = customCenterName ? `${customCenterName} (بيئة تجريبية)` : 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)';
 
-    // 1. مركز الأمل الديمو (بيانات المركز)
+    // 1. بيانات المركز التجريبي
     const demoCenter = {
       centerId,
-      name: 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)',
-      centerName: 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)',
-      nameEn: 'Al-Amal Rehabilitation & Special Ed Center (Demo)',
+      name: resolvedCenterName,
+      centerName: resolvedCenterName,
+      nameEn: 'Special Education & Rehabilitation Center (Demo)',
       type: 'تأهيل شامل وتربية خاصة ونطق وتخاطب',
       managerName: visitorName || 'مدير تجريبي (زائر)',
       managerEmail: 'demo@easycenter.local',
@@ -35,7 +36,7 @@ export function initDemoData(centerId = 'demo_center', visitorName = '') {
       status: 'active',
       subscription: {
         status: 'trial',
-        daysLeft: 5,
+        daysLeft: Math.max(1, parseInt(daysLeft, 10) || 3),
         allowed: true,
         reason: 'demo',
         isDemo: true,
