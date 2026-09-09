@@ -426,11 +426,38 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
             <div className="wg-h"><h3>👤 البيانات الشخصية</h3></div>
             <div className="wg-b">
               <div className="info-grid">
-                {[['الاسم',stu.name],['الصف / الفصل',stu.className],['تاريخ الميلاد',stu.dob],['العمر',calcAge(stu.dob)],['الجنس',stu.gender],['الجنسية',stu.nationality],['تاريخ التسجيل',stu.joinDate],['التشخيص',stu.diagnosis],['تشخيص إضافي',stu.diagnosis2],['المستشفى',stu.hospital],['الطبيب',stu.doctor],['الأدوية',stu.medications]].filter(([,v])=>v).map(([k,v])=>(
+                {[['الاسم',stu.name],['الصف / الفصل',stu.className],['المرحلة التعليمية',stu.stage],['تاريخ الميلاد',stu.dob],['العمر',calcAge(stu.dob)],['الجنس',stu.gender],['الجنسية',stu.nationality],['تاريخ التسجيل',stu.joinDate],['التشخيص',stu.diagnosis],['تشخيص إضافي',stu.diagnosis2],['المستشفى',stu.hospital],['الطبيب',stu.doctor],['الأدوية',stu.medications]].filter(([,v])=>v).map(([k,v])=>(
                   <div className="ic" key={k}><div className="ik">{k}</div><div className="iv">{v}</div></div>
                 ))}
               </div>
               {stu.medNotes && <div style={{ marginTop:10, padding:'10px 14px', background:'var(--err-l)', borderRadius:'var(--r2)', fontSize:'.84rem', color:'var(--err)' }}>⚠️ {stu.medNotes}</div>}
+              
+              {/* Transfer & Promotion History */}
+              {stu.transferHistory && stu.transferHistory.length > 0 && (
+                <div style={{ marginTop: 16, borderTop: '1px solid var(--border-color)', paddingTop: 14 }}>
+                  <div style={{ fontWeight: 800, fontSize: '.88rem', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6, color: '#1d4ed8' }}>
+                    <span>🔄 سجل تسكين ونقل وترقيات الطالب ({stu.transferHistory.length})</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {stu.transferHistory.map((tr, idx) => (
+                      <div key={tr.id || idx} style={{ padding: '10px 12px', background: 'var(--g0)', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                          <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>
+                            {tr.fromClass === tr.toClass && tr.fromStage === tr.toStage ? '📌 التسكين المبدئي' : `🔄 من [${tr.fromClass || 'بدون صف'}] إلى [${tr.toClass || 'صف جديد'}]`}
+                          </span>
+                          <span className="bdg b-bl" style={{ fontSize: '0.7rem' }}>{tr.date}</span>
+                        </div>
+                        <div style={{ color: 'var(--text-sub)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                          <span>المرحلة: <strong>{tr.toStage || tr.fromStage || '—'}</strong></span>
+                          <span>السبب: <strong>{tr.reason || '—'}</strong></span>
+                          {tr.byName && <span>بواسطة: <strong>{tr.byName}</strong></span>}
+                        </div>
+                        {tr.notes && <div style={{ marginTop: 4, color: 'var(--text-main)', fontStyle: 'italic' }}>💬 {tr.notes}</div>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {(stu.attachments && stu.attachments.length > 0) && (
                 <div style={{ marginTop:14 }}>
                   <div style={{ fontWeight:800, fontSize:'.85rem', marginBottom:8 }}>📎 المرفقات</div>

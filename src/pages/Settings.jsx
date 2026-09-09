@@ -14,11 +14,13 @@ import { handleFileInputChange, FILE_ACCEPT_IMAGE } from '../utils/fileUpload';
 import { getRoleLabel, getUserPermissionLabels, getCurrentUsername } from '../utils/userLabels';
 import UnifiedPageHeader from '../components/ui/UnifiedPageHeader';
 import AcademicYearsManager from './Center/AcademicYearsManager';
+import DemoManagementTab from '../components/settings/DemoManagementTab';
 
 const PRESET_COLORS = ['#1a56db', '#7c3aed', '#059669', '#dc2626', '#d97706', '#0891b2', '#db2777', '#0f172a'];
 const ROLE_OPTIONS = [
   ['manager', 'مدير'],
   ['vice', 'نائب المدير'],
+  ['secretary', 'السكرتارية'],
   ['specialist_speech', 'أخصائي تخاطب'],
   ['specialist_physio', 'أخصائي علاج فيزيائي'],
   ['specialist_behavior', 'أخصائي تعديل سلوك'],
@@ -226,7 +228,33 @@ export default function Settings() {
     }
   }
 
-  const fldU = k => e => setUserForm(f => ({ ...f, [k]: e.target.value }));
+  const fldU = k => e => {
+    const val = e.target.value;
+    if (k === 'role') {
+      setUserForm(f => {
+        const next = { ...f, role: val };
+        if (val === 'secretary') {
+          next.permissions = {
+            dash: true,
+            students: true,
+            hr: true,
+            calendar: true,
+            attendance: true,
+            docs: true,
+            parents: true,
+            partnerships: true,
+            visits: true,
+            reports: true,
+            finance: false
+          };
+          if (!next.title) next.title = 'سكرتارية المركز';
+        }
+        return next;
+      });
+      return;
+    }
+    setUserForm(f => ({ ...f, [k]: val }));
+  };
 
   function openNewUserForm() {
     setUserForm({ ...EMPTY_USER_FORM });
@@ -254,13 +282,18 @@ export default function Settings() {
     if (!userForm.name.trim()) { toast('⚠️ أدخل الاسم الكامل', 'er'); return; }
     if (userForm.role === 'parent' && !userForm.studentId) { toast('⚠️ اختر الطالب المرتبط بولي الأمر', 'er'); return; }
 
+    const cleanPermissions = { ...(userForm.permissions || {}) };
+    if (userForm.role === 'secretary') {
+      cleanPermissions.finance = false;
+    }
+
     setSavingUser(true);
     try {
       if (editUserId) {
         await updateDoc(doc(db, 'users', editUserId), {
           name: userForm.name,
           role: userForm.role,
-          permissions: userForm.permissions || {},
+          permissions: cleanPermissions,
           title: userForm.title,
           studentId: userForm.studentId,
           phone: userForm.phone,
@@ -276,7 +309,7 @@ export default function Settings() {
           password: userForm.password,
           name: userForm.name,
           role: userForm.role,
-          permissions: userForm.permissions || {},
+          permissions: cleanPermissions,
           title: userForm.title,
           studentId: userForm.studentId,
           phone: userForm.phone,
@@ -494,6 +527,7 @@ export default function Settings() {
     { id: 'center', label: 'بيانات وهوية المركز', icon: '🏥', badge: 'الرئيسية' },
     { id: 'appearance', label: 'المظهر والخطوط', icon: '🎨' },
     { id: 'users', label: 'المستخدمون والصلاحيات', icon: '👥', count: users.length },
+    { id: 'demos', label: 'العروض التجريبية (ديمو مباشر)', icon: '🚀', badge: 'جديد' },
     { id: 'backup', label: 'النسخ الاحتياطي والمزامنة', icon: '💾' },
     { id: 'about', label: 'عن المنصة', icon: 'ℹ️' },
   ];
@@ -1715,7 +1749,8 @@ export default function Settings() {
                       gap: 10
                     }}>
                       {PERMISSIONS.map(p => {
-                        const isGranted = (userForm.permissions || {})[p.key];
+                        const isFinanceForSecretary = p.key === 'finance' && userForm.role === 'secretary';
+                        const isGranted = isFinanceForSecretary ? false : (userForm.permissions || {})[p.key];
                         return (
                           <label
                             key={p.key}
@@ -1726,21 +1761,32 @@ export default function Settings() {
                               padding: '10px 12px',
                               border: isGranted ? '1.5px solid var(--ok)' : '1px solid var(--border-color)',
                               borderRadius: 10,
-                              cursor: 'pointer',
-                              background: isGranted ? 'var(--ok-l)' : 'var(--bg-card)',
+                              cursor: isFinanceForSecretary ? 'not-allowed' : 'pointer',
+                              background: isFinanceForSecretary ? 'var(--g1)' : isGranted ? 'var(--ok-l)' : 'var(--bg-card)',
+                              opacity: isFinanceForSecretary ? 0.6 : 1,
                               transition: 'all 0.15s ease'
                             }}
+                            title={isFinanceForSecretary ? 'قسم المالية مخصص للمدير العام فقط ولا يمكن منحه للسكرتارية' : undefined}
                           >
                             <input
                               type="checkbox"
                               checked={isGranted || false}
-                              onChange={e => setUserForm(f => ({
-                                ...f,
-                                permissions: { ...(f.permissions || {}), [p.key]: e.target.checked }
-                              }))}
+                              disabled={isFinanceForSecretary}
+                              onChange={e => {
+                                if (isFinanceForSecretary) return;
+                                setUserForm(f => ({
+                                  ...f,
+                                  permissions: { ...(f.permissions || {}), [p.key]: e.target.checked }
+                                }));
+                              }}
                             />
                             <span style={{ fontSize: '.84rem', fontWeight: 700 }}>
                               {p.icon} {p.name}
+                              {isFinanceForSecretary && (
+                                <span style={{ fontSize: '.68rem', color: 'var(--err)', display: 'block', fontWeight: 600 }}>
+                                  (محجوب - خاص بالمدير)
+                                </span>
+                              )}
                             </span>
                           </label>
                         );
@@ -1772,6 +1818,13 @@ export default function Settings() {
             </div>
           )}
         </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          تبويب: العروض التجريبية المباشرة (Direct Demo Management)
+      ────────────────────────────────────────────────────────────── */}
+      {tab === 'demos' && (
+        <DemoManagementTab toast={toast} />
       )}
 
       {/* ─────────────────────────────────────────────────────────────

@@ -70,7 +70,25 @@ export default function HRPage() {
 
   if (activeView === 'hr-list') return <EmployeesList/>;
   if (activeView === 'hr-leaves') return <Leaves/>;
-  if (activeView === 'hr-salary') return <Salaries/>;
+  if (activeView === 'hr-salary') {
+    if (currentUser?.role === 'secretary') {
+      return (
+        <div style={{ padding: '60px 24px', textAlign: 'center', background: 'var(--g0)', borderRadius: '16px', border: '1.5px dashed var(--err)', margin: '40px auto', maxWidth: 640 }}>
+          <div style={{ fontSize: '3.5rem', marginBottom: 16 }}>🔒</div>
+          <h3 style={{ color: 'var(--err)', fontSize: '1.35rem', fontWeight: 800, marginBottom: 8 }}>
+            غير مصرح لك بالدخول إلى هذا النظام
+          </h3>
+          <p style={{ color: 'var(--text-sub)', fontSize: '0.94rem', lineHeight: 1.7, margin: '0 auto', maxWidth: 500 }}>
+            قسم مسيرات الرواتب والشؤون المالية مخصص حصرياً للمدير العام والإدارة المالية. لا تملك السكرتارية صلاحية الاطلاع على بيانات الرواتب والمستحقات المالية.
+          </p>
+          <button type="button" onClick={() => go('hr')} className="btn btn-p" style={{ marginTop: 20 }}>
+            العودة للموارد البشرية
+          </button>
+        </div>
+      );
+    }
+    return <Salaries/>;
+  }
   if (activeView === 'hr-att') return <HrAttendance/>;
   if (activeView === 'hr-warnings') return <Warnings/>;
   if (activeView === 'hr-bonuses') return <Bonuses/>;
@@ -162,6 +180,7 @@ export default function HRPage() {
           let statBadge = null;
           if (s.key === 'hr-list') statBadge = `${empCount} موظف`;
           else if (s.key === 'hr-leaves' && pendingLeaves > 0) statBadge = `${pendingLeaves} معلّق`;
+          else if (s.key === 'hr-salary' && currentUser?.role === 'secretary') statBadge = '🔒 مخصص للمدير';
 
           return (
             <div

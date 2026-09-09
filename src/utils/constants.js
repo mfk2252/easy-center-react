@@ -5,6 +5,7 @@ export const ROLES = {
   specialist_behavior: 'أخصائي تعديل سلوك',
   specialist_occupational: 'أخصائي علاج وظيفي',
   reception: 'استقبال',
+  secretary: 'السكرتارية',
   admin: 'إداري',
   worker: 'عمال',
   other: 'أخرى',
@@ -50,11 +51,11 @@ export const NAV_ITEMS = [
   { id: 'dash', label: '📊 الرئيسية', roles: null },
   { id: 'calendar', label: '🗓️ التقويم', roles: null },
   { id: 'attendance', label: '📅 تسجيل الحضور', roles: null },
-  { id: 'hr', label: '👥 الموظفون', roles: ['manager','vice','admin'] },
+  { id: 'hr', label: '👥 الموظفون', roles: ['manager','vice','admin','secretary'] },
   { id: 'students', label: '👦 الطلاب', roles: null },
   { id: 'programs', label: '🎯 الأنشطة', roles: null },
-  { id: 'reports', label: '📊 التقارير', roles: ['manager','vice','specialist','specialist_speech','specialist_physio','specialist_behavior','specialist_occupational'] },
-  { id: 'center', label: '🏢 إدارة المركز', roles: ['manager','vice'] },
+  { id: 'reports', label: '📊 التقارير', roles: ['manager','vice','secretary','specialist','specialist_speech','specialist_physio','specialist_behavior','specialist_occupational'] },
+  { id: 'center', label: '🏢 إدارة المركز', roles: ['manager','vice','secretary'] },
   { id: 'settings', label: '⚙️ الإعدادات', roles: ['manager','vice','technician'] },
 ];
 

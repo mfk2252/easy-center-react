@@ -47,15 +47,36 @@ const DEFAULT_CATEGORIES = [
   { id: 'cat_early', code: 'EI-01', name: 'تأخر نمائي شامل', capacity: 20, color: '#7c3aed', icon: '🌱', description: 'برامج التدخل المبكر والتحفيز النمائي' },
 ];
 
+export const EDUCATIONAL_STAGES = [
+  'التدخل المبكر (سنتين - 6 سنوات)',
+  'الروضة والتمهيدي التأهيلي',
+  'المرحلة الابتدائية (التربية الخاصة)',
+  'المرحلة المتوسطة التأهيلية',
+  'التأهيل المهني والتدريب الاستقلالي',
+  'الرعاية النهارية والدعم المدرسي',
+  'أخرى / مسار مخصص'
+];
+
+export const TRANSFER_REASONS = [
+  'ترقية أكاديمية لمرحلة تأهيلية أعلى',
+  'نقل صف لتجانس الفئة العمرية والسلوكية',
+  'تعديل المسار التأهيلي بناءً على التقييم الدوري',
+  'إعادة توزيع الفصول وتسكين الطلاب',
+  'تغيير المعلم أو الأخصائي المشرف',
+  'طلب وتنسيق مع ولي الأمر',
+  'أخرى (ملاحظات خاصة)'
+];
+
 const EMPTY_STU = {
   name: '', className: '', sectionId: '', categoryId: '', dob: '', gender: 'ذكر', nationality: 'سعودي', joinDate: '',
-  status: 'active', specialistId: '', sessionTypes: [], diagnosis: '', diagnosis2: '',
+  stage: 'التدخل المبكر (سنتين - 6 سنوات)',
+  status: 'active', specialistId: '', assignedSpecialists: [], sessionTypes: [], diagnosis: '', diagnosis2: '',
   hospital: '', doctor: '', medications: '', medNotes: '', parentName: '', parentPhone: '', parentPhone2: '',
   parentRelation: 'الأب', parentJob: '', parentEmail: '', address: '',
   progMorning: { enabled: false }, progEvening: { enabled: false },
   progSessions: { enabled: false, emp: '', type: 'تخاطب ونطق', freq: 'أسبوعي' },
   progOnline: { enabled: false, emp: '', type: 'تخاطب ونطق', dur: '45 دقيقة', link: '' },
-  notes: '', photo: '', attachments: []
+  notes: '', photo: '', attachments: [], transferHistory: []
 };
 
 const EMPTY_QS = { stuId: '', type: 'تخاطب ونطق', date: '', time: '', duration: 45, empId: '', notes: '', attachData: '', attachName: '' };
@@ -120,10 +141,36 @@ export default function StudentsPage() {
   const [catEditId, setCatEditId] = useState(null);
   const [catForm, setCatForm] = useState(EMPTY_CAT);
 
-  const canAdd = !isParent && ['manager', 'vice', 'reception'].includes(currentUser?.role);
-  const canEdit = !isParent && ['manager', 'vice', 'reception'].includes(currentUser?.role);
+  // Modal 6: Transfer / Promote Student (نقل وترقية طالب بين الصفوف والمراحل)
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferForm, setTransferForm] = useState({
+    stuId: '',
+    toSectionId: '',
+    toStage: 'التدخل المبكر (سنتين - 6 سنوات)',
+    toSpecialistId: '',
+    date: todayStr(),
+    reason: 'ترقية أكاديمية لمرحلة تأهيلية أعلى',
+    notes: ''
+  });
+
+  const canAdd = !isParent && ['manager', 'vice', 'secretary', 'reception'].includes(currentUser?.role);
+  const canEdit = !isParent && ['manager', 'vice', 'secretary', 'reception'].includes(currentUser?.role);
+  const canTransfer = !isParent && ['manager', 'vice', 'secretary'].includes(currentUser?.role);
   const centerWa = centerWhatsAppUrl(center?.whatsapp, center?.phoneCode, center?.phone);
   const specialists = emps.filter(e => SPECIALIST_ROLES.includes(e.role) || ['manager','vice','admin'].includes(e.role));
+
+  const myEmp = emps.find(e => e.id === currentUser?.id || e.email === currentUser?.email || e.name === currentUser?.name);
+  const myEmpId = myEmp?.id || currentUser?.id;
+  const isSpecialistUser = currentUser?.role?.startsWith('specialist') || currentUser?.role === 'specialist';
+
+  const myAssignedCount = useMemo(() => {
+    if (!myEmpId) return 0;
+    return students.filter(s => 
+      s.specialistId === myEmpId || 
+      (s.assignedSpecialists && s.assignedSpecialists.includes(myEmpId)) ||
+      (s.specialistIds && s.specialistIds.includes(myEmpId))
+    ).length;
+  }, [students, myEmpId]);
 
   // Safe loaders ensuring classes and categories are always loaded and initialized
   const getLoadedSections = useCallback(() => {
@@ -174,6 +221,13 @@ export default function StudentsPage() {
     if (directStuId) {
       sessionStorage.removeItem('scs_selected_student');
       setDetailId(directStuId);
+    }
+
+    // التحقق من طلب فتح إضافة طالب جديد من لوحة السكرتارية
+    const openAdd = sessionStorage.getItem('scs_open_add_student');
+    if (openAdd) {
+      sessionStorage.removeItem('scs_open_add_student');
+      openForm();
     }
   }, [activeView, getLoadedSections, getLoadedCategories]);
 
@@ -237,7 +291,12 @@ export default function StudentsPage() {
       if (statusFilter !== 'all' && student.status !== statusFilter) return false;
 
       // Specialist / Teacher Filter
-      if (filterSpec !== 'all' && student.specialistId !== filterSpec) return false;
+      if (filterSpec !== 'all') {
+        const specMatches = student.specialistId === filterSpec ||
+          (Array.isArray(student.assignedSpecialists) && student.assignedSpecialists.includes(filterSpec)) ||
+          (Array.isArray(student.specialistIds) && student.specialistIds.includes(filterSpec));
+        if (!specMatches) return false;
+      }
 
       // Class Dropdown Filter (only when not in a dedicated class folder)
       if (!activeFolder && filterSec !== 'all') {
@@ -329,10 +388,86 @@ export default function StudentsPage() {
       lsUpd('students', editId, updatedForm);
       toast('✅ تم تحديث بيانات الطالب', 'ok');
     } else {
-      lsAdd('students', { ...updatedForm, id: uid() });
-      toast('✅ تم إضافة الطالب بنجاح', 'ok');
+      const newStuId = uid();
+      const initialTransfer = {
+        id: uid(),
+        date: updatedForm.joinDate || todayStr(),
+        fromSection: '—',
+        toSection: updatedForm.className || 'بدون صف',
+        fromStage: '—',
+        toStage: updatedForm.stage || 'التدخل المبكر',
+        fromSpecialist: '—',
+        toSpecialist: specialists.find(e => e.id === updatedForm.specialistId)?.name || 'غير محدد',
+        reason: 'تسجيل وقبول جديد بالمركز وتسكين في الصف والمرحلة',
+        notes: 'تم فتح الملف بواسطة: ' + (currentUser?.name || 'السكرتارية'),
+        executedBy: currentUser?.name || 'السكرتارية',
+        timestamp: new Date().toISOString()
+      };
+      updatedForm.transferHistory = [initialTransfer];
+      lsAdd('students', { ...updatedForm, id: newStuId });
+      toast('✅ تم تسجيل الطالب وتسكينه في الصف بنجاح', 'ok');
     }
     setShowForm(false);
+    reload();
+  }
+
+  // Modal 6: Open Transfer / Promotion Modal (نقل وترقية طالب)
+  function openTransferModal(student = null) {
+    const target = student || (filteredStudents.length > 0 ? filteredStudents[0] : null);
+    if (!target) {
+      toast('⚠️ لا يوجد طلاب متاحون للنقل حالياً', 'er');
+      return;
+    }
+    setTransferForm({
+      stuId: target.id,
+      toSectionId: target.sectionId || (sections[0]?.id || ''),
+      toStage: target.stage || EDUCATIONAL_STAGES[0],
+      toSpecialistId: target.specialistId || '',
+      date: todayStr(),
+      reason: 'ترقية أكاديمية لمرحلة تأهيلية أعلى',
+      notes: ''
+    });
+    setShowTransferModal(true);
+  }
+
+  function saveTransfer() {
+    if (!transferForm.stuId) { toast('⚠️ اختر الطالب المراد نقله أو ترقيته', 'er'); return; }
+    const targetStu = students.find(s => s.id === transferForm.stuId);
+    if (!targetStu) { toast('⚠️ تعذر العثور على سجل الطالب', 'er'); return; }
+    if (!transferForm.toSectionId) { toast('⚠️ اختر الصف الجديد المنقول إليه الطالب', 'er'); return; }
+
+    const targetSec = sections.find(s => s.id === transferForm.toSectionId);
+    const targetSpec = emps.find(e => e.id === transferForm.toSpecialistId);
+    const oldSecName = sections.find(s => s.id === targetStu.sectionId)?.name || targetStu.className || 'بدون صف';
+    const oldSpecName = emps.find(e => e.id === targetStu.specialistId)?.name || 'غير محدد';
+
+    const record = {
+      id: uid(),
+      date: transferForm.date || todayStr(),
+      fromSection: oldSecName,
+      toSection: targetSec ? targetSec.name : 'بدون صف',
+      fromStage: targetStu.stage || 'غير محدد',
+      toStage: transferForm.toStage || targetStu.stage || 'غير محدد',
+      fromSpecialist: oldSpecName,
+      toSpecialist: targetSpec ? targetSpec.name : 'غير محدد',
+      reason: transferForm.reason,
+      notes: transferForm.notes,
+      executedBy: currentUser?.name || 'السكرتارية',
+      timestamp: new Date().toISOString()
+    };
+
+    const updatedStu = {
+      ...targetStu,
+      sectionId: transferForm.toSectionId,
+      className: targetSec ? targetSec.name : targetStu.className,
+      stage: transferForm.toStage || targetStu.stage,
+      specialistId: transferForm.toSpecialistId || targetStu.specialistId,
+      transferHistory: [record, ...(targetStu.transferHistory || [])]
+    };
+
+    lsUpd('students', targetStu.id, updatedStu);
+    toast(`✅ تم نقل وترقية الطالب ${targetStu.name} إلى ${targetSec ? targetSec.name : 'الصف الجديد'} بنجاح`, 'ok');
+    setShowTransferModal(false);
     reload();
   }
 
@@ -620,6 +755,14 @@ export default function StudentsPage() {
                   <button onClick={() => openSecForm()} className="btn btn-g" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', fontSize: '0.85rem' }}>
                     <School style={{ width: 15, height: 15, color: 'var(--pr)' }} />
                     <span>إضافة صف</span>
+                  </button>
+                )}
+
+                {/* Button 6: نقل وترقية طالب */}
+                {canTransfer && (
+                  <button onClick={() => openTransferModal()} className="btn btn-g" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', fontSize: '0.85rem' }}>
+                    <ArrowUpDown style={{ width: 15, height: 15, color: '#2563eb' }} />
+                    <span>نقل وترقية طالب</span>
                   </button>
                 )}
               </div>
@@ -1062,6 +1205,19 @@ export default function StudentsPage() {
               <option value="oldest">📜 الترتيب: الأقدم تسجيل</option>
               <option value="age">🔢 الترتيب: حسب العمر</option>
             </select>
+
+            {/* Specialist Quick Filter Button */}
+            {isSpecialistUser && (
+              <button
+                type="button"
+                onClick={() => setFilterSpec(filterSpec === myEmpId ? 'all' : myEmpId)}
+                className={`btn ${filterSpec === myEmpId ? 'btn-p' : 'btn-s'}`}
+                style={{ height: '40px', fontSize: '0.82rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', whiteSpace: 'nowrap' }}
+                title="عرض الطلاب المسندين إليك فقط"
+              >
+                <span>🌟 طلابي المسندون ({myAssignedCount})</span>
+              </button>
+            )}
           </div>
 
           {/* LIST BAR HEADER & VIEW MODE */}
@@ -1097,9 +1253,11 @@ export default function StudentsPage() {
                 {paginatedStudents.map((student) => {
                   const spec = emps.find(e => e.id === student.specialistId);
                   const sec = sections.find(sec => sec.id === student.sectionId || sec.name === student.className);
+                  const isMyAssigned = isSpecialistUser && (student.specialistId === myEmpId || (student.assignedSpecialists && student.assignedSpecialists.includes(myEmpId)));
+                  const isNewAdmission = (!student.transferHistory || student.transferHistory.length <= 1);
 
                   return (
-                    <div key={student.id} className="card" style={{ flexDirection: 'column', alignItems: 'stretch', padding: '16px', margin: 0 }}>
+                    <div key={student.id} className="card" style={{ flexDirection: 'column', alignItems: 'stretch', padding: '16px', margin: 0, border: isMyAssigned ? '1.5px solid var(--pr)' : '1px solid var(--border-color)' }}>
                       
                       {/* Student Card Top */}
                       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
@@ -1124,7 +1282,17 @@ export default function StudentsPage() {
                       <div style={{ fontSize: '0.78rem', color: 'var(--text-sub)', borderTop: '1px solid var(--border-color)', paddingTop: '10px', marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <div>🎯 التشخيص: <strong style={{ color: 'var(--text-main)' }}>{student.diagnosis || 'غير محدد'}</strong></div>
                         <div>🏫 الصف: <strong style={{ color: 'var(--text-main)' }}>{sec ? sec.name : student.className || 'غير مخصص'}</strong></div>
+                        {student.stage && <div>🌱 المرحلة: <strong style={{ color: 'var(--text-main)' }}>{student.stage}</strong></div>}
                         <div>👨‍🏫 المشرف: <strong style={{ color: 'var(--text-main)' }}>{spec ? spec.name : 'غير محدد'}</strong></div>
+                        
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '4px' }}>
+                          {isMyAssigned && (
+                            <span className="bdg b-gr" style={{ fontSize: '0.68rem', padding: '2px 6px' }}>🌟 مسند إليك</span>
+                          )}
+                          {isNewAdmission && (
+                            <span className="bdg b-bl" style={{ fontSize: '0.68rem', padding: '2px 6px' }}>✨ تسجيل جديد</span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Actions Footer */}
@@ -1150,6 +1318,17 @@ export default function StudentsPage() {
                           </a>
                         )}
 
+                        {canTransfer && (
+                          <button
+                            onClick={() => openTransferModal(student)}
+                            className="btn btn-g btn-sm"
+                            title="نقل وترقية الصف أو المرحلة"
+                            style={{ color: '#2563eb' }}
+                          >
+                            <ArrowUpDown style={{ width: '14px', height: '14px' }} />
+                          </button>
+                        )}
+
                         {canEdit && (
                           <button
                             onClick={() => openForm(student)}
@@ -1172,6 +1351,7 @@ export default function StudentsPage() {
                     <tr style={{ background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', color: 'var(--text-sub)', fontWeight: '700' }}>
                       <th style={{ padding: '12px' }}>الطالب</th>
                       <th style={{ padding: '12px' }}>الصف / القسم</th>
+                      <th style={{ padding: '12px' }}>المرحلة</th>
                       <th style={{ padding: '12px' }}>التشخيص</th>
                       <th style={{ padding: '12px' }}>ولي الأمر والتواصل</th>
                       <th style={{ padding: '12px' }}>المعلم / الأخصائي</th>
@@ -1198,6 +1378,7 @@ export default function StudentsPage() {
                             </div>
                           </td>
                           <td style={{ padding: '12px' }}>{sec ? sec.name : s.className || '—'}</td>
+                          <td style={{ padding: '12px', fontSize: '0.78rem', color: 'var(--text-sub)' }}>{s.stage || '—'}</td>
                           <td style={{ padding: '12px', color: 'var(--pr)', fontWeight: '600' }}>{s.diagnosis || '—'}</td>
                           <td style={{ padding: '12px', fontSize: '0.78rem' }}>
                             <div>{s.parentName || '—'}</div>
@@ -1214,6 +1395,16 @@ export default function StudentsPage() {
                               <button onClick={() => setDetailId(s.id)} className="btn btn-p btn-xs">
                                 👁️ الملف
                               </button>
+                              {canTransfer && (
+                                <button
+                                  onClick={() => openTransferModal(s)}
+                                  className="btn btn-g btn-xs"
+                                  title="نقل وترقية الصف أو المرحلة"
+                                  style={{ color: '#2563eb' }}
+                                >
+                                  🔄 نقل
+                                </button>
+                              )}
                               {canEdit && (
                                 <button onClick={() => openForm(s)} className="btn btn-g btn-xs">
                                   ✏️
@@ -1296,7 +1487,15 @@ export default function StudentsPage() {
                     </select>
                   </div>
                   <div className="fl">
-                    <label>المعلم / الأخصائي المشرف</label>
+                    <label>المرحلة التأهيلية / التعليمية <span className="req">*</span></label>
+                    <select value={form.stage || EDUCATIONAL_STAGES[0]} onChange={fld('stage')}>
+                      {EDUCATIONAL_STAGES.map(stg => (
+                        <option key={stg} value={stg}>{stg}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="fl">
+                    <label>المعلم / الأخصائي المشرف الرئيسي</label>
                     <select value={form.specialistId} onChange={fld('specialistId')}>
                       <option value="">-- اختر الأخصائي المشرف --</option>
                       {specialists.map(e => <option key={e.id} value={e.id}>{e.name} ({e.role})</option>)}
@@ -1382,6 +1581,32 @@ export default function StudentsPage() {
                     <label>صورة الطالب الشخصية</label>
                     <input type="file" accept="image/*" onChange={handlePhoto} />
                   </div>
+                  
+                  <div className="fl full">
+                    <label>فريق العمل والأخصائيون المشاركون في متابعة وتأهيل الطالب</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px', padding: '12px', background: 'var(--g0)', borderRadius: '8px', border: '1px solid var(--border-color)', maxHeight: '180px', overflowY: 'auto' }}>
+                      {specialists.map(sp => {
+                        const isAssigned = (form.assignedSpecialists || []).includes(sp.id) || form.specialistId === sp.id;
+                        return (
+                          <label key={sp.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', cursor: 'pointer', margin: 0, padding: '4px' }}>
+                            <input
+                              type="checkbox"
+                              checked={isAssigned}
+                              onChange={(e) => {
+                                const current = form.assignedSpecialists || [];
+                                const updated = e.target.checked
+                                  ? [...current, sp.id]
+                                  : current.filter(id => id !== sp.id);
+                                setForm(fm => ({ ...fm, assignedSpecialists: updated }));
+                              }}
+                            />
+                            <span>{sp.name} <small style={{ color: 'var(--text-sub)' }}>({sp.role})</small></span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <div className="fl full">
                     <label>ملاحظات إضافية على الطالب</label>
                     <textarea rows="3" value={form.notes} onChange={fld('notes')} />
@@ -1700,6 +1925,161 @@ export default function StudentsPage() {
             <div style={{ padding: '14px 20px', background: 'var(--g0)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
               <button onClick={() => setShowCatModal(false)} className="btn btn-g">إلغاء</button>
               <button onClick={saveCat} className="btn btn-p">حفظ بيانات الفئة</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7️⃣ MODAL 6: TRANSFER / PROMOTE STUDENT (نقل وترقية وإدارة تسكين الطلاب) */}
+      {showTransferModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div className="wg" style={{ width: '100%', maxWidth: '650px', maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', margin: 0 }}>
+            <div className="wg-h">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ background: '#dbeafe', color: '#1d4ed8', width: 34, height: 34, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ArrowUpDown style={{ width: 18, height: 18 }} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0 }}>إدارة تسكين ونقل وترقية الطلاب</h3>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>نقل طالب بين الصفوف والمراحل وتحديث المشرف مع أرشفة السجل</span>
+                </div>
+              </div>
+              <button onClick={() => setShowTransferModal(false)} className="btn btn-g btn-xs"><X style={{ width: '14px', height: '14px' }} /></button>
+            </div>
+
+            <div className="wg-b fg c2" style={{ overflowY: 'auto', flex: 1, padding: '20px' }}>
+              {/* Select Student */}
+              <div className="fl full">
+                <label>اختر الطالب المراد نقله / ترقيته <span className="req">*</span></label>
+                <select
+                  value={transferForm.stuId}
+                  onChange={(e) => {
+                    const selId = e.target.value;
+                    const st = students.find(s => s.id === selId);
+                    setTransferForm(f => ({
+                      ...f,
+                      stuId: selId,
+                      toSectionId: st?.sectionId || f.toSectionId,
+                      toStage: st?.stage || f.toStage,
+                      toSpecialistId: st?.specialistId || f.toSpecialistId
+                    }));
+                  }}
+                  style={{ fontWeight: '700', fontSize: '0.9rem' }}
+                >
+                  <option value="">-- اختر الطالب من القائمة --</option>
+                  {students.map(s => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} ({s.className || 'بدون صف'}) - {s.stage || 'المرحلة غير محددة'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Current Status Preview */}
+              {(() => {
+                const cur = students.find(s => s.id === transferForm.stuId);
+                if (!cur) return null;
+                const curSec = sections.find(sec => sec.id === cur.sectionId || sec.name === cur.className);
+                const curSpec = emps.find(e => e.id === cur.specialistId);
+                return (
+                  <div className="full" style={{ padding: '12px 14px', background: 'var(--g0)', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ fontWeight: '700', color: 'var(--text-main)', marginBottom: '4px' }}>📌 البيانات الحالية للطالب:</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '8px' }}>
+                      <div>🏫 الصف الحالي: <strong>{curSec ? curSec.name : cur.className || 'بدون صف'}</strong></div>
+                      <div>🌱 المرحلة الحالية: <strong>{cur.stage || 'غير محددة'}</strong></div>
+                      <div>👨‍🏫 المشرف الحالي: <strong>{curSpec ? curSpec.name : 'غير محدد'}</strong></div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Target Section */}
+              <div className="fl">
+                <label>الصف الجديد المنقول إليه <span className="req">*</span></label>
+                <select
+                  value={transferForm.toSectionId}
+                  onChange={e => setTransferForm(f => ({ ...f, toSectionId: e.target.value }))}
+                >
+                  <option value="">-- اختر الصف الجديد --</option>
+                  {sections.map(sec => {
+                    const count = students.filter(s => s.sectionId === sec.id).length;
+                    return (
+                      <option key={sec.id} value={sec.id}>
+                        {sec.icon || '🏫'} {sec.name} ({count} / {sec.capacity || 10} طالب)
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {/* Target Stage */}
+              <div className="fl">
+                <label>المرحلة التأهيلية / التعليمية الجديدة <span className="req">*</span></label>
+                <select
+                  value={transferForm.toStage}
+                  onChange={e => setTransferForm(f => ({ ...f, toStage: e.target.value }))}
+                >
+                  {EDUCATIONAL_STAGES.map(stg => (
+                    <option key={stg} value={stg}>{stg}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Target Specialist */}
+              <div className="fl">
+                <label>المعلم / الأخصائي المشرف في الصف الجديد</label>
+                <select
+                  value={transferForm.toSpecialistId}
+                  onChange={e => setTransferForm(f => ({ ...f, toSpecialistId: e.target.value }))}
+                >
+                  <option value="">-- اختر الأخصائي المشرف --</option>
+                  {specialists.map(sp => (
+                    <option key={sp.id} value={sp.id}>{sp.name} ({sp.role})</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Transfer Date */}
+              <div className="fl">
+                <label>تاريخ النقل / الترقية <span className="req">*</span></label>
+                <input
+                  type="date"
+                  value={transferForm.date}
+                  onChange={e => setTransferForm(f => ({ ...f, date: e.target.value }))}
+                />
+              </div>
+
+              {/* Reason */}
+              <div className="fl full">
+                <label>سبب النقل والترقية</label>
+                <select
+                  value={transferForm.reason}
+                  onChange={e => setTransferForm(f => ({ ...f, reason: e.target.value }))}
+                >
+                  {TRANSFER_REASONS.map(r => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Notes */}
+              <div className="fl full">
+                <label>ملاحظات وتوجيهات إدارية وتأهيلية</label>
+                <textarea
+                  rows="2"
+                  value={transferForm.notes}
+                  onChange={e => setTransferForm(f => ({ ...f, notes: e.target.value }))}
+                  placeholder="اكتب أي توصيات للمعلم الجديد أو ولي الأمر..."
+                />
+              </div>
+            </div>
+
+            <div style={{ padding: '14px 20px', background: 'var(--g0)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button onClick={() => setShowTransferModal(false)} className="btn btn-g">إلغاء</button>
+              <button onClick={saveTransfer} className="btn btn-p" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <CheckCircle2 style={{ width: 16, height: 16 }} />
+                <span>تأكيد النقل والترقية</span>
+              </button>
             </div>
           </div>
         </div>

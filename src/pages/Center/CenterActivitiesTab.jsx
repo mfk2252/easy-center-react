@@ -83,7 +83,7 @@ export default function CenterActivitiesTab() {
   const [form, setForm] = useState(EMPTY_ACTIVITY_FORM);
   const [viewActivity, setViewActivity] = useState(null);
 
-  const canEdit = ['manager', 'vice', 'reception', 'supervisor', 'specialist', 'teacher'].includes(currentUser?.role);
+  const canEdit = ['manager', 'vice', 'secretary', 'reception', 'supervisor', 'specialist', 'teacher'].includes(currentUser?.role);
 
   function reload() {
     let list = lsGet('centerActivities');

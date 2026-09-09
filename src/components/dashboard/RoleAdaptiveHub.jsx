@@ -22,6 +22,7 @@ export default function RoleAdaptiveHub({ currentUser, data, today, go }) {
 
   // الأدوار
   const isManager = role === 'manager' || role === 'vice';
+  const isSecretary = role === 'secretary';
   const isSpecialist = role === 'specialist';
   const isReception = role === 'reception';
   const isParent = role === 'parent';
@@ -73,6 +74,7 @@ export default function RoleAdaptiveHub({ currentUser, data, today, go }) {
   const roleNameArabic = {
     manager: 'المدير العام للمركز',
     vice: 'وكيل المركز / المشرف الإداري',
+    secretary: 'السكرتارية والتنسيق الإداري',
     specialist: 'أخصائي / كادر تأهيلي',
     reception: 'مسؤول الاستقبال والتسجيل',
     parent: 'ولي أمر طالب',
@@ -361,8 +363,215 @@ export default function RoleAdaptiveHub({ currentUser, data, today, go }) {
         </div>
       )}
 
-      {/* 2. كشف مهامي وجلساتي العلاجية للأخصائي - مربوط بالطلاب والخطط والمقاييس */}
-      {(isSpecialist || (viewMode === 'role' && !isManager)) && (
+      {/* 2. لوحة السكرتارية والتنسيق الإداري والميداني */}
+      {isSecretary && (
+        <div className="wg" style={{ marginBottom: 14 }}>
+          <div className="wg-h">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: '1.2rem' }}>🗂️</span>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                  لوحة السكرتارية والتنسيق الإداري والميداني
+                </h3>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>
+                  إدارة حضور كافة الكوادر والطلاب، إضافة ونقل الطلاب بين الصفوف، والأنشطة الميدانية
+                </span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button
+                type="button"
+                className="btn btn-p btn-xs"
+                onClick={() => {
+                  sessionStorage.setItem('scs_open_add_student', 'true');
+                  go('students');
+                }}
+              >
+                ➕ تسجيل طالب جديد
+              </button>
+            </div>
+          </div>
+
+          <div className="wg-b">
+            {/* شبكة الإحصائيات الإدارية الخاصة بالسكرتارية */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
+                gap: 12,
+                marginBottom: 14,
+              }}
+            >
+              {/* حضور الموظفين */}
+              <div
+                onClick={() => go('hr-att')}
+                style={{
+                  padding: '14px 16px',
+                  borderRadius: 'var(--r2)',
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border-color)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                title="اضغط لفتح شاشة تسجيل حضور وانصراف الموظفين"
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', fontWeight: 600 }}>👥 حضور الكوادر والموظفين</span>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--ok)', fontWeight: 700 }}>تسجيل ←</span>
+                </div>
+                <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', marginTop: 4 }}>
+                  {staffPresentToday} / {emps.length}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--ok)', fontWeight: 700, marginTop: 4 }}>
+                  نسبة الحضور: {staffAttendanceRate}% اليوم
+                </div>
+              </div>
+
+              {/* حضور الطلاب */}
+              <div
+                onClick={() => go('attendance')}
+                style={{
+                  padding: '14px 16px',
+                  borderRadius: 'var(--r2)',
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border-color)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                title="اضغط لفتح شاشة تسجيل حضور الطلاب"
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', fontWeight: 600 }}>👦 حضور الطلاب لليوم</span>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--pr)', fontWeight: 700 }}>الكشف ←</span>
+                </div>
+                <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', marginTop: 4 }}>
+                  {students.filter(s => s.status !== 'inactive').length} طالب
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--pr)', fontWeight: 700, marginTop: 4 }}>
+                  كافة الصفوف والشعب المدرسية
+                </div>
+              </div>
+
+              {/* الطلاب وإدارة الصفوف */}
+              <div
+                onClick={() => go('students')}
+                style={{
+                  padding: '14px 16px',
+                  borderRadius: 'var(--r2)',
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border-color)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                title="اضغط لفتح إدارة ملفات الطلاب ونقل الصفوف"
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', fontWeight: 600 }}>🎓 إدارة وتسكين الطلاب</span>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--pur, #7c3aed)', fontWeight: 700 }}>الملفات ←</span>
+                </div>
+                <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', marginTop: 4 }}>
+                  {students.length}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--pur, #7c3aed)', fontWeight: 700, marginTop: 4 }}>
+                  إضافة، نقل الصفوف، وإسناد الأخصائيين
+                </div>
+              </div>
+
+              {/* الأنشطة والفعاليات */}
+              <div
+                onClick={() => go('center')}
+                style={{
+                  padding: '14px 16px',
+                  borderRadius: 'var(--r2)',
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border-color)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                title="اضغط لإدارة الأنشطة والفعاليات بالمركز"
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', fontWeight: 600 }}>🎯 الأنشطة والفعاليات</span>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--warn)', fontWeight: 700 }}>الأنشطة ←</span>
+                </div>
+                <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', marginTop: 4 }}>
+                  نشطة
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--warn)', fontWeight: 700, marginTop: 4 }}>
+                  إضافة وتعديل وحذف الأنشطة الميدانية
+                </div>
+              </div>
+            </div>
+
+            {/* شريط الإجراءات السريعة للسكرتارية */}
+            <div
+              style={{
+                borderTop: '1px solid var(--border-color)',
+                paddingTop: 12,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 8,
+              }}
+            >
+              <span style={{ fontSize: '0.76rem', color: 'var(--text-sub)', fontWeight: 700 }}>
+                ⚡ إجراءات السكرتارية الميدانية السريعة:
+              </span>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn btn-p btn-xs"
+                  onClick={() => {
+                    sessionStorage.setItem('scs_open_add_student', 'true');
+                    go('students');
+                  }}
+                >
+                  ➕ إضافة طالب جديد
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-g btn-xs"
+                  onClick={() => go('students')}
+                >
+                  🔄 نقل وإدارة الصفوف
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-g btn-xs"
+                  onClick={() => go('hr-att')}
+                >
+                  👥 حضور الموظفين
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-g btn-xs"
+                  onClick={() => go('attendance')}
+                >
+                  👦 حضور الطلاب
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-g btn-xs"
+                  onClick={() => go('center')}
+                >
+                  🎯 أنشطة المركز
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-g btn-xs"
+                  onClick={() => go('calendar')}
+                >
+                  🗓️ التقويم والمواعيد
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. كشف مهامي وجلساتي العلاجية للأخصائي - مربوط بالطلاب والخطط والمقاييس */}
+      {(isSpecialist || (viewMode === 'role' && !isManager && !isSecretary && !isReception && !isParent)) && (
         <div className="wg" style={{ marginBottom: 14 }}>
           <div className="wg-h">
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

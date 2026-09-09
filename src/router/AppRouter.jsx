@@ -12,13 +12,14 @@ import CenterPage from '../pages/Center/index';
 import Settings from '../pages/Settings';
 import AdminSubscriptions from '../pages/AdminSubscriptions';
 import { isPlatformAdminEmail } from '../firebase/auth';
+import { canDo } from '../utils/permissions';
 
-function BlockedPage({ t }) {
+function BlockedPage({ t, customTitle, customSub }) {
   return (
-    <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--err)' }}>
+    <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--err)', maxWidth: '600px', margin: '40px auto' }}>
       <div style={{ fontSize: '4rem', marginBottom: 20 }}>🔒</div>
-      <h2 style={{ margin: '0 0 10px 0' }}>{t('blocked')}</h2>
-      <p style={{ color: 'var(--g5)', fontSize: '.9rem' }}>{t('blockedSub')}</p>
+      <h2 style={{ margin: '0 0 10px 0', fontSize: '1.4rem', fontWeight: 800 }}>{customTitle || t('blocked')}</h2>
+      <p style={{ color: 'var(--text-sub)', fontSize: '0.95rem', lineHeight: 1.6 }}>{customSub || t('blockedSub')}</p>
     </div>
   );
 }
@@ -35,7 +36,17 @@ export default function AppRouter() {
     catch (e) { return {}; }
   })();
 
-  const can = (key) => isManager || userPerms[key] === true;
+  const can = (key) => isManager || canDo(currentUser?.role, key) || userPerms[key] === true;
+
+  if (activeView === 'finance' && !isManager) {
+    return (
+      <BlockedPage
+        t={t}
+        customTitle="غير مصرح لك بالدخول إلى هذا النظام"
+        customSub="قسم المالية والحسابات مخصص حصرياً للمدير العام والإدارة المالية."
+      />
+    );
+  }
 
   if (activeView === 'admin' && isAdmin) return <AdminSubscriptions currentUserEmail={currentUser?.email}/>;
   if (activeView === 'dash') return <Dashboard/>;

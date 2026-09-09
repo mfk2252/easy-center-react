@@ -9,6 +9,12 @@ const PERMISSIONS = {
     // restricted
     finance: false, userMgmt: false, reset: false,
   },
+  secretary: {
+    dash: true, calendar: true, attendance: true, hr: true,
+    students: true, programs: true, reports: true, center: true,
+    // Strictly restricted: NO access to finance, user management, system reset, or system configuration
+    finance: false, userMgmt: false, reset: false, settings: false,
+  },
   specialist: {
     dash: true, calendar: true, attendance: true,
     students: true, programs: true, sessions: true,
@@ -38,16 +44,16 @@ export function canSeeTab(role, tabId) {
   if (!role) return false;
   if (role === 'manager') return true;
   const tabPerms = {
-    dash: ['manager','vice','specialist','reception','parent'],
-    calendar: ['manager','vice','specialist','reception'],
-    attendance: ['manager','vice','specialist','reception','parent'],
-    hr: ['manager','vice','reception'],
-    students: ['manager','vice','specialist','reception','parent'],
-    programs: ['manager','vice','specialist','reception'],
-    'prog-reports': ['manager','vice','specialist','reception'],
+    dash: ['manager','vice','secretary','specialist','reception','parent'],
+    calendar: ['manager','vice','secretary','specialist','reception'],
+    attendance: ['manager','vice','secretary','specialist','reception','parent'],
+    hr: ['manager','vice','secretary','reception'],
+    students: ['manager','vice','secretary','specialist','reception','parent'],
+    programs: ['manager','vice','secretary','specialist','reception'],
+    'prog-reports': ['manager','vice','secretary','specialist','reception'],
     statistics: ['manager','vice'],
-    reports: ['manager','vice'],
-    center: ['manager','vice','reception'],
+    reports: ['manager','vice','secretary'],
+    center: ['manager','vice','secretary','reception'],
     settings: ['manager','vice','technician'],
   };
   return (tabPerms[tabId] || []).includes(role);
@@ -58,7 +64,11 @@ export function canEditFinance(role) {
 }
 
 export function canSeeHr(role) {
-  return ['manager','vice','reception'].includes(role);
+  return ['manager','vice','secretary','reception'].includes(role);
+}
+
+export function isSecretary(role) {
+  return role === 'secretary';
 }
 
 export function canManageUsers(role) {

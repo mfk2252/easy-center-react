@@ -674,22 +674,27 @@ export async function createAdminDemoAccount({
   seedData = true,
 }) {
   const cleanUsername = (username || '').trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
-  if (!cleanUsername) throw new Error('يرجى إدخال اسم مستخدم صحيح باللغة الإنجليزية أو بريد إلكتروني');
-  if (!password || password.length < 3) throw new Error('يرجى إدخال كلمة مرور (3 أحرف على الأقل)');
+  const autoUsername = cleanUsername || `demo_${Math.random().toString(36).substring(2, 7)}`;
+  const finalPassword = (password || 'demo123').trim();
   const days = Math.max(1, parseInt(durationDays, 10) || 3);
 
   const now = new Date();
   const expiryDate = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
-  const demoCenterId = `demo_ctr_${cleanUsername}`;
-  const demoId = `demo_${cleanUsername}`;
+  const demoCenterId = `demo_ctr_${autoUsername}`;
+  const demoId = `demo_${autoUsername}`;
+  const demoToken = `dmtk_${Math.random().toString(36).substring(2, 10)}_${Date.now().toString(36)}`;
+  const baseUrl = typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}` : '';
+  const directLink = `${baseUrl}?demo=${autoUsername}`;
 
   const demoDoc = {
     id: demoId,
     demoId,
     centerId: demoCenterId,
-    username: cleanUsername,
-    password: password.trim(),
-    centerName: (centerName || 'مركز تجريبي').trim(),
+    username: autoUsername,
+    password: finalPassword,
+    token: demoToken,
+    directLink,
+    centerName: (centerName || 'مركز تجريبي للعرض').trim(),
     managerName: (managerName || 'مدير تجريبي').trim(),
     phone: (phone || '').trim(),
     notes: (notes || '').trim(),
@@ -702,13 +707,13 @@ export async function createAdminDemoAccount({
   // 1) حفظ محلياً في localStorage كنسخة فورية
   try {
     const existing = JSON.parse(localStorage.getItem('scs_demo_accounts') || '[]');
-    const filtered = existing.filter(d => d.username !== cleanUsername);
+    const filtered = existing.filter(d => d.username !== autoUsername);
     localStorage.setItem('scs_demo_accounts', JSON.stringify([demoDoc, ...filtered]));
   } catch (_) {}
 
   // 2) حفظ في Firestore في كولكشن demoAccounts
   try {
-    await setDoc(doc(db, 'demoAccounts', cleanUsername), {
+    await setDoc(doc(db, 'demoAccounts', autoUsername), {
       ...demoDoc,
       createdAtServer: serverTimestamp(),
     });
@@ -869,6 +874,81 @@ export async function authenticateDemoAccount(usernameOrEmail, password) {
   const daysLeft = Math.max(0, Math.ceil((expiry - now) / (1000 * 60 * 60 * 24)));
 
   // تهيئة وتأكيد وجود بيانات الديمو
+  const { initDemoData } = await import('../utils/demoData');
+  initDemoData(demoDoc.centerId, demoDoc.managerName, demoDoc.centerName, daysLeft);
+
+  return {
+    uid: demoDoc.centerId,
+    email: demoDoc.username.includes('@') ? demoDoc.username : `${demoDoc.username}@easycenter.demo`,
+    name: demoDoc.managerName || 'مدير تجريبي',
+    role: 'manager',
+    centerId: demoDoc.centerId,
+    isDemo: true,
+    demoAccount: {
+      ...demoDoc,
+      daysLeft,
+    },
+    subscription: {
+      allowed: true,
+      status: 'trial',
+      reason: 'admin_demo',
+      daysLeft,
+      isDemo: true,
+      expiryDate: demoDoc.expiryDate,
+    },
+  };
+}
+
+export async function autoLoginDemoToken(tokenOrUsername) {
+  const clean = (tokenOrUsername || '').trim().toLowerCase();
+  if (!clean) return null;
+
+  let demoDoc = null;
+  try {
+    const snap = await getDoc(doc(db, 'demoAccounts', clean));
+    if (snap.exists()) {
+      demoDoc = snap.data();
+    }
+  } catch (_) {}
+
+  if (!demoDoc) {
+    const local = JSON.parse(localStorage.getItem('scs_demo_accounts') || '[]');
+    demoDoc = local.find(a => 
+      (a.username || '').toLowerCase() === clean || 
+      (a.token || '').toLowerCase() === clean ||
+      (a.demoId || '').toLowerCase() === clean
+    );
+  }
+
+  // إذا لم نجد عن طريق اسم المستخدم مباشرة، نبحث في Firestore عن token
+  if (!demoDoc) {
+    try {
+      const snapAll = await getDocs(collection(db, 'demoAccounts'));
+      snapAll.forEach(d => {
+        const val = d.data();
+        if (val && (val.username === clean || val.token === clean || val.demoId === clean)) {
+          demoDoc = val;
+        }
+      });
+    } catch (_) {}
+  }
+
+  if (!demoDoc) return null;
+
+  const expiry = new Date(demoDoc.expiryDate);
+  const now = new Date();
+  const isExpired = expiry <= now || demoDoc.status === 'expired';
+
+  if (demoDoc.status === 'suspended') {
+    throw new Error('تم إيقاف هذا العرض التجريبي المؤقت من قبل إدارة المنصة.');
+  }
+
+  if (isExpired) {
+    throw new Error(`انتهت فترة صلاحية هذا العرض التجريبي (المحددة بـ ${demoDoc.durationDays || 3} أيام). يرجى التواصل مع الإدارة للتجديد.`);
+  }
+
+  const daysLeft = Math.max(0, Math.ceil((expiry - now) / (1000 * 60 * 60 * 24)));
+
   const { initDemoData } = await import('../utils/demoData');
   initDemoData(demoDoc.centerId, demoDoc.managerName, demoDoc.centerName, daysLeft);
 

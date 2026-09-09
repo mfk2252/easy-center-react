@@ -160,9 +160,10 @@ export function AppProvider({ children }) {
       setCurrentUser(savedSession);
       setSubscriptionStatus(savedSession.subscription || { allowed: true, reason: 'demo', daysLeft: 5, status: 'trial' });
       const localDemoCenter = JSON.parse(localStorage.getItem(`scs_center_settings_${savedSession.centerId}`) || 'null');
+      const cName = savedSession.demoAccount?.centerName || localDemoCenter?.name || 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)';
       applyCenter(localDemoCenter || {
-        name: 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)',
-        centerName: 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)',
+        name: cName,
+        centerName: cName,
         color: '#1a56db',
         configured: true,
         isSetup: true,
@@ -416,15 +417,16 @@ export function AppProvider({ children }) {
 
     if (user.isDemo) {
       const localDemoCenter = JSON.parse(localStorage.getItem(`scs_center_settings_${user.centerId}`) || 'null');
+      const cName = user.demoAccount?.centerName || localDemoCenter?.name || 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)';
       applyCenter(localDemoCenter || {
-        name: 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)',
-        centerName: 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)',
+        name: cName,
+        centerName: cName,
         color: '#1a56db',
         configured: true,
         isSetup: true,
         setupCompleted: true,
       });
-      toast(`🎉 مرحباً بك أستاذ/ة ${user.name || ''} في وضع الديمو التجريبي`, 'ok');
+      toast(`🎉 مرحباً بك في العرض التجريبي المخصص لـ ${cName}`, 'ok');
       setScreen('app');
       setActiveView('dash');
       return;

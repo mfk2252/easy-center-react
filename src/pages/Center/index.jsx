@@ -747,8 +747,14 @@ export default function CenterPage() {
       {tab === 'finance' && (
         <div>
           {!isManager ? (
-            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--err)', background: 'var(--g0)', borderRadius: 'var(--r)', border: '1px solid var(--border-color)' }}>
-              🔒 البيانات المالية متاحة للمدير الرئيسي فقط.
+            <div style={{ padding: '60px 24px', textAlign: 'center', background: 'var(--g0)', borderRadius: '16px', border: '1.5px dashed var(--err)', margin: '20px auto', maxWidth: 640 }}>
+              <div style={{ fontSize: '3.5rem', marginBottom: 16 }}>🔒</div>
+              <h3 style={{ color: 'var(--err)', fontSize: '1.35rem', fontWeight: 800, marginBottom: 8 }}>
+                غير مصرح لك بالدخول إلى هذا النظام
+              </h3>
+              <p style={{ color: 'var(--text-sub)', fontSize: '0.94rem', lineHeight: 1.7, margin: '0 auto', maxWidth: 500 }}>
+                قسم المالية والحسابات والتحصيلات مخصص لمدير المنصة والإدارة المالية فقط. لا تملك السكرتارية أو الكوادر غير المصرح لها حق الوصول للسجلات المالية.
+              </p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
