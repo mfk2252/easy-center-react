@@ -176,12 +176,6 @@ export default function StudentsPage() {
   const getLoadedSections = useCallback(() => {
     let secs = lsGet('sections');
     if (!Array.isArray(secs) || secs.length === 0) {
-      try {
-        const legacy = JSON.parse(localStorage.getItem('scs_sections') || '[]');
-        if (Array.isArray(legacy) && legacy.length > 0) secs = legacy;
-      } catch(_) {}
-    }
-    if (!Array.isArray(secs) || secs.length === 0) {
       secs = DEFAULT_SECTIONS;
       lsSet('sections', secs);
     }
@@ -190,12 +184,6 @@ export default function StudentsPage() {
 
   const getLoadedCategories = useCallback(() => {
     let cats = lsGet('categories');
-    if (!Array.isArray(cats) || cats.length === 0) {
-      try {
-        const legacy = JSON.parse(localStorage.getItem('scs_categories') || '[]');
-        if (Array.isArray(legacy) && legacy.length > 0) cats = legacy;
-      } catch(_) {}
-    }
     if (!Array.isArray(cats) || cats.length === 0) {
       cats = DEFAULT_CATEGORIES;
       lsSet('categories', cats);

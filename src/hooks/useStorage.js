@@ -21,22 +21,21 @@ function cKey(key) {
 
 export function lsGet(key) {
   try {
-    const r = localStorage.getItem(cKey(key));
-    if (r !== null) {
-      const parsed = JSON.parse(r);
-      if (parsed !== null && parsed !== undefined) return parsed;
-    }
     const cId = getCenterId();
-    const fallback = (cId ? localStorage.getItem(`local_${key}`) : null)
-      || localStorage.getItem(`scs_${key}`)
-      || localStorage.getItem(key);
+    if (cId) {
+      const r = localStorage.getItem(`${cId}_${key}`);
+      if (r !== null) {
+        const parsed = JSON.parse(r);
+        if (parsed !== null && parsed !== undefined) return parsed;
+      }
+      // عزل تام للبيانات: في حال وجود مركز نشط (حقيقي أو تجريبي) لا نسمح بالسقوط على بيانات حسابات أخرى
+      return [];
+    }
+    const fallback = localStorage.getItem(`local_${key}`);
     if (fallback !== null) {
       try {
         const parsed = JSON.parse(fallback);
-        if (parsed !== null && parsed !== undefined) {
-          if (cId) localStorage.setItem(`${cId}_${key}`, fallback);
-          return parsed;
-        }
+        if (parsed !== null && parsed !== undefined) return parsed;
       } catch(_) {}
     }
     return [];
@@ -45,10 +44,10 @@ export function lsGet(key) {
 
 export function lsWrite(key, data) {
   try {
-    localStorage.setItem(cKey(key), JSON.stringify(data));
-    localStorage.setItem(`scs_${key}`, JSON.stringify(data));
     const cId = getCenterId();
     if (cId) {
+      localStorage.setItem(`${cId}_${key}`, JSON.stringify(data));
+    } else {
       localStorage.setItem(`local_${key}`, JSON.stringify(data));
     }
   } catch(e) {}
@@ -159,7 +158,7 @@ export async function syncFromFirebase(centerId, keys, force = false) {
         if (Array.isArray(data) && data.length > 0) {
           localStorage.setItem(`${centerId}_${key}`, JSON.stringify(data));
         } else {
-          const localRaw = localStorage.getItem(`${centerId}_${key}`) || localStorage.getItem(`local_${key}`) || localStorage.getItem(key);
+          const localRaw = localStorage.getItem(`${centerId}_${key}`);
           if (localRaw) {
             try {
               const parsed = JSON.parse(localRaw);
@@ -184,10 +183,7 @@ export async function pushToFirebase(centerId) {
 
   for (const key of keys) {
     try {
-      const raw = localStorage.getItem(`${centerId}_${key}`)
-               || localStorage.getItem(`local_${key}`)
-               || localStorage.getItem(`scs_${key}`)
-               || localStorage.getItem(key);
+      const raw = localStorage.getItem(`${centerId}_${key}`);
       if (!raw) continue;
       const data = JSON.parse(raw);
       if (!Array.isArray(data) || data.length === 0) continue;

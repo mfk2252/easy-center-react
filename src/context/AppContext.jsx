@@ -149,117 +149,151 @@ export function AppProvider({ children }) {
       setScreen(prev => prev === 'loading' ? 'login' : prev);
     }, 8000);
 
-    const savedSession = (() => {
-      try { return JSON.parse(localStorage.getItem('scs_session') || 'null'); }
-      catch(e) { return null; }
-    })();
+    let unsubscribe = () => {};
 
-    if (savedSession?.isDemo) {
-      clearTimeout(loadingTimeout);
-      localStorage.setItem('scs_current_uid', savedSession.centerId || 'demo_center');
-      setCurrentUser(savedSession);
-      setSubscriptionStatus(savedSession.subscription || { allowed: true, reason: 'demo', daysLeft: 5, status: 'trial' });
-      const localDemoCenter = JSON.parse(localStorage.getItem(`scs_center_settings_${savedSession.centerId}`) || 'null');
-      const cName = savedSession.demoAccount?.centerName || localDemoCenter?.name || 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)';
-      applyCenter(localDemoCenter || {
-        name: cName,
-        centerName: cName,
-        color: '#1a56db',
-        configured: true,
-        isSetup: true,
-        setupCompleted: true,
-      });
-      setScreen('app');
-      setActiveView('dash');
-      return;
-    }
+    // 1. أولاً: التحقق الفوري من وجود رابط دخول تجريبي مباشر في الرابط ?demo= أو ?demo_token=
+    const checkDemoUrl = async () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const demoToken = params.get('demo') || params.get('demo_token') || params.get('token');
+        if (demoToken) {
+          clearTimeout(loadingTimeout);
+          const { autoLoginDemoToken } = await import('../firebase/auth');
+          const demoUser = await autoLoginDemoToken(demoToken);
+          if (demoUser) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            await login(demoUser);
+            return true;
+          }
+        }
+      } catch (err) {
+        console.warn('Demo URL check note:', err);
+      }
+      return false;
+    };
 
-    if (savedSession?.centerId) {
-      clearTimeout(loadingTimeout);
-      localStorage.setItem('scs_current_uid', savedSession.centerId);
-      (async () => {
-        const centerData = await getCenterSettings(savedSession.centerId);
-        const subStatus = checkSubscriptionStatus(centerData);
-        const updatedUser = { ...savedSession, subscription: subStatus };
-        localStorage.setItem('scs_session', JSON.stringify(updatedUser));
-        setCurrentUser(updatedUser);
-        setSubscriptionStatus(subStatus);
-        if (!subStatus.allowed) {
-          setScreen('subscription');
-          return;
-        }
-        if (centerData) {
-          applyCenter(centerData);
-        } else {
-          applyCenter(getCenterPrintMeta());
-        }
-        setSyncing(true);
-        syncFromFirebase(savedSession.centerId, ALL_KEYS)
-          .finally(() => { setSyncing(false); setScreen('app'); });
+    checkDemoUrl().then(handled => {
+      if (handled) return;
+
+      const savedSession = (() => {
+        try { return JSON.parse(localStorage.getItem('scs_session') || 'null'); }
+        catch(e) { return null; }
       })();
-      return;
-    }
 
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-      clearTimeout(loadingTimeout);
-      if (fbUser) {
-        if (isPlatformAdminEmail(fbUser.email)) {
-          const adminUser = buildPlatformAdminUser(fbUser);
-          localStorage.setItem('scs_current_uid', fbUser.uid);
-          localStorage.setItem('scs_session', JSON.stringify(adminUser));
-          setCurrentUser(adminUser);
-          setSubscriptionStatus(adminUser.subscription);
-          
-          const centerData = await getCenterSettings(fbUser.uid);
+      if (savedSession?.isDemo) {
+        clearTimeout(loadingTimeout);
+        localStorage.setItem('scs_current_uid', savedSession.centerId || 'demo_center');
+        setCurrentUser(savedSession);
+        setSubscriptionStatus(savedSession.subscription || { allowed: true, reason: 'demo', daysLeft: 5, status: 'trial' });
+
+        // تأكيد تهيئة بيانات الديمو المعزولة
+        import('../utils/demoData').then(({ initDemoData }) => {
+          const cName = savedSession.demoAccount?.centerName || 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)';
+          initDemoData(savedSession.centerId, savedSession.name, cName, savedSession.demoAccount?.daysLeft || 3);
+        });
+
+        const localDemoCenter = JSON.parse(localStorage.getItem(`scs_center_settings_${savedSession.centerId}`) || 'null');
+        const cName = savedSession.demoAccount?.centerName || localDemoCenter?.name || 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)';
+        applyCenter(localDemoCenter || {
+          name: cName,
+          centerName: cName,
+          color: '#1a56db',
+          configured: true,
+          isSetup: true,
+          setupCompleted: true,
+        });
+        setScreen('app');
+        setActiveView('dash');
+        return;
+      }
+
+      if (savedSession?.centerId) {
+        clearTimeout(loadingTimeout);
+        localStorage.setItem('scs_current_uid', savedSession.centerId);
+        (async () => {
+          const centerData = await getCenterSettings(savedSession.centerId);
+          const subStatus = checkSubscriptionStatus(centerData);
+          const updatedUser = { ...savedSession, subscription: subStatus };
+          localStorage.setItem('scs_session', JSON.stringify(updatedUser));
+          setCurrentUser(updatedUser);
+          setSubscriptionStatus(subStatus);
+          if (!subStatus.allowed) {
+            setScreen('subscription');
+            return;
+          }
           if (centerData) {
             applyCenter(centerData);
           } else {
             applyCenter(getCenterPrintMeta());
           }
           setSyncing(true);
-          syncFromFirebase(fbUser.uid, ALL_KEYS)
-            .finally(() => { setSyncing(false); setScreen('app'); setActiveView('admin'); });
-          return;
-        }
-
-        localStorage.setItem('scs_current_uid', fbUser.uid);
-
-        const centerData = await getCenterSettings(fbUser.uid);
-        const subStatus = checkSubscriptionStatus(centerData);
-
-        const user = {
-          uid: fbUser.uid,
-          email: fbUser.email,
-          name: fbUser.displayName || 'المدير',
-          photo: fbUser.photoURL,
-          role: 'manager',
-          centerId: fbUser.uid,
-          subscription: subStatus
-        };
-        localStorage.setItem('scs_session', JSON.stringify(user));
-        setCurrentUser(user);
-        setSubscriptionStatus(subStatus);
-
-        if (!subStatus.allowed) {
-          setScreen('subscription');
-          return;
-        }
-
-        if (!needsCenterSetup(centerData)) {
-          applyCenter(centerData);
-          setSyncing(true);
-          syncFromFirebase(fbUser.uid, ALL_KEYS)
+          syncFromFirebase(savedSession.centerId, ALL_KEYS)
             .finally(() => { setSyncing(false); setScreen('app'); });
-        } else {
-          applyCenter(centerData || getCenterPrintMeta());
-          setScreen('setup');
-        }
-      } else {
-        localStorage.removeItem('scs_current_uid');
-        setCurrentUser(null);
-        setSubscriptionStatus(null);
-        setScreen('login');
+        })();
+        return;
       }
+
+      unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+        clearTimeout(loadingTimeout);
+        if (fbUser) {
+          if (isPlatformAdminEmail(fbUser.email)) {
+            const adminUser = buildPlatformAdminUser(fbUser);
+            localStorage.setItem('scs_current_uid', fbUser.uid);
+            localStorage.setItem('scs_session', JSON.stringify(adminUser));
+            setCurrentUser(adminUser);
+            setSubscriptionStatus(adminUser.subscription);
+            
+            const centerData = await getCenterSettings(fbUser.uid);
+            if (centerData) {
+              applyCenter(centerData);
+            } else {
+              applyCenter(getCenterPrintMeta());
+            }
+            setSyncing(true);
+            syncFromFirebase(fbUser.uid, ALL_KEYS)
+              .finally(() => { setSyncing(false); setScreen('app'); setActiveView('admin'); });
+            return;
+          }
+
+          localStorage.setItem('scs_current_uid', fbUser.uid);
+
+          const centerData = await getCenterSettings(fbUser.uid);
+          const subStatus = checkSubscriptionStatus(centerData);
+
+          const user = {
+            uid: fbUser.uid,
+            email: fbUser.email,
+            name: fbUser.displayName || 'المدير',
+            photo: fbUser.photoURL,
+            role: 'manager',
+            centerId: fbUser.uid,
+            subscription: subStatus
+          };
+          localStorage.setItem('scs_session', JSON.stringify(user));
+          setCurrentUser(user);
+          setSubscriptionStatus(subStatus);
+
+          if (!subStatus.allowed) {
+            setScreen('subscription');
+            return;
+          }
+
+          if (!needsCenterSetup(centerData)) {
+            applyCenter(centerData);
+            setSyncing(true);
+            syncFromFirebase(fbUser.uid, ALL_KEYS)
+              .finally(() => { setSyncing(false); setScreen('app'); });
+          } else {
+            applyCenter(centerData || getCenterPrintMeta());
+            setScreen('setup');
+          }
+        } else {
+          localStorage.removeItem('scs_current_uid');
+          setCurrentUser(null);
+          setSubscriptionStatus(null);
+          setScreen('login');
+        }
+      });
     });
 
     return () => {
@@ -416,8 +450,11 @@ export function AppProvider({ children }) {
     setSubscriptionStatus(user.subscription);
 
     if (user.isDemo) {
+      const { initDemoData } = await import('../utils/demoData');
+      const cName = user.demoAccount?.centerName || 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)';
+      initDemoData(user.centerId, user.name, cName, user.demoAccount?.daysLeft || 3);
+
       const localDemoCenter = JSON.parse(localStorage.getItem(`scs_center_settings_${user.centerId}`) || 'null');
-      const cName = user.demoAccount?.centerName || localDemoCenter?.name || 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)';
       applyCenter(localDemoCenter || {
         name: cName,
         centerName: cName,

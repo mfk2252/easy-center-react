@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useApp } from '../../context/AppContext';
 import {
   getAdminDemoAccounts,
   createAdminDemoAccount,
@@ -8,12 +9,14 @@ import {
 } from '../../firebase/auth';
 
 export default function DemoManagementTab({ toast }) {
+  const { login } = useApp();
   const [demoAccounts, setDemoAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createdSuccess, setCreatedSuccess] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [testingId, setTestingId] = useState(null);
 
   // نموذج الإنشاء
   const [form, setForm] = useState({
@@ -80,6 +83,23 @@ ${link}
   const handleOpenDemo = (acc) => {
     const link = getDirectLink(acc);
     window.open(link, '_blank');
+  };
+
+  const handleTestInCurrentSession = async (acc) => {
+    try {
+      setTestingId(acc.username);
+      toast('جاري تجهيز والدخول لبيئة العرض التجريبي المعزولة...', 'info');
+      const { autoLoginDemoToken } = await import('../../firebase/auth');
+      const demoUser = await autoLoginDemoToken(acc.username);
+      if (demoUser) {
+        await login(demoUser);
+        toast(`🎮 تم التبديل إلى العرض التجريبي لـ ${acc.centerName} بنجاح`, 'ok');
+      }
+    } catch (err) {
+      toast(err.message || 'تعذر الدخول إلى حساب الديمو', 'er');
+    } finally {
+      setTestingId(null);
+    }
   };
 
   async function handleCreate(e) {
@@ -301,7 +321,16 @@ ${link}
               style={{ display: 'flex', alignItems: 'center', gap: 6 }}
             >
               <span>🚀</span>
-              <span>فتح وتجربة العرض التقديمي الآن</span>
+              <span>فتح في تبويب جديد</span>
+            </button>
+            <button
+              onClick={() => handleTestInCurrentSession(createdSuccess)}
+              disabled={testingId === createdSuccess.username}
+              className="btn btn-sm btn-s"
+              style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <span>⚡</span>
+              <span>{testingId === createdSuccess.username ? 'جاري التحضير...' : 'تجربة العرض في هذا المتصفح'}</span>
             </button>
           </div>
         </div>
@@ -432,9 +461,17 @@ ${link}
                             <button
                               onClick={() => handleOpenDemo(acc)}
                               className="btn btn-xs btn-p"
-                              title="فتح العرض التجريبي مباشرة الآن"
+                              title="فتح العرض التجريبي في تبويب جديد"
                             >
                               🚀 فتح
+                            </button>
+                            <button
+                              onClick={() => handleTestInCurrentSession(acc)}
+                              disabled={testingId === acc.username}
+                              className="btn btn-xs btn-g"
+                              title="تجربة بيئة العرض مباشرة في هذه الجلسة"
+                            >
+                              {testingId === acc.username ? '⏳' : '⚡ تجربة'}
                             </button>
                           </div>
                         </td>
