@@ -6,7 +6,7 @@ import { ROLES, ARAB_CURRENCIES, CENTER_ACTIVITY_TYPES } from '../utils/constant
 import CountrySelector from '../components/ui/CountrySelector';
 import { GLOBAL_CURRENCIES, getCountryPresets } from '../data/countriesData';
 import { updateCenterSettings, getCenterUsers, getCenterSettings } from '../firebase/db';
-import { createStaffAccount, checkSubscriptionStatus, isPlatformAdminEmail } from '../firebase/auth';
+import { createStaffAccount, checkSubscriptionStatus, isPlatformAdminEmail, isCurrentPlatformOwner } from '../firebase/auth';
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useLang } from '../context/LanguageContext';
@@ -166,7 +166,8 @@ export default function Settings() {
 
   // استخراج بيانات الاشتراك من المصادر المتاحة
   const sub = liveSub || subscriptionStatus || currentUser?.subscription || (center?.subscription ? checkSubscriptionStatus(center) : null) || {};
-  const isPlatformAdmin = isPlatformAdminEmail(currentUser?.email) || sub?.reason === 'platform_admin' || sub?.reason === 'super_admin';
+  const isPlatformOwner = isCurrentPlatformOwner(currentUser);
+  const isPlatformAdmin = isPlatformOwner || isPlatformAdminEmail(currentUser?.email) || sub?.reason === 'platform_admin' || sub?.reason === 'super_admin';
   const isPermanent = sub?.isPermanent || isPlatformAdmin;
   const isTrial = sub?.reason === 'trial' || sub?.status === 'trial';
   const isActiveSub = isPlatformAdmin || sub?.reason === 'active' || sub?.status === 'active' || isTrial;
@@ -527,13 +528,49 @@ export default function Settings() {
     { id: 'center', label: 'بيانات وهوية المركز', icon: '🏥', badge: 'الرئيسية' },
     { id: 'appearance', label: 'المظهر والخطوط', icon: '🎨' },
     { id: 'users', label: 'المستخدمون والصلاحيات', icon: '👥', count: users.length },
-    { id: 'demos', label: 'العروض التجريبية (ديمو مباشر)', icon: '🚀', badge: 'جديد' },
+    ...(isPlatformOwner ? [{ id: 'demos', label: 'العروض التجريبية (ديمو مباشر)', icon: '🚀', badge: 'مالك المنصة فقط 👑' }] : []),
     { id: 'backup', label: 'النسخ الاحتياطي والمزامنة', icon: '💾' },
     { id: 'about', label: 'عن المنصة', icon: 'ℹ️' },
   ];
 
+  // منع أي وصول غير مصرح لتبويب الديمو لغير مالك المنصة
+  useEffect(() => {
+    if (tab === 'demos' && !isPlatformOwner) {
+      setTab('center');
+    }
+  }, [tab, isPlatformOwner]);
+
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', paddingBottom: 40 }}>
+      {/* تنبيه وضع العرض التجريبي المعزول */}
+      {currentUser?.isDemo && (
+        <div style={{
+          background: 'var(--pr-l, #eff6ff)',
+          border: '1.5px solid var(--pr, #2563eb)',
+          borderRadius: 12,
+          padding: '14px 18px',
+          marginBottom: 20,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          color: 'var(--text-main)',
+          boxShadow: 'var(--sh)'
+        }}>
+          <span style={{ fontSize: '1.8rem' }}>🎮</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <strong style={{ fontSize: '.95rem', color: 'var(--pr, #2563eb)' }}>
+                أنت تتصفح النظام في وضع العرض التجريبي المعزول (Demo Mode)
+              </strong>
+              <span className="bdg b-bl" style={{ fontSize: '.72rem' }}>بيئة نموذجية مستقلة</span>
+            </div>
+            <p style={{ margin: '4px 0 0', fontSize: '.84rem', color: 'var(--text-sub)', lineHeight: 1.5 }}>
+              جميع البيانات والإعدادات هنا نموذجية ومخصصة لتجربة مميزات النظام فقط. لا تملك صلاحية إنشاء حسابات تجريبية أخرى، أو تعديل التراخيص السحابية الأساسية، أو استيراد قواعد بيانات حقيقية.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* رأس الصفحة الحديث والموحد */}
       <UnifiedPageHeader
         icon="⚙️"
@@ -1822,9 +1859,22 @@ export default function Settings() {
 
       {/* ─────────────────────────────────────────────────────────────
           تبويب: العروض التجريبية المباشرة (Direct Demo Management)
+          محصور حصرياً بمالك ومطور المنصة
       ────────────────────────────────────────────────────────────── */}
       {tab === 'demos' && (
-        <DemoManagementTab toast={toast} />
+        isPlatformOwner ? (
+          <DemoManagementTab toast={toast} />
+        ) : (
+          <div className="card" style={{ padding: 48, textAlign: 'center', maxWidth: 640, margin: '30px auto' }}>
+            <div style={{ fontSize: '3.5rem', marginBottom: 16 }}>🔒</div>
+            <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--err, #dc2626)', marginBottom: 10 }}>
+              صلاحية محصورة حصرياً بمالك ومطور المنصة
+            </h3>
+            <p style={{ color: 'var(--text-sub)', fontSize: '.92rem', lineHeight: 1.7, margin: 0 }}>
+              عذراً، تبويب إدارة العروض التجريبية (الديمو) مخصص لمالك المنصة الأساسي فقط لإنشاء وتفعيل نسخ المعاينة للمشتركين والعملاء الجدد. غير مصرح لنواب المدراء أو الموظفين أو الكادر بالوصول لهذه الصلاحية.
+            </p>
+          </div>
+        )
       )}
 
       {/* ─────────────────────────────────────────────────────────────

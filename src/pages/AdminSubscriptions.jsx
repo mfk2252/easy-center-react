@@ -22,7 +22,7 @@ function tsToDate(ts) { return ts?.toDate ? ts.toDate() : (ts ? new Date(ts.seco
 function fmtDate(d) { return d ? d.toLocaleDateString('ar-SA', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'; }
 
 export default function AdminSubscriptions() {
-  const { login } = useApp();
+  const { login, currentUser } = useApp();
   const [activeTab, setActiveTab] = useState('centers'); // 'centers' | 'demoAccounts' | 'leads'
   const [centers, setCenters] = useState([]);
   const [leads, setLeads] = useState([]);
@@ -121,6 +121,7 @@ export default function AdminSubscriptions() {
         phone: createDemoForm.phone,
         notes: createDemoForm.notes,
         seedData: createDemoForm.seedData,
+        callerUser: currentUser,
       });
 
       setDemoAccounts(prev => [demo, ...prev.filter(d => d.username !== demo.username)]);

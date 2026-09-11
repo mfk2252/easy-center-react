@@ -6,10 +6,13 @@ import {
   extendAdminDemoAccount,
   updateAdminDemoAccountStatus,
   deleteAdminDemoAccount,
+  isCurrentPlatformOwner,
 } from '../../firebase/auth';
 
 export default function DemoManagementTab({ toast }) {
-  const { login } = useApp();
+  const { login, currentUser } = useApp();
+  const isOwner = isCurrentPlatformOwner(currentUser);
+
   const [demoAccounts, setDemoAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -32,8 +35,12 @@ export default function DemoManagementTab({ toast }) {
   const [extendingId, setExtendingId] = useState(null);
 
   useEffect(() => {
-    loadAccounts();
-  }, []);
+    if (isOwner) {
+      loadAccounts();
+    } else {
+      setLoading(false);
+    }
+  }, [isOwner]);
 
   async function loadAccounts() {
     setLoading(true);
@@ -124,6 +131,7 @@ ${link}
         phone: form.phone.trim(),
         notes: form.notes.trim(),
         seedData: form.seedData,
+        callerUser: currentUser,
       });
 
       setDemoAccounts(prev => [demo, ...prev.filter(d => d.username !== demo.username)]);
@@ -182,6 +190,20 @@ ${link}
     const isExpired = new Date(d.expiryDate) <= new Date();
     return d.status === 'active' && !isExpired;
   }).length;
+
+  if (!isOwner) {
+    return (
+      <div className="card" style={{ padding: 48, textAlign: 'center', maxWidth: 640, margin: '30px auto' }}>
+        <div style={{ fontSize: '3.5rem', marginBottom: 16 }}>🔒</div>
+        <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--err, #dc2626)', marginBottom: 10 }}>
+          صلاحية محصورة حصرياً بمالك ومطور المنصة
+        </h3>
+        <p style={{ color: 'var(--text-sub)', fontSize: '.92rem', lineHeight: 1.7, margin: 0 }}>
+          عذراً، قسم إدارة العروض التجريبية (الديمو) مخصص حصرياً لمالك ومطور المنصة الأساسي لإنشاء وتفعيل نسخ المعاينة للمشتركين والعملاء الجدد. غير مصرح لنواب المدراء أو الموظفين أو الكادر بالوصول لهذه الصلاحية.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

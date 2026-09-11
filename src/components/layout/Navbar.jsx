@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLang } from '../../context/LanguageContext';
 import { canSeeTab } from '../../utils/permissions';
-import { isPlatformAdminEmail } from '../../firebase/auth';
+import { isPlatformAdminEmail, isCurrentPlatformOwner } from '../../firebase/auth';
 import NotificationsDropdown from './NotificationsDropdown';
 
 const NAV_ITEMS = [
@@ -20,7 +20,7 @@ export default function Navbar() {
   const { center, currentUser, activeView, go, logout, toggleDark, darkMode, setSearchOpen } = useApp();
   const { t, toggleLang, lang } = useLang();
   const role = currentUser?.role || '';
-  const isAdmin = isPlatformAdminEmail(currentUser?.email);
+  const isAdmin = isCurrentPlatformOwner(currentUser);
   const activeBtnRef = useRef(null);
 
   // دالة للتحقق من كون الزر هو النشط حالياً
@@ -44,10 +44,26 @@ export default function Navbar() {
   return (
     <nav className="nav no-print">
       <div className="nav-inner">
-        <div className="nav-brand" title={center.name || ''}>
+        <div className="nav-brand" title={center.name || ''} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {center.logo
             ? <img src={center.logo} alt={center.name || ''} style={{ height: 36, borderRadius: 8, objectFit: 'cover' }}/>
             : <div className="nav-brand-ph">🏥</div>}
+          {currentUser?.isDemo && (
+            <span
+              className="bdg b-bl"
+              style={{
+                fontSize: '.7rem',
+                fontWeight: 800,
+                padding: '2px 7px',
+                background: 'rgba(2, 132, 199, 0.15)',
+                color: '#0284c7',
+                border: '1px solid rgba(2, 132, 199, 0.3)'
+              }}
+              title="أنت في وضع المعاينة والعرض التجريبي (Demo)"
+            >
+              🎮 ديمو
+            </span>
+          )}
         </div>
 
         {NAV_ITEMS.filter(item => canSeeTab(role, item.id)).map(item => {

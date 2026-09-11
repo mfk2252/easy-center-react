@@ -24,6 +24,14 @@ export function isPlatformAdminEmail(email) {
   return e === 'mfk2252@gmail.com' || e === 'mfekry225@gmail.com' || e === PLATFORM_ADMIN_LOGIN_EMAIL;
 }
 
+/** يتحقق بشكل قاطع أن المستخدم الحالي هو مالك ومطور المنصة الفعلي، وليس مستخدماً أو نائباً أو حساب ديمو */
+export function isCurrentPlatformOwner(user) {
+  if (!user) return false;
+  if (user.isDemo) return false;
+  if (user.isPlatformAdmin === true || user.isPlatformOwner === true) return true;
+  return isPlatformAdminEmail(user.email);
+}
+
 function getTrialExpiry() {
   const date = new Date();
   date.setDate(date.getDate() + TRIAL_DAYS);
@@ -672,7 +680,12 @@ export async function createAdminDemoAccount({
   phone = '',
   notes = '',
   seedData = true,
+  callerUser = null,
 }) {
+  if (callerUser && !isCurrentPlatformOwner(callerUser)) {
+    throw new Error('غير مصرح لك: إنشاء الحسابات التجريبية محصور حصرياً بمالك ومطور المنصة.');
+  }
+
   const cleanUsername = (username || '').trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
   const autoUsername = cleanUsername || `demo_${Math.random().toString(36).substring(2, 7)}`;
   const finalPassword = (password || 'demo123').trim();

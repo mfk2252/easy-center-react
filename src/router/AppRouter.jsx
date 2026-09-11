@@ -11,7 +11,7 @@ import ProgramsReports from '../pages/ProgramsReports';
 import CenterPage from '../pages/Center/index';
 import Settings from '../pages/Settings';
 import AdminSubscriptions from '../pages/AdminSubscriptions';
-import { isPlatformAdminEmail } from '../firebase/auth';
+import { isPlatformAdminEmail, isCurrentPlatformOwner } from '../firebase/auth';
 import { canDo } from '../utils/permissions';
 
 function BlockedPage({ t, customTitle, customSub }) {
@@ -29,7 +29,7 @@ export default function AppRouter() {
   const { t } = useLang();
 
   const isManager = currentUser?.role === 'manager' || currentUser?.role === 'vice';
-  const isAdmin = isPlatformAdminEmail(currentUser?.email);
+  const isAdmin = isCurrentPlatformOwner(currentUser);
 
   const userPerms = (() => {
     try { return JSON.parse(localStorage.getItem('userPerms') || '{}'); }
@@ -48,7 +48,17 @@ export default function AppRouter() {
     );
   }
 
-  if (activeView === 'admin' && isAdmin) return <AdminSubscriptions currentUserEmail={currentUser?.email}/>;
+  if (activeView === 'admin') {
+    return isAdmin ? (
+      <AdminSubscriptions currentUserEmail={currentUser?.email}/>
+    ) : (
+      <BlockedPage
+        t={t}
+        customTitle="صلاحية محصورة بمالك المنصة"
+        customSub="لوحة الإدارة العامة والعروض التجريبية مخصصة حصرياً لمالك ومطور المنصة."
+      />
+    );
+  }
   if (activeView === 'dash') return <Dashboard/>;
   if (activeView === 'calendar') return can('calendar') ? <Calendar/> : <BlockedPage t={t}/>;
   if (activeView === 'attendance') return <AttendancePage/>;
