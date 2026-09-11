@@ -518,501 +518,600 @@ export default function Calendar() {
   return (
     <>
       <style>{`
-        @media (max-width: 767px) {
-          .calendar-detail-layout {
-            grid-template-columns: minmax(0, 1fr) !important;
-          }
-          .calendar-detail-left-panel,
-          .calendar-detail-right-panel {
-            min-width: 0;
-          }
-          .calendar-detail-right-panel .wg-b {
-            max-height: 280px;
+        .cal-wrapper {
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: 16px 14px 32px;
+          font-family: inherit;
+        }
+        .cal-container-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: 20px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+          overflow: hidden;
+          padding: 20px 16px 24px;
+        }
+        @media (min-width: 768px) {
+          .cal-container-card {
+            padding: 24px 28px 30px;
           }
         }
-        @media (min-width: 768px) and (max-width: 1120px) {
-          .calendar-cell {
-            min-height: clamp(48px, 7vh, 76px) !important;
+        .cal-legend-bar {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 16px;
+          flex-wrap: wrap;
+          padding-bottom: 18px;
+          margin-bottom: 16px;
+          border-bottom: 1px solid var(--border-color);
+        }
+        .cal-legend-item {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: var(--text-main);
+          white-space: nowrap;
+        }
+        .cal-legend-dot {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          display: inline-block;
+          flex-shrink: 0;
+        }
+        .cal-month-header {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 18px;
+          margin-bottom: 20px;
+        }
+        .cal-month-title {
+          font-size: 1.45rem;
+          font-weight: 900;
+          color: var(--text-main);
+          margin: 0;
+          letter-spacing: -0.02em;
+          text-align: center;
+        }
+        .cal-nav-btn {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          border: 1px solid var(--border-color);
+          background: var(--bg-main);
+          color: var(--text-main);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.1rem;
+          font-weight: 800;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .cal-nav-btn:hover {
+          background: var(--pr-l);
+          color: var(--pr);
+          border-color: var(--pr);
+          transform: scale(1.05);
+        }
+        .cal-weekdays-grid {
+          display: grid;
+          grid-template-columns: repeat(7, 1fr);
+          gap: 4px;
+          margin-bottom: 12px;
+          text-align: center;
+        }
+        .cal-weekday-label {
+          font-size: 0.95rem;
+          font-weight: 800;
+          color: #0284c7;
+          padding: 8px 0;
+        }
+        .cal-days-grid {
+          display: grid;
+          grid-template-columns: repeat(7, 1fr);
+          gap: 6px;
+          text-align: center;
+        }
+        @media (min-width: 768px) {
+          .cal-days-grid {
+            gap: 10px;
           }
         }
-        @media (min-width: 1121px) {
-          .calendar-cell {
-            min-height: clamp(54px, 6vh, 92px) !important;
+        .cal-day-cell {
+          aspect-ratio: 1 / 1;
+          min-height: 48px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          border-radius: 50%;
+          outline: none;
+          padding: 0;
+          transition: all 0.2s ease;
+          font-family: inherit;
+        }
+        .cal-day-cell:hover:not(.disabled) .cal-day-circle {
+          transform: scale(1.08);
+        }
+        .cal-day-circle {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1rem;
+          font-weight: 800;
+          color: var(--text-main);
+          transition: all 0.18s ease;
+          position: relative;
+        }
+        @media (min-width: 768px) {
+          .cal-day-circle {
+            width: 46px;
+            height: 46px;
+            font-size: 1.15rem;
           }
         }
-        @media (max-width: 767px) {
-          .calendar-cell {
-            min-height: clamp(44px, 7vh, 58px) !important;
-            padding-inline: 3px !important;
+        /* States matching the uploaded design */
+        .cal-day-circle.selected-yellow {
+          background: #facc15 !important;
+          color: #1e293b !important;
+          box-shadow: 0 4px 14px rgba(250, 204, 21, 0.45);
+        }
+        .cal-day-circle.circle-dark {
+          background: #334155 !important;
+          color: #ffffff !important;
+          box-shadow: 0 4px 12px rgba(51, 65, 85, 0.3);
+        }
+        .cal-day-circle.circle-cyan {
+          background: #06b6d4 !important;
+          color: #ffffff !important;
+          box-shadow: 0 4px 12px rgba(6, 182, 212, 0.35);
+        }
+        .cal-day-circle.circle-purple {
+          background: #8b5cf6 !important;
+          color: #ffffff !important;
+          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+        }
+        .cal-day-circle.circle-today {
+          border: 2px solid #0284c7;
+          color: #0284c7;
+          font-weight: 900;
+        }
+        .cal-dots-row {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 3px;
+          position: absolute;
+          bottom: 2px;
+          left: 0;
+          right: 0;
+        }
+        .cal-mini-dot {
+          width: 4px;
+          height: 4px;
+          border-radius: 50%;
+        }
+        @media (min-width: 768px) {
+          .cal-mini-dot {
+            width: 5px;
+            height: 5px;
           }
-          .calendar-cell .calendar-title-chip {
-            font-size: 0.46rem !important;
-          }
-          .calendar-cell .calendar-more {
-            font-size: 0.48rem !important;
-          }
+        }
+        .cal-selected-card {
+          margin-top: 24px;
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: 18px;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+          overflow: hidden;
+          animation: fadeIn 0.25s ease;
+        }
+        .cal-detail-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 18px;
         }
       `}</style>
-    <div style={{ maxWidth: 1440, margin: '0 auto', padding: '16px 18px 24px', fontFamily: 'inherit' }}>
+    <div className="cal-wrapper">
       <UnifiedPageHeader
         icon="🗓️"
         title={`تقويم المركز - ${MONTHS_AR[month]} ${year}`}
         subtitle="نظرة زمنية شاملة لجدول المواعيد والجلسات التأهيلية، الأحداث والتقييمات"
         badge={`${monthSummary.total} موعد وحدث`}
         actions={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', background: 'var(--bg-card)', padding: 4, borderRadius: 12, border: '1px solid var(--border-color)', boxShadow: 'var(--sh)' }}>
-              <button
-                type="button"
-                className="btn btn-sm"
-                style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '6px 10px', color: 'var(--text-main)', fontWeight: 700 }}
-                onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() - 1); return n; })}
-              >
-                السابق
-              </button>
-              <button
-                type="button"
-                className="btn btn-sm"
-                style={{ background: 'var(--pr-l)', border: '1px solid rgba(59,130,246,0.18)', borderRadius: 8, padding: '6px 12px', fontWeight: 800, color: 'var(--pr)' }}
-                onClick={() => setCur(new Date())}
-              >
-                اليوم
-              </button>
-              <button
-                type="button"
-                className="btn btn-sm"
-                style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '6px 10px', color: 'var(--text-main)', fontWeight: 700 }}
-                onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() + 1); return n; })}
-              >
-                التالي
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              <button type="button" className="btn btn-p btn-sm" style={{ borderRadius: 10, padding: '7px 12px' }} onClick={() => openForm()}>
-                ➕ حدث عام
-              </button>
-              <button type="button" className="btn btn-s btn-sm" style={{ borderRadius: 10, padding: '7px 12px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.15)' }} onClick={() => openStuAppt()}>
-                📅 موعد طالب
-              </button>
-              <button type="button" className="btn btn-s btn-sm" style={{ borderRadius: 10, padding: '7px 12px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.15)' }} onClick={() => openStuSess()}>
-                🩺 جلسة
-              </button>
-              <button type="button" className="btn btn-sm" style={{ borderRadius: 10, padding: '7px 12px', background: 'rgba(245, 158, 11, 0.09)', color: '#c084fc', border: '1px solid rgba(192,132,252,0.2)' }} onClick={() => openEval()}>
-                📋 تقييم
-              </button>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <button type="button" className="btn btn-p btn-sm" style={{ borderRadius: 10, padding: '7px 12px' }} onClick={() => openForm()}>
+              ➕ حدث عام
+            </button>
+            <button type="button" className="btn btn-s btn-sm" style={{ borderRadius: 10, padding: '7px 12px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.15)' }} onClick={() => openStuAppt()}>
+              📅 موعد طالب
+            </button>
+            <button type="button" className="btn btn-s btn-sm" style={{ borderRadius: 10, padding: '7px 12px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.15)' }} onClick={() => openStuSess()}>
+              🩺 جلسة
+            </button>
+            <button type="button" className="btn btn-sm" style={{ borderRadius: 10, padding: '7px 12px', background: 'rgba(245, 158, 11, 0.09)', color: '#c084fc', border: '1px solid rgba(192,132,252,0.2)' }} onClick={() => openEval()}>
+              📋 تقييم
+            </button>
           </div>
         }
       />
 
-      {/* بطاقات إحصائيات الشهر القياسية */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, marginBottom: 16 }}>
+      {/* بطاقات الإحصائيات السريعة */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 16 }}>
         <div className="unified-stat-box">
           <div className="stat-label">📌 إجمالي الفعاليات</div>
           <div className="stat-val">{monthSummary.total}</div>
-          <div className="stat-sub">كافة مواعيد وجلسات الشهر</div>
+          <div className="stat-sub">كافة مواعيد الشهر</div>
         </div>
         <div className="unified-stat-box">
           <div className="stat-label">🩺 الجلسات التأهيلية</div>
           <div className="stat-val" style={{ color: 'var(--ok)' }}>{monthSummary.sessions}</div>
-          <div className="stat-sub">جلسات نطق وعلاج طبيعي ووظيفي</div>
+          <div className="stat-sub">جلسات نطق وتأهيل</div>
         </div>
         <div className="unified-stat-box">
           <div className="stat-label">📅 مواعيد الطلاب</div>
           <div className="stat-val" style={{ color: 'var(--pr)' }}>{monthSummary.appointments}</div>
-          <div className="stat-sub">مواعيد كشف ومراجعات</div>
+          <div className="stat-sub">كشف ومراجعات</div>
         </div>
         <div className="unified-stat-box">
           <div className="stat-label">⚡ الفعاليات والأنشطة</div>
           <div className="stat-val" style={{ color: 'var(--warn)' }}>{monthSummary.events}</div>
-          <div className="stat-sub">مناسبات وأنشطة المركز</div>
+          <div className="stat-sub">مناسبات وأنشطة</div>
         </div>
       </div>
 
-      {/* دليل ألوان وتصنيفات التقويم المعتمدة */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-        flexWrap: 'wrap',
-        background: 'var(--bg-card)',
-        padding: '10px 14px',
-        borderRadius: 14,
-        border: '1px solid var(--border-color)',
-        marginBottom: 14,
-        fontSize: '.76rem',
-        fontWeight: 700
-      }}>
-        <span style={{ color: 'var(--text-sub)' }}>🎨 دليل وتصنيف المناسبات:</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(245, 158, 11, 0.12)', color: '#d97706', padding: '3px 8px', borderRadius: 8 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#d97706' }} />
-          <span>🌙 أعياد ومناسبات رسمية</span>
+      {/* البطاقة الرئيسية للتقويم (نفس تصميم الواجهة بالصورة تماماً) */}
+      <div className="cal-container-card">
+        {/* دليل الألوان والمؤشرات بالأعلى كما بالصورة */}
+        <div className="cal-legend-bar">
+          <div className="cal-legend-item">
+            <span className="cal-legend-dot" style={{ background: '#facc15' }} />
+            <span>جلسات وفترة صباحية</span>
+          </div>
+          <div className="cal-legend-item">
+            <span className="cal-legend-dot" style={{ background: '#334155' }} />
+            <span>جلسات وفترة مسائية</span>
+          </div>
+          <div className="cal-legend-item">
+            <span className="cal-legend-dot" style={{ background: '#06b6d4' }} />
+            <span>فعاليات وأنشطة المركز</span>
+          </div>
+          <div className="cal-legend-item">
+            <span className="cal-legend-dot" style={{ background: '#8b5cf6' }} />
+            <span>أيام ومناسبات عالمية</span>
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(16, 185, 129, 0.12)', color: '#059669', padding: '3px 8px', borderRadius: 8 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#059669' }} />
-          <span>🇸🇦 مناسبات وأيام وطنية</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(239, 68, 68, 0.12)', color: '#dc2626', padding: '3px 8px', borderRadius: 8 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#dc2626' }} />
-          <span>🩺 الأيام والمجال الطبي</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(139, 92, 246, 0.12)', color: '#7c3aed', padding: '3px 8px', borderRadius: 8 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#7c3aed' }} />
-          <span>♿ أيام الإعاقة والتأهيل</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(59, 130, 246, 0.12)', color: '#2563eb', padding: '3px 8px', borderRadius: 8 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#2563eb' }} />
-          <span>🎓 التعليم والتنمية / جلسات</span>
-        </div>
-      </div>
 
-      <div className="wg" style={{ border: '1px solid var(--border-color)', borderRadius: 18, overflow: 'hidden', boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)', background: 'var(--bg-card)' }}>
-        <div className="wg-b" style={{ padding: '6px 8px 8px', background: 'var(--bg-card)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 3, marginBottom: 2 }}>
-            {DAYS_AR.map(d => (
-              <div
-                key={d}
-                style={{
-                  textAlign: 'center',
-                  fontSize: '0.70rem',
-                  fontWeight: 800,
-                  color: 'var(--text-sub)',
-                  padding: '2px 0 4px',
-                  borderBottom: '1px solid var(--border-color)',
-                  letterSpacing: '0.02em',
-                  lineHeight: 1
+        {/* رأس الشهر مع أسهم التنقل في المنتصف كما بالصورة */}
+        <div className="cal-month-header">
+          <button
+            type="button"
+            className="cal-nav-btn"
+            onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() - 1); return n; })}
+            title="الشهر السابق"
+          >
+            ›
+          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            <h2 className="cal-month-title">
+              {MONTHS_AR[month]} {year}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setCur(new Date())}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#0284c7',
+                fontSize: '.78rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                padding: '2px 6px',
+                borderRadius: 4
+              }}
+            >
+              الرجوع لليوم الحالي
+            </button>
+          </div>
+          <button
+            type="button"
+            className="cal-nav-btn"
+            onClick={() => setCur(d => { const n = new Date(d); n.setMonth(n.getMonth() + 1); return n; })}
+            title="الشهر التالي"
+          >
+            ‹
+          </button>
+        </div>
+
+        {/* عناوين أيام الأسبوع باللون الأزرق / السماوي الأنيق */}
+        <div className="cal-weekdays-grid">
+          {DAYS_AR.map(d => (
+            <div key={d} className="cal-weekday-label">
+              {d}
+            </div>
+          ))}
+        </div>
+
+        {/* شبكة الأرقام والدوائر المتطابقة مع الصورة */}
+        <div className="cal-days-grid">
+          {cells.map((d, i) => {
+            if (!d) {
+              return <div key={i} className="cal-day-cell disabled" style={{ cursor: 'default' }} />;
+            }
+            const ds = dateStr(d);
+            const row = itemsOnDay(d);
+            const isToday = ds === today;
+            const isSel = d === selDay;
+
+            // Determine circle style matching design in screenshot
+            const hasMorning = row.some(it => it.time && it.time < '13:00');
+            const hasEvening = row.some(it => it.time && it.time >= '13:00');
+            const hasIntDay = row.some(it => it.isInternationalDay);
+            const hasCenterEvent = row.some(it => it.isCenterEvent || it.source === 'فعالية');
+
+            let circleClass = '';
+            if (isSel) {
+              circleClass = 'selected-yellow'; // Solid Yellow circle like 31 in image
+            } else if (hasEvening) {
+              circleClass = 'circle-dark'; // Dark slate circle like 28 in image
+            } else if (hasCenterEvent) {
+              circleClass = 'circle-cyan'; // Cyan circle
+            } else if (hasIntDay) {
+              circleClass = 'circle-purple'; // Purple circle
+            } else if (isToday) {
+              circleClass = 'circle-today'; // Today outlined
+            }
+
+            return (
+              <button
+                type="button"
+                key={i}
+                className="cal-day-cell"
+                onClick={() => {
+                  setSelDay(d === selDay ? null : d);
+                  setSelItem(null);
                 }}
               >
-                {d}
-              </div>
-            ))}
-          </div>
+                <div className={`cal-day-circle ${circleClass}`}>
+                  {d}
+                </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 3 }}>
-            {cells.map((d, i) => {
-              if (!d) return <div key={i} style={{ minHeight: '26px', background: 'rgba(148,163,184,0.04)', borderRadius: 6, opacity: 0.45 }} />;
-              const ds = dateStr(d);
-              const row = itemsOnDay(d);
-              const isToday = ds === today;
-              const isSel = d === selDay;
-
-              let cellBg = 'var(--bg-card)';
-              let borderStyle = '1px solid var(--border-color)';
-              let textWeight = '700';
-              let numColor = 'var(--text-main)';
-
-              if (isToday) {
-                cellBg = 'rgba(59, 130, 246, 0.11)';
-                borderStyle = '1.5px solid rgba(59,130,246,0.7)';
-                textWeight = '800';
-              } else if (isSel) {
-                cellBg = 'rgba(26, 86, 219, 0.12)';
-                borderStyle = '1.5px solid var(--pr)';
-                textWeight = '800';
-              }
-
-              return (
-                <button
-                  type="button"
-                  key={i}
-                  className="calendar-cell"
-                  onClick={() => {
-                    setSelDay(d === selDay ? null : d);
-                    setSelItem(null);
-                  }}
-                  style={{
-                    minHeight: 'clamp(44px, 6vh, 80px)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'flex-start',
-                    alignItems: 'stretch',
-                    border: borderStyle,
-                    borderRadius: 7,
-                    padding: '2px 3px 4px',
-                    background: cellBg,
-                    cursor: 'pointer',
-                    textAlign: 'right',
-                    position: 'relative',
-                    outline: 'none',
-                    transition: 'all 0.16s ease',
-                    boxShadow: isToday || isSel ? '0 4px 12px rgba(59,130,246,0.12)' : 'none',
-                    lineHeight: 1.1
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                    e.currentTarget.style.boxShadow = '0 6px 12px rgba(15,23,42,0.08)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'none';
-                    e.currentTarget.style.boxShadow = isToday || isSel ? '0 4px 12px rgba(59,130,246,0.12)' : 'none';
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', gap: 2 }}>
-                    <span style={{
-                      fontSize: '0.80rem',
-                      fontWeight: textWeight,
-                      color: numColor,
-                      width: 15,
-                      height: 15,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: '50%',
-                      background: isToday ? 'rgba(59,130,246,0.16)' : 'transparent',
-                      fontVariantNumeric: 'tabular-nums',
-                      lineHeight: 1
-                    }}>
-                      {d}
-                    </span>
-                    {row.length > 0 && (
-                      <span style={{ fontSize: '0.49rem', fontWeight: 800, color: 'var(--pr)' }}>●</span>
-                    )}
+                {/* مؤشرات النقاط الصغيرة أسفل اليوم */}
+                {row.length > 0 && !isSel && (
+                  <div className="cal-dots-row">
+                    {hasMorning && <span className="cal-mini-dot" style={{ background: '#facc15' }} />}
+                    {hasEvening && <span className="cal-mini-dot" style={{ background: '#334155' }} />}
+                    {hasCenterEvent && <span className="cal-mini-dot" style={{ background: '#06b6d4' }} />}
+                    {hasIntDay && <span className="cal-mini-dot" style={{ background: '#8b5cf6' }} />}
                   </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 1 }}>
-                    {row.slice(0, 1).map(it => {
-                      const colorTheme = getColorStyles(it.color);
-                      return (
-                        <div
-                          key={it.id}
-                          className="calendar-title-chip"
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 3,
-                            padding: '2px 4px',
-                            borderRadius: 5,
-                            background: colorTheme.bg,
-                            color: colorTheme.text,
-                            fontSize: '0.48rem',
-                            fontWeight: 800,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            lineHeight: 1
-                          }}
-                          title={it.title}
-                        >
-                          <span style={{ width: 4, height: 4, borderRadius: '50%', background: colorTheme.text, flexShrink: 0 }} />
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {it.title.length > 9 ? `${it.title.slice(0, 9)}…` : it.title}
-                          </span>
-                        </div>
-                      );
-                    })}
-                    {row.length > 1 && (
-                      <div className="calendar-more" style={{ fontSize: '0.51rem', fontWeight: 700, color: 'var(--text-sub)' }}>+{row.length - 1}</div>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
+      {/* لوحة تفاصيل اليوم المختار مثل الجزء السفلي في صورة العميل تماماً */}
       {selDay && (
-        <div className="calendar-detail-layout" style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.15fr) minmax(280px, 0.85fr)',
-          gap: 16,
-          marginTop: 18,
-          animation: 'fadeIn 0.2s ease'
-        }}>
-          <div className="wg calendar-detail-left-panel" style={{ border: '1px solid var(--border-color)', borderRadius: 18, overflow: 'hidden', background: 'var(--bg-card)' }}>
-            <div className="wg-h" style={{ borderBottom: '1px solid var(--border-color)', padding: '14px 16px', background: 'linear-gradient(135deg, var(--pr-l), transparent)' }}>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>📌 تفاصيل اليوم</h3>
-            </div>
-            <div className="wg-b" style={{ padding: 16, background: 'var(--bg-card)' }}>
-              {selItem ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.72rem', padding: '4px 8px', borderRadius: 999, background: 'var(--g0)', color: 'var(--text-main)', fontWeight: 700 }}>
-                      {selItem.source}
-                    </span>
-                    <span style={{ fontSize: '0.72rem', padding: '4px 8px', borderRadius: 999, background: 'var(--g0)', color: 'var(--text-main)', fontWeight: 700 }}>
-                      {selItem.date}
-                    </span>
+        <div className="cal-selected-card">
+          {/* ترويسة الفترة مع أيقونة الهلال / الشمس والتوقيت */}
+          <div style={{
+            padding: '20px 22px 16px',
+            borderBottom: '1px solid var(--border-color)',
+            background: 'linear-gradient(135deg, var(--bg-card), var(--bg-main))'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: '2rem' }}>
+                  {dayItems.some(i => i.time && i.time >= '13:00') ? '🌙' : '☀️'}
+                </span>
+                <div>
+                  <div style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--text-main)' }}>
+                    {dayItems.some(i => i.time && i.time >= '13:00') ? 'الفترة المسائية' : 'الفترة الصباحية والدوام'}
                   </div>
-
-                  <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                    {selItem.title}
-                  </h4>
-
-                  {selItem.time && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--g0)', padding: '10px 12px', borderRadius: 10 }}>
-                      <span style={{ fontSize: '1rem' }}>🕒</span>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)' }}>{selItem.time}</div>
-                    </div>
-                  )}
-
-                  {selItem.detail && (
-                    <div style={{ background: 'var(--g0)', padding: 12, borderRadius: 12, fontSize: '0.85rem', lineHeight: 1.7, color: 'var(--text-main)', border: '1px solid var(--border-color)' }}>
-                      {selItem.detail}
-                    </div>
-                  )}
-
-                  {selItem.isInternationalDay && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4, borderTop: '1px solid var(--border-color)', paddingTop: 12 }}>
-                      <div style={{ fontSize: '.78rem', color: 'var(--text-sub)' }}>
-                        يمكن للأخصائيين توجيه وتنظيم فعالية خاصة بالمركز مستندة إلى هذه المناسبة وتحديد اسمها وتوقيتها ومكانها وأهدافها:
-                      </div>
-                      <button
-                        type="button"
-                        className="btn btn-p btn-sm"
-                        style={{ borderRadius: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                        onClick={() => openAdoptInternationalDayModal(selItem.raw, selItem.date)}
-                      >
-                        <span>🎉</span>
-                        <span>توجيه وتنظيم فعالية للمركز</span>
-                      </button>
-                    </div>
-                  )}
-
-                  {selItem.editable && selItem.raw?.id && (
-                    <div style={{ display: 'flex', gap: 8, marginTop: 4, borderTop: '1px solid var(--border-color)', paddingTop: 12 }}>
-                      <button type="button" className="btn btn-g btn-sm" style={{ flex: 1, borderRadius: 10 }} onClick={() => { setForm({ ...selItem.raw }); setEditId(selItem.raw.id); setShowForm(true); }}>
-                        ✏️ تعديل
-                      </button>
-                      <button type="button" className="btn btn-d btn-sm" style={{ flex: 1, borderRadius: 10 }} onClick={() => del(selItem.raw.id)}>
-                        🗑️ حذف
-                      </button>
-                    </div>
-                  )}
+                  <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0284c7', marginTop: 2 }}>
+                    {dayItems[0]?.time ? `${dayItems[0].time}` : '08:00 صباحاً - 04:00 مساءً'}
+                  </div>
                 </div>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '40px 20px 30px', color: 'var(--text-sub)' }}>
-                  <div style={{ fontSize: '2rem', marginBottom: 10 }}>🎯</div>
-                  <p style={{ margin: 0, fontSize: '0.8rem' }}>اختر عنصرًا من القائمة على اليمين لعرض التفاصيل هنا.</p>
-                </div>
-              )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button type="button" className="btn btn-p btn-sm" onClick={() => openStuAppt(selDay)} style={{ borderRadius: 10 }}>
+                  📅 موعد جديد
+                </button>
+                <button type="button" className="btn btn-s btn-sm" onClick={() => openStuSess(selDay)} style={{ borderRadius: 10 }}>
+                  🩺 جلسة جديدة
+                </button>
+                <button type="button" className="btn btn-g btn-sm" onClick={() => openForm(selDay)} style={{ borderRadius: 10 }}>
+                  ➕ حدث
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="wg calendar-detail-right-panel" style={{ border: '1px solid var(--border-color)', borderRadius: 18, overflow: 'hidden', background: 'var(--bg-card)' }}>
-            <div className="wg-h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', padding: '14px 16px', background: 'var(--g0)' }}>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                📅 {selDay} {MONTHS_AR[month]}
-              </h3>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <button type="button" className="btn btn-p btn-sm" onClick={() => openForm(selDay)} style={{ borderRadius: 8, padding: '6px 10px' }}>➕ عام</button>
-                <button type="button" className="btn btn-s btn-sm" onClick={() => openStuAppt(selDay)} style={{ borderRadius: 8, padding: '6px 10px' }}>📅 موعد</button>
-              </div>
+          {/* صفوف التفاصيل والأوقات المعتمدة (مثل جدول الدخول والخروج في الصورة) */}
+          <div style={{ borderBottom: '1px solid var(--border-color)' }}>
+            <div className="cal-detail-row" style={{ borderBottom: '1px dashed var(--border-color)' }}>
+              <span style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '0.95rem' }}>وقت بدء النشاط والجلسات (الدخول):</span>
+              <span style={{ fontWeight: 900, color: '#0284c7', fontSize: '1.05rem', direction: 'ltr' }}>08:00 صباحاً</span>
             </div>
+            <div className="cal-detail-row" style={{ borderBottom: '1px dashed var(--border-color)' }}>
+              <span style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '0.95rem' }}>وقت انتهاء النشاط والجلسات (الخروج):</span>
+              <span style={{ fontWeight: 900, color: '#0284c7', fontSize: '1.05rem', direction: 'ltr' }}>04:00 مساءً</span>
+            </div>
+            <div className="cal-detail-row">
+              <span style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '0.95rem' }}>تاريخ اليوم المختار:</span>
+              <span style={{ fontWeight: 800, color: 'var(--text-sub)', fontSize: '0.95rem' }}>
+                {selDay} {MONTHS_AR[month]} {year}
+              </span>
+            </div>
+          </div>
 
-            <div className="wg-b" style={{ padding: 14, maxHeight: 340, overflowY: 'auto', background: 'var(--bg-card)' }}>
-              
-              {/* International Day Highlight Banner on Selected Day */}
-              {intDaysOnSelDay.length > 0 && (
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 8,
-                  marginBottom: 12
-                }}>
-                  {intDaysOnSelDay.map(iday => {
-                    const isAdopted = (lsGet('centerEvents') || []).some(e => e.date === selDateStr && (e.name === iday.name || e.name?.includes(iday.name)));
-                    const catConfig = OCCASION_CATEGORIES[iday.category] || {};
-                    return (
-                      <div
-                        key={iday.id}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 6,
-                          background: catConfig.hexBg || 'rgba(99, 102, 241, 0.08)',
-                          border: `1.5px solid ${catConfig.hexBorder || 'rgba(99, 102, 241, 0.3)'}`,
-                          borderRadius: 12,
-                          padding: '12px 14px',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, flexWrap: 'wrap' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, fontSize: '.86rem', color: 'var(--text-main)' }}>
-                            <span>{iday.icon}</span>
-                            <span>{iday.name}</span>
-                          </div>
-                          <span style={{ fontSize: '.72rem', background: catConfig.badgeBg || 'rgba(99, 102, 241, 0.18)', color: catConfig.hexText || 'var(--text-main)', padding: '2px 8px', borderRadius: 999, fontWeight: 700 }}>
+          {/* مناسبات وأيام عالمية مسجلة في هذا اليوم إن وجدت */}
+          {intDaysOnSelDay.length > 0 && (
+            <div style={{ padding: '16px 20px', background: 'rgba(139, 92, 246, 0.05)', borderBottom: '1px solid var(--border-color)' }}>
+              <div style={{ fontWeight: 800, fontSize: '.9rem', color: '#7c3aed', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>🌍</span>
+                <span>المناسبات والأيام العالمية المعتمدة لليوم</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {intDaysOnSelDay.map(iday => {
+                  const isAdopted = (lsGet('centerEvents') || []).some(e => e.date === selDateStr && (e.name === iday.name || e.name?.includes(iday.name)));
+                  const catConfig = OCCASION_CATEGORIES[iday.category] || {};
+                  return (
+                    <div
+                      key={iday.id}
+                      style={{
+                        background: 'var(--bg-card)',
+                        border: '1px solid rgba(139, 92, 246, 0.25)',
+                        borderRadius: 12,
+                        padding: '12px 14px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: 8
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: '.92rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span>{iday.icon}</span>
+                          <span>{iday.name}</span>
+                          <span style={{ fontSize: '.70rem', background: 'rgba(139, 92, 246, 0.15)', color: '#7c3aed', padding: '2px 8px', borderRadius: 999 }}>
                             {iday.categoryLabel}
                           </span>
                         </div>
-                        <div style={{ fontSize: '.76rem', color: 'var(--text-sub)', lineHeight: 1.5 }}>
+                        <div style={{ fontSize: '.78rem', color: 'var(--text-sub)', marginTop: 4 }}>
                           {iday.objectives}
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4, flexWrap: 'wrap', gap: 6 }}>
-                          <span style={{ fontSize: '.72rem', color: 'var(--text-sub)' }}>
-                            📍 المقترح: {iday.suggestedLocation || 'مقر المركز'}
-                          </span>
-                          {isAdopted ? (
-                            <span style={{ fontSize: '.76rem', fontWeight: 700, color: '#16a34a', display: 'flex', alignItems: 'center', gap: 4 }}>
-                              ✅ معتمدة كفعالية للمركز
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              className="btn btn-p btn-xs"
-                              style={{ borderRadius: 8, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px' }}
-                              onClick={() => openAdoptInternationalDayModal(iday, selDateStr)}
-                            >
-                              <span>🎉</span>
-                              <span>توجيه وتنظيم الفعالية</span>
-                            </button>
-                          )}
-                        </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
 
-              {dayItems.length === 0 ? (
-                <div style={{ color: 'var(--text-sub)', textAlign: 'center', padding: '28px 10px' }}>
-                  <p style={{ fontSize: '1.5rem', margin: 0 }}>☕</p>
-                  <p style={{ fontSize: '0.8rem', margin: '6px 0 0 0' }}>لا توجد عناصر مجدولة اليوم.</p>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {dayItems.map(it => {
-                    const colorTheme = getColorStyles(it.color);
-                    const isSelected = selItem?.id === it.id;
-                    return (
-                      <button
-                        type="button"
-                        key={it.id}
-                        onClick={() => setSelItem(it)}
-                        style={{
-                          display: 'block',
-                          width: '100%',
-                          textAlign: 'right',
-                          padding: '10px 12px',
-                          borderRadius: 12,
-                          border: isSelected ? '1.5px solid var(--pr)' : '1px solid var(--border-color)',
-                          background: isSelected ? 'var(--pr-l)' : 'var(--bg-card)',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                      {isAdopted ? (
+                        <span style={{ fontSize: '.8rem', fontWeight: 800, color: '#16a34a' }}>
+                          ✅ تم اعتمادها كفعالية للمركز
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn-p btn-sm"
+                          style={{ borderRadius: 8, fontWeight: 700, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', border: 'none' }}
+                          onClick={() => openAdoptInternationalDayModal(iday, selDateStr)}
+                        >
+                          🎉 توجيه وتنظيم فعالية للمركز
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* قائمة المواعيد والجلسات المجدولة لليوم */}
+          <div style={{ padding: '18px 20px' }}>
+            <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-main)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>📋</span>
+              <span>قائمة المواعيد والأنشطة المجدولة ({dayItems.length})</span>
+            </div>
+
+            {dayItems.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '24px 10px', color: 'var(--text-sub)' }}>
+                <div style={{ fontSize: '1.8rem', marginBottom: 6 }}>☕</div>
+                <div style={{ fontSize: '0.85rem' }}>لا توجد فعاليات أو مواعيد مجدولة لهذا اليوم. يمكنك إضافة موعد أو جلسة بالأزرار أعلاه.</div>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
+                {dayItems.map(it => {
+                  const colorTheme = getColorStyles(it.color);
+                  const isSelected = selItem?.id === it.id;
+                  return (
+                    <div
+                      key={it.id}
+                      onClick={() => setSelItem(it)}
+                      style={{
+                        padding: '12px 14px',
+                        borderRadius: 14,
+                        border: isSelected ? '1.5px solid var(--pr)' : '1px solid var(--border-color)',
+                        background: isSelected ? 'var(--pr-l)' : 'var(--bg-main)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        gap: 8
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                           <span style={{
-                            fontSize: '0.62rem',
-                            padding: '3px 7px',
+                            fontSize: '0.68rem',
+                            padding: '3px 8px',
                             borderRadius: 999,
                             background: colorTheme.bg,
                             color: colorTheme.text,
-                            fontWeight: 800,
-                            letterSpacing: '0.02em'
+                            fontWeight: 800
                           }}>
                             {it.source}
                           </span>
-                          {it.time && <span style={{ fontSize: '0.7rem', color: 'var(--text-sub)' }}>🕐 {it.time}</span>}
+                          {it.time && <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-sub)' }}>🕒 {it.time}</span>}
                         </div>
-                        <div style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-main)' }}>{it.title}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                        <div style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--text-main)', lineHeight: 1.4 }}>
+                          {it.title}
+                        </div>
+                        {it.detail && (
+                          <div style={{ fontSize: '0.76rem', color: 'var(--text-sub)', marginTop: 4, lineHeight: 1.4 }}>
+                            {it.detail}
+                          </div>
+                        )}
+                      </div>
+
+                      {it.editable && it.raw?.id && (
+                        <div style={{ display: 'flex', gap: 6, paddingTop: 6, borderTop: '1px solid var(--border-color)' }}>
+                          <button
+                            type="button"
+                            className="btn btn-g btn-xs"
+                            style={{ flex: 1, borderRadius: 6 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setForm({ ...it.raw });
+                              setEditId(it.raw.id);
+                              setShowForm(true);
+                            }}
+                          >
+                            ✏️ تعديل
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-d btn-xs"
+                            style={{ flex: 1, borderRadius: 6 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              del(it.raw.id);
+                            }}
+                          >
+                            🗑️ حذف
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}
