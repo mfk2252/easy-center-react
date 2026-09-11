@@ -46,6 +46,7 @@ export default function Dashboard() {
       students: lsGet('students'),
       sessions: lsGet('sessions'),
       attStu: lsGet('attStu'),
+      attEmp: lsGet('attEmp') || [],
       leaves: lsGet('leaves'),
       notifs: lsGet('notifs'),
     });
@@ -121,13 +122,101 @@ export default function Dashboard() {
   }, {});
 
   const getTodayStatusMessage = () => {
+    const now = clockData.time;
+    const currentHour = now.getHours();
+    const isMorning = currentHour < 12;
+    const isAfternoon = currentHour >= 12 && currentHour < 17;
+    const isNight = currentHour >= 17;
+
+    const timeGreeting = isMorning ? 'صباح الخير' : isAfternoon ? 'مساء النور' : 'مساء الخير';
+
+    // 1. فحص عطلة نهاية الأسبوع الرسمية وأيام الإجازات المحددة من مدير النظام
+    const dow = now.getDay();
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const currentDayName = dayNames[dow];
+    const configuredWeekends = center?.weekendDays || center?.shifts?.weekendDays || ['Friday', 'Saturday', 5, 6];
+    
+    const isWeekend = configuredWeekends.includes(dow) || 
+                      configuredWeekends.includes(currentDayName) || 
+                      configuredWeekends.includes(currentDayName?.toLowerCase?.()) || 
+                      (dow === 5); // الجمعة عطلة رسمية مباركة كحد أدنى افتراضي
+
+    if (isWeekend) {
+      if (dow === 5) {
+        return {
+          text: `${timeGreeting}! جمعة مباركة، اليوم عطلة نهاية الأسبوع الرسمية للمركز. نتمنى لكم وللكادر يوماً طيباً ومباركاً.`,
+          icon: "🕌",
+          type: "info"
+        };
+      }
+      return {
+        text: `${timeGreeting}! اليوم عطلة نهاية الأسبوع الرسمية للمركز (${dayNameStr}). نتمنى لكم وللكادر إجازة ممتعة وهانئة.`,
+        icon: "🌴",
+        type: "info"
+      };
+    }
+
+    // 2. إحصائيات حضور الطلاب والكادر الوظيفي لليوم
     const totalExpectedAttendance = sessStudents.length + classStudents.length;
     const totalActualPresent = sessPresent + classPresent;
-    
-    if (totalExpectedAttendance > 0 && totalActualPresent === 0) {
+    const todayEmpsPresent = (data.attEmp || []).filter(
+      a => a.date === today && (a.status === 'present' || a.status === 'late')
+    ).length;
+    const totalActiveEmps = (data.emps || []).filter(e => e.status !== 'inactive').length;
+
+    // 3. فترة المساء بعد انتهاء ساعات الدوام الرسمي
+    if (isNight) {
+      if (totalActualPresent > 0 || todayEmpsPresent > 0) {
+        return {
+          text: `${timeGreeting}! انتهت فترات الدوام الرسمي لليوم، مع تسجيل حضور (${totalActualPresent} طالب و ${todayEmpsPresent} من الكادر). نتمنى للجميع أمسية سعيدة وراحة مستحقة.`,
+          icon: "🌙",
+          type: "info"
+        };
+      }
       return {
-        text: "بداية يوم نشيط! لم يتم تسجيل حضور الطلاب للفترة الحالية بعد. يرجى توجيه المعلمين لبدء التحضير.",
+        text: `${timeGreeting}! انتهت فترات الدوام الرسمي لليوم. نتمنى لكافة منسوبي المركز والطلاب أمسية هانئة ومريحة.`,
+        icon: "🌙",
+        type: "info"
+      };
+    }
+
+    // 4. فترة الظهيرة والمساء أثناء الدوام
+    if (isAfternoon) {
+      const absentRate = totalExpectedAttendance > 0 ? ((totalExpectedAttendance - totalActualPresent) / totalExpectedAttendance) : 0;
+      if (absentRate >= 0.25 && totalActualPresent > 0) {
+        return {
+          text: `${timeGreeting}: تنبيه تشغيلي - نسبة غياب الطلاب اليوم مرتفعة وتصل إلى ${Math.round(absentRate * 100)}% (${totalActualPresent} حاضر من ${totalExpectedAttendance}). يرجى مراجعة التواصل مع أولياء الأمور.`,
+          icon: "⚠️",
+          type: "warning"
+        };
+      }
+      if (totalActualPresent > 0 || todayEmpsPresent > 0) {
+        return {
+          text: `${timeGreeting}! سير العمليات والجلسات منتظم اليوم (تم تسجيل حضور ${totalActualPresent} طالب و ${todayEmpsPresent} من الكادر الوظيفي). متابعة الجلسات مستمرة بنجاح.`,
+          icon: "✨",
+          type: "success"
+        };
+      }
+      return {
+        text: `${timeGreeting}: لم يتم رصد تسجيل حضور للطلاب أو الكادر خلال فترات اليوم حتى الآن. يرجى مراجعة سجلات التحضير.`,
+        icon: "ℹ️",
+        type: "info"
+      };
+    }
+
+    // 5. الفترة الصباحية (بداية اليوم)
+    if (totalActualPresent === 0 && todayEmpsPresent === 0) {
+      return {
+        text: `${timeGreeting} ونشاط متجدد! بداية يوم عمل جديد، في انتظار بدء تسجيل حضور الكادر والطلاب للفترة الصباحية.`,
         icon: "🌅",
+        type: "info"
+      };
+    }
+
+    if (totalActualPresent === 0 && todayEmpsPresent > 0) {
+      return {
+        text: `${timeGreeting}! بدأ الكادر الوظيفي بالتحضير وتسجيل الحضور (${todayEmpsPresent} موظف حاضر)، وفي انتظار استكمال تحضير الطلاب.`,
+        icon: "👥",
         type: "info"
       };
     }
@@ -135,14 +224,14 @@ export default function Dashboard() {
     const absentRate = totalExpectedAttendance > 0 ? ((totalExpectedAttendance - totalActualPresent) / totalExpectedAttendance) : 0;
     if (absentRate >= 0.25) {
       return {
-        text: `تنبيه تشغيلي: نسبة غياب الطلاب اليوم مرتفعة وتصل إلى ${Math.round(absentRate * 100)}%. يرجى مراجعة الاتصالات مع أولياء الأمور.`,
+        text: `${timeGreeting}: تنبيه تشغيلي - نسبة غياب الطلاب اليوم مرتفعة وتصل إلى ${Math.round(absentRate * 100)}%. يرجى مراجعة التواصل مع أولياء الأمور.`,
         icon: "⚠️",
         type: "warning"
       };
     }
 
     return {
-      text: "العمليات تسير بشكل ممتاز اليوم! تم تحضير الطلاب بنجاح، ومتابعة الجلسات مستمرة دون عوائق.",
+      text: `${timeGreeting}! العمليات تسير بنشاط وتميز اليوم، حيث تم حضور ${totalActualPresent} طالب و ${todayEmpsPresent} من الكادر الوظيفي دون عوائق.`,
       icon: "✨",
       type: "success"
     };
@@ -178,9 +267,10 @@ export default function Dashboard() {
         }
       />
 
-      {/* شريط حالة المركز اليوم الذكي والديناميكي */}
+      {/* شريط حالة المركز اليوم الذكي والديناميكي المتجاوب */}
       {showStatusBanner && (
         <div
+          className="dashboard-status-banner"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -195,11 +285,12 @@ export default function Dashboard() {
             fontSize: 'clamp(0.78rem, 2.4vw, 0.88rem)',
             fontWeight: 700,
             animation: 'fadeIn 0.3s ease-in-out',
+            boxShadow: 'var(--sh)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: '1.2rem' }}>{statusMessage.icon}</span>
-            <span>{statusMessage.text}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+            <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>{statusMessage.icon}</span>
+            <span style={{ lineHeight: 1.5, minWidth: 0 }}>{statusMessage.text}</span>
           </div>
           <button
             type="button"
@@ -209,10 +300,11 @@ export default function Dashboard() {
               border: 'none',
               color: 'inherit',
               cursor: 'pointer',
-              fontSize: '1rem',
-              padding: '0 4px',
+              fontSize: '1.1rem',
+              padding: '4px 6px',
               fontWeight: 'bold',
-              opacity: 0.7
+              opacity: 0.7,
+              flexShrink: 0,
             }}
             title="إغلاق الشريط"
           >
@@ -221,33 +313,23 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* شريط التوقيت والترحيب المطور - تم منع تكرار اليوم بالكامل وتنسيقه */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 20,
-          padding: 'clamp(12px, 2vw, 18px) clamp(14px, 3vw, 24px)',
-          background: 'var(--bg-card)',
-          borderRadius: 'var(--r)',
-          border: '1px solid var(--border-color)',
-          marginBottom: 14,
-          boxShadow: 'var(--sh)',
-          flexWrap: 'wrap',
-        }}
-      >
+      {/* شريط التوقيت والترحيب المطور المتجاوب تماماً مع شاشات الجوال والحاسوب */}
+      <div className="dashboard-clock-bar">
         {/* الساعة الكبيرة المريحة للعين */}
-        <div style={{ fontSize: 'clamp(1.25rem, 4.5vw, 1.85rem)', fontVariantNumeric: 'tabular-nums', letterSpacing: 1, fontWeight: 900, color: 'var(--text-main)' }}>
-          {timeStr}
+        <div className="dashboard-clock-time-sec">
+          <span>{timeStr}</span>
+          <span className="mobile-only-greeting" style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--pr)', display: 'none' }}>
+            {dayNameStr} — {clockData.greeting}
+          </span>
         </div>
 
         {/* قسم البيانات الحية المرتب - منع التكرار */}
-        <div style={{ flex: 1, minWidth: 0, borderRight: '2px solid var(--border-color)', paddingRight: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div className="dashboard-clock-info-sec">
+          <div className="desktop-only-greeting" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 'clamp(0.85rem, 2.6vw, 1.05rem)', fontWeight: 900, color: 'var(--pr)' }}>{dayNameStr}</span>
-            <span style={{ fontSize: 'clamp(0.72rem, 2.2vw, 0.84rem)', color: 'var(--g5)', fontWeight: 500 }}>— {clockData.greeting}</span>
+            <span style={{ fontSize: 'clamp(0.72rem, 2.2vw, 0.84rem)', color: 'var(--g5)', fontWeight: 600 }}>— {clockData.greeting}</span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', marginTop: 4, gap: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', marginTop: 4, gap: 2 }}>
             <div style={{ fontSize: 'clamp(0.75rem, 2.3vw, 0.88rem)', fontWeight: 600, color: 'var(--g6)' }}>
               📅 ميلادي: <span style={{ fontVariantNumeric: 'tabular-nums' }}>{numericDateStr}</span>
             </div>
@@ -260,10 +342,12 @@ export default function Dashboard() {
         </div>
 
         {/* معلومات المستخدم والمركز الحالية لتوثيق الواجهة */}
-        <div style={{ borderRight: '2px solid var(--border-color)', paddingRight: 16, textAlign: 'right', minWidth: 0 }}>
-          <div style={{ fontSize: 'clamp(0.78rem, 2.2vw, 0.88rem)', fontWeight: 900, color: 'var(--pr)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 'min(220px, 40vw)' }}>{center.name}</div>
+        <div className="dashboard-clock-user-sec">
+          <div style={{ fontSize: 'clamp(0.78rem, 2.2vw, 0.88rem)', fontWeight: 900, color: 'var(--pr)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {center.name || 'المركز'}
+          </div>
           <div style={{ fontSize: 'clamp(0.68rem, 2vw, 0.78rem)', color: 'var(--g5)', marginTop: 2 }}>
-            {currentUser?.name} — {currentUser?.title || ''}
+            {currentUser?.name} — {currentUser?.title || 'إدارة النظام'}
           </div>
         </div>
       </div>

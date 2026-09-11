@@ -117,6 +117,7 @@ export default function Settings() {
     instagram: center.instagram || '',
     barcode: center.barcode || '',
     shiftType: center.shifts?.type || center.shifts?.shiftType || (center.shifts?.single?.from ? 'single' : 'double'),
+    weekendDays: center.weekendDays || center.shifts?.weekendDays || ['Friday', 'Saturday'],
     singleFrom: center.shifts?.single?.from || center.shifts?.morning?.from || '08:00',
     singleTo: center.shifts?.single?.to || center.shifts?.morning?.to || '16:00',
     morningFrom: center.shifts?.morning?.from || '07:00',
@@ -378,6 +379,7 @@ export default function Settings() {
     const shifts = {
       type: centerForm.shiftType || 'double',
       shiftType: centerForm.shiftType || 'double',
+      weekendDays: centerForm.weekendDays || ['Friday', 'Saturday'],
       single: { from: centerForm.singleFrom || '08:00', to: centerForm.singleTo || '16:00' },
       morning: { from: centerForm.morningFrom || '07:00', to: centerForm.morningTo || '12:00' },
       evening: centerForm.shiftType === 'single'
@@ -391,6 +393,7 @@ export default function Settings() {
       name: centerForm.name.trim(),
       nameEn: centerForm.nameEn ? centerForm.nameEn.trim() : '',
       shifts,
+      weekendDays: centerForm.weekendDays || ['Friday', 'Saturday'],
       socialLinks,
       configured: true
     };
@@ -1081,6 +1084,55 @@ export default function Settings() {
                   </div>
                 </div>
               )}
+
+              {/* تحديد أيام العطلة الأسبوعية الرسمية للمركز */}
+              <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px dashed var(--border-color)' }}>
+                <div style={{ fontWeight: 800, fontSize: '.9rem', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-main)' }}>
+                  <span>🏖️</span>
+                  <span>أيام العطلة الأسبوعية الرسمية (الإجازة الأسبوعية)</span>
+                </div>
+                <p style={{ fontSize: '.78rem', color: 'var(--text-sub)', marginBottom: 12, lineHeight: 1.5 }}>
+                  حدد أيام الإجازة الأسبوعية المعتمدة للمركز (مثل الجمعة أو الجمعة والسبت). يراعي النظام هذه الأيام في لوحة التحكم وتنبيهات الحضور بحيث يتم توجيه رسائل التهنئة بالإجازة بدلاً من طلب تسجيل حضور الطلاب أو الكادر.
+                </p>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {[
+                    { id: 'Sunday', num: 0, label: 'الأحد' },
+                    { id: 'Monday', num: 1, label: 'الإثنين' },
+                    { id: 'Tuesday', num: 2, label: 'الثلاثاء' },
+                    { id: 'Wednesday', num: 3, label: 'الأربعاء' },
+                    { id: 'Thursday', num: 4, label: 'الخميس' },
+                    { id: 'Friday', num: 5, label: 'الجمعة' },
+                    { id: 'Saturday', num: 6, label: 'السبت' },
+                  ].map(d => {
+                    const currentDays = centerForm.weekendDays || ['Friday', 'Saturday'];
+                    const isSelected = currentDays.includes(d.id) || currentDays.includes(d.num);
+                    return (
+                      <button
+                        key={d.id}
+                        type="button"
+                        className={`btn btn-sm ${isSelected ? 'btn-p' : 'btn-g'}`}
+                        onClick={() => {
+                          const exists = currentDays.includes(d.id) || currentDays.includes(d.num);
+                          const next = exists
+                            ? currentDays.filter(x => x !== d.id && x !== d.num)
+                            : [...currentDays, d.id];
+                          setCenterForm(f => ({ ...f, weekendDays: next }));
+                        }}
+                        style={{
+                          borderRadius: 10,
+                          padding: '6px 14px',
+                          fontWeight: isSelected ? 800 : 600,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5
+                        }}
+                      >
+                        {isSelected ? '✓ ' : ''}{d.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
 

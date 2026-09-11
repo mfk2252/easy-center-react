@@ -42,72 +42,38 @@ export default function UnifiedPageHeader({
     <div
       className={`unified-page-header ${className}`.trim()}
       style={{
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border-color)',
         borderRight: `5px solid ${effectiveAccent}`,
-        borderRadius: 'var(--r)',
-        padding: '16px 20px',
-        marginBottom: '20px',
-        boxShadow: 'var(--sh)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '16px',
         ...style,
       }}
       {...props}
     >
       {/* القسم الأيمن: الأيقونة + العنوان والوصف + الشارة */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0, flex: 1 }}>
+      <div className="unified-page-header-main">
         {icon && (
           <div
+            className="unified-page-header-icon"
             style={{
-              width: '46px',
-              height: '46px',
-              borderRadius: '12px',
               background: effectiveIconBg,
               color: effectiveIconColor,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.45rem',
-              flexShrink: 0,
             }}
           >
             {icon}
           </div>
         )}
 
-        <div style={{ minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <h1
-              style={{
-                fontSize: '1.25rem',
-                fontWeight: '800',
-                color: 'var(--text-main)',
-                margin: 0,
-                lineHeight: 1.3,
-              }}
-            >
+        <div className="unified-page-header-text">
+          <div className="unified-page-header-title-row">
+            <h1 className="unified-page-header-title">
               {title}
             </h1>
             {badge && (
-              <span className="bdg" style={{ fontSize: '0.78rem', padding: '3px 10px', fontWeight: '700' }}>
+              <span className="bdg unified-page-header-badge">
                 {badge}
               </span>
             )}
           </div>
           {subtitle && (
-            <p
-              style={{
-                fontSize: '0.82rem',
-                color: 'var(--text-sub)',
-                marginTop: '4px',
-                marginBottom: 0,
-                lineHeight: 1.45,
-              }}
-            >
+            <p className="unified-page-header-sub">
               {subtitle}
             </p>
           )}
@@ -116,7 +82,7 @@ export default function UnifiedPageHeader({
 
       {/* القسم الأيسر: الإجراءات وزر العودة */}
       {(actions || onBack) && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+        <div className="unified-page-header-actions">
           {actions}
           {onBack && (
             <UnifiedBackButton

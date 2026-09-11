@@ -8,6 +8,15 @@ export function getCenterPrintMeta(extra = {}) {
     try { return JSON.parse(localStorage.getItem('scs_center_shifts') || '{}'); }
     catch { return {}; }
   })();
+  const weekendDays = (() => {
+    try {
+      const saved = localStorage.getItem('scs_weekend_days');
+      if (saved) return JSON.parse(saved);
+      return shifts?.weekendDays || ['Friday', 'Saturday'];
+    } catch {
+      return ['Friday', 'Saturday'];
+    }
+  })();
 
   return {
     name: extra.name || extra.nameAr || localStorage.getItem('scs_center_name') || '',
@@ -29,6 +38,7 @@ export function getCenterPrintMeta(extra = {}) {
     currency: extra.currency || localStorage.getItem('scs_center_currency') || 'SAR',
     barcode: extra.barcode || localStorage.getItem('scs_center_barcode') || '',
     shifts,
+    weekendDays: extra.weekendDays || weekendDays,
     social,
   };
 }
@@ -59,4 +69,5 @@ export function persistCenterMeta(data) {
     if (s.instagram) localStorage.setItem('scs_center_instagram', s.instagram);
   }
   if (data.shifts) localStorage.setItem('scs_center_shifts', JSON.stringify(data.shifts));
+  if (data.weekendDays) localStorage.setItem('scs_weekend_days', JSON.stringify(data.weekendDays));
 }

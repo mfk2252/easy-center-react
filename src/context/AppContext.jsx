@@ -113,6 +113,7 @@ export function AppProvider({ children }) {
       instagram: localMeta.instagram || '',
       barcode: localMeta.barcode || '',
       shifts: localMeta.shifts || {},
+      weekendDays: localMeta.weekendDays || ['Friday', 'Saturday'],
       configured: Boolean(localMeta.name || localMeta.nameAr),
     };
   });
