@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { lsGet, lsSet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { todayStr, uid } from '../../utils/dateHelpers';
 import { getAcademicYears } from '../../utils/academicYears';
-import { INTERNATIONAL_DAYS, getInternationalDayDate } from '../../data/internationalDays';
+import { INTERNATIONAL_DAYS, getInternationalDayDate, OCCASION_CATEGORIES } from '../../data/internationalDays';
 import EmptyState from '../../components/ui/EmptyState';
 import {
   PartyPopper,
@@ -32,8 +32,11 @@ import {
 } from 'lucide-react';
 
 const EVENT_CATEGORIES = [
-  { id: 'national', label: '🇸🇦 مناسبات وطنية ورسمية', color: 'b-gr' },
-  { id: 'awareness', label: '♿ أيام ومناسبات عالمية للإعاقة', color: 'b-bl' },
+  { id: 'holidays', label: '🌙 أعياد ومناسبات رسمية وإسلامية', color: 'b-yl' },
+  { id: 'national', label: '🇸🇦🌍 مناسبات وأيام وطنية (الخليج والعالم العربي)', color: 'b-gr' },
+  { id: 'medical', label: '🩺 أيام ومناسبات المجال الطبي والصحي', color: 'b-rd' },
+  { id: 'awareness', label: '♿ أيام ومناسبات الإعاقة والتربية الخاصة والتأهيل', color: 'b-pr' },
+  { id: 'education', label: '🎓 فعاليات تعليمية وتنموية وتكريم', color: 'b-bl' },
   { id: 'graduation', label: '🎓 حفلات تخرج وتكريم وتفوق', color: 'b-yl' },
   { id: 'community', label: '🤝 ملتقيات وشراكات مجتمعية', color: 'b-or' },
   { id: 'exhibition', label: '🎨 معارض وبازارات إنتاجية', color: 'b-pr' },
@@ -172,14 +175,19 @@ export default function CenterEventsTab() {
       if (yrMatch) targetYear = parseInt(yrMatch[1], 10);
     }
     const computedDate = getInternationalDayDate(selected, targetYear);
+    const cat = selected.category === 'holidays' ? 'holidays'
+      : selected.category === 'national' ? 'national'
+      : selected.category === 'medical' ? 'medical'
+      : selected.category === 'education' ? 'education'
+      : 'awareness';
 
     setForm(f => ({
       ...f,
       name: f.name?.trim() ? f.name : `فعالية بمناسبة ${selected.name}`,
-      category: 'awareness',
+      category: cat,
       date: computedDate,
       time: f.time || '',
-      location: f.location || '',
+      location: f.location || selected.suggestedLocation || 'مقر المركز الرئيسي',
       locationType: f.locationType || 'internal',
       targetAudience: f.targetAudience || selected.targetAudience || 'all',
       parentsInvited: true,
@@ -201,16 +209,21 @@ export default function CenterEventsTab() {
       if (yrMatch) targetYear = parseInt(yrMatch[1], 10);
     }
     const computedDate = getInternationalDayDate(dayObj, targetYear);
+    const cat = dayObj.category === 'holidays' ? 'holidays'
+      : dayObj.category === 'national' ? 'national'
+      : dayObj.category === 'medical' ? 'medical'
+      : dayObj.category === 'education' ? 'education'
+      : 'awareness';
 
     setForm({
       ...EMPTY_EVENT_FORM,
       academicYear: activeYr,
       academicYearId: activeYrId,
       name: `فعالية بمناسبة ${dayObj.name}`,
-      category: 'awareness',
+      category: cat,
       date: computedDate,
       time: '',
-      location: '',
+      location: dayObj.suggestedLocation || 'مقر المركز الرئيسي',
       locationType: 'internal',
       targetAudience: dayObj.targetAudience || 'all',
       parentsInvited: true,
@@ -1069,10 +1082,10 @@ export default function CenterEventsTab() {
                 </div>
               </div>
 
-              {/* Conditional Container: If category is International & Awareness Days */}
-              {form.category === 'awareness' && (
+              {/* Smart Occasion Helper: National, Medical, Holiday, Disability Awareness Days */}
+              {['awareness', 'national', 'holidays', 'medical', 'education'].includes(form.category) && (
                 <div style={{
-                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.09), rgba(168, 85, 247, 0.09))',
+                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(168, 85, 247, 0.08))',
                   border: '1.5px solid rgba(99, 102, 241, 0.35)',
                   borderRadius: 12,
                   padding: '14px',
@@ -1084,11 +1097,18 @@ export default function CenterEventsTab() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
                     <label style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '.86rem', display: 'flex', alignItems: 'center', gap: 6 }}>
                       <Sparkles style={{ width: 16, height: 16, color: '#6366f1' }} />
-                      <span>🌍 الاسترشاد بمناسبة عالمية أو توعوية:</span>
+                      <span>🌍 الاسترشاد بمناسبة وطنية / طبية / رسمية / عالمية:</span>
                     </label>
-                    <span style={{ fontSize: '.72rem', color: '#6366f1', fontWeight: 700 }}>
-                      💡 استيراد استرشادي مع إمكانية التخصيص الكامل للعنوان والمكان والوقت والأهداف
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <button
+                        type="button"
+                        className="btn btn-xs btn-g"
+                        style={{ fontSize: '.72rem', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}
+                        onClick={() => setShowIntDaysModal(true)}
+                      >
+                        📖 تصفح الدليل الشامل
+                      </button>
+                    </div>
                   </div>
 
                   <select
@@ -1107,12 +1127,31 @@ export default function CenterEventsTab() {
                       borderRadius: 8
                     }}
                   >
-                    <option value="">— اضغط هنا لاختيار المناسبة للاسترشاد بها في الفعالية —</option>
-                    {INTERNATIONAL_DAYS.map(day => (
-                      <option key={day.id} value={day.id}>
-                        {day.icon} {day.day}/{day.month} — {day.name} ({day.categoryLabel})
-                      </option>
-                    ))}
+                    <option value="">— اضغط هنا لاختيار مناسبة وطنية أو طبية أو رسمية أو إعاقة للاسترشاد بها —</option>
+                    {(() => {
+                      const matchingDays = INTERNATIONAL_DAYS.filter(d => d.category === form.category);
+                      const otherDays = INTERNATIONAL_DAYS.filter(d => d.category !== form.category);
+                      return (
+                        <>
+                          {matchingDays.length > 0 && (
+                            <optgroup label={`⭐ مناسبات مقترحة لتصنيف (${EVENT_CATEGORIES.find(c => c.id === form.category)?.label || form.category})`}>
+                              {matchingDays.map(day => (
+                                <option key={day.id} value={day.id}>
+                                  {day.icon} {day.day ? `${day.day}/${day.month}` : '🌙'} — {day.name} ({day.categoryLabel})
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
+                          <optgroup label="🌐 بقية المناسبات الوطنية والطبية والعالمية">
+                            {otherDays.map(day => (
+                              <option key={day.id} value={day.id}>
+                                {day.icon} {day.day ? `${day.day}/${day.month}` : '🌙'} — {day.name} ({day.categoryLabel})
+                              </option>
+                            ))}
+                          </optgroup>
+                        </>
+                      );
+                    })()}
                   </select>
                 </div>
               )}
@@ -1251,6 +1290,104 @@ export default function CenterEventsTab() {
                   placeholder="ملاحظات إدارة الجودة، نسبة رضا الحضور، والمخرجات المحققة..."
                   style={{ background: 'var(--bg-input)', color: 'var(--text-main)' }}
                 />
+              </div>
+
+              {/* اختيار المشرفين والمنسقين بعلامة صح */}
+              <div className="fl">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '.84rem', margin: 0 }}>
+                    👥 المشرفون والمنسقون من الكادر ({form.supervisorEmpIds?.length || 0} محددين)
+                  </label>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      type="button"
+                      className="btn btn-xs btn-g"
+                      style={{ fontSize: '.72rem', padding: '2px 8px', borderRadius: 6 }}
+                      onClick={() => {
+                        const allIds = emps.map(e => e.id);
+                        setForm(f => ({ ...f, supervisorEmpIds: allIds }));
+                      }}
+                    >
+                      تحديد الكل
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-xs btn-g"
+                      style={{ fontSize: '.72rem', padding: '2px 8px', borderRadius: 6 }}
+                      onClick={() => setForm(f => ({ ...f, supervisorEmpIds: [] }))}
+                    >
+                      إلغاء التحديد
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    maxHeight: 150,
+                    overflowY: 'auto',
+                    background: 'var(--bg-input)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 10,
+                    padding: '8px 10px',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
+                    gap: 6,
+                  }}
+                >
+                  {emps.length === 0 ? (
+                    <div style={{ fontSize: '.78rem', color: 'var(--text-sub)', padding: 8 }}>
+                      لا يوجد موظفون مضافون حالياً
+                    </div>
+                  ) : (
+                    emps.map(emp => {
+                      const isChecked = form.supervisorEmpIds?.includes(emp.id);
+                      return (
+                        <label
+                          key={emp.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            padding: '6px 10px',
+                            borderRadius: 8,
+                            cursor: 'pointer',
+                            background: isChecked ? 'var(--pr-l)' : 'var(--bg-card)',
+                            border: isChecked ? '1px solid var(--pr)' : '1px solid var(--border-color)',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={e => {
+                              const checked = e.target.checked;
+                              setForm(f => ({
+                                ...f,
+                                supervisorEmpIds: checked
+                                  ? [...(f.supervisorEmpIds || []), emp.id]
+                                  : (f.supervisorEmpIds || []).filter(id => id !== emp.id),
+                              }));
+                            }}
+                            style={{
+                              width: 16,
+                              height: 16,
+                              accentColor: 'var(--pr)',
+                              cursor: 'pointer',
+                            }}
+                          />
+                          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                            <span style={{ fontSize: '.82rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {emp.name}
+                            </span>
+                            <span style={{ fontSize: '.70rem', color: 'var(--text-sub)' }}>
+                              {emp.role || 'كادر تأهيلي'}
+                            </span>
+                          </div>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
@@ -1623,12 +1760,12 @@ export default function CenterEventsTab() {
                   🏷️ المجال:
                 </span>
                 {[
-                  { id: 'all', label: 'جميع المجالات' },
-                  { id: 'developmental', label: '🧩 التوحد واضطرابات النمو' },
-                  { id: 'sensory', label: '🦯 الإعاقات الحسية والسمعية' },
-                  { id: 'rehab', label: '🏃 التأهيل والعلاج الطبيعي' },
-                  { id: 'educational', label: '📚 التعليم والتربية الخاصة' },
-                  { id: 'national', label: '🇸🇦 المناسبات الوطنية' },
+                  { id: 'all', label: '🌐 جميع المناسبات' },
+                  { id: 'holidays', label: '🌙 أعياد ومناسبات رسمية' },
+                  { id: 'national', label: '🇸🇦🌍 مناسبات وطنية (الخليج والعالم العربي)' },
+                  { id: 'medical', label: '🩺 المجال الطبي والصحي' },
+                  { id: 'disability', label: '♿ أيام الإعاقة والتربية الخاصة' },
+                  { id: 'education', label: '🎓 التعليم والتنمية والمجتمع' },
                 ].map(cat => (
                   <button
                     key={cat.id}
@@ -1727,28 +1864,28 @@ export default function CenterEventsTab() {
                             <div
                               style={{
                                 width: '100%',
-                                background: 'var(--pr)',
-                                color: '#fff',
+                                background: OCCASION_CATEGORIES[day.category]?.hexBg || 'var(--pr)',
+                                color: OCCASION_CATEGORIES[day.category]?.hexText || '#fff',
                                 padding: '3px 6px',
                                 fontSize: '.68rem',
                                 fontWeight: 800,
                               }}
                             >
-                              {monthsNames[day.month]}
+                              {day.month ? monthsNames[day.month] : 'هجري'}
                             </div>
                             <div
                               style={{
                                 padding: '6px 4px 4px',
-                                fontSize: '1.45rem',
+                                fontSize: day.day ? '1.45rem' : '1.1rem',
                                 fontWeight: 900,
                                 color: 'var(--text-main)',
                                 lineHeight: 1,
                               }}
                             >
-                              {day.day}
+                              {day.day || '🌙'}
                             </div>
                             <div style={{ fontSize: '.64rem', color: 'var(--text-sub)', paddingBottom: 4 }}>
-                              سنوي
+                              {day.hijriKey ? 'إسلامي' : 'سنوي'}
                             </div>
                           </div>
 
@@ -1771,8 +1908,8 @@ export default function CenterEventsTab() {
                                   fontWeight: 700,
                                   padding: '2px 8px',
                                   borderRadius: 6,
-                                  background: 'var(--pr-l)',
-                                  color: 'var(--pr)',
+                                  background: OCCASION_CATEGORIES[day.category]?.badgeBg || 'var(--pr-l)',
+                                  color: OCCASION_CATEGORIES[day.category]?.hexText || 'var(--pr)',
                                 }}
                               >
                                 {day.categoryLabel}
@@ -1870,11 +2007,11 @@ export default function CenterEventsTab() {
                                     fontWeight: 800,
                                     padding: '3px 8px',
                                     borderRadius: 6,
-                                    background: 'var(--pr-l)',
-                                    color: 'var(--pr)',
+                                    background: OCCASION_CATEGORIES[day.category]?.badgeBg || 'var(--pr-l)',
+                                    color: OCCASION_CATEGORIES[day.category]?.hexText || 'var(--pr)',
                                   }}
                                 >
-                                  📅 {day.day} / {day.month}
+                                  {day.day ? `📅 ${day.day} / ${day.month}` : '🌙 هجري'}
                                 </span>
                               </td>
                               <td>
@@ -1884,7 +2021,16 @@ export default function CenterEventsTab() {
                                 </div>
                               </td>
                               <td style={{ textAlign: 'center' }}>
-                                <span style={{ fontSize: '.74rem', color: 'var(--text-sub)', fontWeight: 600 }}>
+                                <span
+                                  style={{
+                                    fontSize: '.72rem',
+                                    fontWeight: 700,
+                                    padding: '2px 8px',
+                                    borderRadius: 6,
+                                    background: OCCASION_CATEGORIES[day.category]?.badgeBg || 'var(--pr-l)',
+                                    color: OCCASION_CATEGORIES[day.category]?.hexText || 'var(--pr)',
+                                  }}
+                                >
                                   {day.categoryLabel}
                                 </span>
                               </td>

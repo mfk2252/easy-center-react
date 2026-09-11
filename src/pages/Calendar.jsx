@@ -3,17 +3,24 @@ import { useApp } from '../context/AppContext';
 import { lsGet, lsSet, lsAdd, lsUpd, lsDel } from '../hooks/useStorage';
 import { todayStr, uid, daysUntilDate, nextAnnualOccurrenceDate, nowTimeStr } from '../utils/dateHelpers';
 import { SPECIALIST_ROLES } from '../utils/constants';
-import { INTERNATIONAL_DAYS, getInternationalDayDate, getInternationalDaysForDate } from '../data/internationalDays';
+import {
+  INTERNATIONAL_DAYS,
+  getInternationalDayDate,
+  getInternationalDayDates,
+  getInternationalDaysForDate,
+  OCCASION_CATEGORIES
+} from '../data/internationalDays';
 import UnifiedPageHeader from '../components/ui/UnifiedPageHeader';
 
 const DAYS_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 const MONTHS_AR = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 const EV_COLORS = [
-  ['bl', 'أزرق', 'rgba(59, 130, 246, 0.1)', '#3b82f6'],
-  ['gr', 'أخضر', 'rgba(16, 185, 129, 0.1)', '#10b981'],
-  ['or', 'برتقالي', 'rgba(245, 158, 11, 0.1)', '#f59e0b'],
-  ['rd', 'أحمر', 'rgba(239, 68, 68, 0.1)', '#ef4444'],
-  ['pu', 'بنفسجي', 'rgba(139, 92, 246, 0.1)', '#8b5cf6']
+  ['bl', 'أزرق (تعليمي وتنموي)', 'rgba(59, 130, 246, 0.12)', '#2563eb'],
+  ['gr', 'أخضر (مناسبات وطنية)', 'rgba(16, 185, 129, 0.12)', '#059669'],
+  ['or', 'برتقالي (أنشطة وتقييمات)', 'rgba(245, 158, 11, 0.12)', '#f59e0b'],
+  ['rd', 'أحمر (طبي وصحي)', 'rgba(239, 68, 68, 0.12)', '#dc2626'],
+  ['pu', 'بنفسجي (إعاقة وتأهيل)', 'rgba(139, 92, 246, 0.12)', '#7c3aed'],
+  ['yl', 'ذهبي (أعياد ومناسبات رسمية)', 'rgba(245, 158, 11, 0.14)', '#d97706'],
 ];
 
 const getColorStyles = (colorKey) => {
@@ -39,6 +46,7 @@ const EMPTY_ADOPT_EVENT = {
   notes: '',
   internationalDayName: '',
   internationalDayIcon: '',
+  internationalDayCategory: '',
   internationalDayCategoryLabel: '',
   suggestedObjectives: '',
   suggestedLocation: '',
@@ -210,7 +218,7 @@ function buildCalendarItems() {
     });
   });
 
-  // International & Specialized Awareness Days (الأيام والمناسبات العالمية والتربوية)
+  // International & Specialized Awareness Days (الأيام والمناسبات العالمية والتربوية والوطنية والطبية)
   const currentYear = new Date().getFullYear();
   // Include past, current, and future academic/calendar years (2024 up to 2035)
   const yearsRange = [];
@@ -219,20 +227,23 @@ function buildCalendarItems() {
   }
 
   INTERNATIONAL_DAYS.forEach(iday => {
+    const catConfig = OCCASION_CATEGORIES[iday.category] || {};
     yearsRange.forEach(y => {
-      const dIso = getInternationalDayDate(iday, y);
-      items.push({
-        id: `intday-${iday.id}-${y}`,
-        source: 'يوم عالمي 🌍',
-        date: dIso,
-        time: '',
-        title: `${iday.icon} ${iday.name}`,
-        detail: `${iday.categoryLabel} · ${iday.objectives}`,
-        color: 'pu',
-        raw: iday,
-        isInternationalDay: true,
-        year: y,
-        editable: false,
+      const dates = getInternationalDayDates(iday, y);
+      dates.forEach((dIso, idx) => {
+        items.push({
+          id: `intday-${iday.id}-${y}-${idx}`,
+          source: catConfig.shortLabel || 'يوم عالمي 🌍',
+          date: dIso,
+          time: '',
+          title: `${iday.icon} ${iday.name}`,
+          detail: `${iday.categoryLabel} · ${iday.objectives}`,
+          color: catConfig.colorKey || 'pu',
+          raw: iday,
+          isInternationalDay: true,
+          year: y,
+          editable: false,
+        });
       });
     });
   });
@@ -412,7 +423,7 @@ export default function Calendar() {
       name: `فعالية بمناسبة ${iday.name}`,
       date: targetDate || todayStr(),
       time: '',
-      location: '',
+      location: iday.suggestedLocation || 'مقر المركز',
       locationType: 'internal',
       academicYear: evtYear,
       targetAudience: iday.targetAudience || 'all',
@@ -422,6 +433,7 @@ export default function Calendar() {
       notes: '',
       internationalDayName: iday.name,
       internationalDayIcon: iday.icon || '🌍',
+      internationalDayCategory: iday.category || 'awareness',
       internationalDayCategoryLabel: iday.categoryLabel || '',
       suggestedObjectives: iday.objectives || '',
       suggestedLocation: iday.suggestedLocation || '',
@@ -434,10 +446,20 @@ export default function Calendar() {
       toast('⚠️ يرجى كتابة عنوان الفعالية وتحديد تاريخ إقامتها', 'er');
       return;
     }
+    const cat = adoptForm.internationalDayCategory === 'holidays'
+      ? 'holidays'
+      : adoptForm.internationalDayCategory === 'national'
+      ? 'national'
+      : adoptForm.internationalDayCategory === 'medical'
+      ? 'medical'
+      : adoptForm.internationalDayCategory === 'education'
+      ? 'education'
+      : 'awareness';
+
     const newEvt = {
       id: `evt_${Date.now()}_${uid()}`,
       name: adoptForm.name.trim(),
-      category: 'awareness',
+      category: cat,
       date: adoptForm.date,
       time: adoptForm.time?.trim() || '',
       location: adoptForm.location?.trim() || 'مقر المركز',
@@ -605,6 +627,43 @@ export default function Calendar() {
           <div className="stat-label">⚡ الفعاليات والأنشطة</div>
           <div className="stat-val" style={{ color: 'var(--warn)' }}>{monthSummary.events}</div>
           <div className="stat-sub">مناسبات وأنشطة المركز</div>
+        </div>
+      </div>
+
+      {/* دليل ألوان وتصنيفات التقويم المعتمدة */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        flexWrap: 'wrap',
+        background: 'var(--bg-card)',
+        padding: '10px 14px',
+        borderRadius: 14,
+        border: '1px solid var(--border-color)',
+        marginBottom: 14,
+        fontSize: '.76rem',
+        fontWeight: 700
+      }}>
+        <span style={{ color: 'var(--text-sub)' }}>🎨 دليل وتصنيف المناسبات:</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(245, 158, 11, 0.12)', color: '#d97706', padding: '3px 8px', borderRadius: 8 }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#d97706' }} />
+          <span>🌙 أعياد ومناسبات رسمية</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(16, 185, 129, 0.12)', color: '#059669', padding: '3px 8px', borderRadius: 8 }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#059669' }} />
+          <span>🇸🇦 مناسبات وأيام وطنية</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(239, 68, 68, 0.12)', color: '#dc2626', padding: '3px 8px', borderRadius: 8 }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#dc2626' }} />
+          <span>🩺 الأيام والمجال الطبي</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(139, 92, 246, 0.12)', color: '#7c3aed', padding: '3px 8px', borderRadius: 8 }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#7c3aed' }} />
+          <span>♿ أيام الإعاقة والتأهيل</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(59, 130, 246, 0.12)', color: '#2563eb', padding: '3px 8px', borderRadius: 8 }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#2563eb' }} />
+          <span>🎓 التعليم والتنمية / جلسات</span>
         </div>
       </div>
 
@@ -847,25 +906,33 @@ export default function Calendar() {
               {/* International Day Highlight Banner on Selected Day */}
               {intDaysOnSelDay.length > 0 && (
                 <div style={{
-                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.12))',
-                  border: '1.5px solid rgba(99, 102, 241, 0.3)',
-                  borderRadius: 12,
-                  padding: '12px 14px',
-                  marginBottom: 12,
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 8
+                  gap: 8,
+                  marginBottom: 12
                 }}>
                   {intDaysOnSelDay.map(iday => {
                     const isAdopted = (lsGet('centerEvents') || []).some(e => e.date === selDateStr && (e.name === iday.name || e.name?.includes(iday.name)));
+                    const catConfig = OCCASION_CATEGORIES[iday.category] || {};
                     return (
-                      <div key={iday.id} style={{ display: 'flex', flexDirection: 'column', gap: 6, borderBottom: intDaysOnSelDay.length > 1 ? '1px dashed rgba(99, 102, 241, 0.2)' : 'none', paddingBottom: intDaysOnSelDay.length > 1 ? 8 : 0 }}>
+                      <div
+                        key={iday.id}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 6,
+                          background: catConfig.hexBg || 'rgba(99, 102, 241, 0.08)',
+                          border: `1.5px solid ${catConfig.hexBorder || 'rgba(99, 102, 241, 0.3)'}`,
+                          borderRadius: 12,
+                          padding: '12px 14px',
+                        }}
+                      >
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, flexWrap: 'wrap' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, fontSize: '.86rem', color: 'var(--text-main)' }}>
                             <span>{iday.icon}</span>
                             <span>{iday.name}</span>
                           </div>
-                          <span style={{ fontSize: '.72rem', background: 'rgba(99, 102, 241, 0.18)', color: 'var(--text-main)', padding: '2px 8px', borderRadius: 999, fontWeight: 700 }}>
+                          <span style={{ fontSize: '.72rem', background: catConfig.badgeBg || 'rgba(99, 102, 241, 0.18)', color: catConfig.hexText || 'var(--text-main)', padding: '2px 8px', borderRadius: 999, fontWeight: 700 }}>
                             {iday.categoryLabel}
                           </span>
                         </div>
@@ -1366,26 +1433,102 @@ export default function Calendar() {
                 </div>
 
                 <div className="fl full">
-                  <label style={{ fontWeight: 700, fontSize: '.84rem', color: 'var(--text-main)' }}>
-                    المشرفون والمنسقون من الكادر
-                  </label>
-                  <select
-                    multiple
-                    value={adoptForm.supervisorEmpIds}
-                    onChange={e => {
-                      const selectedValues = Array.from(e.target.selectedOptions, opt => opt.value);
-                      setAdoptForm(f => ({ ...f, supervisorEmpIds: selectedValues }));
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <label style={{ fontWeight: 700, fontSize: '.84rem', color: 'var(--text-main)', margin: 0 }}>
+                      👥 المشرفون والمنسقون من الكادر ({adoptForm.supervisorEmpIds.length} محددين)
+                    </label>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button
+                        type="button"
+                        className="btn btn-xs btn-g"
+                        style={{ fontSize: '.72rem', padding: '2px 8px', borderRadius: 6 }}
+                        onClick={() => {
+                          const allIds = specialists.map(sp => sp.id);
+                          setAdoptForm(f => ({ ...f, supervisorEmpIds: allIds }));
+                        }}
+                      >
+                        تحديد الكل
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-xs btn-g"
+                        style={{ fontSize: '.72rem', padding: '2px 8px', borderRadius: 6 }}
+                        onClick={() => setAdoptForm(f => ({ ...f, supervisorEmpIds: [] }))}
+                      >
+                        إلغاء التحديد
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      maxHeight: 160,
+                      overflowY: 'auto',
+                      background: 'var(--bg-input)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: 10,
+                      padding: '8px 10px',
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
+                      gap: 6,
                     }}
-                    style={{ background: 'var(--bg-input)', minHeight: 70 }}
                   >
-                    {specialists.map(sp => (
-                      <option key={sp.id} value={sp.id}>
-                        {sp.name} — ({sp.role})
-                      </option>
-                    ))}
-                  </select>
-                  <small style={{ fontSize: '.72rem', color: 'var(--text-sub)' }}>
-                    (يمكنك الضغط مع زر Ctrl/Cmd لتحديد أكثر من أخصائي مشرف)
+                    {specialists.length === 0 ? (
+                      <div style={{ fontSize: '.78rem', color: 'var(--text-sub)', padding: 8 }}>
+                        لا يوجد موظفون أو أخصائيون مضافون حالياً
+                      </div>
+                    ) : (
+                      specialists.map(sp => {
+                        const isChecked = adoptForm.supervisorEmpIds.includes(sp.id);
+                        return (
+                          <label
+                            key={sp.id}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              padding: '6px 10px',
+                              borderRadius: 8,
+                              cursor: 'pointer',
+                              background: isChecked ? 'var(--pr-l)' : 'var(--bg-card)',
+                              border: isChecked ? '1px solid var(--pr)' : '1px solid var(--border-color)',
+                              transition: 'all 0.15s ease',
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={e => {
+                                const checked = e.target.checked;
+                                setAdoptForm(f => ({
+                                  ...f,
+                                  supervisorEmpIds: checked
+                                    ? [...f.supervisorEmpIds, sp.id]
+                                    : f.supervisorEmpIds.filter(id => id !== sp.id),
+                                }));
+                              }}
+                              style={{
+                                width: 16,
+                                height: 16,
+                                accentColor: 'var(--pr)',
+                                cursor: 'pointer',
+                              }}
+                            />
+                            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                              <span style={{ fontSize: '.82rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {sp.name}
+                              </span>
+                              <span style={{ fontSize: '.70rem', color: 'var(--text-sub)' }}>
+                                {sp.role}
+                              </span>
+                            </div>
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                  <small style={{ fontSize: '.72rem', color: 'var(--text-sub)', marginTop: 4, display: 'block' }}>
+                    قم بوضع علامة (✓) أمام كل أخصائي أو مشرف ترغب بإسناد مهام تنظيم وتوجيه الفعالية إليه.
                   </small>
                 </div>
 
