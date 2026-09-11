@@ -173,6 +173,8 @@ export function fetchGlobalNotifications(currentUser) {
 
       rawList.push({
         id: `sess-${s.id}`,
+        sessionId: s.id,
+        stuId: s.stuId,
         category: 'sessions',
         categoryLabel: 'الجلسات',
         categoryIcon: '⏱️',
@@ -180,8 +182,10 @@ export function fetchGlobalNotifications(currentUser) {
         detail: `الطالب: ${st?.name || 'غير محدد'} · التوقيت: ${s.time || 'غير محدد'} ${s.notes ? `(${s.notes})` : ''}`,
         time: timeLabel,
         rawDate: s.date,
+        actionDate: s.date,
+        targetDate: s.date,
         severity: isUrgent ? 'urgent' : 'info',
-        actionView: 'students',
+        actionView: 'calendar',
         actionTab: 'sessions',
         targetRoles: ['manager', 'vice', 'specialist', 'reception', 'parent'],
       });
@@ -234,6 +238,8 @@ export function fetchGlobalNotifications(currentUser) {
 
         rawList.push({
           id: `appt-${a.id}`,
+          appointmentId: a.id,
+          stuId: a.stuId,
           category: 'appointments',
           categoryLabel: isEval ? 'التقييمات' : 'المواعيد',
           categoryIcon: isEval ? '📋' : '🗓️',
@@ -241,6 +247,8 @@ export function fetchGlobalNotifications(currentUser) {
           detail: `المستفيد: ${st?.name || a.clientName || 'مستفيد'} · ${[a.time && `الساعة: ${a.time}`, a.notes].filter(Boolean).join(' · ')}`,
           time: timeLabel,
           rawDate: a.date,
+          actionDate: a.date,
+          targetDate: a.date,
           severity: a.date === today ? 'urgent' : 'info',
           actionView: 'calendar',
           actionTab: 'appointments',
@@ -431,6 +439,7 @@ export function fetchGlobalNotifications(currentUser) {
   upcomingBirthdays.forEach(b => {
     rawList.push({
       id: `bday-${b.type}-${b.id}`,
+      stuId: b.type === 'طالب' ? b.id : undefined,
       category: 'general',
       categoryLabel: 'مناسبات المركز',
       categoryIcon: '🎂',
@@ -439,7 +448,9 @@ export function fetchGlobalNotifications(currentUser) {
       time: b.days === 0 ? 'اليوم' : `خلال ${b.days} أيام`,
       rawDate: today,
       severity: b.days === 0 ? 'info' : 'info',
-      actionView: b.type === 'طالب' ? 'students' : 'hr',
+      actionView: b.type === 'طالب' ? 'calendar' : 'calendar',
+      actionDate: today,
+      targetDate: today,
       targetRoles: ['manager', 'vice', 'reception', 'specialist'],
     });
   });

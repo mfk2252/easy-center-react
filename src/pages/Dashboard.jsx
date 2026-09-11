@@ -239,6 +239,36 @@ export default function Dashboard() {
 
   const statusMessage = getTodayStatusMessage();
 
+  const handleAlertClick = (a) => {
+    if (!a.action) return;
+    const targetView = a.action;
+    const targetDate = a.targetDate || a.date || a.actionDate;
+    const stuId = a.stuId || a.raw?.stuId || a.raw?.id;
+    const appointmentId = a.appointmentId || a.raw?.appointmentId || a.raw?.id;
+    const sessionId = a.sessionId || a.raw?.sessionId;
+    const tab = a.actionTab || a.tab || (targetView === 'students' ? (a.cat === 'مواعيد' ? 'appts' : a.cat === 'جلسات' ? 'sessions' : 'basic') : undefined);
+
+    if (stuId && targetView === 'students') {
+      sessionStorage.setItem('scs_selected_student', stuId);
+      if (tab) sessionStorage.setItem('scs_student_tab', tab);
+    }
+
+    if (targetView === 'calendar') {
+      if (targetDate) sessionStorage.setItem('scs_calendar_target_date', targetDate);
+      if (appointmentId) sessionStorage.setItem('scs_calendar_target_appt', appointmentId);
+    }
+
+    go(targetView, {
+      date: targetDate,
+      targetDate,
+      stuId,
+      appointmentId,
+      sessionId,
+      tab,
+      intDayId: a.intDayId || a.raw?.id,
+    });
+  };
+
   return (
     <div>
       <UnifiedPageHeader
@@ -446,7 +476,7 @@ export default function Dashboard() {
                   {items.map(a => (
                     <div
                       key={a.id}
-                      onClick={() => a.action && go(a.action)}
+                      onClick={() => handleAlertClick(a)}
                       style={{
                         ...SEV_STYLE[a.severity] || SEV_STYLE.info,
                         padding: '10px 14px',

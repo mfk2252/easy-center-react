@@ -12,11 +12,58 @@ export function formatDateAr(d) {
   try { return new Date(d).toLocaleDateString('ar-SA', { year:'numeric', month:'long', day:'numeric' }); } catch(e) { return d; }
 }
 
+export function parseDob(dobStr) {
+  if (!dobStr) return null;
+  const str = String(dobStr).trim();
+  const m = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (m) {
+    const year = parseInt(m[1], 10);
+    const month = parseInt(m[2], 10);
+    const day = parseInt(m[3], 10);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return {
+        year,
+        month,
+        day,
+        monthStr: String(month).padStart(2, '0'),
+        dayStr: String(day).padStart(2, '0'),
+        isoDate: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      };
+    }
+  }
+  const d = new Date(dobStr);
+  if (!isNaN(d.getTime())) {
+    const year = d.getFullYear();
+    const month = d.getMonth() + 1;
+    const day = d.getDate();
+    return {
+      year,
+      month,
+      day,
+      monthStr: String(month).padStart(2, '0'),
+      dayStr: String(day).padStart(2, '0'),
+      isoDate: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+    };
+  }
+  return null;
+}
+
 export function calcAge(dob) {
   if (!dob) return '—';
-  const b = new Date(dob), n = new Date();
-  let y = n.getFullYear() - b.getFullYear();
-  let m = n.getMonth() - b.getMonth();
+  const p = parseDob(dob);
+  if (!p) {
+    const b = new Date(dob), n = new Date();
+    if (isNaN(b.getTime())) return '—';
+    let y = n.getFullYear() - b.getFullYear();
+    let m = n.getMonth() - b.getMonth();
+    if (m < 0) { y--; m += 12; }
+    if (y === 0) return m + ' شهر';
+    if (m === 0) return y + ' سنة';
+    return y + ' سنة و' + m + ' شهر';
+  }
+  const n = new Date();
+  let y = n.getFullYear() - p.year;
+  let m = n.getMonth() + 1 - p.month;
   if (m < 0) { y--; m += 12; }
   if (y === 0) return m + ' شهر';
   if (m === 0) return y + ' سنة';
@@ -63,14 +110,13 @@ export function daysFromToday(isoDate) {
 
 /** Next calendar occurrence of month-day from dob (for birthday this/next year) */
 export function nextAnnualOccurrenceDate(dobIso) {
-  if (!dobIso || dobIso.length < 10) return null;
-  const [, mm, dd] = dobIso.split('-').map(Number);
-  if (!mm || !dd) return null;
+  const p = parseDob(dobIso);
+  if (!p) return null;
   const now = new Date();
   const y = now.getFullYear();
-  let t = new Date(y, mm - 1, dd);
+  let t = new Date(y, p.month - 1, p.day);
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  if (t < startOfToday) t = new Date(y + 1, mm - 1, dd);
+  if (t < startOfToday) t = new Date(y + 1, p.month - 1, p.day);
   return t;
 }
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { lsGet, lsSet, lsAdd, lsUpd, lsDel } from '../hooks/useStorage';
-import { todayStr, uid, daysUntilDate, nextAnnualOccurrenceDate, nowTimeStr } from '../utils/dateHelpers';
+import { todayStr, uid, daysUntilDate, nextAnnualOccurrenceDate, nowTimeStr, parseDob } from '../utils/dateHelpers';
 import { SPECIALIST_ROLES } from '../utils/constants';
 import {
   INTERNATIONAL_DAYS,
@@ -21,7 +21,20 @@ const EV_COLORS = [
   ['rd', 'أحمر (طبي وصحي)', 'rgba(239, 68, 68, 0.12)', '#dc2626'],
   ['pu', 'بنفسجي (إعاقة وتأهيل)', 'rgba(139, 92, 246, 0.12)', '#7c3aed'],
   ['yl', 'ذهبي (أعياد ومناسبات رسمية)', 'rgba(245, 158, 11, 0.14)', '#d97706'],
+  ['pk', 'وردي (أعياد ميلاد المستفيدين)', 'rgba(236, 72, 153, 0.14)', '#db2777'],
 ];
+
+function sendStudentBirthdayGreeting(stu, turningAge, centerName) {
+  const rawPhone = stu.parentPhone || stu.phone || stu.parentPhone2 || '';
+  const phone = rawPhone.replace(/[^0-9]/g, '');
+  const cName = centerName || 'المركز';
+  const ageText = turningAge > 0 ? ` (${turningAge} أعوام)` : '';
+  const msg = `السلام عليكم ورحمة الله وبركاته 🌸✨\n\nتتقدم أسرة وإدارة وكادر *${cName}* بأصدق وأعطر التهاني والتبريكات للبطل/ة الغالي/ة *${stu.name}* بمناسبة ذكرى يوم ميلاده الميمون 🎂🎉${ageText}.\n\nنسأل الله له/لها عمراً مديداً حافلاً بالصحة والعافية، والمزيد من التقدم والارتقاء في مسيرته التأهيلية والتربوية، ودمتم فخراً وسنداً له! 🎈🍰🌸`;
+  
+  const encoded = encodeURIComponent(msg);
+  const url = phone ? `https://api.whatsapp.com/send?phone=${phone}&text=${encoded}` : `https://api.whatsapp.com/send?text=${encoded}`;
+  window.open(url, '_blank');
+}
 
 const getColorStyles = (colorKey) => {
   const found = EV_COLORS.find(([c]) => c === colorKey);
@@ -95,7 +108,10 @@ function buildCalendarItems() {
       detail: [a.duration, a.mode === 'online' ? '🌐 أونلاين' : '', a.notes].filter(Boolean).join(' · '),
       color: col,
       raw: a,
-      editable: false,
+      stuId: a.stuId,
+      appointmentId: a.id,
+      isAppointment: true,
+      editable: true,
     });
   });
 
@@ -113,6 +129,9 @@ function buildCalendarItems() {
       detail: [emp?.name, s.status === 'done' ? '✅ منجزة' : '⏳ مجدولة', s.notes].filter(Boolean).join(' · '),
       color: col,
       raw: s,
+      stuId: s.stuId,
+      sessionId: s.id,
+      isSession: true,
       editable: false,
     });
   });
@@ -163,42 +182,62 @@ function buildCalendarItems() {
     });
   });
 
+  // Academic/calendar years range for recurring events and birthdays
+  const currentYear = new Date().getFullYear();
+  const yearsRange = [];
+  for (let y = currentYear - 2; y <= currentYear + 8; y++) {
+    yearsRange.push(y);
+  }
+
+  // Student Birthdays (أعياد ميلاد الطلاب المستفيدين مع حساب العمر تلقائياً بدقة تامة)
   students.forEach(s => {
     if (!s.dob) return;
-    const nd = nextAnnualOccurrenceDate(s.dob);
-    const d = daysUntilDate(nd);
-    if (d == null || d < 0 || d > 14) return;
-    const iso = `${nd.getFullYear()}-${String(nd.getMonth() + 1).padStart(2, '0')}-${String(nd.getDate()).padStart(2, '0')}`;
-    items.push({
-      id: `bd-s-${s.id}`,
-      source: 'عيد ميلاد',
-      date: iso,
-      time: '',
-      title: `🎂 ${s.name} (طالب)`,
-      detail: d === 0 ? 'اليوم' : d === 1 ? 'غداً' : `خلال ${d} يوم`,
-      color: 'gr',
-      raw: s,
-      editable: false,
-    });
+    const p = parseDob(s.dob);
+    if (p) {
+      yearsRange.forEach(y => {
+        const iso = `${y}-${p.monthStr}-${p.dayStr}`;
+        const turningAge = y - p.year;
+        items.push({
+          id: `bd-s-${s.id}-${y}`,
+          source: 'عيد ميلاد 🎂',
+          date: iso,
+          time: '',
+          title: `🎂 عيد ميلاد: ${s.name}`,
+          detail: `${turningAge > 0 ? `يكمل ${turningAge} سنة · ` : ''}تاريخ الميلاد: ${p.isoDate} · ${s.diagnosis || s.className || 'طالب المركز'}`,
+          color: 'pk',
+          raw: s,
+          stuId: s.id,
+          isStudentBirthday: true,
+          turningAge,
+          editable: false,
+        });
+      });
+    }
   });
 
+  // Employee Birthdays (أعياد ميلاد الكادر والموظفين)
   emps.forEach(e => {
     if (!e.dob) return;
-    const nd = nextAnnualOccurrenceDate(e.dob);
-    const d = daysUntilDate(nd);
-    if (d == null || d < 0 || d > 14) return;
-    const iso = `${nd.getFullYear()}-${String(nd.getMonth() + 1).padStart(2, '0')}-${String(nd.getDate()).padStart(2, '0')}`;
-    items.push({
-      id: `bd-e-${e.id}`,
-      source: 'عيد ميلاد',
-      date: iso,
-      time: '',
-      title: `🎂 ${e.name} (موظف)`,
-      detail: d === 0 ? 'اليوم' : d === 1 ? 'غداً' : `خلال ${d} يوم`,
-      color: 'gr',
-      raw: e,
-      editable: false,
-    });
+    const p = parseDob(e.dob);
+    if (p) {
+      yearsRange.forEach(y => {
+        const iso = `${y}-${p.monthStr}-${p.dayStr}`;
+        const turningAge = y - p.year;
+        items.push({
+          id: `bd-e-${e.id}-${y}`,
+          source: 'عيد ميلاد 🎂',
+          date: iso,
+          time: '',
+          title: `🎂 عيد ميلاد: ${e.name} (موظف)`,
+          detail: `تاريخ الميلاد: ${p.isoDate} · ${e.role || 'كادر المركز'}`,
+          color: 'pk',
+          raw: e,
+          isEmpBirthday: true,
+          turningAge,
+          editable: false,
+        });
+      });
+    }
   });
 
   // Official Center Events (فعاليات المركز الرسمية)
@@ -219,13 +258,6 @@ function buildCalendarItems() {
   });
 
   // International & Specialized Awareness Days (الأيام والمناسبات العالمية والتربوية والوطنية والطبية)
-  const currentYear = new Date().getFullYear();
-  // Include past, current, and future academic/calendar years (2024 up to 2035)
-  const yearsRange = [];
-  for (let y = currentYear - 2; y <= currentYear + 8; y++) {
-    yearsRange.push(y);
-  }
-
   INTERNATIONAL_DAYS.forEach(iday => {
     const catConfig = OCCASION_CATEGORIES[iday.category] || {};
     yearsRange.forEach(y => {
@@ -252,7 +284,7 @@ function buildCalendarItems() {
 }
 
 export default function Calendar() {
-  const { toast, activeView, viewParams, go } = useApp();
+  const { toast, activeView, viewParams, go, center } = useApp();
   const [cur, setCur] = useState(new Date());
   const [allItems, setAllItems] = useState([]);
   const [students, setStudents] = useState([]);
@@ -261,6 +293,7 @@ export default function Calendar() {
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState(EMPTY_EV);
   const [showStuAppt, setShowStuAppt] = useState(false);
+  const [apptEditId, setApptEditId] = useState(null);
   const [stuApptForm, setStuApptForm] = useState(EMPTY_STU_APPT);
   const [showStuSess, setShowStuSess] = useState(false);
   const [stuSessForm, setStuSessForm] = useState(EMPTY_STU_SESS);
@@ -279,13 +312,25 @@ export default function Calendar() {
 
   useEffect(() => {
     reload();
+    const handleDataUpdate = () => {
+      reload();
+    };
+    window.addEventListener('scs_data_updated', handleDataUpdate);
+    window.addEventListener('storage', handleDataUpdate);
+    return () => {
+      window.removeEventListener('scs_data_updated', handleDataUpdate);
+      window.removeEventListener('storage', handleDataUpdate);
+    };
   }, [activeView]);
 
-  // استجابة لتمرير تاريخ محدد من التنبيهات والإشعارات (مثل النقر على إشعار يوم عالمي)
+  // استجابة لتمرير تاريخ محدد من التنبيهات والإشعارات والبحث
   useEffect(() => {
-    if (viewParams && (viewParams.targetDate || viewParams.date)) {
-      const target = viewParams.targetDate || viewParams.date;
-      const parts = target.split('-');
+    const targetDate = viewParams?.targetDate || viewParams?.date || sessionStorage.getItem('scs_calendar_target_date');
+    if (sessionStorage.getItem('scs_calendar_target_date')) {
+      sessionStorage.removeItem('scs_calendar_target_date');
+    }
+    if (targetDate) {
+      const parts = targetDate.split('-');
       if (parts.length === 3) {
         const y = parseInt(parts[0], 10);
         const m = parseInt(parts[1], 10) - 1;
@@ -296,11 +341,33 @@ export default function Calendar() {
         // تحديد العنصر تلقائياً لعرض بطاقة تفاصيله
         setTimeout(() => {
           const items = buildCalendarItems();
-          const matched = items.find(it => it.date === target && (viewParams.intDayId ? (it.raw?.id === viewParams.intDayId || it.id?.includes(viewParams.intDayId)) : true));
+          const targetApptId = viewParams?.appointmentId || sessionStorage.getItem('scs_calendar_target_appt');
+          if (sessionStorage.getItem('scs_calendar_target_appt')) {
+            sessionStorage.removeItem('scs_calendar_target_appt');
+          }
+          const targetSessId = viewParams?.sessionId;
+          const targetStuId = viewParams?.stuId;
+
+          let matched = null;
+          if (targetApptId) {
+            matched = items.find(it => it.raw?.id === targetApptId || it.id === `ap-${targetApptId}`);
+          }
+          if (!matched && targetSessId) {
+            matched = items.find(it => it.raw?.id === targetSessId || it.id === `se-${targetSessId}`);
+          }
+          if (!matched && targetStuId) {
+            matched = items.find(it => it.date === targetDate && (it.raw?.stuId === targetStuId || it.stuId === targetStuId || it.raw?.id === targetStuId));
+          }
+          if (!matched && viewParams?.intDayId) {
+            matched = items.find(it => it.date === targetDate && (it.raw?.id === viewParams.intDayId || it.id?.includes(viewParams.intDayId)));
+          }
+          if (!matched) {
+            matched = items.find(it => it.date === targetDate);
+          }
           if (matched) {
             setSelItem(matched);
           }
-        }, 80);
+        }, 100);
       }
     }
   }, [viewParams, activeView]);
@@ -360,7 +427,55 @@ export default function Calendar() {
 
   function openStuAppt(d = null) {
     setStuApptForm({ ...EMPTY_STU_APPT, date: d ? dateStr(d) : todayStr(), time: nowTimeStr() });
+    setApptEditId(null);
     setShowStuAppt(true);
+  }
+
+  function openEditAppt(appt) {
+    setStuApptForm({
+      stuId: appt.stuId || '',
+      type: appt.type || 'تخاطب ونطق',
+      date: appt.date || todayStr(),
+      time: appt.time || nowTimeStr(),
+      duration: appt.duration || '45 دقيقة',
+      mode: appt.mode || 'inperson',
+      link: appt.link || '',
+      empId: appt.empId || '',
+      notes: appt.notes || '',
+    });
+    setApptEditId(appt.id);
+    setShowStuAppt(true);
+  }
+
+  function delAppt(id) {
+    if (!window.confirm('هل أنت متأكد من حذف هذا الموعد؟')) return;
+    lsDel('appointments', id);
+    reload();
+    toast('🗑️ تم حذف الموعد', 'ok');
+    setSelItem(null);
+  }
+
+  function confirmAndDocumentSession(appt) {
+    const newSessId = uid();
+    lsAdd('sessions', {
+      id: newSessId,
+      stuId: appt.stuId,
+      type: appt.type || 'تخاطب ونطق',
+      date: appt.date || todayStr(),
+      time: appt.time || nowTimeStr(),
+      duration: parseInt(appt.duration, 10) || 45,
+      empId: appt.empId || '',
+      status: 'done',
+      notes: appt.notes ? `من موعد مجدول: ${appt.notes}` : 'تم تأكيد وحضور الموعد كجلسة منجزة',
+      goals: '',
+      attachmentData: '',
+      attachmentName: '',
+    });
+    toast('✅ تم تأكيد حضور الموعد وتسجيله كجلسة منجزة بنجاح', 'ok');
+    reload();
+    sessionStorage.setItem('scs_selected_student', appt.stuId);
+    sessionStorage.setItem('scs_student_tab', 'sessions');
+    go('students', { stuId: appt.stuId, tab: 'sessions' });
   }
 
   function saveStuAppt() {
@@ -368,9 +483,15 @@ export default function Calendar() {
       toast('⚠️ اختر الطالب والتاريخ والوقت', 'er');
       return;
     }
-    lsAdd('appointments', { ...stuApptForm, id: uid() });
-    toast('✅ تم تسجيل الموعد', 'ok');
+    if (apptEditId) {
+      lsUpd('appointments', apptEditId, stuApptForm);
+      toast('✅ تم تحديث الموعد بنجاح', 'ok');
+    } else {
+      lsAdd('appointments', { ...stuApptForm, id: uid() });
+      toast('✅ تم تسجيل الموعد بنجاح', 'ok');
+    }
     setShowStuAppt(false);
+    setApptEditId(null);
     reload();
   }
 
@@ -415,7 +536,9 @@ export default function Calendar() {
   const selDateStr = selDay ? dateStr(selDay) : null;
   const dayItems = selDay ? itemsOnDay(selDay) : [];
   const intDaysOnSelDay = selDateStr ? getInternationalDaysForDate(selDateStr) : [];
-  const scheduledDayItems = dayItems.filter(it => !it.isInternationalDay);
+  const studentBirthdaysOnSelDay = dayItems.filter(it => it.isStudentBirthday);
+  const empBirthdaysOnSelDay = dayItems.filter(it => it.isEmpBirthday);
+  const scheduledDayItems = dayItems.filter(it => !it.isInternationalDay && !it.isStudentBirthday && !it.isEmpBirthday);
 
   function openAdoptInternationalDayModal(iday, targetDate) {
     if (!iday) return;
@@ -509,11 +632,14 @@ export default function Calendar() {
     setSelItem(null);
   }, [selDay]);
 
+  const studentBirthdaysInMonth = allItems.filter(item => item.isStudentBirthday && item.date && item.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`));
+
   const monthSummary = {
     total: allItems.filter(item => item.date && item.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)).length,
     sessions: allItems.filter(item => item.source === 'جلسة' && item.date && item.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)).length,
     appointments: allItems.filter(item => item.source === 'موعد' && item.date && item.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)).length,
     events: allItems.filter(item => item.source === 'تقويم' && item.date && item.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)).length,
+    birthdays: studentBirthdaysInMonth.length,
   };
 
   return (
@@ -671,6 +797,12 @@ export default function Calendar() {
           font-weight: 900 !important;
           box-shadow: 0 4px 12px rgba(250, 204, 21, 0.45);
         }
+        .cal-day-circle.circle-birthday {
+          background: linear-gradient(135deg, #f43f5e, #ec4899) !important;
+          color: #ffffff !important;
+          box-shadow: 0 4px 10px rgba(236, 72, 153, 0.45);
+          font-weight: 900 !important;
+        }
         .cal-day-circle.circle-dark {
           background: #334155 !important;
           color: #ffffff !important;
@@ -690,6 +822,14 @@ export default function Calendar() {
           border: 2px solid #0284c7;
           color: #0284c7;
           font-weight: 800;
+        }
+        .cal-day-bday-badge {
+          position: absolute;
+          top: -4px;
+          right: -4px;
+          font-size: 0.74rem;
+          line-height: 1;
+          filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
         }
         .cal-dots-row {
           display: flex;
@@ -776,6 +916,10 @@ export default function Calendar() {
           {/* دليل الألوان والمؤشرات بالأعلى كما بالصورة */}
           <div className="cal-legend-bar">
             <div className="cal-legend-item">
+              <span className="cal-legend-dot" style={{ background: '#ec4899' }} />
+              <span>أعياد ميلاد 🎂</span>
+            </div>
+            <div className="cal-legend-item">
               <span className="cal-legend-dot" style={{ background: '#facc15' }} />
               <span>صباحي</span>
             </div>
@@ -859,6 +1003,7 @@ export default function Calendar() {
               const isSel = d === (selDay || (new Date().getMonth() === month && new Date().getFullYear() === year ? new Date().getDate() : null));
 
               // Determine circle style matching design in screenshot
+              const hasBirthday = row.some(it => it.isStudentBirthday);
               const hasMorning = row.some(it => it.time && it.time < '13:00');
               const hasEvening = row.some(it => it.time && it.time >= '13:00');
               const hasIntDay = row.some(it => it.isInternationalDay);
@@ -867,6 +1012,8 @@ export default function Calendar() {
               let circleClass = '';
               if (isSel) {
                 circleClass = 'selected-yellow'; // Solid Yellow circle like 31 in image
+              } else if (hasBirthday) {
+                circleClass = 'circle-birthday'; // Festive Rose / Pink for student birthday
               } else if (hasEvening) {
                 circleClass = 'circle-dark'; // Dark slate circle like 28 in image
               } else if (hasCenterEvent) {
@@ -889,11 +1036,17 @@ export default function Calendar() {
                 >
                   <div className={`cal-day-circle ${circleClass}`}>
                     {d}
+                    {hasBirthday && (
+                      <span className="cal-day-bday-badge" title="يوجد عيد ميلاد طالب مستفيد 🎂">
+                        🎂
+                      </span>
+                    )}
                   </div>
 
                   {/* مؤشرات النقاط الصغيرة أسفل اليوم */}
                   {row.length > 0 && !isSel && (
                     <div className="cal-dots-row">
+                      {hasBirthday && <span className="cal-mini-dot" style={{ background: '#ec4899' }} />}
                       {hasMorning && <span className="cal-mini-dot" style={{ background: '#facc15' }} />}
                       {hasEvening && <span className="cal-mini-dot" style={{ background: '#334155' }} />}
                       {hasCenterEvent && <span className="cal-mini-dot" style={{ background: '#06b6d4' }} />}
@@ -904,10 +1057,237 @@ export default function Calendar() {
               );
             })}
           </div>
+
+          {/* بطاقة أعياد ميلاد طلاب المركز خلال هذا الشهر لخدمة جودة المركز والتخطيط المسبق */}
+          {studentBirthdaysInMonth.length > 0 && (
+            <div style={{
+              marginTop: 18,
+              background: 'linear-gradient(135deg, rgba(253, 242, 248, 0.95), rgba(255, 241, 242, 0.95))',
+              border: '1px solid rgba(244, 114, 182, 0.35)',
+              borderRadius: 16,
+              padding: '14px 16px',
+              boxShadow: '0 4px 14px rgba(236, 72, 153, 0.08)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div style={{ fontWeight: 900, fontSize: '.88rem', color: '#be185d', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span>🎂</span>
+                  <span>أعياد ميلاد الشهر ({studentBirthdaysInMonth.length})</span>
+                </div>
+                <span style={{ fontSize: '.68rem', background: '#fce7f3', color: '#db2777', padding: '2px 8px', borderRadius: 999, fontWeight: 800 }}>
+                  🌟 جودة المركز
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
+                {studentBirthdaysInMonth.map(bItem => {
+                  const st = bItem.raw || {};
+                  const bDayNum = parseInt(bItem.date.split('-')[2], 10);
+                  const isBdaySel = selDay === bDayNum;
+                  return (
+                    <div
+                      key={bItem.id}
+                      onClick={() => {
+                        setSelDay(bDayNum);
+                        setSelItem(null);
+                      }}
+                      style={{
+                        background: isBdaySel ? 'rgba(236, 72, 153, 0.15)' : 'var(--bg-card)',
+                        border: isBdaySel ? '1.5px solid #ec4899' : '1px solid rgba(244, 114, 182, 0.2)',
+                        borderRadius: 10,
+                        padding: '6px 10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                      title="انقر لعرض تفاصيل هذا اليوم"
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{
+                          background: '#f43f5e',
+                          color: '#fff',
+                          fontWeight: 900,
+                          fontSize: '.74rem',
+                          borderRadius: 6,
+                          padding: '2px 6px',
+                          minWidth: 24,
+                          textAlign: 'center'
+                        }}>
+                          {bDayNum}
+                        </span>
+                        <div>
+                          <div style={{ fontWeight: 800, fontSize: '.82rem', color: 'var(--text-main)' }}>
+                            {st.name}
+                          </div>
+                          <div style={{ fontSize: '.7rem', color: 'var(--text-sub)' }}>
+                            {bItem.turningAge > 0 ? `يكمل ${bItem.turningAge} أعوام` : ''} · {st.diagnosis || 'طالب'}
+                          </div>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '.8rem' }}>🎉</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* لوحة تفاصيل اليوم المختار مثل الجزء السفلي في صورة العميل تماماً */}
         <div className="cal-detail-card">
+          {/* بطاقة الاحتفال بأعياد ميلاد طلاب المركز لليوم المختار */}
+          {studentBirthdaysOnSelDay.length > 0 && (
+            <div style={{
+              padding: '16px 20px',
+              background: 'linear-gradient(135deg, rgba(253, 242, 248, 0.98), rgba(255, 241, 242, 0.92))',
+              borderBottom: '1px solid rgba(244, 114, 182, 0.35)',
+              borderLeft: '4px solid #ec4899',
+            }}>
+              <div style={{ fontWeight: 900, fontSize: '.95rem', color: '#be185d', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '1.4rem' }}>🎂</span>
+                  <span>أعياد ميلاد أبطال المركز لليوم ({studentBirthdaysOnSelDay.length})</span>
+                  <span style={{ fontSize: '.72rem', background: '#fce7f3', color: '#db2777', padding: '2px 8px', borderRadius: 999, fontWeight: 800 }}>
+                    🎉 مناسبة سعيدة
+                  </span>
+                </div>
+                <span style={{ fontSize: '0.78rem', color: '#9d174d', fontWeight: 800 }}>
+                  🌟 جودة الرعاية والاهتمام الإنساني
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {studentBirthdaysOnSelDay.map(bItem => {
+                  const st = bItem.raw || {};
+                  const age = bItem.turningAge;
+                  const parentPhone = st.parentPhone || st.phone || st.parentPhone2;
+                  
+                  return (
+                    <div
+                      key={bItem.id}
+                      style={{
+                        background: 'var(--bg-card)',
+                        border: '1px solid rgba(244, 114, 182, 0.35)',
+                        borderRadius: 14,
+                        padding: '12px 14px',
+                        boxShadow: '0 2px 8px rgba(236, 72, 153, 0.08)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 10
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div style={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #f472b6, #ec4899)',
+                            color: '#fff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.2rem',
+                            fontWeight: 900,
+                            boxShadow: '0 2px 6px rgba(236, 72, 153, 0.35)',
+                            position: 'relative'
+                          }}>
+                            {st.photo ? (
+                              <img src={st.photo} alt={st.name} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                            ) : (
+                              <span>🎂</span>
+                            )}
+                            <span style={{ position: 'absolute', bottom: -2, right: -2, fontSize: '0.75rem' }}>👑</span>
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 900, fontSize: '.98rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span>{st.name}</span>
+                              {age > 0 && (
+                                <span style={{ fontSize: '.72rem', background: 'rgba(236, 72, 153, 0.14)', color: '#db2777', padding: '1px 8px', borderRadius: 999, fontWeight: 800 }}>
+                                  يكمل {age} أعوام 🎈
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: '.76rem', color: 'var(--text-sub)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                              <span>📅 تاريخ الميلاد: <strong>{st.dob}</strong></span>
+                              {st.stage && <span>· {st.stage}</span>}
+                              {st.diagnosis && <span>· {st.diagnosis}</span>}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* أزرار الإجراءات السريعة لخدمة جودة المركز */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            style={{
+                              background: '#25d366',
+                              color: '#ffffff',
+                              border: 'none',
+                              fontWeight: 800,
+                              borderRadius: 8,
+                              padding: '6px 12px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              cursor: 'pointer',
+                              boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)'
+                            }}
+                            onClick={() => sendStudentBirthdayGreeting(st, age, center?.name)}
+                            title={parentPhone ? `إرسال تهنئة إلى: ${parentPhone}` : 'إرسال تهنئة عبر واتساب'}
+                          >
+                            <span>💬</span>
+                            <span>إرسال تهنئة WhatsApp لولي الأمر</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-p"
+                            style={{
+                              borderRadius: 8,
+                              padding: '6px 10px',
+                              fontWeight: 700,
+                              background: 'linear-gradient(135deg, #f43f5e, #ec4899)',
+                              border: 'none'
+                            }}
+                            onClick={() => {
+                              openAdoptInternationalDayModal({
+                                id: `bday-celeb-${st.id}`,
+                                name: `احتفال يوم ميلاد البطل/ة ${st.name} 🎂🎈`,
+                                category: 'social',
+                                categoryLabel: 'أنشطة ومناسبات اجتماعية',
+                                icon: '🎂',
+                                objectives: `إدخال البهجة والسرور ومشاركة الطفل ${st.name} وأسرته وزملائه فرحة يوم ميلاده وتعزيز الاندماج الاجتماعي بالمركز.`
+                              }, selDateStr);
+                            }}
+                          >
+                            <span>🎉</span>
+                            <span>تسجيل احتفال بالمركز</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            style={{ borderRadius: 8, padding: '6px 10px', fontWeight: 700 }}
+                            onClick={() => {
+                              sessionStorage.setItem('scs_selected_student', st.id);
+                              sessionStorage.setItem('scs_student_tab', 'info');
+                              go('students');
+                            }}
+                          >
+                            <span>👤</span>
+                            <span>ملف الطالب</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {/* ترويسة الفترة مع أيقونة الهلال / الشمس والتوقيت */}
           <div style={{
             padding: '18px 20px 14px',
@@ -1078,7 +1458,99 @@ export default function Calendar() {
                         )}
                       </div>
 
-                      {it.editable && it.raw?.id && (
+                      {it.isAppointment ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, paddingTop: 6, borderTop: '1px solid var(--border-color)' }}>
+                          <button
+                            type="button"
+                            className="btn btn-p btn-xs"
+                            style={{ width: '100%', borderRadius: 6, padding: '4px 8px', fontSize: '0.74rem', fontWeight: 800 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              confirmAndDocumentSession(it.raw);
+                            }}
+                          >
+                            ✅ تأكيد الموعد وتسجيل كجلسة
+                          </button>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button
+                              type="button"
+                              className="btn btn-g btn-xs"
+                              style={{ flex: 1, borderRadius: 6, padding: '3px 6px', fontSize: '0.72rem' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditAppt(it.raw);
+                              }}
+                            >
+                              ✏️ تعديل
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-s btn-xs"
+                              style={{ flex: 1, borderRadius: 6, padding: '3px 6px', fontSize: '0.72rem' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                sessionStorage.setItem('scs_selected_student', it.raw.stuId);
+                                sessionStorage.setItem('scs_student_tab', 'appts');
+                                go('students', { stuId: it.raw.stuId, tab: 'appts' });
+                              }}
+                            >
+                              🎓 ملف الطالب
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-d btn-xs"
+                              style={{ borderRadius: 6, padding: '3px 8px', fontSize: '0.72rem' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                delAppt(it.raw.id);
+                              }}
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </div>
+                      ) : it.isSession ? (
+                        <div style={{ display: 'flex', gap: 6, paddingTop: 4, borderTop: '1px solid var(--border-color)' }}>
+                          <button
+                            type="button"
+                            className="btn btn-s btn-xs"
+                            style={{
+                              flex: 1,
+                              borderRadius: 6,
+                              padding: '4px 6px',
+                              fontSize: '0.74rem',
+                              fontWeight: 800,
+                              background: 'rgba(59, 130, 246, 0.1)',
+                              color: '#2563eb',
+                              border: '1px solid rgba(59, 130, 246, 0.2)'
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              sessionStorage.setItem('scs_selected_student', it.raw.stuId);
+                              sessionStorage.setItem('scs_student_tab', 'sessions');
+                              go('students', { stuId: it.raw.stuId, tab: 'sessions' });
+                              toast('📌 تم فتح ملف الطالب لتوثيق تفاصيل الجلسة والأهداف المنجزة', 'ok');
+                            }}
+                          >
+                            🩺 توثيق في ملف الطالب
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-d btn-xs"
+                            style={{ borderRadius: 6, padding: '4px 8px' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm('هل تريد حذف هذه الجلسة؟')) {
+                                lsDel('sessions', it.raw.id);
+                                reload();
+                                toast('🗑️ تم حذف الجلسة', 'ok');
+                              }
+                            }}
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      ) : it.editable && it.raw?.id ? (
                         <div style={{ display: 'flex', gap: 6, paddingTop: 4, borderTop: '1px solid var(--border-color)' }}>
                           <button
                             type="button"
@@ -1105,9 +1577,7 @@ export default function Calendar() {
                             🗑️ حذف
                           </button>
                         </div>
-                      )}
-
-                      {it.raw?.stuId && (
+                      ) : it.raw?.stuId ? (
                         <div style={{ display: 'flex', gap: 6, paddingTop: 4, borderTop: '1px solid var(--border-color)' }}>
                           <button
                             type="button"
@@ -1126,14 +1596,14 @@ export default function Calendar() {
                               e.stopPropagation();
                               sessionStorage.setItem('scs_selected_student', it.raw.stuId);
                               sessionStorage.setItem('scs_student_tab', it.source === 'جلسة' ? 'sessions' : 'appts');
-                              go('students');
-                              toast('📌 تم فتح ملف الطالب لتوثيق تفاصيل الجلسة والأهداف المنجزة', 'ok');
+                              go('students', { stuId: it.raw.stuId, tab: it.source === 'جلسة' ? 'sessions' : 'appts' });
+                              toast('📌 تم فتح ملف الطالب', 'ok');
                             }}
                           >
                             🩺 توثيق في ملف الطالب
                           </button>
                         </div>
-                      )}
+                      ) : null}
                     </div>
                   );
                 })}
@@ -1205,8 +1675,8 @@ export default function Calendar() {
       {showStuAppt && (
         <div className="mbg">
           <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
-            <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0 }}>
-              <h2 style={{ margin: 0, fontSize: '1.15rem' }}>📅 تسجيل موعد مرتبط بطالب</h2>
+            <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0, background: 'var(--pr)' }}>
+              <h2 style={{ color: '#fff', margin: 0, fontSize: '1.15rem' }}>{apptEditId ? '✏️ تعديل موعد الطالب' : '📅 تسجيل موعد مرتبط بطالب'}</h2>
             </div>
             <div className="modal-body-scroll" style={{ padding: '20px' }}>
               <div className="fg c2">
@@ -1352,7 +1822,7 @@ export default function Calendar() {
                   </select>
                 </div>
                 <div className="fl full">
-                  <label style={{ fontWeight: 700 }}>المخرجات والملاحظات السلوكية</label>
+                  <label style={{ fontWeight: 700 }}>ملاحظات</label>
                   <textarea value={stuSessForm.notes} onChange={fldS('notes')} rows={2} />
                 </div>
                 <div className="fl full">

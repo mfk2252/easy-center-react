@@ -668,6 +668,32 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
                     {a.mode==='online'&&<span className="bdg b-cy">🌐 أونلاين</span>}
                   </div>
                   <div className="c-acts">
+                    {canEdit && (
+                      <button
+                        className="btn btn-xs btn-p"
+                        title="تأكيد وتوثيق الجلسة وربط الأهداف"
+                        onClick={() => {
+                          setSessForm({
+                            type: a.type || 'تخاطب ونطق',
+                            empId: a.empId || '',
+                            date: a.date || today,
+                            time: a.time || '',
+                            duration: parseInt(a.duration, 10) || 45,
+                            status: 'done',
+                            linkedGoals: [],
+                            goals: '',
+                            notes: a.notes ? `من موعد مجدول: ${a.notes}` : '',
+                            attachmentData: '',
+                            attachmentName: '',
+                          });
+                          setSessEditId(null);
+                          setShowSessForm(true);
+                          setTab('sessions');
+                        }}
+                      >
+                        ✅ توثيق كجلسة
+                      </button>
+                    )}
                     {a.link&&<a href={a.link} target="_blank" rel="noreferrer" className="btn btn-xs btn-v">🔗</a>}
                     {canEdit&&<button className="btn btn-xs btn-g" onClick={()=>{ setApptForm({...a}); setApptEditId(a.id); setShowApptForm(true); }}>✏️</button>}
                     {canEdit&&<button className="btn btn-xs btn-d" onClick={()=>delAppt(a.id)}>🗑️</button>}

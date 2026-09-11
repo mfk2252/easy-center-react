@@ -50,6 +50,9 @@ export function lsWrite(key, data) {
     } else {
       localStorage.setItem(`local_${key}`, JSON.stringify(data));
     }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('scs_data_updated', { detail: { key } }));
+    }
   } catch(e) {}
 }
 
