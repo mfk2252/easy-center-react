@@ -1450,18 +1450,20 @@ export default function CenterEventsTab() {
             style={{
               maxWidth: 'min(1180px, 96vw)',
               width: '100%',
-              maxHeight: 'min(94vh, 920px)',
+              height: '92vh',
+              maxHeight: 'calc(100dvh - 24px)',
               display: 'flex',
               flexDirection: 'column',
               borderRadius: 18,
               overflow: 'hidden',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
               border: '1.5px solid var(--border-color)',
+              padding: 0,
             }}
           >
             {/* Modal Header with Center Identity & Print Action */}
             <div
-              className="fhd"
+              className="fhd modal-header-custom"
               style={{
                 padding: '16px 22px',
                 display: 'flex',
@@ -1472,6 +1474,7 @@ export default function CenterEventsTab() {
                 background: 'linear-gradient(135deg, var(--pr), var(--pr-d))',
                 color: '#fff',
                 borderBottom: '1px solid rgba(255,255,255,0.15)',
+                flexShrink: 0,
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -1581,13 +1584,17 @@ export default function CenterEventsTab() {
 
             {/* Sub-Header Toolbar: Search, View Switcher & Month Scroll */}
             <div
+              className="modal-subbar"
               style={{
-                padding: '12px 18px',
+                padding: '14px 20px',
                 background: 'var(--bg-card)',
                 borderBottom: '1px solid var(--border-color)',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 10,
+                gap: 12,
+                flexShrink: 0,
+                flexGrow: 0,
+                overflow: 'visible',
               }}
             >
               {/* Top Row: Search & View Modes */}
@@ -1766,17 +1773,48 @@ export default function CenterEventsTab() {
                   { id: 'medical', label: '🩺 المجال الطبي والصحي' },
                   { id: 'disability', label: '♿ أيام الإعاقة والتربية الخاصة' },
                   { id: 'education', label: '🎓 التعليم والتنمية والمجتمع' },
-                ].map(cat => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    className={`btn btn-xs ${intDaysCategoryFilter === cat.id ? 'btn-p' : 'btn-g'}`}
-                    onClick={() => setIntDaysCategoryFilter(cat.id)}
-                    style={{ borderRadius: 16, padding: '3px 10px', fontWeight: 700, fontSize: '.74rem' }}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
+                ].map(cat => {
+                  const isSelected = intDaysCategoryFilter === cat.id;
+                  const count = cat.id === 'all'
+                    ? INTERNATIONAL_DAYS.length
+                    : INTERNATIONAL_DAYS.filter(d => d.category === cat.id).length;
+
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      className={`btn btn-xs ${isSelected ? 'btn-p' : 'btn-g'}`}
+                      onClick={() => setIntDaysCategoryFilter(cat.id)}
+                      style={{
+                        borderRadius: 16,
+                        padding: '4px 11px',
+                        fontWeight: isSelected ? 800 : 600,
+                        fontSize: '.74rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease',
+                        border: isSelected ? '1px solid var(--pr)' : '1px solid var(--border-color)',
+                      }}
+                    >
+                      <span>{cat.label}</span>
+                      <span
+                        style={{
+                          fontSize: '.66rem',
+                          padding: '1px 5px',
+                          borderRadius: 99,
+                          background: isSelected ? 'rgba(255,255,255,0.25)' : 'var(--border-color)',
+                          color: isSelected ? '#fff' : 'var(--text-sub)',
+                          fontWeight: 700,
+                        }}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -1786,8 +1824,9 @@ export default function CenterEventsTab() {
               style={{
                 padding: '18px 22px',
                 background: 'var(--g0)',
-                flex: 1,
-                minHeight: 320,
+                flex: '1 1 auto',
+                minHeight: 0,
+                overflowY: 'auto',
               }}
             >
               {(() => {
@@ -2064,7 +2103,7 @@ export default function CenterEventsTab() {
 
             {/* Modal Footer */}
             <div
-              className="fa"
+              className="fa modal-footer"
               style={{
                 padding: '12px 22px',
                 display: 'flex',
@@ -2074,6 +2113,7 @@ export default function CenterEventsTab() {
                 borderTop: '1px solid var(--border-color)',
                 flexWrap: 'wrap',
                 gap: 10,
+                flexShrink: 0,
               }}
             >
               <div style={{ fontSize: '.8rem', color: 'var(--text-sub)', fontWeight: 600 }}>
