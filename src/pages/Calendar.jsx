@@ -252,7 +252,7 @@ function buildCalendarItems() {
 }
 
 export default function Calendar() {
-  const { toast, activeView, viewParams } = useApp();
+  const { toast, activeView, viewParams, go } = useApp();
   const [cur, setCur] = useState(new Date());
   const [allItems, setAllItems] = useState([]);
   const [students, setStudents] = useState([]);
@@ -736,10 +736,10 @@ export default function Calendar() {
               📅 موعد طالب
             </button>
             <button type="button" className="btn btn-s btn-sm" style={{ borderRadius: 10, padding: '7px 12px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.15)' }} onClick={() => openStuSess()}>
-              🩺 جلسة
+              🗓️ جدولة جلسة
             </button>
             <button type="button" className="btn btn-sm" style={{ borderRadius: 10, padding: '7px 12px', background: 'rgba(245, 158, 11, 0.09)', color: '#c084fc', border: '1px solid rgba(192,132,252,0.2)' }} onClick={() => openEval()}>
-              📋 تقييم
+              📋 موعد تقييم
             </button>
           </div>
         }
@@ -934,10 +934,10 @@ export default function Calendar() {
                   📅 موعد جديد
                 </button>
                 <button type="button" className="btn btn-s btn-xs" onClick={() => openStuSess(selDay || 1)} style={{ borderRadius: 8, padding: '5px 10px' }}>
-                  🩺 جلسة جديدة
+                  🗓️ جدولة جلسة
                 </button>
                 <button type="button" className="btn btn-g btn-xs" onClick={() => openForm(selDay || 1)} style={{ borderRadius: 8, padding: '5px 10px' }}>
-                  ➕ حدث
+                  ➕ حدث جديد
                 </button>
               </div>
             </div>
@@ -1106,6 +1106,34 @@ export default function Calendar() {
                           </button>
                         </div>
                       )}
+
+                      {it.raw?.stuId && (
+                        <div style={{ display: 'flex', gap: 6, paddingTop: 4, borderTop: '1px solid var(--border-color)' }}>
+                          <button
+                            type="button"
+                            className="btn btn-s btn-xs"
+                            style={{
+                              flex: 1,
+                              borderRadius: 6,
+                              padding: '4px 6px',
+                              fontSize: '0.74rem',
+                              fontWeight: 800,
+                              background: 'rgba(59, 130, 246, 0.1)',
+                              color: '#2563eb',
+                              border: '1px solid rgba(59, 130, 246, 0.2)'
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              sessionStorage.setItem('scs_selected_student', it.raw.stuId);
+                              sessionStorage.setItem('scs_student_tab', it.source === 'جلسة' ? 'sessions' : 'appts');
+                              go('students');
+                              toast('📌 تم فتح ملف الطالب لتوثيق تفاصيل الجلسة والأهداف المنجزة', 'ok');
+                            }}
+                          >
+                            🩺 توثيق في ملف الطالب
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -1257,9 +1285,24 @@ export default function Calendar() {
         <div className="mbg">
           <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
             <div className="fhd" style={{ padding: '16px 20px', borderRadius: 0 }}>
-              <h2 style={{ margin: 0, fontSize: '1.15rem' }}>🩺 تسجيل جلسة علاجية وتوثيقها</h2>
+              <h2 style={{ margin: 0, fontSize: '1.15rem' }}>🗓️ جدولة موعد جلسة علاجية</h2>
             </div>
             <div className="modal-body-scroll" style={{ padding: '20px' }}>
+              <div style={{
+                background: 'rgba(59, 130, 246, 0.08)',
+                border: '1px solid rgba(59, 130, 246, 0.2)',
+                borderRadius: 10,
+                padding: '10px 14px',
+                marginBottom: 16,
+                fontSize: '0.82rem',
+                color: 'var(--text-main)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8
+              }}>
+                <span>💡</span>
+                <span>تُستخدم هذه النافذة لحجز موعد الجلسة في التقويم وجدول الأخصائي. لتوثيق الأهداف والتقييم السريري يرجى التوثيق عبر ملف الطالب في الخط الزمني.</span>
+              </div>
               <div className="fg c2">
                 <div className="fl full">
                   <label style={{ fontWeight: 700 }}>الطالب <span className="req">*</span></label>
@@ -1304,8 +1347,8 @@ export default function Calendar() {
                 <div className="fl">
                   <label style={{ fontWeight: 700 }}>الحالة</label>
                   <select value={stuSessForm.status} onChange={fldS('status')}>
-                    <option value="done">✅ تم إنجازها</option>
                     <option value="scheduled">⏳ مجدولة</option>
+                    <option value="done">✅ تم إنجازها</option>
                   </select>
                 </div>
                 <div className="fl full">
@@ -1326,7 +1369,7 @@ export default function Calendar() {
               </div>
             </div>
             <div className="fa" style={{ padding: '12px 20px', background: 'var(--g0)' }}>
-              <button type="button" className="btn btn-p" onClick={saveStuSess}>💾 حفظ الجلسة</button>
+              <button type="button" className="btn btn-p" onClick={saveStuSess}>💾 حفظ وجدولة الجلسة</button>
               <button type="button" className="btn btn-g" onClick={() => setShowStuSess(false)}>إلغاء</button>
             </div>
           </div>

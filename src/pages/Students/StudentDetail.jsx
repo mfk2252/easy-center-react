@@ -26,7 +26,14 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
   const centerWa = centerWhatsAppUrl(center?.whatsapp, center?.phoneCode, center?.phone);
   const [stu, setStu] = useState(null);
   const [sections, setSections] = useState([]);
-  const [tab, setTab] = useState('info');
+  const [tab, setTab] = useState(() => {
+    const directTab = sessionStorage.getItem('scs_student_tab');
+    if (directTab) {
+      sessionStorage.removeItem('scs_student_tab');
+      return directTab;
+    }
+    return 'info';
+  });
   const [emps, setEmps] = useState([]);
   const [iepGoals, setIepGoals] = useState([]);
   const [sessions, setSessions] = useState([]);
@@ -549,8 +556,11 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
       {/* SESSIONS TAB */}
       {tab === 'sessions' && (
         <div>
-          <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:12 }}>
-            {canEdit && <button className="btn btn-p" onClick={()=>{ setSessForm({...EMPTY_SESSION,date:today,time:nowTimeStr()}); setSessEditId(null); setShowSessForm(true); }}>➕ جلسة جديدة</button>}
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems: 'center', marginBottom:12, flexWrap: 'wrap', gap: 8 }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-sub)' }}>
+              🩺 توثيق الجلسات التأهيلية الفعلية، رصد إنجاز الأهداف في الخطة الفردية (IEP)، وتحديث الخط الزمني للطالب.
+            </div>
+            {canEdit && <button className="btn btn-p" onClick={()=>{ setSessForm({...EMPTY_SESSION,date:today,time:nowTimeStr()}); setSessEditId(null); setShowSessForm(true); }}>🩺 توثيق جلسة علاجية</button>}
           </div>
           {sessions.length === 0
             ? <div className="empty"><div className="ei">🩺</div><div className="et">لا توجد جلسات مسجلة</div></div>
@@ -576,7 +586,7 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
           {showSessForm && (
             <div className="mbg" onClick={e=>{if(e.target===e.currentTarget)setShowSessForm(false);}}>
               <div className="mb" style={{ padding:0, overflow:'hidden', borderRadius:16 }}>
-                <div className="fhd" style={{ padding:'14px 20px', borderRadius:0 }}><h2>{sessEditId?'✏️ تعديل الجلسة':'🩺 تسجيل جلسة'}</h2></div>
+                <div className="fhd" style={{ padding:'14px 20px', borderRadius:0 }}><h2>{sessEditId?'✏️ تعديل توثيق الجلسة':'🩺 توثيق جلسة علاجية وربط الأهداف'}</h2></div>
                 <div style={{ padding:'18px 20px' }}>
                   <div className="fg c2">
                     <div className="fl"><label>نوع الجلسة</label><select value={sessForm.type} onChange={fldS('type')}><option>تخاطب ونطق</option><option>تعديل سلوك</option><option>علاج فيزيائي</option><option>علاج وظيفي</option><option>تكامل حسي</option><option>تعليمي وتربوي</option><option>مهارات اجتماعية</option><option>أخرى</option></select></div>
