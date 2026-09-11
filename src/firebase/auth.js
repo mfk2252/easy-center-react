@@ -671,6 +671,19 @@ export async function startDemoSession({ name, email, phone, org }) {
 // كلمة المرور، ومدة الصلاحية بالأيام (3، 4، 5 أيام ...إلخ) يدوياً.
 // ============================================================
 
+export async function hashDemoPassword(str) {
+  if (!str) return '';
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode('easycenter_demo_salt_' + str);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch (_) {
+    return str;
+  }
+}
+
 export async function createAdminDemoAccount({
   centerName,
   managerName,
@@ -689,6 +702,7 @@ export async function createAdminDemoAccount({
   const cleanUsername = (username || '').trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
   const autoUsername = cleanUsername || `demo_${Math.random().toString(36).substring(2, 7)}`;
   const finalPassword = (password || 'demo123').trim();
+  const passwordHash = await hashDemoPassword(finalPassword);
   const days = Math.max(1, parseInt(durationDays, 10) || 3);
 
   const now = new Date();
@@ -705,6 +719,7 @@ export async function createAdminDemoAccount({
     centerId: demoCenterId,
     username: autoUsername,
     password: finalPassword,
+    passwordHash,
     token: demoToken,
     directLink,
     centerName: (centerName || 'مركز تجريبي للعرض').trim(),
@@ -866,8 +881,11 @@ export async function authenticateDemoAccount(usernameOrEmail, password) {
 
   if (!demoDoc) return null; // ليس حساب ديمو
 
-  // فحص كلمة المرور
-  if (demoDoc.password !== pass) {
+  // فحص كلمة المرور (يدعم التشفير الآمن بالتجزئة مع التوافق التام)
+  const inputHash = await hashDemoPassword(pass);
+  const isMatch = (demoDoc.passwordHash && demoDoc.passwordHash === inputHash) ||
+                  (demoDoc.password && demoDoc.password === pass);
+  if (!isMatch) {
     throw new Error('كلمة المرور غير صحيحة لهذا الحساب التجريبي');
   }
 

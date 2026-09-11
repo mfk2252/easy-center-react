@@ -9,7 +9,7 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // هل المستخدم هو مالك المنصة (Super Admin)
+    // هل المستخدم هو مالك ومطور المنصة الأساسي (Super Admin)
     function isPlatformAdmin() {
       return isSignedIn() && (
         request.auth.token.email == 'mfk2252@gmail.com' ||
@@ -23,14 +23,15 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == centerId;
     }
 
-    // هل المستخدم موظف تابع لهذا المركز ومسجل في كولكشن users
+    // هل المستخدم موظف نشط تابع لهذا المركز ومسجل في كولكشن users
     function isCenterStaff(centerId) {
       return isSignedIn() &&
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.centerId == centerId;
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.centerId == centerId &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active != false;
     }
 
-    // هل للمستخدم صلاحية كاملة على بيانات المركز (مدير المركز أو موظف فيه أو مدير المنصة)
+    // هل للمستخدم صلاحية على بيانات المركز (مدير المركز أو موظف نشط فيه أو مدير المنصة)
     function canAccessCenter(centerId) {
       return isPlatformAdmin() || isCenterManager(centerId) || isCenterStaff(centerId);
     }
@@ -39,16 +40,16 @@ service cloud.firestore {
     // 1. قواعد عزْل بيانات المراكز ومجموعاتها الفرعية (Multi-Tenant Isolation)
     // ===============================================================
     match /centers/{centerId} {
-      // قراءة بيانات المركز: مسموحة فقط للمدير أو منسوبي المركز أو مدير المنصة
+      // قراءة بيانات المركز: مسموحة فقط للمدير أو منسوبي المركز النشطين أو مدير المنصة
       allow read: if canAccessCenter(centerId);
 
       // إنشاء مركز جديد: مسموح عند التسجيل للمدير نفسه (uid == centerId) أو لمدير المنصة
       allow create: if isSignedIn() && (request.auth.uid == centerId || isPlatformAdmin());
 
-      // تعديل بيانات المركز: محصورة بمدير المركز نفسه أو مالك المنصة
+      // تعديل أو حذف بيانات المركز: محصورة بمدير المركز نفسه أو مالك المنصة فقط (يُمنع الموظفون)
       allow update, delete: if isPlatformAdmin() || isCenterManager(centerId);
 
-      // 🛡️ المجموعات الفرعية للبيانات (الطلاب، الموظفون، الحضور، الجلسات، الخطط، السندات...)
+      // 🛡️ المجموعات الفرعية للبيانات (الطلاب، الموظفون، الحضور، الجلسات، الخطط، التقييمات...)
       match /{collection}/{docId} {
         allow read: if canAccessCenter(centerId);
         allow write: if canAccessCenter(centerId);
@@ -66,11 +67,33 @@ service cloud.firestore {
         (resource != null && isCenterManager(resource.data.centerId))
       );
 
-      // تعديل أو إنشاء الحساب:
-      allow write: if isSignedIn() && (
-        request.auth.uid == userId ||
+      // إنشاء حساب موظف جديد: محصور بمدير ذلك المركز أو مالك المنصة
+      allow create: if isSignedIn() && (
         isPlatformAdmin() ||
-        (request.resource != null && isCenterManager(request.resource.data.centerId)) ||
+        (request.resource.data.centerId != null && isCenterManager(request.resource.data.centerId))
+      );
+
+      // تحديث الحساب:
+      // 1. مالك المنصة أو مدير المركز يملكان صلاحية الإدارة (دون نقله لمركز آخر)
+      // 2. الموظف نفسه يمكنه تعديل بياناته الشخصية، ويُمنع منعاً باتاً من التلاعب بـ centerId أو role أو permissions أو active
+      allow update: if isSignedIn() && (
+        isPlatformAdmin() ||
+        (
+          resource != null &&
+          isCenterManager(resource.data.centerId) &&
+          request.resource.data.centerId == resource.data.centerId
+        ) ||
+        (
+          request.auth.uid == userId &&
+          resource != null &&
+          request.resource.data.centerId == resource.data.centerId &&
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['centerId', 'role', 'permissions', 'active'])
+        )
+      );
+
+      // حذف الحساب: محصور بمدير المركز أو مالك المنصة فقط (يُمنع الموظف من حذف حسابه)
+      allow delete: if isSignedIn() && (
+        isPlatformAdmin() ||
         (resource != null && isCenterManager(resource.data.centerId))
       );
     }
@@ -81,17 +104,31 @@ service cloud.firestore {
     match /staffLoginIndex/{username} {
       // قراءة الفهرس مسموحة للتحقق من هوية المستخدم عند تسجيل الدخول
       allow read: if true;
-      // حجز اسم المستخدم مسموح فقط للمستخدمين المسجلين
-      allow create, update, delete: if isSignedIn();
+
+      // حجز اسم المستخدم: مسموح فقط لمدير المركز صاحب الحساب أو مالك المنصة
+      allow create: if isSignedIn() && (
+        isPlatformAdmin() ||
+        (request.resource.data.centerId != null && isCenterManager(request.resource.data.centerId))
+      );
+
+      // التحديث أو الحذف: محصور بمدير المركز نفسه المالك للاسم أو مالك المنصة
+      allow update, delete: if isSignedIn() && (
+        isPlatformAdmin() ||
+        (resource != null && isCenterManager(resource.data.centerId))
+      );
     }
 
     // ===============================================================
     // 4. طلبات تجربة الديمو والعملاء المحتملين (trialLeads)
     // ===============================================================
     match /trialLeads/{leadId} {
-      // يُسمح لأي زائر بإرسال بياناته لطلب تجربة ديمو (Lead Capture)
-      allow create: if true;
-      // قراءة وإدارة وتعديل العملاء المحتملين محصورة بمالك المنصة
+      // يُسمح للزوار بطلب تجربة مع التحقق من الحقول الأساسية ومكافحة الإغراق
+      allow create: if request.resource.data.name is string &&
+                       request.resource.data.name.size() > 0 &&
+                       request.resource.data.name.size() < 150 &&
+                       request.resource.data.status == 'new';
+
+      // قراءة وإدارة وتعديل العملاء المحتملين محصورة حصرياً بمالك المنصة
       allow read, update, delete: if isPlatformAdmin();
     }
 
@@ -99,9 +136,13 @@ service cloud.firestore {
     // 5. حسابات الديمو التجريبية المؤقتة (demoAccounts)
     // ===============================================================
     match /demoAccounts/{username} {
-      // قراءة بيانات حساب الديمو مسموحة عند تسجيل الدخول للتحقق من الصلاحية وكلمة المرور
-      allow read: if true;
-      // الإنشاء والتعديل والحذف محصور بمالك المنصة
+      // السماح بجلب حساب محدد بالاسم فقط (get) للتحقق الفردي عند الدخول بالرابط
+      allow get: if true;
+
+      // 🛡️ منع الاستعلام الجماعي أو سرد كافة الحسابات (list) إلا لمالك المنصة فقط
+      allow list: if isPlatformAdmin();
+
+      // الإنشاء والتعديل والحذف محصور حصرياً بمالك ومطور المنصة
       allow write: if isPlatformAdmin();
     }
   }
