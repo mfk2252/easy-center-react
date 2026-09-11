@@ -415,6 +415,7 @@ export default function Calendar() {
   const selDateStr = selDay ? dateStr(selDay) : null;
   const dayItems = selDay ? itemsOnDay(selDay) : [];
   const intDaysOnSelDay = selDateStr ? getInternationalDaysForDate(selDateStr) : [];
+  const scheduledDayItems = dayItems.filter(it => !it.isInternationalDay);
 
   function openAdoptInternationalDayModal(iday, targetDate) {
     if (!iday) return;
@@ -916,14 +917,14 @@ export default function Calendar() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: '1.8rem' }}>
-                  {dayItems.some(i => i.time && i.time >= '13:00') ? '🌙' : '☀️'}
+                  {scheduledDayItems.some(i => i.time && i.time >= '13:00') ? '🌙' : '☀️'}
                 </span>
                 <div>
                   <div style={{ fontWeight: 900, fontSize: '1.1rem', color: 'var(--text-main)' }}>
-                    {dayItems.some(i => i.time && i.time >= '13:00') ? 'الفترة المسائية' : 'الفترة الصباحية والدوام'}
+                    {scheduledDayItems.some(i => i.time && i.time >= '13:00') ? 'الفترة المسائية' : 'الفترة الصباحية والدوام'}
                   </div>
                   <div style={{ fontWeight: 800, fontSize: '0.98rem', color: '#0284c7', marginTop: 2 }}>
-                    {dayItems[0]?.time ? `${dayItems[0].time}` : '08:00 صباحاً - 04:00 مساءً'}
+                    {scheduledDayItems.find(i => i.time)?.time ? `${scheduledDayItems.find(i => i.time).time}` : '08:00 صباحاً - 04:00 مساءً'}
                   </div>
                 </div>
               </div>
@@ -1023,17 +1024,17 @@ export default function Calendar() {
           <div style={{ padding: '14px 18px 18px' }}>
             <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--text-main)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
               <span>📋</span>
-              <span>المواعيد والأنشطة المجدولة ({dayItems.length})</span>
+              <span>المواعيد والأنشطة المجدولة ({scheduledDayItems.length})</span>
             </div>
 
-            {dayItems.length === 0 ? (
+            {scheduledDayItems.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '20px 10px', color: 'var(--text-sub)' }}>
                 <div style={{ fontSize: '1.5rem', marginBottom: 4 }}>☕</div>
-                <div style={{ fontSize: '0.8rem' }}>لا توجد فعاليات أو مواعيد مجدولة لهذا اليوم. يمكنك إضافة موعد أو جلسة بالأزرار أعلاه.</div>
+                <div style={{ fontSize: '0.8rem' }}>لا توجد فعاليات أو مواعيد مجدولة خاصة لهذا اليوم. يمكنك إضافة موعد أو جلسة بالأزرار أعلاه.</div>
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8 }}>
-                {dayItems.map(it => {
+                {scheduledDayItems.map(it => {
                   const colorTheme = getColorStyles(it.color);
                   const isSelected = selItem?.id === it.id;
                   return (
