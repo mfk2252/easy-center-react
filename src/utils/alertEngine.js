@@ -46,7 +46,12 @@ export function collectSystemAlerts() {
       severity: s.date === today ? 'urgent' : 'warn',
       title: `${when}: جلسة ${s.type || ''} — ${st?.name || 'طالب'}`,
       detail: [s.time, s.notes].filter(Boolean).join(' · ') || undefined,
-      action: 'sessions',
+      action: 'calendar',
+      actionTab: 'sessions',
+      stuId: s.stuId,
+      sessionId: s.id,
+      targetDate: s.date,
+      raw: s,
     });
   });
 
@@ -62,7 +67,12 @@ export function collectSystemAlerts() {
         severity: 'warn',
         title: `${when}: موعد تقييم — ${st?.name || 'طالب'}`,
         detail: [a.type, a.time, a.notes].filter(Boolean).join(' · '),
-        action: 'students',
+        action: 'calendar',
+        actionTab: 'appts',
+        stuId: a.stuId,
+        appointmentId: a.id,
+        targetDate: a.date,
+        raw: a,
       });
     });
 
@@ -83,6 +93,9 @@ export function collectSystemAlerts() {
       title: `متابعة بيانات جلسة — ${st?.name || 'طالب'}`,
       detail: 'حضر الطالب ويُنصح بإكمال محتوى/ملاحظات الجلسة.',
       action: 'students',
+      actionTab: 'sessions',
+      stuId: a.kidId,
+      raw: { stuId: a.kidId },
     });
   });
 
@@ -114,6 +127,9 @@ export function collectSystemAlerts() {
         title: `مراجعة هدف خلال ${df === 0 ? 'اليوم' : df + ' يوم'} — ${st?.name || 'طالب'}`,
         detail: `${g.domain || ''} — ${(g.goal || '').slice(0, 80)}${(g.goal || '').length > 80 ? '…' : ''}`,
         action: 'students',
+        actionTab: 'iep',
+        stuId: g.stuId,
+        raw: g,
       });
     }
   });
@@ -246,6 +262,11 @@ export function collectSystemAlerts() {
         title: `${when}: ${a.type} — ${st?.name || 'طالب'}`,
         detail: [a.time, a.notes].filter(Boolean).join(' · '),
         action: 'calendar',
+        actionTab: 'appts',
+        stuId: a.stuId,
+        appointmentId: a.id,
+        targetDate: a.date,
+        raw: a,
       });
     });
 

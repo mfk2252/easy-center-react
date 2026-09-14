@@ -504,10 +504,10 @@ const DEFAULT_SCALE_LIBRARY = [
   },
   {
     id: 'srs',
-    name: 'مقياس الاستجابة الاجتماعية (SRS-2)',
-    nameEn: 'SRS-2 (Social Responsiveness Scale)',
+    name: 'استمارة الملاحظة والفرز النمائي للاستجابة والتواصل الاجتماعي',
+    nameEn: 'Social Communication & Responsiveness Observational Screening (DSM-5)',
     category: 'autism',
-    description: 'مقياس الاستجابة والوعي الاجتماعي والتواصل المتبادل والتحفيز — 65 بنداً مع الدرجات المعيارية T والتقييم الإكلينيكي',
+    description: 'استمارة ملاحظة سريرية نمائية داخلية لتقييم الوعي الاجتماعي، التواصل المتبادل، والأنماط السلوكية وفق معايير DSM-5 (65 بنداً ملاحظياً)',
     icon: '👥',
     color: '#059669',
     scoreMode: 'subscale',
@@ -516,7 +516,7 @@ const DEFAULT_SCALE_LIBRARY = [
     maxValue: 4,
     maxScore: 260,
     items: SRS2_ITEMS,
-    thresholdText: 'الدرجة التائية: 59 فأقل طبيعي | 60-65 قصور بسيط | 66-75 قصور متوسط | 76 فأكثر قصور شديد',
+    thresholdText: 'الدرجة التائية: 59 فأقل طبيعي | 60-65 مؤشرات بسيطة | 66-75 مؤشرات متوسطة | 76 فأكثر مؤشرات بارزة',
     isDefault: true,
   },
   {

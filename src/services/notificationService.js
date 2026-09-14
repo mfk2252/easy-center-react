@@ -210,6 +210,7 @@ export function fetchGlobalNotifications(currentUser) {
       if (missingNotes) {
         rawList.push({
           id: `incomp-sess-${a.kidId}-${today}`,
+          stuId: a.kidId,
           category: 'sessions',
           categoryLabel: 'متابعة الجلسات',
           categoryIcon: '📝',
@@ -251,7 +252,7 @@ export function fetchGlobalNotifications(currentUser) {
           targetDate: a.date,
           severity: a.date === today ? 'urgent' : 'info',
           actionView: 'calendar',
-          actionTab: 'appointments',
+          actionTab: 'appts',
           targetRoles: ['manager', 'vice', 'specialist', 'reception'],
         });
       }
@@ -276,6 +277,7 @@ export function fetchGlobalNotifications(currentUser) {
           const isOverdue = df < 0;
           rawList.push({
             id: `fee-${fee.id}`,
+            stuId: fee.stuId || fee.studentId,
             category: 'finance',
             categoryLabel: 'المالية',
             categoryIcon: '💰',
@@ -285,7 +287,7 @@ export function fetchGlobalNotifications(currentUser) {
             rawDate: fee.dueDate,
             severity: isOverdue ? 'urgent' : 'warn',
             actionView: 'students',
-            actionTab: 'finance',
+            actionTab: 'fees',
             targetRoles: ['manager', 'vice'],
           });
         }
@@ -332,6 +334,7 @@ export function fetchGlobalNotifications(currentUser) {
 
       rawList.push({
         id: `att-abs-${a.id || a.kidId}`,
+        stuId: a.kidId,
         category: 'attendance',
         categoryLabel: 'الغياب والتأخير',
         categoryIcon: '⚠️',
@@ -359,6 +362,7 @@ export function fetchGlobalNotifications(currentUser) {
         const isOverdue = df < 0;
         rawList.push({
           id: `iep-rev-${g.id}`,
+          stuId: g.stuId,
           category: 'iep',
           categoryLabel: 'الخطط الفردية IEP',
           categoryIcon: '🎯',

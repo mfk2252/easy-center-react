@@ -87,7 +87,7 @@ const EMPTY_CAT = { name: '', code: '', capacity: 20, color: '#7c3aed', icon: '�
 const ITEMS_PER_PAGE = 12;
 
 export default function StudentsPage() {
-  const { toast, currentUser, activeView, center } = useApp();
+  const { toast, currentUser, activeView, center, viewParams } = useApp();
   const isParent = currentUser?.role === 'parent';
 
   // Data State
@@ -205,9 +205,11 @@ export default function StudentsPage() {
     setCategories(storedCats);
 
     // التحقق من وجود طالب محدد مسبقاً من لوحة التحكم أو الإشعارات
-    const directStuId = sessionStorage.getItem('scs_selected_student');
-    if (directStuId) {
+    const directStuId = sessionStorage.getItem('scs_selected_student') || viewParams?.stuId;
+    if (sessionStorage.getItem('scs_selected_student')) {
       sessionStorage.removeItem('scs_selected_student');
+    }
+    if (directStuId) {
       setDetailId(directStuId);
     }
 

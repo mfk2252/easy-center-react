@@ -112,13 +112,31 @@ export default function NotificationsDropdown() {
     refreshNotifications();
     setIsOpen(false);
     if (item.actionView) {
+      const stuId = item.stuId || item.studentId || item.raw?.stuId || item.raw?.id;
+      const targetDate = item.actionDate || item.targetDate || item.rawDate;
+      const targetApptId = item.appointmentId || item.raw?.appointmentId;
+      const targetTab = item.actionTab || item.tab;
+
+      if (stuId && (item.actionView === 'students' || item.actionView === 'sessions')) {
+        sessionStorage.setItem('scs_selected_student', stuId);
+        if (targetTab) sessionStorage.setItem('scs_student_tab', targetTab);
+      }
+
+      if (item.actionView === 'calendar') {
+        if (targetDate) sessionStorage.setItem('scs_calendar_target_date', targetDate);
+        if (targetApptId) sessionStorage.setItem('scs_calendar_target_appt', targetApptId);
+      }
+
       go(item.actionView, {
-        date: item.actionDate || item.targetDate || item.rawDate,
-        targetDate: item.actionDate || item.targetDate || item.rawDate,
-        tab: item.actionTab,
+        date: targetDate,
+        targetDate: targetDate,
+        tab: targetTab,
         category: item.category,
         intDayId: item.intDayId,
         source: 'notification',
+        stuId: stuId,
+        appointmentId: targetApptId,
+        sessionId: item.sessionId || item.raw?.sessionId,
       });
     }
   };

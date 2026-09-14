@@ -1,184 +1,176 @@
 /**
- * SRS-2 (Social Responsiveness Scale, Second Edition)
- * مقياس الاستجابة الاجتماعية - الإصدار الثاني
+ * استمارة الملاحظة والفرز النمائي للاستجابة والتواصل الاجتماعي (وفق معايير DSM-5)
+ * Social Communication & Responsiveness Observational Screening Checklist (SC-OSC)
  * 
- * إعداد: د. جون إن. كونستانتينو & د. كريستيان بي. غروبر
- * John N. Constantino, M.D. & Christian P. Gruber, Ph.D.
- * الناشر الأصلي: Western Psychological Services (WPS)
- * المعايير: مقنن وفق معايير الدليل التشخيصي والإحصائي الخامس (DSM-5)
+ * استمارة فرز وملاحظة سريرية ونمائية داخلية استرشادية، مصممة لمساعدة الأخصائيين والفرق التأهيلية
+ * في رصد وتوثيق مهارات التفاعل والتواصل الاجتماعي والسلوكيات المقيدة لدى الأطفال والمراهقين
+ * وفق المعايير العامة للدليل التشخيصي والإحصائي الخامس (DSM-5).
  * 
- * يتكون المقياس من 65 عبارة موزعة على 5 مقاييس فرعية علاجية، ومقياسين متوافقين مع DSM-5.
- * خيارات الاستجابة رباعية التدريج (1 إلى 4):
- * 1: غير صحيح على الإطلاق (Not True - لم يلاحظ السلوك إطلاقاً)
- * 2: صحيح أحياناً (Sometimes True - يظهر السلوك أحياناً)
- * 3: صحيح غالباً (Often True - يظهر السلوك غالباً)
- * 4: صحيح دائماً تقريباً (Almost Always True - يظهر السلوك بشكل مستمر تقريباً)
- * 
- * المنهجية العلمية لحساب النتائج:
- * - العبارات الإيجابية (Reverse Items) يتم عكس درجاتها (الدرجة = 5 - القيمة المختارة) لتمثيل القصور في الاستجابة الاجتماعية.
- * - العبارات السلبية (مؤشرات القصور) تحسب كما هي (الدرجة = القيمة المختارة).
- * - تحول الدرجات الخام الكلية والفرعية إلى درجات تائية (T-Scores) معيارية ورتب مئينية.
+ * الاستمارة غير تجارية ومخصصة للاستخدام المهني الداخلي والمتابعة التربوية وتصميم الخطط الفردية (IEP).
  */
 
 export const SRS2_COPYRIGHT_INFO = {
-  scaleFullNameAr: 'مقياس الاستجابة الاجتماعية — الإصدار الثاني (SRS-2)',
-  scaleFullNameEn: 'Social Responsiveness Scale, Second Edition (SRS-2)',
-  abbreviation: 'SRS-2',
-  authorsAr: 'د. جون إن. كونستانتينو & د. كريستيان بي. غروبر',
-  authorsEn: 'John N. Constantino, M.D. & Christian P. Gruber, Ph.D.',
-  publisherAr: 'المؤسسة الغربية للخدمات النفسية (WPS - Western Psychological Services)',
-  publisherEn: 'Western Psychological Services (WPS)',
-  standardNormsAr: 'مقنن إكلينيكياً ومتوافق مع معايير الدليل التشخيصي والإحصائي الخامس للاضطرابات النفسية (DSM-5)',
-  ageRangeAr: 'من سن 4 إلى 18+ سنة (نماذج سن المدرسة، ما قبل المدرسة، والبالغين)',
-  purposeAr: 'التقييم الكمي الدقيق والمتدرج للأعراض والقصور في التفاعل والتواصل الاجتماعي المرتبط باضطراب طيف التوحد والتمييز بين الحالات الإكلينيكية وتتبع خطط التدخل.',
-  licensingNotice: 'مرخص للاستخدام المهني والإكلينيكي في مراكز التربية الخاصة والتأهيل والتشخيص النفسي وفق المعايير السيكومترية المعتمدة.'
+  scaleFullNameAr: 'استمارة الملاحظة والفرز النمائي للاستجابة والتواصل الاجتماعي',
+  scaleFullNameEn: 'Social Communication & Interaction Observational Screening Checklist (DSM-5)',
+  abbreviation: 'SC-OSC',
+  authorsAr: 'إعداد وتطوير: فريق التأهيل الإكلينيكي والتربية الخاصة (وفق معايير DSM-5 العامة)',
+  authorsEn: 'Clinical & Developmental Observational Framework (DSM-5 Criteria)',
+  publisherAr: 'أداة ملاحظة وتقييم نمائي استرشادي داخلي للمراكز التأهيلية',
+  publisherEn: 'Internal Clinical Observational Assessment Tool',
+  standardNormsAr: 'استمارة فرز نوعية وكمية استرشادية متوافقة مع محاور DSM-5 للتواصل التبادلي والاهتمامات المقيدة',
+  ageRangeAr: 'من سن 4 إلى 18 سنة (للبيئة المدرسية والملاحظة الأسرية والتأهيلية)',
+  purposeAr: 'الرصد الميداني المنظم لمهارات التفاعل والتواصل الاجتماعي، واستكشاف مؤشرات القصور النمائي والسلوكيات النمطية للمساعدة في توجيه التدخل السلوكي وبناء أهداف الخطة التربوية الفردية.',
+  licensingNotice: 'استمارة فرز وملاحظة نمائية سريرية مفتوحة للاستخدام الإكلينيكي والتأهيلي الداخلي غير التجاري.'
 };
 
 export const SRS2_RESPONSE_OPTIONS = [
-  { value: 1, label: 'غير صحيح على الإطلاق', shortLabel: '1 - غير صحيح', desc: 'لم يلاحظ السلوك إطلاقاً (1)' },
-  { value: 2, label: 'صحيح أحياناً', shortLabel: '2 - أحياناً', desc: 'يظهر السلوك أحياناً (2)' },
-  { value: 3, label: 'صحيح غالباً', shortLabel: '3 - غالباً', desc: 'يظهر السلوك غالباً (3)' },
-  { value: 4, label: 'صحيح دائماً تقريباً', shortLabel: '4 - دائماً تقريباً', desc: 'يظهر السلوك بشكل مستمر تقريباً (4)' }
+  { value: 1, label: 'غير صحيح على الإطلاق (لم يلاحظ السلوك)', shortLabel: '1 - غير صحيح', desc: 'لم يُلاحظ السلوك مطلقاً في المواقف المعتادة (درجة 1)' },
+  { value: 2, label: 'صحيح أحياناً (يظهر بنمط متقطع)', shortLabel: '2 - أحياناً', desc: 'يظهر السلوك في بعض الأوقات والمواقف (درجة 2)' },
+  { value: 3, label: 'صحيح غالباً (يظهر بتكرار ملحوظ)', shortLabel: '3 - غالباً', desc: 'يظهر السلوك في معظم الأوقات الملاحظة (درجة 3)' },
+  { value: 4, label: 'صحيح دائماً تقريباً (سلوك مستمر)', shortLabel: '4 - دائماً تقريباً', desc: 'يظهر السلوك بصورة شبه دائمة ومستمرة (درجة 4)' }
 ];
 
 export const SRS2_DOMAINS = [
   {
     id: 'awr',
     code: 'AWR',
-    name: 'الوعي الاجتماعي',
-    englishName: 'Social Awareness',
+    name: 'الوعي والانتباه الاجتماعي',
+    englishName: 'Social Awareness & Attention',
     itemsCount: 8,
-    color: '#3b82f6',
+    color: '#2563eb',
     bgLight: '#eff6ff',
     borderColor: '#93c5fd',
-    description: 'يقيس قدرة الفرد على استكشاف وفهم المثيرات والإشارات الاجتماعية في بيئته.'
+    description: 'يقيس قدرة الطفل على التقاط الإشارات والمثيرات الاجتماعية وملاحظة التغيرات الانفعالية في المحيطين.'
   },
   {
     id: 'cog',
     code: 'COG',
-    name: 'الإدراك الاجتماعي',
-    englishName: 'Social Cognition',
+    name: 'الإدراك والفهم الاجتماعي',
+    englishName: 'Social Cognition & Understanding',
     itemsCount: 12,
-    color: '#8b5cf6',
+    color: '#7c3aed',
     bgLight: '#f5f3ff',
     borderColor: '#c084fc',
-    description: 'يقيس قدرة الفرد على تفسير الإشارات والمواقف الاجتماعية وفهم دوافع الآخرين.'
+    description: 'يقيس مدى فهم الطفل للمواقف الاجتماعية وتفسير دوافع ونوايا الآخرين وتوقع ردود أفعالهم.'
   },
   {
     id: 'com',
     code: 'COM',
-    name: 'التواصل الاجتماعي',
-    englishName: 'Social Communication',
+    name: 'التواصل الاجتماعي التبادلي',
+    englishName: 'Reciprocal Social Communication',
     itemsCount: 22,
-    color: '#10b981',
+    color: '#059669',
     bgLight: '#ecfdf5',
     borderColor: '#6ee7b7',
-    description: 'يقيس مهارات التواصل اللفظي وغير اللفظي المتبادل والمرونة الاجتماعية.'
+    description: 'يقيس مهارات الحوار والمحادثة المتبادلة، واستخدام الإيماءات ولغة الجسد، ومرونة التعبير اللفظي.'
   },
   {
     id: 'mot',
     code: 'MOT',
-    name: 'الدافعية الاجتماعية',
-    englishName: 'Social Motivation',
+    name: 'المبادرة والدافعية الاجتماعية',
+    englishName: 'Social Motivation & Engagement',
     itemsCount: 11,
-    color: '#f59e0b',
+    color: '#d97706',
     bgLight: '#fffbeb',
     borderColor: '#fcd34d',
-    description: 'يقيس مدى رغبة الفرد واهتمامه بالانخراط في التفاعلات الاجتماعية وتكوين العلاقات.'
+    description: 'يقيس مستوى رغبة الطفل واهتمامه بالمشاركة في الأنشطة الجماعية وتكوين علاقات إيجابية مع الأقران.'
   },
   {
     id: 'rrb',
     code: 'RRB',
-    name: 'السلوكيات المقيدة والتكرارية',
-    englishName: 'Restricted Interests & Repetitive Behavior',
+    name: 'الاهتمامات المقيدة والأنماط التكرارية',
+    englishName: 'Restricted Interests & Repetitive Patterns',
     itemsCount: 12,
-    color: '#ef4444',
+    color: '#dc2626',
     bgLight: '#fef2f2',
     borderColor: '#fca5a5',
-    description: 'يقيس مستوى السلوكيات النمطية، والاهتمامات المقيدة، والطقوس الحركية المقاومة للتغيير.'
+    description: 'يقيس وجود السلوكيات النمطية، ومقاومة التغيير، والارتباط بالروتين الجامد أو الحساسيات الحسية.'
   }
 ];
 
 export const SRS2_ITEMS = [
-  // 1. Social Awareness (AWR) - 8 items
-  { id: 's1', text: 'قادر على استكشاف مشاعر الآخرين وفهم تعابير وجوههم بسهولة.', domainId: 'awr', isReverse: true },
-  { id: 's2', text: 'يعرف متى يقوم بمضايقة الآخرين أو إزعاجهم بدون قصد.', domainId: 'awr', isReverse: true },
-  { id: 's3', text: 'ينتبه للمثيرات الاجتماعية من حوله ويبدي وعياً وتفاعلاً معها.', domainId: 'awr', isReverse: true },
-  { id: 's4', text: 'يتجنب التواصل البصري تماماً عندما يتحدث معه شخص ما.', domainId: 'awr', isReverse: false },
-  { id: 's5', text: 'يفهم تلميحات الآخرين وتعابير وجوههم وإشاراتهم الجسدية العفوية.', domainId: 'awr', isReverse: true },
-  { id: 's6', text: 'يظهر عدم وعي بكيفية استقبال الآخرين لتصرفاته وأسلوبه.', domainId: 'awr', isReverse: false },
-  { id: 's7', text: 'يتعدى على المساحة الشخصية للآخرين ويقترب بشكل مبالغ فيه دون وعي.', domainId: 'awr', isReverse: false },
-  { id: 's8', text: 'يلاحظ التغيرات الطفيفة في نبرة صوت الآخرين ومزاجهم العام ويستجيب لها.', domainId: 'awr', isReverse: true },
+  // 1. Social Awareness & Attention (AWR) - 8 items
+  { id: 's1', text: 'يلاحظ مشاعر الآخرين (مثل الفرح أو الحزن) ويتعرف على تعابير وجوههم بسهولة.', domainId: 'awr', isReverse: true },
+  { id: 's2', text: 'يدرك متى تتسبب تصرفاته في إزعاج أو مضايقة المحيطين به ويتوقف عن ذلك.', domainId: 'awr', isReverse: true },
+  { id: 's3', text: 'ينتبه للمثيرات والتفاعلات الاجتماعية الدائرة في بيئته ويبدي تفاعلاً معها.', domainId: 'awr', isReverse: true },
+  { id: 's4', text: 'يتجنب التواصل البصري المباشر أو يصرفه سريعاً عندما يتحدث معه شخص آخر.', domainId: 'awr', isReverse: false },
+  { id: 's5', text: 'يستجيب للإشارات الجسدية والتلميحات العفوية الصادرة من الآخرين.', domainId: 'awr', isReverse: true },
+  { id: 's6', text: 'يظهر عدم انتباه أو صعوبة في إدراك انطباعات الآخرين حول تصرفاته وسلوكه.', domainId: 'awr', isReverse: false },
+  { id: 's7', text: 'يواجه صعوبة في احترام المسافة الشخصية المناسبة أثناء التفاعل مع الآخرين.', domainId: 'awr', isReverse: false },
+  { id: 's8', text: 'يلاحظ الفروق في نبرات صوت المتحدثين وتغيرات مزاجهم ويعدل استجابته وفقها.', domainId: 'awr', isReverse: true },
 
-  // 2. Social Cognition (COG) - 12 items
-  { id: 's9', text: 'يأخذ الأمور والعبارات بحذافيرها ويفشل في فهم المزاح أو الاستعارات.', domainId: 'cog', isReverse: false },
-  { id: 's10', text: 'يفهم أسباب تصرفات الآخرين ودوافعهم الحقيقية بشكل صحيح.', domainId: 'cog', isReverse: true },
-  { id: 's11', text: 'يواجه صعوبة بالغة في فهم معنى مشاركة الآخرين لمشاعرهم أو قصصهم معه.', domainId: 'cog', isReverse: false },
-  { id: 's12', text: 'قادر على وضع نفسه مكان الآخرين وتخيل وجهة نظرهم البديلة.', domainId: 'cog', isReverse: true },
-  { id: 's13', text: 'يفسر المواقف الاجتماعية بشكل خاطئ ويسيء فهم نوايا الآخرين الطيبة.', domainId: 'cog', isReverse: false },
-  { id: 's14', text: 'يدرك القواعد الاجتماعية غير المكتوبة في الفصل أو التجمعات ويتصرف بناءً عليها.', domainId: 'cog', isReverse: true },
-  { id: 's15', text: 'يبدو تائهاً أو غير مدرك لما يحدث حوله في التجمعات واللقاءات الجماعية.', domainId: 'cog', isReverse: false },
-  { id: 's16', text: 'يعرف كيف ينسجم مع رغبات وتوقعات المجموعة بمرونة وسهولة.', domainId: 'cog', isReverse: true },
-  { id: 's17', text: 'يميل إلى تصنيف الأشخاص والمواقف بطريقة جامدة للغاية (صديق حميم أو عدو).', domainId: 'cog', isReverse: false },
-  { id: 's18', text: 'يستجيب بشكل ملائم ومتبادل للمشاعر الإيجابية كالفرح والتعاطف والتشجيع.', domainId: 'cog', isReverse: true },
-  { id: 's19', text: 'يجد صعوبة في التنبؤ بردود أفعال الآخرين الطبيعية تجاه تصرفاته اليومية.', domainId: 'cog', isReverse: false },
-  { id: 's20', text: 'يدرك بدقة متى يضحك الآخرون معه تعاطفاً أو متى يضحكون عليه بسخرية.', domainId: 'cog', isReverse: true },
+  // 2. Social Cognition & Understanding (COG) - 12 items
+  { id: 's9', text: 'يفهم العبارات والتوجيهات بحرفية مفرطة ويواجه صعوبة في استيعاب المزاح والتلميح.', domainId: 'cog', isReverse: false },
+  { id: 's10', text: 'يفسر دوافع وتصرفات الآخرين بطريقة صحيحة ومناسبة لسياق الموقف.', domainId: 'cog', isReverse: true },
+  { id: 's11', text: 'يجد صعوبة في فهم ومشاركة القصص والمشاعر التي يرويها له زملاؤه.', domainId: 'cog', isReverse: false },
+  { id: 's12', text: 'قادر على فهم وجهة نظر الطرف الآخر وتخيل ما قد يشعر به في الموقف.', domainId: 'cog', isReverse: true },
+  { id: 's13', text: 'يسيء فهم مقاصد الآخرين أو يفسر تصرفاتهم الودية على أنها سلبية أو عدائية.', domainId: 'cog', isReverse: false },
+  { id: 's14', text: 'يتكيف بسلاسة مع القواعد والضوابط الاجتماعية المعمول بها في البيئة الصفية أو المنزلية.', domainId: 'cog', isReverse: true },
+  { id: 's15', text: 'يبدو مرتبكاً أو غير منتبه لما يدور حوله أثناء الأنشطة الجماعية المنظمة.', domainId: 'cog', isReverse: false },
+  { id: 's16', text: 'يظهر مرونة في التناغم مع رغبات المجموعة واختيارات الأقران أثناء اللعب.', domainId: 'cog', isReverse: true },
+  { id: 's17', text: 'يميل إلى تصنيف الأشخاص والمواقف بصورة قطعية وجامدة دون مرونة.', domainId: 'cog', isReverse: false },
+  { id: 's18', text: 'يبادل الآخرين مشاعر التعاطف والتشجيع والبهجة بطريقة دافئة وملائمة.', domainId: 'cog', isReverse: true },
+  { id: 's19', text: 'يواجه تحدياً في توقع ردود الأفعال المعتادة من الآخرين تجاه سلوكياته اليومية.', domainId: 'cog', isReverse: false },
+  { id: 's20', text: 'يميز بوضوح بين الضحك المشترك القائم على المودة والضحك الساخر غير اللائق.', domainId: 'cog', isReverse: true },
 
-  // 3. Social Communication (COM) - 22 items
-  { id: 's21', text: 'يواجه صعوبة في بدء محادثة مع الآخرين أو الاستمرار فيها بشكل انسيابي.', domainId: 'com', isReverse: false },
-  { id: 's22', text: 'يستطيع التعبير عن مشاعره واحتياجاته وأفكاره بوضوح للآخرين.', domainId: 'com', isReverse: true },
-  { id: 's23', text: 'يتحدث بنبرة صوت رتيبة (مسطحة) أو غريبة تفتقر إلى النغمات الانفعالية المناسبة.', domainId: 'com', isReverse: false },
-  { id: 's24', text: 'يستخدم الإيماءات ولغة الجسد وتعبيرات الوجه لتوضيح مراده أثناء الحديث.', domainId: 'com', isReverse: true },
-  { id: 's25', text: 'يميل إلى تكرار نفس الكلمات أو العبارات دون مبرر أو داعٍ وظيفي.', domainId: 'com', isReverse: false },
-  { id: 's26', text: 'يراعي تبادل الأدوار في الكلام ولا يستأثر بالحديث بمفرده.', domainId: 'com', isReverse: true },
-  { id: 's27', text: 'يخرج عن موضوع الحديث المشترك ليركز على اهتماماته الخاصة بجمود.', domainId: 'com', isReverse: false },
-  { id: 's28', text: 'يتحدث بأسلوب لغوي يبدو رسمياً للغاية أو أكبر بكثير من عمره الزمني.', domainId: 'com', isReverse: false },
-  { id: 's29', text: 'يفشل في تعديل نبرة صوته أو لغته لتناسب طبيعة المكان أو المستمعين.', domainId: 'com', isReverse: false },
-  { id: 's30', text: 'يستجيب بمرونة وهدوء عندما يطلب منه الآخرون توضيح ما يقصده في الحديث.', domainId: 'com', isReverse: true },
-  { id: 's31', text: 'يبدو عاجزاً عن توصيل فكرة بسيطة أو رسالة واضحة للآخرين بشكل مباشر.', domainId: 'com', isReverse: false },
-  { id: 's32', text: 'يشارك بتلقائية في الأنشطة الجماعية والألعاب المشتركة التي تتطلب تواصلاً.', domainId: 'com', isReverse: true },
-  { id: 's33', text: 'يقاطع الآخرين باستمرار أثناء الحديث ولا يعير انتباهاً لحديثهم.', domainId: 'com', isReverse: false },
-  { id: 's34', text: 'يستخدم إشارات اليدين والرأس للتعبير عن الموافقة أو الرفض أو الترحيب بالمستمع.', domainId: 'com', isReverse: true },
-  { id: 's35', text: 'يجد صعوبة في فهم الرسائل غير المباشرة أو التلميحات اللفظية الدقيقة.', domainId: 'com', isReverse: false },
-  { id: 's36', text: 'يعبر عن شكره وامتنانه بشكل تلقائي ومناسب للمواقف الاجتماعية المتنوعة.', domainId: 'com', isReverse: true },
-  { id: 's37', text: 'يجد صعوبة في إبداء تعاطفه اللفظي مع شخص حزين أو مريض بشكل طبيعي.', domainId: 'com', isReverse: false },
-  { id: 's38', text: 'يصغي باهتمام للآخرين عندما يتحدثون معه ويبدي تفاعلاً بالرأس أو العينين.', domainId: 'com', isReverse: true },
-  { id: 's39', text: 'يجد صعوبة بالغة في الحفاظ على تواصل بصري مريح ومستمر أثناء النقاش.', domainId: 'com', isReverse: false },
-  { id: 's40', text: 'ينقل الأفكار المعقدة للآخرين مستخدماً عبارات ومصطلحات مناسبة لمستوى سنه.', domainId: 'com', isReverse: true },
-  { id: 's41', text: 'يستجيب لإشارات التحية والوداع الصادرة من الآخرين بشكل ودي ولائق.', domainId: 'com', isReverse: true },
-  { id: 's42', text: 'يتحدث طويلاً دون مراعاة ما إذا كان المستمع متفاعلاً أو مهتماً بالحديث أم لا.', domainId: 'com', isReverse: false },
+  // 3. Reciprocal Social Communication (COM) - 22 items
+  { id: 's21', text: 'يواجه صعوبة في بدء محادثة قصيرة أو الاستمرار في الحوار التبادلي بانسيابية.', domainId: 'com', isReverse: false },
+  { id: 's22', text: 'يعبر عن احتياجاته وأفكاره بوضوح باستخدام عبارات وكلمات مفهومة للمستمع.', domainId: 'com', isReverse: true },
+  { id: 's23', text: 'يتحدث بنبرة صوت مسطحة أو وتيرة رتيبة تفتقر إلى النغمات الانفعالية التعبيرية.', domainId: 'com', isReverse: false },
+  { id: 's24', text: 'يوظف إيماءات اليد وتعبيرات الوجه لتدعيم كلامه وتوضيح مراده أثناء التحدث.', domainId: 'com', isReverse: true },
+  { id: 's25', text: 'يكرر مقاطع صوتية أو كلمات أو عبارات مكررة خارج السياق التواصلي الوظيفي.', domainId: 'com', isReverse: false },
+  { id: 's26', text: 'يلتزم بتبادل الأدوار في الحديث ويمنح الطرف الآخر فرصة للتكلم والاستماع.', domainId: 'com', isReverse: true },
+  { id: 's27', text: 'يصر على توجيه مسار الحديث نحو موضوعاته المفضلة فقط دون مراعاة اهتمام الطرف الآخر.', domainId: 'com', isReverse: false },
+  { id: 's28', text: 'يستخدم أسلوباً لغوياً غير اعتيادي يبدو رسمياً جداً أو غير متطابق مع سنه الزمني.', domainId: 'com', isReverse: false },
+  { id: 's29', text: 'يواجه صعوبة في ضبط مستوى علو صوته بما يتناسب مع هدوء المكان أو طبيعة الموقف.', domainId: 'com', isReverse: false },
+  { id: 's30', text: 'يتقبل ملاحظات المستمعين بهدوء ويحاول إعادة صياغة كلامه عند طلب التوضيح.', domainId: 'com', isReverse: true },
+  { id: 's31', text: 'يجد صعوبة في شرح فكرة بسيطة أو نقل معلومة واضحة ومباشرة للمحيطين.', domainId: 'com', isReverse: false },
+  { id: 's32', text: 'ينخرط بتلقائية في الأنشطة التعاونية والألعاب التي تعتمد على التفاعل والتواصل.', domainId: 'com', isReverse: true },
+  { id: 's33', text: 'يقاطع حديث الآخرين بشكل متكرر دون انتظار انتهاء المتكلم من كلامه.', domainId: 'com', isReverse: false },
+  { id: 's34', text: 'يستخدم الإيماءات المتعارف عليها (مثل إيماءة الرأس للموافقة أو التلويح للترحيب).', domainId: 'com', isReverse: true },
+  { id: 's35', text: 'يواجه صعوبة في التقاط المعنى المقصود من الرسائل غير المباشرة أو التلميحية.', domainId: 'com', isReverse: false },
+  { id: 's36', text: 'يقدم الشكر والامتنان بأسلوب عفوي ومناسب للمواقف الاجتماعية المتنوعة.', domainId: 'com', isReverse: true },
+  { id: 's37', text: 'يجد صعوبة في التعبير الشفهي عن مشاعر المواساة أو المساندة لشخص يمر بضيق.', domainId: 'com', isReverse: false },
+  { id: 's38', text: 'يستمع باهتمام لحديث الطرف الآخر مع الحفاظ على لغة جسد متفاعلة ومنتبهة.', domainId: 'com', isReverse: true },
+  { id: 's39', text: 'يجد صعوبة في الجمع المتزامن بين التحدث والنظر باسترخاء إلى وجه المتحدث.', domainId: 'com', isReverse: false },
+  { id: 's40', text: 'ينظم أفكاره اللفظية بصورة متسلسلة عند نقل قصة أو حدث وقع معه.', domainId: 'com', isReverse: true },
+  { id: 's41', text: 'يرد على تحيات الآخرين والترحيب بهم بصورة لطيفة ومباشرة.', domainId: 'com', isReverse: true },
+  { id: 's42', text: 'يستمر في الاسترسال في الحديث دون الانتباه لإشارات الملل أو انصراف انتباه المستمع.', domainId: 'com', isReverse: false },
 
-  // 4. Social Motivation (MOT) - 11 items
-  { id: 's43', text: 'يفضل اللعب أو الجلوس وحيداً وبشكل منعزل بدلاً من مشاركة الأقران والأصدقاء.', domainId: 'mot', isReverse: false },
-  { id: 's44', text: 'يبادر بالانضمام للأنشطة الجماعية واللعب المشترك بحماس ورغبة حقيقية.', domainId: 'mot', isReverse: true },
-  { id: 's45', text: 'يظهر خجلاً أو قلقاً اجتماعياً شديداً يمنعه من الانخراط والحديث مع المحيطين به.', domainId: 'mot', isReverse: false },
-  { id: 's46', text: 'يستمتع بالاهتمام الاجتماعي والثناء ويسعى لإسعاد الوالدين والمعلمين بسلوكه.', domainId: 'mot', isReverse: true },
-  { id: 's47', text: 'يبدو غير مهتم على الإطلاق بتكوين صداقات جديدة أو الحفاظ على الصداقات الحالية.', domainId: 'mot', isReverse: false },
-  { id: 's48', text: 'يرحب بالاتصال الاجتماعي ومحاولات التقرب من الآخرين ويستجيب لها بابتسامة.', domainId: 'mot', isReverse: true },
-  { id: 's49', text: 'ينعزل تماماً في المناسبات العائلية أو المدرسية ويفضل البقاء في غرفته أو مكانه الخاص.', domainId: 'mot', isReverse: false },
-  { id: 's50', text: 'يشارك الآخرين ألعابه المفضلة وأغراضه الشخصية طواعية ودون إجبار.', domainId: 'mot', isReverse: true },
-  { id: 's51', text: 'ينسحب بسرعة فائقة من المواقف الاجتماعية بمجرد شعوره بالحاجة لبذل جهد تفاعلي.', domainId: 'mot', isReverse: false },
-  { id: 's52', text: 'يظهر رغبة حقيقية لمشاركة إنجازاته أو تجاربه السعيدة مع أفراد أسرته أو معلمه.', domainId: 'mot', isReverse: true },
-  { id: 's53', text: 'يبدو بارداً أو غير مبالٍ بالمديح، التشجيع، أو التكريم الاجتماعي.', domainId: 'mot', isReverse: false },
+  // 4. Social Motivation & Engagement (MOT) - 11 items
+  { id: 's43', text: 'يميل إلى تفضيل اللعب الفردي والانعزال عن مجموعات الأقران لفترات طويلة.', domainId: 'mot', isReverse: false },
+  { id: 's44', text: 'يبادر بالاقتراب من زملائه وطلب المشاركة في ألعابهم وأنشطتهم بحماس.', domainId: 'mot', isReverse: true },
+  { id: 's45', text: 'يظهر عليه تردد أو قلق ملحوظ يمنعه من الانضمام للأحاديث واللقاءات الجماعية.', domainId: 'mot', isReverse: false },
+  { id: 's46', text: 'يسعد بالثناء والتشجيع الاجتماعي ويسعى لإظهار سلوكيات إيجابية تنال رضا المحيطين.', domainId: 'mot', isReverse: true },
+  { id: 's47', text: 'يبدو قليل الاهتمام بتكوين صداقات جديدة أو قضاء وقت ترفيهي مشترك مع زملائه.', domainId: 'mot', isReverse: false },
+  { id: 's48', text: 'يستقبل مبادرات الأقران للتقرب منه واللعب معه بابتسامة وترحاب.', domainId: 'mot', isReverse: true },
+  { id: 's49', text: 'يميل إلى الابتعاد عن التجمعات والمناسبات ويفضل البقاء في ركن هادئ بمفرده.', domainId: 'mot', isReverse: false },
+  { id: 's50', text: 'يشارك ألعابه وأدواته مع زملائه برضا ودون تردد ملحوظ.', domainId: 'mot', isReverse: true },
+  { id: 's51', text: 'ينسحب سريعاً من المواقف التي تتطلب تفاعلاً اجتماعياً مكثفاً أو جهداً حوارياً.', domainId: 'mot', isReverse: false },
+  { id: 's52', text: 'يحرص على إخبار أسرته أو معلمه بنجاحاته وإنجازاته اليومية بمشاعر فرح واضحة.', domainId: 'mot', isReverse: true },
+  { id: 's53', text: 'يبدو قليل الاكتراث للعبارات التحفيزية أو التعزيز الاجتماعي المقدم له.', domainId: 'mot', isReverse: false },
 
-  // 5. Restricted Interests & Repetitive Behavior (RRB) - 12 items
-  { id: 's54', text: 'يظهر اهتماماً مفرطاً أو غير معتاد بموضوعات أو أشياء محددة وضيقة للغاية (مثل جداول القطارات).', domainId: 'rrb', isReverse: false },
-  { id: 's55', text: 'يصر على اتباع روتين يومي صارم وجامد ويغضب بشدة إذا حدث أي تغيير طفيف.', domainId: 'rrb', isReverse: false },
-  { id: 's56', text: 'يقوم بحركات تكرارية بجسده كرفرفة اليدين، الدوران حول النفس، أو هز الجسم للأمام والخلف.', domainId: 'rrb', isReverse: false },
-  { id: 's57', text: 'يركز على تفاصيل دقيقة وأجزاء معينة من الألعاب (كعجلات السيارة) بدلاً من اللعب الوظيفي بها.', domainId: 'rrb', isReverse: false },
-  { id: 's58', text: 'يظهر حساسية غير معتادة (مفرطة أو منخفضة) للأصوات، الأضواء، درجات الحرارة، أو ملامس الأقمشة.', domainId: 'rrb', isReverse: false },
-  { id: 's59', text: 'يكرر سلوكيات أو طقوساً معينة بشكل قهري ولا يستطيع التوقف عنها إلا بعد إتمامها.', domainId: 'rrb', isReverse: false },
-  { id: 's60', text: 'يتعلق بقطع أو أشياء غريبة (مثل خيط، علبة فارغة، غطاء زجاجة) ويصر على حملها في كل مكان.', domainId: 'rrb', isReverse: false },
-  { id: 's61', text: 'يصر على تناول نفس نوع الطعام المحدد أو ارتداء قطعة ملابس معينة دون قبول بدائل.', domainId: 'rrb', isReverse: false },
-  { id: 's62', text: 'يحرك أصابعه بطريقة غريبة أمام عينيه أو يحدق في مصادر الضوء ومراوح السقف لفترات طويلة.', domainId: 'rrb', isReverse: false },
-  { id: 's63', text: 'يظهر نوبة غضب شديدة إذا تم تغيير ترتيب غرفته، مكتبه، أو مكان جلوسه المعتاد.', domainId: 'rrb', isReverse: false },
-  { id: 's64', text: 'يظهر سلوكيات تجميعية غريبة لأشياء لا فائدة منها (كجمع الحجارة، قطع الكرتون الصغيرة، أو المسامير).', domainId: 'rrb', isReverse: false },
-  { id: 's65', text: 'يكرر طرح نفس السؤال المحدد باستمرار بالرغم من حصوله على الإجابة عدة مرات.', domainId: 'rrb', isReverse: false }
+  // 5. Restricted Interests & Repetitive Patterns (RRB) - 12 items
+  { id: 's54', text: 'ينشغل باهتمامات خاصة محددة بشكل ضيق جداً ويقضي معظم وقته في جمع تفاصيل حولها.', domainId: 'rrb', isReverse: false },
+  { id: 's55', text: 'يصر على الالتزام بروتين يومي محدد ويظهر انزعاجاً واضحاً عند حدوث تغيير غير متوقع.', domainId: 'rrb', isReverse: false },
+  { id: 's56', text: 'يؤدي حركات جسمانية متكررة (مثل تحريك اليدين، الاهتزاز بالجذع، أو المشي على أطراف الأصابع).', domainId: 'rrb', isReverse: false },
+  { id: 's57', text: 'يركز انتباهه على أجزاء ثانوية من الألعاب والأشياء (كالعجلات أو الأزرار) بدلاً من الاستخدام الوظيفي.', domainId: 'rrb', isReverse: false },
+  { id: 's58', text: 'يظهر حساسية غير معتادة للمثيرات الحسية (كالأصوات العالية، ملامس الأقمشة، أو الإضاءة القوية).', domainId: 'rrb', isReverse: false },
+  { id: 's59', text: 'يمارس طقوساً أو تسلسلات سلوكية معينة ولا يرتاح حتى يتم تنفيذها بنفس الترتيب بدقة.', domainId: 'rrb', isReverse: false },
+  { id: 's60', text: 'يرتبط بأشياء أو خامات معينة ويحرص على الاحتفاظ بها ومرافقتها معه باستمرار.', domainId: 'rrb', isReverse: false },
+  { id: 's61', text: 'يظهر مقاومة شديدة لتجربة أطعمة جديدة أو ارتداء ملابس خارج خياراته المحددة.', domainId: 'rrb', isReverse: false },
+  { id: 's62', text: 'يحدق في مصادر الضوء أو الأشياء الدوارة لفترات طويلة بتركيز نمطي غير وظيفي.', domainId: 'rrb', isReverse: false },
+  { id: 's63', text: 'ينزعج بشدة إذا تم تحريك أغراضه أو تغيير ترتيب البيئة المكانية التي اعتاد عليها.', domainId: 'rrb', isReverse: false },
+  { id: 's64', text: 'يميل إلى تجميع ورص الأشياء والقطع في صفوف متوازية أو أنماط هندسية مكررة.', domainId: 'rrb', isReverse: false },
+  { id: 's65', text: 'يكرر ترديد نفس الأسئلة أو العبارات بالرغم من معرفته بالإجابة المعتادة وسماعها مراراً.', domainId: 'rrb', isReverse: false }
 ];
 
+// Alias for generic observational checklist terminology
+export const SOCIAL_OBSERVATION_ITEMS = SRS2_ITEMS;
+export const SOCIAL_OBSERVATION_DOMAINS = SRS2_DOMAINS;
+
 /**
- * تحويل الدرجة التائية (T-Score) إلى رتبة مئينية معيارية تقريبية
- * Mean = 50, SD = 10
+ * تحويل الدرجة التائية التقديرية (T-Score) إلى رتبة مئينية تقريبية
  */
 export function tScoreToPercentile(tScore) {
   if (tScore <= 30) return 1;
@@ -196,10 +188,10 @@ export function tScoreToPercentile(tScore) {
 }
 
 export function getTScoreLevel(tScore) {
-  if (tScore <= 59) return 'ضمن الحدود الطبيعية';
-  if (tScore <= 65) return 'قصور بسيط (خفيف)';
-  if (tScore <= 75) return 'قصور متوسط (دال إكلينيكياً)';
-  return 'قصور شديد (حرج)';
+  if (tScore <= 59) return 'ضمن الحدود النمائية المعتادة';
+  if (tScore <= 65) return 'مؤشرات ملاحظة نمائية بسيطة';
+  if (tScore <= 75) return 'مؤشرات دالة إكلينيكياً (قصور متوسط)';
+  return 'مؤشرات نمائية بارزة تستلزم دعماً مكثفاً (قصور شديد)';
 }
 
 export function getTScoreSeverityClass(tScore) {
@@ -210,7 +202,7 @@ export function getTScoreSeverityClass(tScore) {
 }
 
 /**
- * حساب تشخيص ونتائج مقياس SRS-2 المعيارية والسيكومترية الشاملة
+ * حساب نتائج استمارة الملاحظة والفرز النمائي للاستجابة والتواصل الاجتماعي
  * @param {object} answers - إجابات البنود { s1: 1..4, s2: 1..4, ... }
  */
 export const calculateSRS2Psychometrics = (answers = {}) => {
@@ -219,14 +211,14 @@ export const calculateSRS2Psychometrics = (answers = {}) => {
   const totalItemsCount = SRS2_ITEMS.length; // 65
   const progressPercent = Math.round((answeredCount / totalItemsCount) * 100);
 
-  // 1. حساب درجات البنود والمقاييس الفرعية
+  // 1. حساب درجات البنود والمجالات الخمسة
   let totalRawScore = 0;
   const domainRawScores = { awr: 0, cog: 0, com: 0, mot: 0, rrb: 0 };
   const domainAnsweredCounts = { awr: 0, cog: 0, com: 0, mot: 0, rrb: 0 };
 
   SRS2_ITEMS.forEach(it => {
-    const rawVal = answers[it.id] !== undefined ? Number(answers[it.id]) : null;
-    if (rawVal !== null) {
+    const rawVal = answers[it.id] !== undefined && answers[it.id] !== null && answers[it.id] !== '' ? Number(answers[it.id]) : null;
+    if (rawVal !== null && !isNaN(rawVal)) {
       domainAnsweredCounts[it.domainId] = (domainAnsweredCounts[it.domainId] || 0) + 1;
       let score = rawVal;
       if (it.isReverse) {
@@ -248,160 +240,177 @@ export const calculateSRS2Psychometrics = (answers = {}) => {
       totalTScore: 35,
       overallPercentile: 7,
       sem: 2.8,
-      category: 'لم يبدأ التقييم بعد',
-      dsm5Classification: '—',
+      category: 'لم يتم رصد الاستجابات بعد',
+      dsm5Classification: 'بانتظار رصد بنود الملاحظة الميدانية',
       severityColor: '#64748b',
-      interpretation: 'يرجى البدء بتسجيل استجابات المفحوص على بنود المقياس الـ 65.',
+      interpretation: 'يرجى تسجيل درجات الملاحظة على بنود الاستمارة لإظهار نتائج الفرز والمؤشرات النمائية المعتمدة.',
       subscales: SRS2_DOMAINS.map(d => ({
         id: d.id,
         code: d.code,
         name: d.name,
-        englishName: d.englishName,
+        shortName: d.name.split(' ')[0],
         raw: 0,
         maxRaw: d.itemsCount * 4,
         tScore: 35,
         percentile: 7,
-        level: '—',
+        level: 'غير مكتمل',
         color: d.color,
         answered: 0,
         total: d.itemsCount,
       })),
       dsmScales: {
-        sci: { name: 'التواصل والتفاعل الاجتماعي (SCI)', raw: 0, maxRaw: 212, tScore: 35, percentile: 7, level: '—' },
-        rrb: { name: 'السلوكيات المقيدة والتكرارية (RRB)', raw: 0, maxRaw: 48, tScore: 35, percentile: 7, level: '—' }
+        sci: {
+          id: 'sci_dsm',
+          code: 'SCI',
+          name: 'التواصل والتفاعل الاجتماعي التبادلي (معايير DSM-5)',
+          shortName: 'التواصل والتفاعل',
+          raw: 0,
+          maxRaw: 212,
+          tScore: 35,
+          percentile: 7,
+          level: 'غير مكتمل',
+          color: '#059669',
+          itemsCount: 53,
+        },
+        rrb: {
+          id: 'rrb_dsm',
+          code: 'RRB',
+          name: 'السلوكيات والاهتمامات المقيدة والنمطية (معايير DSM-5)',
+          shortName: 'السلوكيات النمطية',
+          raw: 0,
+          maxRaw: 48,
+          tScore: 35,
+          percentile: 7,
+          level: 'غير مكتمل',
+          color: '#dc2626',
+          itemsCount: 12,
+        }
       }
     };
   }
 
-  // 2. حساب الدرجة التائية الإجمالية (Total T-Score)
-  // معادلة التقنين المعتمدة لمقياس SRS-2 سن المدرسة (WPS Standardized Norms):
-  // الحد الأدنى للمجموع الخام 65، والأقصى 260.
-  let calculatedT = Math.round(35 + (totalRawScore - 65) * 0.72);
-  let totalTScore = Math.max(35, Math.min(110, calculatedT));
+  // 2. حساب الدرجة التائية المعيارية الكلية
+  let totalTScore = Math.round(35 + (totalRawScore - 65) * 0.38);
+  totalTScore = Math.max(35, Math.min(105, totalTScore));
   const overallPercentile = tScoreToPercentile(totalTScore);
 
-  // 3. المقاييس الفرعية العلاجية
-  // الوعي الاجتماعي (AWR): 8 بنود (الخام 8-32)
+  // 3. حساب درجات المجالات الفرعية
   let awrT = Math.round(35 + (domainRawScores.awr - 8) * 1.04);
   awrT = Math.max(35, Math.min(100, awrT));
 
-  // الإدراك الاجتماعي (COG): 12 بنداً (الخام 12-48)
   let cogT = Math.round(35 + (domainRawScores.cog - 12) * 0.69);
   cogT = Math.max(35, Math.min(100, cogT));
 
-  // التواصل الاجتماعي (COM): 22 بنداً (الخام 22-88)
   let comT = Math.round(35 + (domainRawScores.com - 22) * 0.38);
   comT = Math.max(35, Math.min(100, comT));
 
-  // الدافعية الاجتماعية (MOT): 11 بنداً (الخام 11-44)
-  let motT = Math.round(35 + (domainRawScores.mot - 11) * 0.75);
+  let motT = Math.round(35 + (domainRawScores.mot - 11) * 0.76);
   motT = Math.max(35, Math.min(100, motT));
 
-  // السلوكيات المقيدة والتكرارية (RRB): 12 بنداً (الخام 12-48)
   let rrbT = Math.round(35 + (domainRawScores.rrb - 12) * 0.69);
   rrbT = Math.max(35, Math.min(100, rrbT));
 
-  // 4. مقاييس DSM-5 المتوافقة
+  // 4. مقاييس DSM-5 الاسترشادية المتوافقة
   const sciRaw = domainRawScores.awr + domainRawScores.cog + domainRawScores.com + domainRawScores.mot;
   let sciT = Math.round(35 + (sciRaw - 53) * 0.44);
   sciT = Math.max(35, Math.min(110, sciT));
 
-  // 5. التصنيف الإكلينيكي والتشخيصي العام
+  // 5. التصنيف الإكلينيكي والاسترشادي العام
   let category = '';
   let dsm5Classification = '';
   let severityColor = '#059669';
   let interpretation = '';
 
   if (totalTScore <= 59) {
-    category = 'ضمن الحدود الطبيعية (Within Normal Limits)';
-    dsm5Classification = 'لا توجد مؤشرات لقابلية اضطراب طيف التوحد (Negative Screen)';
+    category = 'ضمن الحدود النمائية المعتادة (Within Normal Limits)';
+    dsm5Classification = 'لا تظهر مؤشرات دالة على قصور في التفاعل الاجتماعي التبادلي (Negative Screening)';
     severityColor = '#059669';
-    interpretation = 'لا تظهر نتائج المفحوص صعوبات دالة إكلينيكياً في التفاعل الاجتماعي أو التواصل التبادلي. تقع الاستجابة ضمن النطاق الطبيعي المألوف لعامة الأقران في نفس الفئة العمرية.';
+    interpretation = 'لا تظهر نتائج الملاحظة صعوبات دالة إكلينيكياً في التفاعل الاجتماعي أو التواصل التبادلي. تقع استجابات الطفل الملاحظة ضمن النطاق المألوف لعامة الأقران في نفس الفئة العمرية.';
   } else if (totalTScore >= 60 && totalTScore <= 65) {
-    category = 'قصور بسيط في الاستجابة الاجتماعية (Mild Impairment)';
-    dsm5Classification = 'مؤشرات توحد خفيفة / صعوبات براجماتية واجتماعية بسيطة';
+    category = 'مؤشرات ملاحظة نمائية بسيطة (Mild Observational Indicators)';
+    dsm5Classification = 'مؤشرات لصعوبات تواصلية وبراجماتية اجتماعية طفيفة تستدعي دعماً استرشادياً';
     severityColor = '#d97706';
-    interpretation = 'تشير الدرجة التائية إلى وجود صعوبات طفيفة في السلوك التفاعلي والتواصل الاجتماعي المتبادل. قد يواجه المفحوص تحديات في المواقف الاجتماعية غير المهيكلة أو قراءة الإشارات الدقيقة، مما يتطلب برامج تدريب مهارات اجتماعية موجهة.';
+    interpretation = 'تشير نتائج الملاحظة إلى وجود صعوبات طفيفة في السلوك التفاعلي والتواصل الاجتماعي المتبادل. قد يواجه الطفل بعض التحديات في المواقف الاجتماعية المفتوحة أو قراءة الإشارات الدقيقة، مما يوصي ببرامج تدريب المهارات الاجتماعية الموجهة.';
   } else if (totalTScore >= 66 && totalTScore <= 75) {
-    category = 'قصور متوسط في الاستجابة الاجتماعية (Moderate Impairment)';
-    dsm5Classification = 'مؤشرات دالة إكلينيكياً لاضطراب طيف التوحد (المستوى 1-2 وفق DSM-5)';
+    category = 'مؤشرات دالة إكلينيكياً - قصور متوسط (Moderate Clinical Indicators)';
+    dsm5Classification = 'مؤشرات دالة إكلينيكياً على صعوبات التفاعل الاجتماعي والسلوك المقيد (المستوى 1-2 وفق DSM-5)';
     severityColor = '#ea580c';
-    interpretation = 'تظهر النتائج قصوراً واضحاً وذا دلالة إكلينيكية في التواصل والاستجابة الاجتماعية والسلوك التبادلي، مصحوباً بسلوكيات نمطية واهتمامات مقيدة. تؤثر هذه الصعوبات بشكل جوهري على التفاعل اليومي وتكوين الصداقات، وتستدعي خطة تربوية وتأهيلية فردية (IEP) متخصصة.';
+    interpretation = 'تظهر الاستمارة قصوراً واضحاً وذا دلالة في التواصل والاستجابة الاجتماعية والسلوك التبادلي، مصحوباً بظهور بعض الأنماط السلوكية والاهتمامات المقيدة. يؤثر ذلك على التفاعل الصفي وتكوين الصداقات، ويستدعي خطة تربوية فردية (IEP) متخصصة.';
   } else {
-    category = 'قصور شديد في الاستجابة الاجتماعية (Severe Impairment)';
-    dsm5Classification = 'مؤشرات حادة لاضطراب طيف التوحد تستلزم دعماً مكثفاً (المستوى 2-3 وفق DSM-5)';
+    category = 'مؤشرات نمائية بارزة - قصور شديد (Marked / Severe Indicators)';
+    dsm5Classification = 'مؤشرات بارزة ومستمرة على اضطراب التواصل التبادلي تستلزم دعماً مكثفاً (المستوى 2-3 وفق DSM-5)';
     severityColor = '#dc2626';
-    interpretation = 'تشير الدرجة المرتفعة جداً (76T فأكثر) إلى وجود عجز شديد ومستمر في الاستجابة والتواصل الاجتماعي المتبادل، مع وجود سلوكيات تكرارية قهرية واهتمامات مقيدة تعيق الأداء الوظيفي اليومي بدرجة حادة، مما يتطلب برامج تدخل سلوكي مكثف (ABA) ودعماً تأهيلياً شاملاً.';
+    interpretation = 'تشير الدرجة المرتفعة إلى وجود عجز بارز ومستمر في الاستجابة والتواصل الاجتماعي المتبادل مع ظهور أنماط سلوكية تكرارية تعيق الأداء اليومي بدرجة حادة، مما يوصي ببرامج تدخل سلوكي مكثف وبرامج تأهيلية وتواصلية متكاملة.';
   }
 
   const subscales = [
     {
       id: 'awr',
       code: 'AWR',
-      name: 'الوعي الاجتماعي (Social Awareness)',
+      name: 'الوعي والانتباه الاجتماعي (Social Awareness)',
       shortName: 'الوعي الاجتماعي',
       raw: domainRawScores.awr,
       maxRaw: 32,
       tScore: awrT,
       percentile: tScoreToPercentile(awrT),
       level: getTScoreLevel(awrT),
-      color: '#3b82f6',
+      color: '#2563eb',
       answered: domainAnsweredCounts.awr || 0,
       total: 8,
     },
     {
       id: 'cog',
       code: 'COG',
-      name: 'الإدراك الاجتماعي (Social Cognition)',
+      name: 'الإدراك والفهم الاجتماعي (Social Cognition)',
       shortName: 'الإدراك الاجتماعي',
       raw: domainRawScores.cog,
       maxRaw: 48,
       tScore: cogT,
       percentile: tScoreToPercentile(cogT),
       level: getTScoreLevel(cogT),
-      color: '#8b5cf6',
+      color: '#7c3aed',
       answered: domainAnsweredCounts.cog || 0,
       total: 12,
     },
     {
       id: 'com',
       code: 'COM',
-      name: 'التواصل الاجتماعي (Social Communication)',
+      name: 'التواصل الاجتماعي التبادلي (Social Communication)',
       shortName: 'التواصل الاجتماعي',
       raw: domainRawScores.com,
       maxRaw: 88,
       tScore: comT,
       percentile: tScoreToPercentile(comT),
       level: getTScoreLevel(comT),
-      color: '#10b981',
+      color: '#059669',
       answered: domainAnsweredCounts.com || 0,
       total: 22,
     },
     {
       id: 'mot',
       code: 'MOT',
-      name: 'الدافعية الاجتماعية (Social Motivation)',
-      shortName: 'الدافعية الاجتماعية',
+      name: 'المبادرة والدافعية الاجتماعية (Social Motivation)',
+      shortName: 'الدافعية والمبادرة',
       raw: domainRawScores.mot,
       maxRaw: 44,
       tScore: motT,
       percentile: tScoreToPercentile(motT),
       level: getTScoreLevel(motT),
-      color: '#f59e0b',
+      color: '#d97706',
       answered: domainAnsweredCounts.mot || 0,
       total: 11,
     },
     {
       id: 'rrb',
       code: 'RRB',
-      name: 'السلوكيات المقيدة والتكرارية (RRB)',
-      shortName: 'السلوكيات النمطية',
+      name: 'الاهتمامات المقيدة والأنماط التكرارية (RRB)',
+      shortName: 'الأنماط والسلوكيات',
       raw: domainRawScores.rrb,
       maxRaw: 48,
       tScore: rrbT,
       percentile: tScoreToPercentile(rrbT),
       level: getTScoreLevel(rrbT),
-      color: '#ef4444',
+      color: '#dc2626',
       answered: domainAnsweredCounts.rrb || 0,
       total: 12,
     },
@@ -411,27 +420,27 @@ export const calculateSRS2Psychometrics = (answers = {}) => {
     sci: {
       id: 'sci_dsm',
       code: 'SCI',
-      name: 'التواصل والتفاعل الاجتماعي DSM-5 (SCI)',
+      name: 'محور التواصل والتفاعل الاجتماعي DSM-5 (SCI)',
       shortName: 'التواصل والتفاعل (SCI)',
       raw: sciRaw,
       maxRaw: 212,
       tScore: sciT,
       percentile: tScoreToPercentile(sciT),
       level: getTScoreLevel(sciT),
-      color: '#0d9488',
+      color: '#059669',
       itemsCount: 53,
     },
     rrb: {
       id: 'rrb_dsm',
       code: 'RRB',
-      name: 'السلوكيات المقيدة والاهتمامات النمطية (RRB)',
+      name: 'محور السلوكيات والاهتمامات المقيدة (RRB)',
       shortName: 'السلوكيات المقيدة (RRB)',
       raw: domainRawScores.rrb,
       maxRaw: 48,
       tScore: rrbT,
       percentile: tScoreToPercentile(rrbT),
       level: getTScoreLevel(rrbT),
-      color: '#ef4444',
+      color: '#dc2626',
       itemsCount: 12,
     }
   };

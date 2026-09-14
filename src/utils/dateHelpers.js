@@ -14,12 +14,17 @@ export function formatDateAr(d) {
 
 export function parseDob(dobStr) {
   if (!dobStr) return null;
-  const str = String(dobStr).trim();
-  const m = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-  if (m) {
-    const year = parseInt(m[1], 10);
-    const month = parseInt(m[2], 10);
-    const day = parseInt(m[3], 10);
+  // Convert any Arabic-Indic digits (٠-٩) or Persian digits to Western ASCII (0-9)
+  let str = String(dobStr).trim().replace(/[\u0660-\u0669\u06F0-\u06F9]/g, (d) => {
+    return (d.charCodeAt(0) & 0xf).toString();
+  });
+  
+  // Format YYYY-MM-DD or YYYY/MM/DD or YYYY.MM.DD
+  const mYmd = str.match(/^(\d{4})[-/. ](\d{1,2})[-/. ](\d{1,2})/);
+  if (mYmd) {
+    const year = parseInt(mYmd[1], 10);
+    const month = parseInt(mYmd[2], 10);
+    const day = parseInt(mYmd[3], 10);
     if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
       return {
         year,
@@ -31,7 +36,26 @@ export function parseDob(dobStr) {
       };
     }
   }
-  const d = new Date(dobStr);
+
+  // Format DD-MM-YYYY or DD/MM/YYYY or DD.MM.YYYY
+  const mDmy = str.match(/^(\d{1,2})[-/. ](\d{1,2})[-/. ](\d{4})/);
+  if (mDmy) {
+    const day = parseInt(mDmy[1], 10);
+    const month = parseInt(mDmy[2], 10);
+    const year = parseInt(mDmy[3], 10);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return {
+        year,
+        month,
+        day,
+        monthStr: String(month).padStart(2, '0'),
+        dayStr: String(day).padStart(2, '0'),
+        isoDate: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      };
+    }
+  }
+
+  const d = new Date(str);
   if (!isNaN(d.getTime())) {
     const year = d.getFullYear();
     const month = d.getMonth() + 1;

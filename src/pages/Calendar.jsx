@@ -191,8 +191,9 @@ function buildCalendarItems() {
 
   // Student Birthdays (أعياد ميلاد الطلاب المستفيدين مع حساب العمر تلقائياً بدقة تامة)
   students.forEach(s => {
-    if (!s.dob) return;
-    const p = parseDob(s.dob);
+    const rawDob = s.dob || s.birthDate || s.birth_date;
+    if (!rawDob) return;
+    const p = parseDob(rawDob);
     if (p) {
       yearsRange.forEach(y => {
         const iso = `${y}-${p.monthStr}-${p.dayStr}`;
@@ -217,8 +218,9 @@ function buildCalendarItems() {
 
   // Employee Birthdays (أعياد ميلاد الكادر والموظفين)
   emps.forEach(e => {
-    if (!e.dob) return;
-    const p = parseDob(e.dob);
+    const rawDob = e.dob || e.birthDate || e.birth_date;
+    if (!rawDob) return;
+    const p = parseDob(rawDob);
     if (p) {
       yearsRange.forEach(y => {
         const iso = `${y}-${p.monthStr}-${p.dayStr}`;

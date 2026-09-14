@@ -20,19 +20,32 @@ const EMPTY_PAYMENT = { amount:0, date:'', method:'تحويل بنكي', notes:'
 const PRIORITY_BADGE = { high:'b-rd', medium:'b-or', low:'b-gr' };
 const PRIORITY_LABEL = { high:'عالية', medium:'متوسطة', low:'منخفضة' };
 
+function normalizeTab(raw) {
+  if (!raw) return 'info';
+  const t = String(raw).toLowerCase();
+  if (t === 'appts' || t === 'appointments' || t === 'مواعيد' || t === 'المواعيد') return 'appts';
+  if (t === 'sessions' || t === 'sess' || t === 'جلسات' || t === 'الجلسات') return 'sessions';
+  if (t === 'iep' || t === 'خطة iep' || t === 'اهداف') return 'iep';
+  if (t === 'fees' || t === 'finance' || t === 'رسوم' || t === 'الرسوم') return 'fees';
+  if (t === 'attendance' || t === 'att' || t === 'حضور' || t === 'الغياب') return 'attendance';
+  if (t === 'reports' || t === 'تقارير') return 'reports';
+  if (t === 'behavior' || t === 'سلوك') return 'behavior';
+  if (t === 'timeline' || t === 'خط زمني') return 'timeline';
+  return 'info';
+}
+
 export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
-  const { toast, currentUser, center } = useApp();
+  const { toast, currentUser, center, viewParams } = useApp();
   const isParent = currentUser?.role === 'parent';
   const centerWa = centerWhatsAppUrl(center?.whatsapp, center?.phoneCode, center?.phone);
   const [stu, setStu] = useState(null);
   const [sections, setSections] = useState([]);
   const [tab, setTab] = useState(() => {
-    const directTab = sessionStorage.getItem('scs_student_tab');
-    if (directTab) {
+    const directTab = sessionStorage.getItem('scs_student_tab') || viewParams?.tab;
+    if (sessionStorage.getItem('scs_student_tab')) {
       sessionStorage.removeItem('scs_student_tab');
-      return directTab;
     }
-    return 'info';
+    return normalizeTab(directTab);
   });
   const [emps, setEmps] = useState([]);
   const [iepGoals, setIepGoals] = useState([]);
@@ -176,6 +189,16 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
 
 
   useEffect(() => { load(); }, [stuId]);
+
+  useEffect(() => {
+    const rawTab = sessionStorage.getItem('scs_student_tab') || viewParams?.tab;
+    if (sessionStorage.getItem('scs_student_tab')) {
+      sessionStorage.removeItem('scs_student_tab');
+    }
+    if (rawTab) {
+      setTab(normalizeTab(rawTab));
+    }
+  }, [viewParams, stuId]);
   useEffect(() => {
     if (!stu || !isParent) return;
     if (!parentCanViewStudent(stu, currentUser)) {

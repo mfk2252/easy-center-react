@@ -50,7 +50,7 @@ export default function SRS2ReportModal({
       <tr style="border-bottom:1px solid #e2e8f0;">
         <td style="padding:8px 12px;font-weight:bold;color:#065f46;">
           ${s.name}
-          <div style="font-size:11px;color:#64748b;font-weight:normal;">كود المقياس: ${s.code}</div>
+          <div style="font-size:11px;color:#64748b;font-weight:normal;">رمز المجال: [${s.code}]</div>
         </td>
         <td style="padding:8px 12px;text-align:center;">${s.raw} / ${s.maxRaw}</td>
         <td style="padding:8px 12px;text-align:center;font-weight:bold;color:#047857;font-size:14px;">${s.tScore} T</td>
@@ -74,7 +74,7 @@ export default function SRS2ReportModal({
       <tr style="border-bottom:1px solid #e2e8f0;background:#f0fdf4;">
         <td style="padding:8px 12px;font-weight:bold;color:#0f766e;">
           ${psychometrics.dsmScales.sci.name}
-          <div style="font-size:11px;color:#0d9488;font-weight:normal;">المقاييس المدمجة: AWR + COG + COM + MOT (53 بنداً)</div>
+          <div style="font-size:11px;color:#0d9488;font-weight:normal;">مجالات التواصل والتفاعل المدمجة (53 بنداً)</div>
         </td>
         <td style="padding:8px 12px;text-align:center;">${psychometrics.dsmScales.sci.raw} / 212</td>
         <td style="padding:8px 12px;text-align:center;font-weight:bold;color:#0f766e;font-size:14px;">${psychometrics.dsmScales.sci.tScore} T</td>
@@ -84,7 +84,7 @@ export default function SRS2ReportModal({
       <tr style="border-bottom:1px solid #e2e8f0;background:#fef2f2;">
         <td style="padding:8px 12px;font-weight:bold;color:#b91c1c;">
           ${psychometrics.dsmScales.rrb.name}
-          <div style="font-size:11px;color:#ef4444;font-weight:normal;">مقياس السلوكيات النمطية والاهتمامات المقيدة (12 بنداً)</div>
+          <div style="font-size:11px;color:#ef4444;font-weight:normal;">مجال السلوكيات النمطية والاهتمامات المقيدة (12 بنداً)</div>
         </td>
         <td style="padding:8px 12px;text-align:center;">${psychometrics.dsmScales.rrb.raw} / 48</td>
         <td style="padding:8px 12px;text-align:center;font-weight:bold;color:#b91c1c;font-size:14px;">${psychometrics.dsmScales.rrb.tScore} T</td>
@@ -107,7 +107,7 @@ export default function SRS2ReportModal({
         1: '1 - غير صحيح',
         2: '2 - أحياناً',
         3: '3 - غالباً',
-        4: '4 - دائماً تقريباً'
+        4: '4 - دائماً'
       };
 
       const domMeta = SRS2_DOMAINS.find(d => d.id === it.domainId);
@@ -118,7 +118,7 @@ export default function SRS2ReportModal({
           <td style="padding:6px 8px;text-align:center;font-weight:bold;color:#64748b;">${idx + 1}</td>
           <td style="padding:6px 8px;font-weight:600;font-size:12px;">
             ${it.text}
-            ${it.isReverse ? '<span style="font-size:10px;color:#047857;background:#ecfdf5;padding:1px 4px;border-radius:3px;margin-right:4px;">(بند مقلوب)</span>' : ''}
+            ${it.isReverse ? '<span style="font-size:10px;color:#047857;background:#ecfdf5;padding:1px 4px;border-radius:3px;margin-right:4px;">(بند إيجابي معكوس)</span>' : ''}
           </td>
           <td style="padding:6px 8px;text-align:center;font-size:11px;color:#64748b;">${domMeta?.name?.split(' ')[0] || ''}</td>
           <td style="padding:6px 8px;text-align:center;font-weight:bold;color:#047857;font-size:11px;">
@@ -137,20 +137,19 @@ export default function SRS2ReportModal({
         <!-- Header -->
         <div style="border-bottom:3px solid #0d9488;padding-bottom:12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
           <div>
-            <h1 style="color:#065f46;font-size:22px;margin:0 0 4px 0;">👥 تقرير التقييم والتشخيص الإكلينيكي المعتمد (SRS-2)</h1>
-            <p style="margin:0;font-size:13px;color:#64748b;">مقياس الاستجابة الاجتماعية — الإصدار الثاني (Social Responsiveness Scale, Second Edition)</p>
+            <h1 style="color:#065f46;font-size:20px;margin:0 0 4px 0;">👥 تقرير الملاحظة والفرز النمائي للاستجابة والتواصل الاجتماعي</h1>
+            <p style="margin:0;font-size:13px;color:#64748b;">Social Communication & Interaction Observational Screening (DSM-5 Criteria)</p>
           </div>
           <div style="text-align:left;font-size:12px;color:#475569;">
             <div><b>التاريخ:</b> ${assessment.date || '—'}</div>
-            <div><b>المركز:</b> ${center?.name || 'مركز التربية الخاصة والتأهيل النفسي'}</div>
+            <div><b>المركز:</b> ${center?.name || 'مركز التربية الخاصة والتأهيل'}</div>
           </div>
         </div>
 
-        <!-- COPYRIGHT & INTELLECTUAL PROPERTY BOX -->
+        <!-- NOTICE BOX -->
         <div style="background:#ecfdf5;border:1px solid #6ee7b7;border-radius:6px;padding:8px 12px;margin-bottom:14px;font-size:11px;color:#065f46;line-height:1.5;">
-          <b>⚖️ إشعار حقوق الملكية الفكرية والاعتماد العلمي:</b> مقياس الاستجابة الاجتماعية — الإصدار الثاني (SRS-2) · 
-          إعداد: <b>${SRS2_COPYRIGHT_INFO.authorsAr}</b> (${SRS2_COPYRIGHT_INFO.authorsEn}) · 
-          الناشر: <b>${SRS2_COPYRIGHT_INFO.publisherAr}</b> · 
+          <b>📜 طبيعة الأداة:</b> ${SRS2_COPYRIGHT_INFO.scaleFullNameAr} · 
+          الإعداد: <b>${SRS2_COPYRIGHT_INFO.authorsAr}</b> · 
           ${SRS2_COPYRIGHT_INFO.standardNormsAr}.
           <div style="margin-top:3px;font-size:10px;color:#047857;">
             ${SRS2_COPYRIGHT_INFO.licensingNotice}
@@ -166,17 +165,17 @@ export default function SRS2ReportModal({
           </tr>
           <tr>
             <td style="padding:4px 8px;"><b>التشخيص المبدئي:</b> ${assessment.diagnosis || '—'}</td>
-            <td style="padding:4px 8px;"><b>المستجيب (Rater):</b> ${assessment.raterName || '—'} (${assessment.raterRelation || '—'})</td>
-            <td style="padding:4px 8px;"><b>الأخصائي الفاحص:</b> ${assessment.examinerName || '—'}</td>
+            <td style="padding:4px 8px;"><b>القائم بالملاحظة:</b> ${assessment.raterName || '—'} (${assessment.raterRelation || '—'})</td>
+            <td style="padding:4px 8px;"><b>الأخصائي المشرف:</b> ${assessment.examinerName || '—'}</td>
           </tr>
         </table>
 
         <!-- Psychometric Dashboard -->
         <div style="background:#ecfdf5;border:1.5px solid #a7f3d0;border-radius:8px;padding:12px;margin-bottom:16px;">
-          <h3 style="margin:0 0 10px 0;color:#065f46;font-size:15px;">📊 المؤشرات السيكومترية والدرجة التائية الإجمالية (SRS-2 Dashboard)</h3>
+          <h3 style="margin:0 0 10px 0;color:#065f46;font-size:15px;">📊 المؤشرات السيكومترية والدرجة التائية التقديرية</h3>
           <div style="display:flex;justify-content:space-around;text-align:center;font-size:12px;flex-wrap:wrap;gap:8px;">
             <div style="background:#fff;padding:8px 14px;border-radius:6px;border:1px solid #6ee7b7;min-width:130px;">
-              <span style="color:#64748b;display:block;font-size:11px;">الدرجة التائية الكلية (Total T)</span>
+              <span style="color:#64748b;display:block;font-size:11px;">الدرجة التائية التقديرية (Total T)</span>
               <span style="font-size:22px;font-weight:900;color:${psychometrics.severityColor};">${psychometrics.totalTScore}T</span>
             </div>
             <div style="background:#fff;padding:8px 14px;border-radius:6px;border:1px solid #6ee7b7;min-width:130px;">
@@ -197,22 +196,22 @@ export default function SRS2ReportModal({
             </div>
           </div>
           <div style="margin-top:10px;text-align:center;padding:6px;background:#fff;border-radius:6px;border:1px solid #6ee7b7;">
-            <span style="font-size:12px;color:#64748b;">التصنيف والشدة الإكلينيكية: </span>
+            <span style="font-size:12px;color:#64748b;">النتيجة والاستنتاج النمائي: </span>
             <strong style="color:${psychometrics.severityColor};font-size:13px;">${psychometrics.category}</strong>
             <span style="font-size:11px;color:#64748b;margin-right:8px;">[${psychometrics.dsm5Classification}]</span>
           </div>
         </div>
 
         <!-- Subscales Breakdown Table -->
-        <h3 style="color:#065f46;font-size:14px;margin:14px 0 8px 0;">📋 نتائج المقاييس الفرعية العلاجية ومؤشرات DSM-5 المعتمدة:</h3>
+        <h3 style="color:#065f46;font-size:14px;margin:14px 0 8px 0;">📋 نتائج مجالات الملاحظة الخمسة ومؤشرات DSM-5:</h3>
         <table style="width:100%;margin-bottom:16px;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
           <thead>
             <tr style="background:#f1f5f9;border-bottom:2px solid #cbd5e1;">
-              <th style="padding:8px 12px;text-align:right;">المقياس الفرعي</th>
+              <th style="padding:8px 12px;text-align:right;">المجال النمائي</th>
               <th style="padding:8px 12px;text-align:center;">الدرجة الخام</th>
               <th style="padding:8px 12px;text-align:center;">الدرجة التائية (T)</th>
               <th style="padding:8px 12px;text-align:center;">الرتبة المئينية</th>
-              <th style="padding:8px 12px;text-align:center;">مستوى القصور</th>
+              <th style="padding:8px 12px;text-align:center;">مستوى المؤشرات</th>
             </tr>
           </thead>
           <tbody>
@@ -223,7 +222,7 @@ export default function SRS2ReportModal({
 
         <!-- Clinical Narrative -->
         <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:12px;margin-bottom:14px;">
-          <h3 style="margin:0 0 6px 0;color:#065f46;font-size:14px;">📝 الخلاصة والتقرير الإكلينيكي:</h3>
+          <h3 style="margin:0 0 6px 0;color:#065f46;font-size:14px;">📝 الخلاصة والتقرير النمائي:</h3>
           <p style="margin:0;font-size:12px;line-height:1.6;color:#334155;white-space:pre-wrap;">${assessment.clinicalSummary || psychometrics.interpretation}</p>
         </div>
 
@@ -234,12 +233,12 @@ export default function SRS2ReportModal({
         </div>
 
         <!-- All Items Table -->
-        <h3 style="color:#065f46;font-size:14px;margin:14px 0 8px 0;">🔍 تفريغ درجات بنود المقياس الـ 65 كاملة:</h3>
+        <h3 style="color:#065f46;font-size:14px;margin:14px 0 8px 0;">🔍 تفريغ درجات بنود الملاحظة الـ 65 كاملة:</h3>
         <table style="width:100%;margin-bottom:20px;border-collapse:collapse;font-size:11px;background:#fff;border:1px solid #e2e8f0;">
           <thead>
             <tr style="background:#f1f5f9;border-bottom:2px solid #cbd5e1;">
               <th style="padding:6px;width:30px;text-align:center;">#</th>
-              <th style="padding:6px;text-align:right;">نص البند التقييمي</th>
+              <th style="padding:6px;text-align:right;">نص البند الملاحظي</th>
               <th style="padding:6px;width:80px;text-align:center;">المجال</th>
               <th style="padding:6px;width:120px;text-align:center;">الاستجابة المسجلة</th>
               <th style="padding:6px;width:50px;text-align:center;">الدرجة</th>
@@ -254,7 +253,7 @@ export default function SRS2ReportModal({
         <!-- Signatures Footer -->
         <div style="margin-top:24px;border-top:1px solid #cbd5e1;padding-top:14px;display:flex;justify-content:space-between;font-size:12px;color:#475569;">
           <div>
-            <b>الأخصائي الفاحص:</b> ${assessment.examinerName || '________________'}
+            <b>الأخصائي المشرف:</b> ${assessment.examinerName || '________________'}
             <br /><span style="font-size:10px;">التوقيع والاعتماد</span>
           </div>
           <div>
@@ -272,7 +271,7 @@ export default function SRS2ReportModal({
         <html dir="rtl" lang="ar">
         <head>
           <meta charset="utf-8" />
-          <title>تقرير SRS-2 - ${assessment.studentName || 'مفحوص'}</title>
+          <title>تقرير الملاحظة النمائية للتواصل الاجتماعي - ${assessment.studentName || 'مفحوص'}</title>
           <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
           <style>
             body { margin: 0; padding: 0; background: #fff; font-family: 'Tajawal', sans-serif; }
@@ -297,14 +296,14 @@ export default function SRS2ReportModal({
   }
 
   function handleShareWhatsApp() {
-    const summaryText = `*تقرير تقييم مقياس الاستجابة الاجتماعية (SRS-2)*\n` +
+    const summaryText = `*تقرير الملاحظة والفرز النمائي للاستجابة والتواصل الاجتماعي (DSM-5)*\n` +
       `👤 *المفحوص:* ${assessment.studentName || '—'}\n` +
       `📅 *التاريخ:* ${assessment.date || '—'}\n` +
-      `📊 *الدرجة التائية الكلية:* ${psychometrics.totalTScore}T (مئيني: ${psychometrics.overallPercentile}%)\n` +
-      `🎯 *التصنيف:* ${psychometrics.category}\n` +
+      `📊 *الدرجة التائية التقديرية:* ${psychometrics.totalTScore}T (مئيني: ${psychometrics.overallPercentile}%)\n` +
+      `🎯 *النتيجة والاستنتاج:* ${psychometrics.category}\n` +
       `📋 *مؤشر DSM-5 (SCI):* ${psychometrics.dsmScales.sci.tScore}T\n` +
       `🔄 *مؤشر DSM-5 (RRB):* ${psychometrics.dsmScales.rrb.tScore}T\n\n` +
-      `📌 *الخلاصة الإكلينيكية:* ${assessment.clinicalSummary?.slice(0, 200) || psychometrics.interpretation.slice(0, 200)}...`;
+      `📌 *الخلاصة:* ${assessment.clinicalSummary?.slice(0, 200) || psychometrics.interpretation.slice(0, 200)}...`;
 
     sendReportToWhatsApp({
       phone: assessment.phone || '',
@@ -313,7 +312,7 @@ export default function SRS2ReportModal({
   }
 
   return (
-    <div className="mbg">
+    <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()}>
       <div
         className="mb"
         style={{
@@ -322,6 +321,9 @@ export default function SRS2ReportModal({
           maxHeight: 'min(94vh, calc(100dvh - 20px))',
           display: 'flex',
           flexDirection: 'column',
+          borderRadius: 16,
+          overflow: 'hidden',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         }}
       >
         {/* Report Main Header */}
@@ -343,14 +345,14 @@ export default function SRS2ReportModal({
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <h2 style={{ fontSize: '1.18rem', fontWeight: 800, margin: 0, color: '#fff' }}>
-                  تقرير التقييم والتشخيص الإكلينيكي المعتمد (SRS-2)
+                  تقرير الملاحظة والفرز النمائي للاستجابة والتواصل الاجتماعي (DSM-5)
                 </h2>
                 <span className="bdg" style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>
-                  Social Responsiveness Scale
+                  أداة استرشادية داخلية
                 </span>
               </div>
               <div style={{ fontSize: '0.78rem', opacity: 0.95, marginTop: 2 }}>
-                {assessment.studentName} · {assessment.date} · المعايير المقننة وفق DSM-5
+                {assessment.studentName} · {assessment.date} · مؤشرات استرشادية لمهارات التواصل والسلوك
               </div>
             </div>
           </div>
@@ -412,7 +414,7 @@ export default function SRS2ReportModal({
 
         {/* Scrollable Report Content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Copyright Scientific Notice */}
+          {/* Scientific Notice */}
           <div
             style={{
               background: '#ecfdf5',
@@ -429,15 +431,14 @@ export default function SRS2ReportModal({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: '1.2rem' }}>⚖️</span>
+              <span style={{ fontSize: '1.2rem' }}>📜</span>
               <div>
-                <strong>إشعار حقوق الملكية الفكرية والأمانة العلمية:</strong> {SRS2_COPYRIGHT_INFO.scaleFullNameAr} · 
-                المؤلفون: {SRS2_COPYRIGHT_INFO.authorsAr} ({SRS2_COPYRIGHT_INFO.authorsEn}) · 
-                الناشر: {SRS2_COPYRIGHT_INFO.publisherAr}.
+                <strong>المرجعية المنهجية:</strong> {SRS2_COPYRIGHT_INFO.scaleFullNameAr} · 
+                {SRS2_COPYRIGHT_INFO.standardNormsAr}.
               </div>
             </div>
             <span style={{ fontSize: '0.72rem', background: '#d1fae5', padding: '3px 8px', borderRadius: 6, border: '1px solid #6ee7b7', fontWeight: 700 }}>
-              معايير مقننة وفق DSM-5
+              استمارة فرز وملاحظة نمائية
             </span>
           </div>
 
@@ -468,11 +469,11 @@ export default function SRS2ReportModal({
                 <strong>{assessment.diagnosis || '—'}</strong>
               </div>
               <div>
-                <span style={{ color: 'var(--text-sub)' }}>الأخصائي الفاحص: </span>
+                <span style={{ color: 'var(--text-sub)' }}>الأخصائي المشرف: </span>
                 <strong>{assessment.examinerName || '—'}</strong>
               </div>
               <div>
-                <span style={{ color: 'var(--text-sub)' }}>المستجيب (Rater): </span>
+                <span style={{ color: 'var(--text-sub)' }}>القائم بالملاحظة: </span>
                 <strong>{assessment.raterName || '—'} ({assessment.raterRelation || '—'})</strong>
               </div>
               <div>
@@ -499,7 +500,7 @@ export default function SRS2ReportModal({
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
               <h3 style={{ margin: 0, color: '#065f46', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span>📊</span> المؤشرات السيكومترية والدرجات المعيارية التائية (SRS-2 Summary Dashboard):
+                <span>📊</span> المؤشرات السيكومترية والدرجات التائية التقديرية:
               </h3>
               <span className="bdg" style={{ background: '#d1fae5', color: '#065f46', fontWeight: 700, fontSize: '0.74rem' }}>
                 Mean = 50 · SD = 10 · SEM = ±{psychometrics.sem}T
@@ -509,7 +510,7 @@ export default function SRS2ReportModal({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
               {/* Total T-Score */}
               <div style={{ background: '#fff', padding: '12px', borderRadius: 8, border: `2px solid ${psychometrics.severityColor}`, textAlign: 'center' }}>
-                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', display: 'block' }}>الدرجة التائية الكلية (Total T)</span>
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', display: 'block' }}>الدرجة التائية التقديرية (Total T)</span>
                 <span style={{ fontSize: '1.6rem', fontWeight: 900, color: psychometrics.severityColor }}>
                   {psychometrics.totalTScore}T
                 </span>
@@ -531,7 +532,7 @@ export default function SRS2ReportModal({
 
               {/* DSM-5 SCI */}
               <div style={{ background: '#fff', padding: '12px', borderRadius: 8, border: '1px solid #a7f3d0', textAlign: 'center' }}>
-                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', display: 'block' }}>مؤشر DSM-5 التواصلي (SCI)</span>
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', display: 'block' }}>مؤشر التفاعل والتواصل (SCI)</span>
                 <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f766e' }}>
                   {psychometrics.dsmScales.sci.tScore}T
                 </span>
@@ -542,7 +543,7 @@ export default function SRS2ReportModal({
 
               {/* DSM-5 RRB */}
               <div style={{ background: '#fff', padding: '12px', borderRadius: 8, border: '1px solid #a7f3d0', textAlign: 'center' }}>
-                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', display: 'block' }}>مؤشر DSM-5 النمطي (RRB)</span>
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', display: 'block' }}>مؤشر السلوك المقيد (RRB)</span>
                 <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#dc2626' }}>
                   {psychometrics.dsmScales.rrb.tScore}T
                 </span>
@@ -568,7 +569,7 @@ export default function SRS2ReportModal({
               }}
             >
               <div>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)' }}>التصنيف والنتيجة الإكلينيكية العامة: </span>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)' }}>النتيجة والاستنتاج النمائي: </span>
                 <strong style={{ fontSize: '0.95rem', color: psychometrics.severityColor }}>{psychometrics.category}</strong>
               </div>
               <span className="bdg" style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0', fontSize: '0.78rem', fontWeight: 700 }}>
@@ -588,7 +589,7 @@ export default function SRS2ReportModal({
           >
             <div style={{ padding: '12px 16px', background: 'var(--g0)', borderBottom: '1px solid var(--border-color)' }}>
               <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                📋 تفصيل المقاييس الفرعية العلاجية ومؤشرات DSM-5 المعتمدة:
+                📋 تفصيل مجالات الملاحظة الخمسة ومؤشرات DSM-5:
               </h3>
             </div>
 
@@ -596,11 +597,11 @@ export default function SRS2ReportModal({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
                 <thead>
                   <tr style={{ background: 'var(--g0)', borderBottom: '1px solid var(--border-color)' }}>
-                    <th style={{ padding: '10px 12px', textAlign: 'right' }}>المقياس الفرعي</th>
+                    <th style={{ padding: '10px 12px', textAlign: 'right' }}>المجال النمائي</th>
                     <th style={{ padding: '10px 10px', textAlign: 'center' }}>الدرجة الخام</th>
                     <th style={{ padding: '10px 10px', textAlign: 'center' }}>الدرجة التائية (T-Score)</th>
                     <th style={{ padding: '10px 10px', textAlign: 'center' }}>الرتبة المئينية</th>
-                    <th style={{ padding: '10px 10px', textAlign: 'center' }}>مستوى القصور</th>
+                    <th style={{ padding: '10px 10px', textAlign: 'center' }}>مستوى المؤشرات</th>
                     <th style={{ padding: '10px 12px', textAlign: 'right', width: '180px' }}>مستوى الشدة البصري</th>
                   </tr>
                 </thead>
@@ -611,7 +612,7 @@ export default function SRS2ReportModal({
                       <tr key={s.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                         <td style={{ padding: '10px 12px' }}>
                           <strong style={{ color: s.color }}>{s.name}</strong>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>كود المقياس: [{s.code}] · {s.total} بنود</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>رمز المجال: [{s.code}] · {s.total} بنود</div>
                         </td>
                         <td style={{ padding: '10px 10px', textAlign: 'center', fontWeight: 700 }}>
                           {s.raw} / {s.maxRaw}
@@ -707,7 +708,7 @@ export default function SRS2ReportModal({
             {/* Clinical Summary */}
             <div style={{ background: 'var(--g0)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '14px' }}>
               <h4 style={{ margin: '0 0 8px 0', fontSize: '0.88rem', fontWeight: 800, color: '#065f46' }}>
-                📝 التقرير والخلاصة الإكلينيكية:
+                📝 التقرير والخلاصة النمائية:
               </h4>
               <div style={{ fontSize: '0.8rem', lineHeight: 1.6, color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>
                 {assessment.clinicalSummary || psychometrics.interpretation}
@@ -747,119 +748,124 @@ export default function SRS2ReportModal({
               }}
             >
               <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                🔍 تفريغ الاستجابات على بنود المقياس الـ 65 ({filteredItems.length} بنداً معروضاً):
+                🔍 تفريغ الاستجابات على بنود الملاحظة الـ 65 ({filteredItems.length} بنداً معروضاً):
               </h3>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                 <input
                   type="text"
                   className="inp"
-                  style={{ fontSize: '0.74rem', padding: '4px 10px', width: 160 }}
-                  placeholder="بحث في نص البند..."
+                  style={{ height: 28, fontSize: '0.74rem', padding: '2px 8px', width: 140, borderRadius: 20 }}
+                  placeholder="بحث في البنود..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                 />
                 <select
                   className="inp"
-                  style={{ fontSize: '0.74rem', padding: '4px 8px' }}
+                  style={{ height: 28, fontSize: '0.74rem', padding: '2px 8px', borderRadius: 20 }}
                   value={activeDomainFilter}
                   onChange={e => setActiveDomainFilter(e.target.value)}
                 >
-                  <option value="all">جميع المقاييس (65)</option>
+                  <option value="all">جميع المجالات (65)</option>
                   {SRS2_DOMAINS.map(d => (
-                    <option key={d.id} value={d.id}>{d.name} ({d.itemsCount})</option>
+                    <option key={d.id} value={d.id}>
+                      {d.name} ({d.itemsCount})
+                    </option>
                   ))}
                 </select>
               </div>
             </div>
 
-            <div style={{ overflowX: 'auto', maxHeight: '380px' }}>
+            <div style={{ overflowX: 'auto', maxHeight: '400px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
-                <thead style={{ position: 'sticky', top: 0, zIndex: 2, background: 'var(--g0)' }}>
-                  <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
-                    <th style={{ padding: '8px 6px', width: '40px', textAlign: 'center' }}>#</th>
-                    <th style={{ padding: '8px 10px', textAlign: 'right' }}>نص البند التقييمي</th>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
+                  <tr style={{ background: 'var(--g0)', borderBottom: '2px solid var(--border-color)' }}>
+                    <th style={{ padding: '8px 8px', width: '45px', textAlign: 'center' }}>#</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'right' }}>نص البند التقييمي</th>
                     <th style={{ padding: '8px 8px', width: '110px', textAlign: 'center' }}>المجال</th>
-                    <th style={{ padding: '8px 10px', width: '150px', textAlign: 'center' }}>الاستجابة المسجلة</th>
-                    <th style={{ padding: '8px 8px', width: '60px', textAlign: 'center' }}>الدرجة</th>
-                    <th style={{ padding: '8px 10px', width: '160px', textAlign: 'right' }}>ملاحظات نوعية</th>
+                    <th style={{ padding: '8px 10px', width: '130px', textAlign: 'center' }}>الاستجابة المسجلة</th>
+                    <th style={{ padding: '8px 8px', width: '70px', textAlign: 'center' }}>الدرجة</th>
+                    <th style={{ padding: '8px 10px', width: '140px', textAlign: 'right' }}>ملاحظات نوعية</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredItems.map(it => {
+                  {(() => {
                     const answers = assessment.results || assessment.scores || {};
-                    const rawVal = answers[it.id] !== undefined && answers[it.id] !== null ? Number(answers[it.id]) : null;
-                    let calculatedScore = rawVal;
-                    if (rawVal !== null && it.isReverse) {
-                      calculatedScore = 5 - rawVal;
-                    }
+                    const notes = assessment.itemNotes || {};
 
-                    const note = assessment.itemNotes?.[it.id] || '';
-                    const domMeta = SRS2_DOMAINS.find(d => d.id === it.domainId);
-                    const isDeficit = calculatedScore !== null && calculatedScore >= 3;
+                    return filteredItems.map((it, idx) => {
+                      const rawVal = answers[it.id] !== undefined && answers[it.id] !== null ? Number(answers[it.id]) : null;
+                      let calculatedScore = rawVal;
+                      if (rawVal !== null && it.isReverse) {
+                        calculatedScore = 5 - rawVal;
+                      }
 
-                    const responseLabels = {
-                      1: '1 - غير صحيح',
-                      2: '2 - أحياناً',
-                      3: '3 - غالباً',
-                      4: '4 - دائماً تقريباً'
-                    };
+                      const note = notes[it.id] || '';
+                      const dom = SRS2_DOMAINS.find(d => d.id === it.domainId);
+                      const isDeficit = calculatedScore !== null && calculatedScore >= 3;
 
-                    return (
-                      <tr
-                        key={it.id}
-                        style={{
-                          borderBottom: '1px solid var(--border-color)',
-                          background: isDeficit ? 'rgba(239, 68, 68, 0.05)' : (calculatedScore === 2 ? 'rgba(245, 158, 11, 0.04)' : 'transparent'),
-                        }}
-                      >
-                        <td style={{ padding: '6px 6px', textAlign: 'center', fontWeight: 800, color: 'var(--text-sub)' }}>
-                          {it.id.replace('s', '')}
-                        </td>
-                        <td style={{ padding: '6px 10px', lineHeight: 1.4 }}>
-                          <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>
+                      const labels = {
+                        1: '1 - غير صحيح',
+                        2: '2 - أحياناً',
+                        3: '3 - غالباً',
+                        4: '4 - دائماً'
+                      };
+
+                      return (
+                        <tr
+                          key={it.id}
+                          style={{
+                            borderBottom: '1px solid var(--border-color)',
+                            background: isDeficit ? 'rgba(239, 68, 68, 0.06)' : 'transparent',
+                          }}
+                        >
+                          <td style={{ padding: '8px 8px', textAlign: 'center', fontWeight: 700, color: 'var(--text-sub)' }}>
+                            {idx + 1}
+                          </td>
+                          <td style={{ padding: '8px 12px', fontWeight: 600 }}>
                             {it.text}
-                          </div>
-                          {it.isReverse && (
-                            <span className="bdg" style={{ background: '#ecfdf5', color: '#047857', fontSize: '0.64rem', fontWeight: 700, marginTop: 2 }}>
-                              🔄 بند إيجابي مقلوب
+                            {it.isReverse && (
+                              <span style={{ fontSize: '0.68rem', color: '#059669', background: '#ecfdf5', padding: '1px 6px', borderRadius: 4, marginRight: 6 }}>
+                                (بند إيجابي معكوس)
+                              </span>
+                            )}
+                          </td>
+                          <td style={{ padding: '8px 8px', textAlign: 'center' }}>
+                            <span
+                              style={{
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                padding: '2px 6px',
+                                borderRadius: 10,
+                                background: dom?.bgLight,
+                                color: dom?.color,
+                                border: `1px solid ${dom?.borderColor}`,
+                              }}
+                            >
+                              {dom?.code}
                             </span>
-                          )}
-                        </td>
-                        <td style={{ padding: '6px 8px', textAlign: 'center' }}>
-                          <span
-                            className="bdg"
-                            style={{
-                              background: domMeta?.bgLight || '#f1f5f9',
-                              color: domMeta?.color || '#334155',
-                              border: `1px solid ${domMeta?.borderColor || '#cbd5e1'}`,
-                              fontSize: '0.66rem',
-                              fontWeight: 700,
-                            }}
-                          >
-                            {domMeta?.code} · {domMeta?.name ? domMeta.name.split(' ')[0] : ''}
-                          </span>
-                        </td>
-                        <td style={{ padding: '6px 10px', textAlign: 'center', fontWeight: 700, color: '#047857', fontSize: '0.76rem' }}>
-                          {rawVal ? responseLabels[rawVal] : '—'}
-                        </td>
-                        <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 800, color: isDeficit ? '#dc2626' : 'var(--text-main)' }}>
-                          {calculatedScore !== null ? calculatedScore : '—'}
-                        </td>
-                        <td style={{ padding: '6px 10px', fontSize: '0.74rem', color: 'var(--text-sub)' }}>
-                          {note || '—'}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          </td>
+                          <td style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 700, color: '#047857' }}>
+                            {rawVal ? labels[rawVal] : '—'}
+                          </td>
+                          <td style={{ padding: '8px 8px', textAlign: 'center', fontWeight: 800, color: isDeficit ? '#dc2626' : 'var(--text-main)' }}>
+                            {calculatedScore !== null ? calculatedScore : '—'}
+                          </td>
+                          <td style={{ padding: '8px 10px', fontSize: '0.74rem', color: 'var(--text-sub)' }}>
+                            {note || '—'}
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })()}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
 
-        {/* Modal Footer */}
+        {/* Report Footer Actions */}
         <div
-          className="modal-footer"
           style={{
             padding: '12px 20px',
             borderTop: '1px solid var(--border-color)',
@@ -872,18 +878,16 @@ export default function SRS2ReportModal({
             flexShrink: 0,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.78rem', color: 'var(--text-sub)' }}>
-            <span>👥 {SRS2_COPYRIGHT_INFO.scaleFullNameAr}</span>
-            <span>·</span>
-            <span>{SRS2_COPYRIGHT_INFO.publisherAr}</span>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>
+            معتمد بواسطة: <strong>{assessment.examinerName || 'الأخصائي الفاحص'}</strong> · {assessment.date}
           </div>
 
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <button
               type="button"
               className="btn btn-outline"
               onClick={onClose}
-              style={{ fontSize: '0.82rem', padding: '6px 16px', fontWeight: 700 }}
+              style={{ fontSize: '0.82rem', padding: '7px 16px', fontWeight: 700 }}
             >
               إغلاق
             </button>
@@ -892,10 +896,10 @@ export default function SRS2ReportModal({
               className="btn btn-primary"
               onClick={handlePrint}
               style={{
-                background: 'linear-gradient(135deg, #059669 0%, #0d9488 100%)',
+                background: 'linear-gradient(135deg, #065f46 0%, #0d9488 100%)',
                 border: 'none',
                 fontSize: '0.82rem',
-                padding: '6px 20px',
+                padding: '7px 20px',
                 fontWeight: 800,
                 color: '#fff',
               }}
@@ -911,14 +915,22 @@ export default function SRS2ReportModal({
         <IepBridgeModal
           isOpen={bridgeOpen}
           onClose={() => setBridgeOpen(false)}
-          measureId="srs"
-          scaleName="مقياس الاستجابة الاجتماعية (SRS-2)"
-          studentId={assessment.stuId}
-          studentName={assessment.studentName}
-          assessmentScores={assessment.results || assessment.scores || {}}
-          scaleItems={SRS2_ITEMS}
-          recommendedGoals={recommendedGoals}
-          assessmentDate={assessment.date}
+          student={{
+            id: assessment.stuId,
+            name: assessment.studentName,
+            dob: assessment.dob,
+            age: assessment.age,
+            diagnosis: assessment.diagnosis,
+          }}
+          assessmentData={{
+            ...assessment,
+            scaleId: 'srs',
+            measureId: 'srs',
+            measureName: 'استمارة الملاحظة والفرز النمائي للاستجابة والتواصل الاجتماعي (DSM-5)',
+            scores: assessment.results || assessment.scores || {},
+          }}
+          assessmentItems={SRS2_ITEMS}
+          scaleId="srs"
         />
       )}
     </div>

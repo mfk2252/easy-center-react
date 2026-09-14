@@ -24,7 +24,7 @@ const EMPTY_SRS2_FORM = {
   raterRelation: 'الأم',
   relationshipDuration: 'سنتان فأكثر',
   examinerName: '',
-  examinerRole: 'أخصائي تشخيص وتأهيل توحد',
+  examinerRole: 'أخصائي تشخيص وتأهيل نمائي',
   date: todayStr(),
   notes: '',
   itemNotes: {},
@@ -78,8 +78,8 @@ export default function SRS2AssessmentModal({
   const { toast, currentUser } = useApp();
 
   const [form, setForm] = useState(() => normalizeFormState(initialData, currentUser));
-
   const [activeDomainFilter, setActiveDomainFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [showCopyrightDetails, setShowCopyrightDetails] = useState(false);
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
   const [isManualEdit, setIsManualEdit] = useState(false);
@@ -87,6 +87,8 @@ export default function SRS2AssessmentModal({
   useEffect(() => {
     if (isOpen) {
       setForm(normalizeFormState(initialData, currentUser));
+      setActiveDomainFilter('all');
+      setSearchQuery('');
     }
   }, [isOpen, initialData, currentUser]);
 
@@ -133,9 +135,12 @@ export default function SRS2AssessmentModal({
 
   const filteredItems = useMemo(() => {
     const items = SRS2_ITEMS || [];
-    if (activeDomainFilter === 'all') return items;
-    return items.filter(it => it.domainId === activeDomainFilter);
-  }, [activeDomainFilter]);
+    return items.filter(it => {
+      const matchDomain = activeDomainFilter === 'all' || it.domainId === activeDomainFilter;
+      const matchSearch = !searchQuery.trim() || it.text.toLowerCase().includes(searchQuery.trim().toLowerCase()) || it.id.includes(searchQuery.trim());
+      return matchDomain && matchSearch;
+    });
+  }, [activeDomainFilter, searchQuery]);
 
   if (!isOpen) return null;
 
@@ -170,68 +175,63 @@ export default function SRS2AssessmentModal({
     SRS2_ITEMS.forEach(it => {
       // 1: Not true, 2: Sometimes, 3: Often, 4: Almost always
       if (level === 'normal') {
-        // Normal profile: negative items = 1, reverse positive items = 4
         scores[it.id] = it.isReverse ? 4 : 1;
       } else if (level === 'mild') {
-        // Mild Impairment: mix of 2 and some 3s
         if (it.isReverse) {
           scores[it.id] = (it.id.charCodeAt(1) % 2 === 0) ? 3 : 2;
         } else {
           scores[it.id] = (it.id.charCodeAt(1) % 3 === 0) ? 3 : 2;
         }
       } else if (level === 'moderate') {
-        // Moderate Impairment: Mostly 3s and some 4s
         if (it.isReverse) {
           scores[it.id] = (it.id.charCodeAt(1) % 2 === 0) ? 2 : 1;
         } else {
           scores[it.id] = (it.id.charCodeAt(1) % 2 === 0) ? 3 : 4;
         }
       } else {
-        // Severe Impairment: Almost all 4s (and 1 for reverse items)
         scores[it.id] = it.isReverse ? 1 : 4;
       }
     });
 
     setForm(f => ({ ...f, scores }));
-    toast(`⚡ تم تعبئة استجابات نموذجية (${level === 'normal' ? 'أداء طبيعي' : level === 'mild' ? 'قصور بسيط' : level === 'moderate' ? 'قصور متوسط دال إكلينيكياً' : 'قصور شديد حرج'}) للمعاينة السريعة`, 'ok');
+    toast(`⚡ تم رصد استجابات نموذجية (${level === 'normal' ? 'أداء طبيعي' : level === 'mild' ? 'مؤشرات بسيطة' : level === 'moderate' ? 'مؤشرات متوسطة' : 'مؤشرات بارزة'}) للمعاينة السريعة`, 'ok');
   }
 
   function handleClearAll() {
-    if (window.confirm('هل أنت متأكد من تصفير جميع استجابات بنود المقياس؟')) {
+    if (window.confirm('هل أنت متأكد من تصفير جميع استجابات بنود الاستمارة؟')) {
       setForm(f => ({ ...f, scores: {}, itemNotes: {} }));
-      toast('تم تصفير استجابات المقياس', 'ok');
+      toast('تم تصفير استجابات الاستمارة', 'ok');
     }
   }
 
   function applyAutoClinicalSummary() {
-    if (psychometrics.answeredCount < 15) {
-      toast('⚠️ يرجى تقييم عدد كافٍ من البنود (15 بنداً على الأقل) لتوليد الخلاصة التشخيصية', 'er');
+    if (psychometrics.answeredCount < 10) {
+      toast('⚠️ يرجى تقييم عدد كافٍ من البنود (10 بنود على الأقل) لتوليد الخلاصة والمؤشرات', 'er');
       return;
     }
 
     const domainDetails = psychometrics.subscales.map(d => {
-      return `• ${d.name} [${d.code}]: الدرجة الخام (${d.raw}/${d.maxRaw}) ➔ الدرجة التائية (${d.tScore}T) برتبة مئينية (${d.percentile}%) - [${d.level}]`;
+      return `• ${d.name}: الدرجة الخام (${d.raw}/${d.maxRaw}) ➔ الدرجة التائية (${d.tScore}T) برتبة مئينية (${d.percentile}%) - [${d.level}]`;
     }).join('\n');
 
     const dsmSummary = `• مؤشر التواصل والتفاعل الاجتماعي DSM-5 (SCI): الدرجة التائية (${psychometrics.dsmScales.sci.tScore}T) - رتبة مئينية (${psychometrics.dsmScales.sci.percentile}%).\n` +
       `• مؤشر السلوكيات المقيدة والاهتمامات النمطية DSM-5 (RRB): الدرجة التائية (${psychometrics.dsmScales.rrb.tScore}T) - رتبة مئينية (${psychometrics.dsmScales.rrb.percentile}%).`;
 
-    const suggestedSummary = `تقرير التقييم والتشخيص الإكلينيكي بمقياس الاستجابة الاجتماعية - الإصدار الثاني (SRS-2):\n` +
-      `إعداد: د. جون إن. كونستانتينو & د. كريستيان بي. غروبر (Western Psychological Services - WPS)\n\n` +
+    const suggestedSummary = `تقرير الملاحظة والفرز النمائي للاستجابة والتواصل الاجتماعي (معايير DSM-5 العامة):\n\n` +
       `المؤشرات السيكومترية العامة:\n` +
       `- مجموع الدرجة الخام الكلية: (${psychometrics.totalRawScore} من أصل 260).\n` +
-      `- الدرجة التائية الكلية المعيارية (Total T-Score): (${psychometrics.totalTScore}T) برتبة مئينية كلية (${psychometrics.overallPercentile}%).\n` +
-      `- الخطأ المعياري للقياس (SEM): (±${psychometrics.sem} نقطة تائية).\n\n` +
-      `التصنيف التشخيصي والإكلينيكي:\n` +
+      `- الدرجة التائية التقديرية (Total T-Score): (${psychometrics.totalTScore}T) برتبة مئينية (${psychometrics.overallPercentile}%).\n` +
+      `- نسبة اكتمال البنود: (${psychometrics.progressPercent}%).\n\n` +
+      `التصنيف والاستنتاج النمائي:\n` +
       `- النتيجة العامة: [${psychometrics.category}]\n` +
-      `- تصنيف DSM-5: [${psychometrics.dsm5Classification}]\n\n` +
-      `مؤشرات DSM-5 المعتمدة:\n${dsmSummary}\n\n` +
-      `الأداء التفصيلي على المقاييس الفرعية العلاجية:\n${domainDetails}\n\n` +
-      `التفسير الإكلينيكي:\n${psychometrics.interpretation}`;
+      `- التصنيف الاسترشادي: [${psychometrics.dsm5Classification}]\n\n` +
+      `محاور DSM-5 الاسترشادية:\n${dsmSummary}\n\n` +
+      `الأداء التفصيلي على مجالات الملاحظة الخمسة:\n${domainDetails}\n\n` +
+      `التفسير الإكلينيكي والاسترشادي:\n${psychometrics.interpretation}`;
 
     let suggestedRecs = '';
     if (psychometrics.totalTScore <= 59) {
-      suggestedRecs = '1. لا يتطلب ملف المفحوص تدخلاً علاجياً مكثفاً لاضطراب طيف التوحد حيث تقع الاستجابة ضمن الحدود الطبيعية.\n' +
+      suggestedRecs = '1. لا تظهر نتائج الملاحظة حاجة لتدخل سلوكي مكثف؛ تقع استجابة الطفل ضمن الحدود النمائية المعتادة.\n' +
         '2. الاستمرار في تعزيز مهارات التفاعل الاجتماعي والاندماج الصفي والمدرسي الطبيعي.\n' +
         '3. المتابعة الدورية عند الانتقال لمراحل نمائية جديدة.';
     } else if (psychometrics.totalTScore <= 65) {
@@ -240,7 +240,7 @@ export default function SRS2AssessmentModal({
         '3. تطبيق استراتيجيات القصص الاجتماعية (Social Stories) لتهيئة الطفل للمواقف الاجتماعية التفاعلية.\n' +
         '4. التنسيق مع الأسرة لتوفير بيئات لعب تفاعلية منظمة مع الأقران.';
     } else if (psychometrics.totalTScore <= 75) {
-      suggestedRecs = '1. إعداد خطة تربوية فردية (IEP) شاملة تركز على مجالات العجز المحددة في التواصل التبادلي والسلوك الاجتماعي.\n' +
+      suggestedRecs = '1. إعداد خطة تربوية فردية (IEP) شاملة تركز على مجالات الدعم المحددة في التواصل التبادلي والسلوك الاجتماعي.\n' +
         '2. جلسات علاج وتأهيل تخاطبي ونمائي لتنمية التواصل اللفظي والبراجماتي (Pragmatic Language).\n' +
         '3. تطبيق فنيات تحليل السلوك التطبيقي (ABA) للحد من السلوكيات التكرارية والاهتمامات المقيدة واستبدالها بسلوكيات تكيفية.\n' +
         '4. تدريب الأقران كنموذج (Peer-Mediated Intervention) لتسهيل الاندماج الصفي المنظم.\n' +
@@ -261,7 +261,7 @@ export default function SRS2AssessmentModal({
       recommendations: suggestedRecs,
     }));
 
-    toast('✨ تم توليد التقرير السيكومتري والتوصيات الإكلينيكية آلياً بناءً على معايير WPS و DSM-5', 'ok');
+    toast('✨ تم توليد الخلاصة التشخيصية والتوصيات الإكلينيكية آلياً بناءً على معايير DSM-5', 'ok');
   }
 
   function handleSave() {
@@ -276,7 +276,7 @@ export default function SRS2AssessmentModal({
     }
 
     if (psychometrics.answeredCount < SRS2_ITEMS.length) {
-      if (!window.confirm(`⚠️ تم تقييم ${psychometrics.answeredCount} من أصل ${SRS2_ITEMS.length} بنداً. هل تود حفظ المقياس كمسودة؟`)) {
+      if (!window.confirm(`⚠️ تم رصد ${psychometrics.answeredCount} من أصل ${SRS2_ITEMS.length} بنداً. هل تود حفظ الاستمارة كمسودة؟`)) {
         return;
       }
     }
@@ -285,9 +285,9 @@ export default function SRS2AssessmentModal({
       ...form,
       measureId: 'srs',
       scaleId: 'srs',
-      measureName: 'مقياس الاستجابة الاجتماعية — الإصدار الثاني (SRS-2)',
-      scaleName: 'مقياس الاستجابة الاجتماعية — الإصدار الثاني (SRS-2)',
-      category: 'autism_behavior',
+      measureName: 'استمارة الملاحظة والفرز النمائي للاستجابة والتواصل الاجتماعي (DSM-5)',
+      scaleName: 'استمارة الملاحظة والفرز النمائي للاستجابة والتواصل الاجتماعي (DSM-5)',
+      category: 'autism',
       categoryName: 'طيف التوحد والاستجابة الاجتماعية',
       score: psychometrics.totalTScore,
       totalTScore: psychometrics.totalTScore,
@@ -297,7 +297,7 @@ export default function SRS2AssessmentModal({
       maxScore: 260,
       overallPercentile: psychometrics.overallPercentile,
       percentile: psychometrics.overallPercentile,
-      percentage: psychometrics.progressPercent,
+      percentage: `${psychometrics.progressPercent}%`,
       level: psychometrics.category,
       severityLevel: psychometrics.category,
       dsm5Classification: psychometrics.dsm5Classification,
@@ -314,7 +314,7 @@ export default function SRS2AssessmentModal({
 
     if (initialData?.id) {
       lsUpd('studentAssessments', initialData.id, payload);
-      toast('✅ تم تحديث تقييم الاستجابة الاجتماعية (SRS-2) بنجاح', 'ok');
+      toast('✅ تم تحديث استمارة الملاحظة والتواصل الاجتماعي بنجاح', 'ok');
     } else {
       const newId = uid();
       lsAdd('studentAssessments', {
@@ -322,7 +322,7 @@ export default function SRS2AssessmentModal({
         id: newId,
         createdAt: new Date().toISOString(),
       });
-      toast('✅ تم حفظ تطبيق مقياس الاستجابة الاجتماعية (SRS-2) بنجاح', 'ok');
+      toast('✅ تم حفظ استمارة الملاحظة والتواصل الاجتماعي بنجاح', 'ok');
     }
 
     if (onSaved) onSaved();
@@ -332,7 +332,7 @@ export default function SRS2AssessmentModal({
   function handleSafeClose() {
     const count = Object.keys(form.scores || {}).length;
     if (count > 0) {
-      if (window.confirm(`⚠️ تنبيه: تم رصد إجابات لـ (${count}) بنداً في المقياس. هل أنت متأكد من رغبتك في الإغلاق دون حفظ التغييرات؟`)) {
+      if (window.confirm(`⚠️ تنبيه: تم رصد إجابات لـ (${count}) بنداً في الاستمارة. هل أنت متأكد من رغبتك في الإغلاق دون حفظ التغييرات؟`)) {
         onClose();
       }
     } else {
@@ -341,7 +341,7 @@ export default function SRS2AssessmentModal({
   }
 
   return (
-    <div className="mbg">
+    <div className="mbg" onClick={e => e.target === e.currentTarget && handleSafeClose()}>
       <div
         className="mb"
         style={{
@@ -350,11 +350,15 @@ export default function SRS2AssessmentModal({
           maxHeight: 'min(94vh, calc(100dvh - 20px))',
           display: 'flex',
           flexDirection: 'column',
+          padding: 0,
+          borderRadius: 16,
+          overflow: 'hidden',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         }}
       >
-        {/* Modal Main Header */}
+        {/* Modal Header */}
         <div
-          className="fhd modal-header-custom"
+          className="modal-header-custom"
           style={{
             padding: '14px 20px',
             display: 'flex',
@@ -371,18 +375,18 @@ export default function SRS2AssessmentModal({
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <h2 style={{ fontSize: '1.18rem', fontWeight: 800, margin: 0, color: '#fff' }}>
-                  مقياس الاستجابة الاجتماعية — الإصدار الثاني (SRS-2)
+                  استمارة الملاحظة والفرز النمائي للاستجابة والتواصل الاجتماعي (DSM-5)
                 </h2>
                 <span className="bdg" style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>
-                  65 بنداً تشخيصياً · 5 مقاييس فرعية · متوافق مع DSM-5
+                  65 بنداً ملاحظياً · 5 مجالات نمائية · أداة استرشادية داخلية
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 3 }}>
                 <span className="bdg" style={{ background: '#042f2e', color: '#ccfbf1', fontSize: '0.68rem', fontWeight: 800 }}>
-                  © WPS / د. كونستانتينو & د. غروبر
+                  استمارة ملاحظة سريرية داخلية
                 </span>
                 <span style={{ fontSize: '0.76rem', opacity: 0.95 }}>
-                  Social Responsiveness Scale, Second Edition — التقييم الكمي المعياري للاستجابة الاجتماعية وأعراض طيف التوحد
+                  Social Communication Observational Screening Checklist — الرصد الميداني للاستجابة والتفاعل الاجتماعي
                 </span>
               </div>
             </div>
@@ -400,7 +404,7 @@ export default function SRS2AssessmentModal({
                 fontWeight: 700,
               }}
             >
-              📜 {showCopyrightDetails ? 'إخفاء حقوق الملكية' : 'حقوق الملكية الفكرية'}
+              📜 {showCopyrightDetails ? 'إخفاء الإشعار' : 'إشعار الاستمارة'}
             </button>
             <button
               type="button"
@@ -413,7 +417,7 @@ export default function SRS2AssessmentModal({
           </div>
         </div>
 
-        {/* EXPANDABLE DETAILED COPYRIGHT NOTICE */}
+        {/* EXPANDABLE NOTICE */}
         {showCopyrightDetails && (
           <div
             style={{
@@ -427,7 +431,7 @@ export default function SRS2AssessmentModal({
             }}
           >
             <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>📜</span> إشعار حقوق الملكية الفكرية والاعتماد السيكومتري لمقياس SRS-2:
+              <span>📜</span> إشعار الاستمارة السريرية الاسترشادية:
             </div>
 
             <div
@@ -449,32 +453,30 @@ export default function SRS2AssessmentModal({
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: '1.2rem' }}>⚖️</span>
                 <div>
-                  <strong>إشعار الأمانة العلمية والاعتماد المهني:</strong> مقياس الاستجابة الاجتماعية — الإصدار الثاني (SRS-2) · إعداد: د. جون إن. كونستانتينو & د. كريستيان بي. غروبر · المؤسسة الغربية للخدمات النفسية (WPS - Western Psychological Services).
+                  <strong>استمارة ملاحظة نمائية داخلية:</strong> تم إعداد وتطوير هذه الاستمارة الاسترشادية لتوثيق وملاحظة مهارات التفاعل الاجتماعي التبادلي والأنماط السلوكية وفق معايير DSM-5 العامة، بهدف مساندة وتوجيه بناء الخطط التربوية الفردية (IEP).
                 </div>
               </div>
               <span style={{ fontSize: '0.72rem', background: '#d1fae5', padding: '3px 8px', borderRadius: 6, border: '1px solid #6ee7b7', fontWeight: 700 }}>
-                مقنن إكلينيكياً ومتوافق مع معايير DSM-5
+                استمارة غير تجارية مفتوحة
               </span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, marginBottom: 8 }}>
               <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #a7f3d0' }}>
-                <strong>المؤلفون:</strong> {SRS2_COPYRIGHT_INFO.authorsAr} ({SRS2_COPYRIGHT_INFO.authorsEn})
+                <strong>الإعداد المنهجي:</strong> {SRS2_COPYRIGHT_INFO.authorsAr}
               </div>
               <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #a7f3d0' }}>
-                <strong>جهة النشر الأصلية:</strong> {SRS2_COPYRIGHT_INFO.publisherAr} ({SRS2_COPYRIGHT_INFO.publisherEn})
+                <strong>طبيعة الأداة:</strong> {SRS2_COPYRIGHT_INFO.publisherAr}
               </div>
               <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #a7f3d0' }}>
-                <strong>الفئة المستهدفة:</strong> {SRS2_COPYRIGHT_INFO.ageRangeAr}
+                <strong>الفئة العمرية المستهدفة:</strong> {SRS2_COPYRIGHT_INFO.ageRangeAr}
               </div>
               <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #a7f3d0' }}>
-                <strong>المرجعية التشخيصية:</strong> {SRS2_COPYRIGHT_INFO.standardNormsAr}
+                <strong>المرجعية:</strong> {SRS2_COPYRIGHT_INFO.standardNormsAr}
               </div>
             </div>
             <div style={{ fontSize: '0.78rem', color: '#047857', background: '#d1fae5', padding: '8px 12px', borderRadius: 8 }}>
               {SRS2_COPYRIGHT_INFO.purposeAr}
-              <br />
-              <strong>{SRS2_COPYRIGHT_INFO.licensingNotice}</strong>
             </div>
           </div>
         )}
@@ -505,7 +507,7 @@ export default function SRS2AssessmentModal({
                 textAlign: 'center',
               }}
             >
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>الدرجة التائية الكلية (Total T-Score):</span>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>الدرجة التائية التقديرية (Total T-Score):</span>
               <span style={{ fontSize: '1.3rem', fontWeight: 900, color: psychometrics.severityColor }}>
                 {psychometrics.totalTScore}T
               </span>
@@ -583,7 +585,7 @@ export default function SRS2AssessmentModal({
                 justifyContent: 'center',
               }}
             >
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-sub)' }}>التصنيف والشدة الإكلينيكية:</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-sub)' }}>النتيجة والاستنتاج:</span>
               <span style={{ fontSize: '0.88rem', fontWeight: 800, color: psychometrics.severityColor }}>
                 {psychometrics.category}
               </span>
@@ -616,13 +618,12 @@ export default function SRS2AssessmentModal({
 
         {/* Scrollable Body */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Student Info & Assessment Metadata - Compact Refactored Header */}
+          {/* Student Info & Assessment Metadata */}
           <div
             style={{
               background: 'var(--g0)',
               padding: '10px 14px',
               borderRadius: 10,
-              marginBottom: 14,
               border: '1px solid var(--border-color)',
             }}
           >
@@ -645,7 +646,7 @@ export default function SRS2AssessmentModal({
                 }}
               >
                 <span>👦</span>
-                <span>بيانات المفحوص والفحص الإكلينيكي</span>
+                <span>بيانات المفحوص والملاحظة السريرية</span>
                 {form.studentName && (
                   <span
                     style={{
@@ -685,12 +686,12 @@ export default function SRS2AssessmentModal({
 
             {!isHeaderCollapsed && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
-                {/* Mode toggle if other */}
                 {form.mode === 'other' && (
                   <div style={{ marginBottom: 4 }}>
                     <div className="fl full">
                       <label style={{ fontSize: '0.76rem', marginBottom: 2 }}>اسم المستفيد الخارجي <span className="req">*</span></label>
                       <input
+                        className="inp"
                         style={{ height: 32, fontSize: '0.82rem' }}
                         value={form.studentName || ''}
                         onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
@@ -700,7 +701,7 @@ export default function SRS2AssessmentModal({
                   </div>
                 )}
 
-                {/* ROW 1: Clinical Essentials (4 Columns) */}
+                {/* ROW 1: Essentials */}
                 <div
                   style={{
                     display: 'grid',
@@ -712,6 +713,7 @@ export default function SRS2AssessmentModal({
                   <div className="fl" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الطالب المسجل <span className="req">*</span></label>
                     <select
+                      className="inp"
                       style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
                       value={form.mode === 'other' ? '__other__' : (form.stuId || '')}
                       onChange={handleSelectStudent}
@@ -730,6 +732,7 @@ export default function SRS2AssessmentModal({
                   <div className="fl" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>العمر الزمني</label>
                     <input
+                      className="inp"
                       style={{ height: 32, fontSize: '0.82rem', background: isManualEdit ? 'var(--bg-input)' : 'var(--g0)' }}
                       value={form.age || (form.dob ? calcAge(form.dob) : '')}
                       readOnly={!isManualEdit}
@@ -738,10 +741,11 @@ export default function SRS2AssessmentModal({
                     />
                   </div>
 
-                  {/* 3. Medical / Educational Diagnosis */}
+                  {/* 3. Diagnosis */}
                   <div className="fl" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>التشخيص الطبي / التربوي</label>
                     <input
+                      className="inp"
                       style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
                       value={form.diagnosis || ''}
                       readOnly={!isManualEdit && form.mode !== 'other'}
@@ -754,6 +758,7 @@ export default function SRS2AssessmentModal({
                   <div className="fl" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>تاريخ التقييم</label>
                     <input
+                      className="inp"
                       type="date"
                       dir="ltr"
                       style={{ height: 32, fontSize: '0.82rem', textAlign: 'right', padding: '2px 8px' }}
@@ -763,7 +768,7 @@ export default function SRS2AssessmentModal({
                   </div>
                 </div>
 
-                {/* ROW 2: Respondent and Examiner Details (4 Columns) */}
+                {/* ROW 2: Respondent and Examiner */}
                 <div
                   style={{
                     display: 'grid',
@@ -774,6 +779,7 @@ export default function SRS2AssessmentModal({
                   <div className="fl" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>اسم الأخصائي الفاحص</label>
                     <input
+                      className="inp"
                       style={{ height: 32, fontSize: '0.82rem' }}
                       value={form.examinerName || ''}
                       onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
@@ -782,8 +788,9 @@ export default function SRS2AssessmentModal({
                   </div>
 
                   <div className="fl" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>اسم الفاحص / ولي الأمر</label>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>اسم القائم بالملاحظة / ولي الأمر</label>
                     <input
+                      className="inp"
                       style={{ height: 32, fontSize: '0.82rem' }}
                       value={form.raterName || ''}
                       onChange={e => setForm(f => ({ ...f, raterName: e.target.value }))}
@@ -794,6 +801,7 @@ export default function SRS2AssessmentModal({
                   <div className="fl" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>صلة القرابة / الصفة</label>
                     <select
+                      className="inp"
                       style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
                       value={form.raterRelation || 'الأم'}
                       onChange={e => setForm(f => ({ ...f, raterRelation: e.target.value }))}
@@ -810,6 +818,7 @@ export default function SRS2AssessmentModal({
                   <div className="fl" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>مدة معرفة الطفل</label>
                     <input
+                      className="inp"
                       style={{ height: 32, fontSize: '0.82rem' }}
                       value={form.relationshipDuration || ''}
                       onChange={e => setForm(f => ({ ...f, relationshipDuration: e.target.value }))}
@@ -821,99 +830,119 @@ export default function SRS2AssessmentModal({
             )}
           </div>
 
-          {/* Domain Filter Tabs & Quick Sample Controls */}
+          {/* Domain Filter Tabs, Search Bar & Quick Sample Controls */}
           <div
             style={{
               display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: 12,
-              flexWrap: 'wrap',
+              flexDirection: 'column',
+              gap: 10,
               background: 'var(--bg-card)',
-              padding: '10px 14px',
-              borderRadius: 8,
+              padding: '12px 14px',
+              borderRadius: 10,
               border: '1px solid var(--border-color)',
             }}
           >
-            {/* Domain Tabs */}
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-sub)' }}>
-                تصفية المقاييس:
-              </span>
-              <button
-                type="button"
-                className={`btn btn-xs ${activeDomainFilter === 'all' ? 'btn-primary' : 'btn-ghost'}`}
-                onClick={() => setActiveDomainFilter('all')}
-                style={{ borderRadius: 20, fontSize: '0.76rem', fontWeight: 700 }}
-              >
-                جميع البنود (65)
-              </button>
-              {SRS2_DOMAINS.map(d => {
-                const sub = psychometrics.subscales.find(s => s.id === d.id);
-                return (
-                  <button
-                    key={d.id}
-                    type="button"
-                    className={`btn btn-xs ${activeDomainFilter === d.id ? 'btn-primary' : 'btn-ghost'}`}
-                    onClick={() => setActiveDomainFilter(d.id)}
-                    style={{
-                      borderRadius: 20,
-                      fontSize: '0.76rem',
-                      fontWeight: 700,
-                      border: activeDomainFilter === d.id ? 'none' : `1px solid ${d.color}44`,
-                      color: activeDomainFilter === d.id ? '#fff' : d.color,
-                      background: activeDomainFilter === d.id ? d.color : 'transparent',
-                    }}
-                  >
-                    {d.name} ({d.itemsCount}) {sub?.answered ? `✓ ${sub.answered}` : ''}
-                  </button>
-                );
-              })}
+            {/* Top row: Tabs & Search */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              {/* Domain Tabs */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-sub)' }}>
+                  تصفية المجالات:
+                </span>
+                <button
+                  type="button"
+                  className={`btn btn-xs ${activeDomainFilter === 'all' ? 'btn-primary' : 'btn-ghost'}`}
+                  onClick={() => setActiveDomainFilter('all')}
+                  style={{ borderRadius: 20, fontSize: '0.76rem', fontWeight: 700 }}
+                >
+                  جميع البنود ({SRS2_ITEMS.length})
+                </button>
+                {SRS2_DOMAINS.map(d => {
+                  const sub = psychometrics.subscales.find(s => s.id === d.id);
+                  const isSelected = activeDomainFilter === d.id;
+                  return (
+                    <button
+                      key={d.id}
+                      type="button"
+                      className={`btn btn-xs ${isSelected ? 'btn-primary' : 'btn-ghost'}`}
+                      onClick={() => setActiveDomainFilter(d.id)}
+                      style={{
+                        borderRadius: 20,
+                        fontSize: '0.76rem',
+                        fontWeight: 700,
+                        border: isSelected ? 'none' : `1px solid ${d.color}44`,
+                        color: isSelected ? '#fff' : d.color,
+                        background: isSelected ? d.color : 'transparent',
+                      }}
+                    >
+                      {d.name} ({d.itemsCount}) {sub?.answered ? `✓ ${sub.answered}` : ''}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Search Bar */}
+              <div style={{ minWidth: 200, flexShrink: 0 }}>
+                <input
+                  type="text"
+                  className="inp"
+                  style={{ height: 30, fontSize: '0.78rem', padding: '2px 10px', borderRadius: 20 }}
+                  placeholder="🔍 بحث في نص البنود..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
 
-            {/* Quick Fill Samples */}
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>⚡ تعبئة سريعة للتجربة:</span>
-              <button
-                type="button"
-                className="btn btn-xs btn-ghost"
-                onClick={() => autoFillSample('normal')}
-                style={{ fontSize: '0.7rem', color: '#059669', borderColor: '#a7f3d0' }}
-              >
-                طبيعي
-              </button>
-              <button
-                type="button"
-                className="btn btn-xs btn-ghost"
-                onClick={() => autoFillSample('mild')}
-                style={{ fontSize: '0.7rem', color: '#d97706', borderColor: '#fde68a' }}
-              >
-                بسيط
-              </button>
-              <button
-                type="button"
-                className="btn btn-xs btn-ghost"
-                onClick={() => autoFillSample('moderate')}
-                style={{ fontSize: '0.7rem', color: '#ea580c', borderColor: '#fdba74' }}
-              >
-                متوسط
-              </button>
-              <button
-                type="button"
-                className="btn btn-xs btn-ghost"
-                onClick={() => autoFillSample('severe')}
-                style={{ fontSize: '0.7rem', color: '#dc2626', borderColor: '#fca5a5' }}
-              >
-                شديد
-              </button>
-              <button
-                type="button"
-                className="btn btn-xs btn-ghost"
-                onClick={handleClearAll}
-                style={{ fontSize: '0.7rem', color: '#64748b' }}
-              >
-                🔄 تصفير
-              </button>
+            {/* Bottom row: Quick Samples & Clear */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap', borderTop: '1px solid var(--border-color)', paddingTop: 8 }}>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>⚡ تعبئة سريعة للتجربة:</span>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-ghost"
+                  onClick={() => autoFillSample('normal')}
+                  style={{ fontSize: '0.7rem', color: '#059669', borderColor: '#a7f3d0' }}
+                >
+                  طبيعي
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-ghost"
+                  onClick={() => autoFillSample('mild')}
+                  style={{ fontSize: '0.7rem', color: '#d97706', borderColor: '#fde68a' }}
+                >
+                  بسيط
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-ghost"
+                  onClick={() => autoFillSample('moderate')}
+                  style={{ fontSize: '0.7rem', color: '#ea580c', borderColor: '#fdba74' }}
+                >
+                  متوسط
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-ghost"
+                  onClick={() => autoFillSample('severe')}
+                  style={{ fontSize: '0.7rem', color: '#dc2626', borderColor: '#fca5a5' }}
+                >
+                  شديد
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-ghost"
+                  onClick={handleClearAll}
+                  style={{ fontSize: '0.7rem', color: '#64748b' }}
+                >
+                  🔄 تصفير
+                </button>
+              </div>
+
+              <div style={{ fontSize: '0.76rem', color: 'var(--text-sub)' }}>
+                يتم عرض: <strong style={{ color: '#0d9488' }}>{filteredItems.length}</strong> بنداً
+              </div>
             </div>
           </div>
 
@@ -939,7 +968,7 @@ export default function SRS2AssessmentModal({
                 >
                   <div>
                     <div style={{ fontWeight: 800, fontSize: '0.88rem', color: dom.color }}>
-                      {dom.name} ({dom.englishName}) — كود المقياس: [{dom.code}]
+                      {dom.name} ({dom.englishName}) — [{dom.code}]
                     </div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-sub)', marginTop: 2 }}>
                       {dom.description}
@@ -973,7 +1002,7 @@ export default function SRS2AssessmentModal({
                   <tr style={{ background: 'var(--g0)', borderBottom: '2px solid var(--border-color)' }}>
                     <th style={{ padding: '10px 8px', width: '50px', textAlign: 'center' }}>#</th>
                     <th style={{ padding: '10px 12px', textAlign: 'right' }}>نص السلوك / البند التقييمي</th>
-                    <th style={{ padding: '10px 8px', width: '120px', textAlign: 'center' }}>المجال</th>
+                    <th style={{ padding: '10px 8px', width: '130px', textAlign: 'center' }}>المجال النمائي</th>
                     <th style={{ padding: '10px 12px', width: '380px', textAlign: 'center' }}>
                       مستوى الاستجابة والتكرار الملاحظ
                     </th>
@@ -989,13 +1018,21 @@ export default function SRS2AssessmentModal({
                       return (
                         <tr>
                           <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: 'var(--text-sub)', fontSize: '0.86rem' }}>
-                            ⚠️ لا توجد بنود مطابقة لهذه التصفية. يرجى اختيار مجال آخر أو اختيار "جميع البنود (65)".
+                            ⚠️ لا توجد بنود مطابقة للبحث أو التصفية الحالية.{' '}
+                            <button
+                              type="button"
+                              className="btn btn-xs btn-g"
+                              onClick={() => { setActiveDomainFilter('all'); setSearchQuery(''); }}
+                              style={{ marginRight: 8 }}
+                            >
+                              عرض جميع البنود (65)
+                            </button>
                           </td>
                         </tr>
                       );
                     }
 
-                    return filteredItems.map(it => {
+                    return filteredItems.map((it, idx) => {
                       const domain = SRS2_DOMAINS.find(d => d.id === it.domainId);
                       const currentScore = safeScores[it.id];
                       const note = safeNotes[it.id] || '';
@@ -1012,49 +1049,52 @@ export default function SRS2AssessmentModal({
                           style={{
                             borderBottom: '1px solid var(--border-color)',
                             background: isSevereDeficit
-                              ? (it.isReverse ? 'rgba(239, 68, 68, 0.05)' : 'rgba(239, 68, 68, 0.07)')
-                              : (currentScore !== undefined && currentScore !== null ? 'rgba(13, 148, 136, 0.03)' : 'transparent'),
+                              ? 'rgba(239, 68, 68, 0.05)'
+                              : currentScore !== undefined && currentScore !== null
+                              ? 'rgba(13, 148, 136, 0.03)'
+                              : 'transparent',
+                            transition: 'background 0.15s ease',
                           }}
                         >
-                          {/* Item ID */}
-                          <td style={{ padding: '8px 6px', textAlign: 'center', fontWeight: 800, color: 'var(--text-sub)' }}>
-                            {it.id.replace('s', '')}
+                          {/* Item Index */}
+                          <td style={{ padding: '10px 8px', textAlign: 'center', fontWeight: 700, color: 'var(--text-sub)' }}>
+                            {idx + 1}
                           </td>
 
                           {/* Item Text */}
-                          <td style={{ padding: '8px 12px', lineHeight: 1.5 }}>
-                            <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>
-                              {it.text}
-                            </div>
+                          <td style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-main)', lineHeight: 1.5 }}>
+                            <div>{it.text}</div>
                             {it.isReverse && (
-                              <div style={{ marginTop: 2 }}>
-                                <span
-                                  className="bdg"
-                                  style={{
-                                    background: '#ecfdf5',
-                                    color: '#047857',
-                                    border: '1px solid #a7f3d0',
-                                    fontSize: '0.66rem',
-                                    fontWeight: 700,
-                                  }}
-                                  title="عبارة إيجابية تعكس درجاتها سيكومترياً لاحتساب القصور"
-                                >
-                                  🔄 بند إيجابي (درجة مقلوبة في المقياس)
-                                </span>
-                              </div>
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  marginTop: 3,
+                                  fontSize: '0.68rem',
+                                  color: '#059669',
+                                  background: '#ecfdf5',
+                                  padding: '1px 6px',
+                                  borderRadius: 4,
+                                  fontWeight: 700,
+                                }}
+                              >
+                                ↺ بند إيجابي (يُعكس تلقائياً في حساب مؤشرات القصور)
+                              </span>
                             )}
                           </td>
 
                           {/* Domain Badge */}
-                          <td style={{ padding: '8px 6px', textAlign: 'center' }}>
+                          <td style={{ padding: '8px 8px', textAlign: 'center' }}>
                             <span
-                              className="bdg"
                               style={{
-                                background: domain?.bgLight || '#f1f5f9',
-                                color: domain?.color || '#334155',
-                                border: `1px solid ${domain?.borderColor || '#cbd5e1'}`,
-                                fontSize: '0.68rem',
+                                display: 'inline-block',
+                                fontSize: '0.7rem',
                                 fontWeight: 700,
+                                padding: '3px 8px',
+                                borderRadius: 12,
+                                background: domain?.bgLight || '#f1f5f9',
+                                color: domain?.color || '#475569',
+                                border: `1px solid ${domain?.borderColor || '#cbd5e1'}`,
+                                whiteSpace: 'nowrap',
                               }}
                             >
                               {domain?.code} · {domain?.name ? domain.name.split(' ')[0] : ''}
@@ -1161,7 +1201,7 @@ export default function SRS2AssessmentModal({
               {/* Clinical Summary */}
               <div>
                 <label style={{ fontSize: '0.78rem', fontWeight: 800, display: 'block', marginBottom: 4 }}>
-                  التقرير والتشخيص الإكلينيكي (Clinical Summary):
+                  التقرير والخلاصة النمائية (Clinical Summary):
                 </label>
                 <textarea
                   className="inp"
@@ -1175,7 +1215,7 @@ export default function SRS2AssessmentModal({
                   }}
                   value={form.clinicalSummary}
                   onChange={e => setForm(f => ({ ...f, clinicalSummary: e.target.value }))}
-                  placeholder="انقر على زر التوليد الآلي أعلاه، أو اكتب الخلاصة التشخيصية والملف النفسي العصبي للمفحوص..."
+                  placeholder="انقر على زر التوليد الآلي أعلاه، أو اكتب الخلاصة التشخيصية وملف الاستجابة الاجتماعية للمفحوص..."
                 />
               </div>
 
@@ -1221,7 +1261,7 @@ export default function SRS2AssessmentModal({
           {/* Progress Indicator */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-sub)' }}>
-              اكتمال الاستجابة: <strong style={{ color: '#0d9488' }}>{psychometrics.answeredCount}</strong> / {SRS2_ITEMS.length} بنداً
+              اكتمال الملاحظة: <strong style={{ color: '#0d9488' }}>{psychometrics.answeredCount}</strong> / {SRS2_ITEMS.length} بنداً
             </div>
             <div
               style={{
@@ -1279,7 +1319,7 @@ export default function SRS2AssessmentModal({
                 boxShadow: '0 2px 8px rgba(13, 148, 136, 0.3)',
               }}
             >
-              💾 حفظ المقياس واعتماد النتائج
+              💾 حفظ الاستمارة واعتماد النتائج
             </button>
           </div>
         </div>
