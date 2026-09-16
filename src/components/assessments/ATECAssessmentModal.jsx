@@ -206,30 +206,27 @@ export default function ATECAssessmentModal({
     }
   }
 
+  if (!isOpen) return null;
+
   return (
-    <div className="modal-overlay" style={{ zIndex: 1200, padding: '12px' }}>
+    <div className="mbg" onClick={e => e.target === e.currentTarget && handleSafeClose()}>
       <div
-        className="modal-box modal-lg"
+        className="mb"
         style={{
-          maxWidth: 1120,
-          width: '98%',
-          maxHeight: '94vh',
+          maxWidth: 'min(1360px, calc(100vw - 24px))',
+          width: '100%',
+          maxHeight: 'min(94vh, calc(100dvh - 20px))',
           display: 'flex',
           flexDirection: 'column',
-          padding: 0,
-          overflow: 'hidden',
-          borderRadius: 'var(--r)',
-          boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
-          border: '1px solid var(--border-color)',
         }}
       >
         {/* Modal Header */}
         <div
-          className="modal-header-custom"
+          className="fhd modal-header-custom"
           style={{
             background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
             color: '#fff',
-            padding: '16px 22px',
+            padding: '14px 20px',
             position: 'relative',
             flexShrink: 0,
           }}

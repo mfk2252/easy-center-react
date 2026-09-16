@@ -746,7 +746,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     // Prevent duplication: If the autism or speech featured cards are shown at the top,
     // we do not display those scales in the generic bottom list.
     const isAutismFeatured = (selectedCategoryFilter === 'all' || selectedCategoryFilter === 'autism') && !searchTerm;
-    const isAutismScale = ['cars', 'gars', 'gars3', 'srs', 'srs2', 'pep3', 'pep', 'mchat', 'mchat_r_f', 'mchat_rf'].includes(s.id);
+    const isAutismScale = ['cars', 'gars', 'gars3', 'srs', 'srs2', 'pep3', 'pep', 'mchat', 'mchat_r_f', 'mchat_rf', 'atec'].includes(s.id);
     if (isAutismFeatured && isAutismScale) {
       return false; 
     }
