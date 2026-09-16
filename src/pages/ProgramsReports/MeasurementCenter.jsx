@@ -14,6 +14,8 @@ import {
 import { StudentPicker, validateStudentPick, EMPTY_STU_PICK } from './StudentPicker';
 import CARS2AssessmentModal from '../../components/assessments/CARS2AssessmentModal';
 import CARS2ReportModal from '../../components/assessments/CARS2ReportModal';
+import ATECAssessmentModal from '../../components/assessments/ATECAssessmentModal';
+import ATECReportModal from '../../components/assessments/ATECReportModal';
 import GARS3AssessmentModal from '../../components/assessments/GARS3AssessmentModal';
 import GARS3ReportModal from '../../components/assessments/GARS3ReportModal';
 import SRS2AssessmentModal from '../../components/assessments/SRS2AssessmentModal';
@@ -66,7 +68,7 @@ function getCustomMeasurements() {
 
 function getAvailableScales() {
   const custom = getCustomMeasurements();
-  return [...DEFAULT_SCALE_LIBRARY, ...custom];
+  return [...DEFAULT_SCALE_LIBRARY, ...custom].filter(s => !s.archived && !s.isArchived && s.id !== 'srs');
 }
 
 export default function MeasurementCenter({ onBack }) {
@@ -85,6 +87,11 @@ export default function MeasurementCenter({ onBack }) {
   const [carsModalOpen, setCarsModalOpen] = useState(false);
   const [carsReportOpen, setCarsReportOpen] = useState(false);
   const [selectedCarsAssessment, setSelectedCarsAssessment] = useState(null);
+
+  // ATEC Specific Modals (Open Access)
+  const [atecModalOpen, setAtecModalOpen] = useState(false);
+  const [atecReportOpen, setAtecReportOpen] = useState(false);
+  const [selectedAtecAssessment, setSelectedAtecAssessment] = useState(null);
 
   // SRS-2 Specific Modals
   const [srsModalOpen, setSrsModalOpen] = useState(false);
@@ -141,7 +148,8 @@ export default function MeasurementCenter({ onBack }) {
     setStudents(lsGet('students') || []);
     setEmps(lsGet('employees') || []);
     setScales(getAvailableScales());
-    setAssessments(lsGet('studentAssessments') || []);
+    const allAss = lsGet('studentAssessments') || [];
+    setAssessments(allAss.filter(a => a.measureId !== 'srs' && a.measureId !== 'srs2' && a.scaleType !== 'srs' && a.scaleType !== 'srs2'));
   }
 
   useEffect(() => { reload(); }, []);
@@ -217,6 +225,11 @@ export default function MeasurementCenter({ onBack }) {
     if (scaleId === 'cars') {
       setSelectedCarsAssessment(null);
       setCarsModalOpen(true);
+      return;
+    }
+    if (scaleId === 'atec') {
+      setSelectedAtecAssessment(null);
+      setAtecModalOpen(true);
       return;
     }
     if (scaleId === 'gars' || scaleId === 'gars3') {
@@ -414,6 +427,7 @@ export default function MeasurementCenter({ onBack }) {
             assessments.map(item => {
               const isMChat = item.measureId === 'mchat_r_f' || item.measureId === 'mchat' || item.scaleId === 'mchat_r_f' || item.scaleType === 'mchat_r_f';
               const isCars = item.measureId === 'cars' || item.scaleType === 'cars2';
+              const isAtec = item.measureId === 'atec' || item.scaleType === 'atec';
               const isGars = item.measureId === 'gars' || item.measureId === 'gars3' || item.scaleType === 'gars3';
               const isSrs = item.measureId === 'srs' || item.scaleType === 'srs2' || item.measureId === 'srs2';
               const isPep3 = item.measureId === 'pep3' || item.scaleType === 'pep3';
@@ -430,6 +444,7 @@ export default function MeasurementCenter({ onBack }) {
                       <span>{item.measureName || 'مقياس'}</span>
                       {isMChat && <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.68rem', fontWeight: 800 }}>M-CHAT-R/F</span>}
                       {isCars && <span className="bdg b-bl" style={{ fontSize: '.68rem' }}>CARS-2</span>}
+                      {isAtec && <span className="bdg" style={{ background: '#1e3a8a', color: '#fff', fontSize: '.68rem', fontWeight: 800 }}>ATEC (بدون قيود)</span>}
                       {isGars && <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontSize: '.68rem', fontWeight: 800 }}>GARS-3</span>}
                       {isSrs && <span className="bdg" style={{ background: '#d1fae5', color: '#047857', fontSize: '.68rem', fontWeight: 800 }}>SRS-2</span>}
                       {isPep3 && <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.68rem', fontWeight: 800 }}>PEP-3</span>}
@@ -469,6 +484,19 @@ export default function MeasurementCenter({ onBack }) {
                         }}
                       >
                         📄 تقرير CARS-2
+                      </button>
+                    )}
+                    {isAtec && (
+                      <button
+                        type="button"
+                        className="btn btn-xs"
+                        style={{ background: '#1e3a8a', color: '#fff', fontWeight: 800 }}
+                        onClick={() => {
+                          setSelectedAtecAssessment(item);
+                          setAtecReportOpen(true);
+                        }}
+                      >
+                        📄 تقرير ATEC
                       </button>
                     )}
                     {isGars && (
@@ -635,6 +663,30 @@ export default function MeasurementCenter({ onBack }) {
           isOpen={carsReportOpen}
           onClose={() => setCarsReportOpen(false)}
           assessment={selectedCarsAssessment}
+        />
+      )}
+
+      {/* ATEC MODALS */}
+      {atecModalOpen && (
+        <ATECAssessmentModal
+          isOpen={atecModalOpen}
+          onClose={() => setAtecModalOpen(false)}
+          onSaved={() => reload()}
+          students={students}
+          emps={emps}
+          initialData={selectedAtecAssessment}
+        />
+      )}
+
+      {atecReportOpen && selectedAtecAssessment && (
+        <ATECReportModal
+          isOpen={atecReportOpen}
+          onClose={() => setAtecReportOpen(false)}
+          assessment={selectedAtecAssessment}
+          onEdit={(item) => {
+            setSelectedAtecAssessment(item);
+            setAtecModalOpen(true);
+          }}
         />
       )}
 

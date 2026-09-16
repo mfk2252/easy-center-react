@@ -10,6 +10,7 @@ import { SENSORY_CHECKLIST_ITEMS, calculateSensoryChecklistScore } from '../data
 
 import { CONNERS_PARENT_ITEMS, calculateConnersParentScore } from "../data/connersParentData";
 import { MCHAT_ITEMS } from '../data/mchatData';
+import { ATEC_ITEMS } from '../data/atecData';
 
 export const MEASUREMENT_CATEGORIES = [
   {
@@ -503,7 +504,30 @@ const DEFAULT_SCALE_LIBRARY = [
     isDefault: true,
   },
   {
+    id: 'atec',
+    name: 'استمارة تقييم علاج وبرامج التوحد (ATEC)',
+    nameEn: 'Autism Treatment Evaluation Checklist (ATEC)',
+    category: 'autism',
+    description: 'أداة القياس العالمية المفتوحة بدون حقوق ملكية من معهد أبحاث التوحد (ARI) — 77 بنداً على 4 مجالات نمائية لقياس فاعلية التدخل وتتبع التطور',
+    icon: '🧩',
+    color: '#1e3a8a',
+    scoreMode: 'subscale',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 180,
+    items: ATEC_ITEMS.map(it => ({
+      id: String(it.id),
+      text: `${it.title}: ${it.subtitle}`,
+      domain: it.domainId,
+    })),
+    thresholdText: '0-30: طيف خفيف جداً / استجابة نمائية عالية | 31-50: طيف خفيف إلى متوسط | 51-104: طيف متوسط إلى شديد | 105-180: طيف شديد جداً',
+    isDefault: true,
+  },
+  {
     id: 'srs',
+    archived: true,
+    isArchived: true,
     name: 'استمارة الملاحظة والفرز النمائي للاستجابة والتواصل الاجتماعي',
     nameEn: 'Social Communication & Responsiveness Observational Screening (DSM-5)',
     category: 'autism',

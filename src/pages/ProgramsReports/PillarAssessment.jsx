@@ -9,6 +9,8 @@ import { StudentPicker, validateStudentPick, EMPTY_STU_PICK } from './StudentPic
 import { sendReportToWhatsApp } from './programsWhatsApp';
 import CARS2AssessmentModal from '../../components/assessments/CARS2AssessmentModal';
 import CARS2ReportModal from '../../components/assessments/CARS2ReportModal';
+import ATECAssessmentModal from '../../components/assessments/ATECAssessmentModal';
+import ATECReportModal from '../../components/assessments/ATECReportModal';
 import GARS3AssessmentModal from '../../components/assessments/GARS3AssessmentModal';
 import GARS3ReportModal from '../../components/assessments/GARS3ReportModal';
 import SRS2AssessmentModal from '../../components/assessments/SRS2AssessmentModal';
@@ -51,6 +53,7 @@ import { FAMILY_DISINTEGRATION_ITEMS } from '../../data/familyDisintegrationData
 import { SENSORY_INTEGRATION_ITEMS } from '../../data/sensoryIntegrationData';
 import { CONNERS_PARENT_ITEMS } from '../../data/connersParentData';
 import { MCHAT_ITEMS } from '../../data/mchatData';
+import { ATEC_ITEMS } from '../../data/atecData';
 import InitialAssessmentModal from '../../components/assessments/InitialAssessmentModal';
 import IepBridgeModal from './IepBridgeModal';
 import { extractRecommendedGoals } from '../../utils/iepBridge';
@@ -174,6 +177,12 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
   const [carsReportOpen, setCarsReportOpen] = useState(false);
   const [selectedCarsAssessment, setSelectedCarsAssessment] = useState(null);
 
+  // ATEC Specific Specialized Modals States (Open Access)
+  const [atecModalOpen, setAtecModalOpen] = useState(false);
+  const [atecEditData, setAtecEditData] = useState(null);
+  const [atecReportOpen, setAtecReportOpen] = useState(false);
+  const [selectedAtecAssessment, setSelectedAtecAssessment] = useState(null);
+
   // GARS-3 Specific Specialized Modals States
   const [garsModalOpen, setGarsModalOpen] = useState(false);
   const [garsEditData, setGarsEditData] = useState(null);
@@ -287,7 +296,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
 
   const allScales = useMemo(() => {
     const custom = lsGet('measurements') || [];
-    return [...DEFAULT_SCALE_LIBRARY, ...custom];
+    return [...DEFAULT_SCALE_LIBRARY, ...custom].filter(s => !s.archived && !s.isArchived && s.id !== 'srs');
   }, []);
 
   const categoryMap = useMemo(() => {
@@ -345,6 +354,11 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     if (scaleId === 'cars') {
       setCarsEditData(null);
       setCarsModalOpen(true);
+      return;
+    }
+    if (scaleId === 'atec') {
+      setAtecEditData(null);
+      setAtecModalOpen(true);
       return;
     }
     if (scaleId === 'gars' || scaleId === 'gars3') {
@@ -583,6 +597,16 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     setMchatReportOpen(true);
   }
 
+  function openEditAtecAssessment(item) {
+    setAtecEditData(item);
+    setAtecModalOpen(true);
+  }
+
+  function openViewAtecReport(item) {
+    setSelectedAtecAssessment(item);
+    setAtecReportOpen(true);
+  }
+
   function handleScaleOptionChange(itemId, value) {
     setScaleResponses(prev => ({
       ...prev,
@@ -646,6 +670,8 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
       setBridgeScaleItems(CONNERS_PARENT_ITEMS);
     } else if (item.measureId === 'mchat' || item.scaleType === 'mchat_r_f' || item.scaleType === 'mchat' || item.measureId === 'mchat_r_f' || item.isMChat) {
       setBridgeScaleItems(MCHAT_ITEMS);
+    } else if (item.measureId === 'atec' || item.scaleType === 'atec') {
+      setBridgeScaleItems(ATEC_ITEMS);
     } else {
       const scale = allScales.find(s => s.id === item.measureId) || null;
       setBridgeScaleItems(scale?.items || []);
@@ -702,6 +728,9 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
   });
 
   const filteredAssessments = assessments.filter(a => {
+    if (a.measureId === 'srs' || a.measureId === 'srs2' || a.scaleType === 'srs' || a.scaleType === 'srs2') {
+      return false; // أرشفة مقياس SRS-2
+    }
     const matchSearch = !searchTerm || (a.studentName && a.studentName.includes(searchTerm)) || (a.measureName && a.measureName.includes(searchTerm));
     const matchStu = !selectedStudentFilter || a.stuId === selectedStudentFilter;
     const normCat = normalizeCategoryId(a.category);
@@ -1105,7 +1134,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                 )}
               </div>
 
-              {/* Featured Autism Highlight Cards (CARS-2, GARS-3, SRS-2, PEP-3) inside category detail view only if Autism or All is active */}
+              {/* Featured Autism Highlight Cards (CARS-2, GARS-3, PEP-3) inside category detail view only if Autism or All is active */}
               {(selectedCategoryFilter === 'all' || selectedCategoryFilter === 'autism') && !searchTerm && (
                 <div
                   style={{
@@ -1187,42 +1216,6 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                     </button>
                   </div>
 
-                  {/* SRS-2 */}
-                  <div
-                    style={{
-                      background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.08), rgba(16, 185, 129, 0.04))',
-                      border: '1.5px solid #059669',
-                      borderRadius: 14,
-                      padding: '16px 18px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      gap: 12,
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        <span className="bdg" style={{ background: '#d1fae5', color: '#047857', fontWeight: 600, fontSize: '.72rem' }}>التفاعل والتواصل المتبادل</span>
-                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>SRS-2 المقنن</span>
-                      </div>
-                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                        👥 مقياس الاستجابة الاجتماعية — الإصدار الثاني (SRS-2)
-                      </h3>
-                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
-                        65 عبارة سيكومترية · 5 مقاييس فرعية دقيقة · درجات معيارية تائية T متوافقة مع معايير DSM-5 واشتقاق IEP تلقائي
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="btn"
-                      onClick={() => { setSrsEditData(null); setSrsModalOpen(true); }}
-                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#059669', color: '#fff', width: '100%' }}
-                    >
-                      🚀 فتح أداة فحص وتطبيق SRS-2
-                    </button>
-                  </div>
-
                   {/* PEP-3 */}
                   <div
                     style={{
@@ -1292,6 +1285,42 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                       style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#2563eb', color: '#fff', width: '100%' }}
                     >
                       🚀 فتح أداة فحص وتطبيق M-CHAT-R/F
+                    </button>
+                  </div>
+
+                  {/* ATEC (Autism Treatment Evaluation Checklist - Open Access) */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(30, 58, 138, 0.08), rgba(37, 99, 235, 0.04))',
+                      border: '1.5px solid #1e3a8a',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#dbeafe', color: '#1e3a8a', fontWeight: 600, fontSize: '.72rem' }}>معهد أبحاث التوحد (ARI)</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>مفتوح بدون حقوق تجارية</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        🧩 قائمة تقييم علاج التوحد (ATEC)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        77 بنداً على 4 مجالات نمائية وسلوكية · قياس فاعلية البرامج العلاجية وتتبع التحسن الدوري · اشتقاق أهداف IEP تلقائياً
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setAtecEditData(null); setAtecModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#1e3a8a', color: '#fff', width: '100%' }}
+                    >
+                      🚀 فتح أداة فحص وتطبيق ATEC
                     </button>
                   </div>
                 </div>
@@ -1829,6 +1858,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14 }}>
               {filteredAssessments.map(item => {
                 const isCars = item.measureId === 'cars' || item.scaleType === 'cars2';
+                const isAtec = item.measureId === 'atec' || item.scaleType === 'atec';
                 const isGars = item.measureId === 'gars' || item.measureId === 'gars3' || item.scaleType === 'gars3';
                 const isSrs = item.measureId === 'srs' || item.scaleType === 'srs2' || item.measureId === 'srs2';
                 const isPep3 = item.measureId === 'pep3' || item.scaleType === 'pep3';
@@ -1850,8 +1880,8 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                     key={item.id}
                     className="prog-item-card"
                     style={{
-                      border: isMChat ? '1.5px solid #2563eb' : isConnersParent ? '1.5px solid #ea580c' : isSensory ? '1.5px solid #0284c7' : isFamily ? '1.5px solid #7c3aed' : isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
-                      boxShadow: isMChat ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isConnersParent ? '0 4px 12px rgba(234, 88, 12, 0.08)' : isSensory ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isFamily ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
+                      border: isAtec ? '1.5px solid #1e3a8a' : isMChat ? '1.5px solid #2563eb' : isConnersParent ? '1.5px solid #ea580c' : isSensory ? '1.5px solid #0284c7' : isFamily ? '1.5px solid #7c3aed' : isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
+                      boxShadow: isAtec ? '0 4px 12px rgba(30, 58, 138, 0.08)' : isMChat ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isConnersParent ? '0 4px 12px rgba(234, 88, 12, 0.08)' : isSensory ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isFamily ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
@@ -1861,6 +1891,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                           {isMChat && <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>M-CHAT-R/F (20)</span>}
                           {isConnersParent && <span className="bdg" style={{ background: '#ffedd5', color: '#c2410c', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>كونرز للوالدين (80)</span>}
                           {isCars && <span className="bdg b-bl" style={{ fontSize: '.68rem', padding: '1px 6px' }}>CARS-2</span>}
+                          {isAtec && <span className="bdg" style={{ background: '#dbeafe', color: '#1e3a8a', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>ATEC (77 بند)</span>}
                           {isGars && <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>GARS-3</span>}
                           {isSrs && <span className="bdg" style={{ background: '#d1fae5', color: '#047857', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>SRS-2</span>}
                           {isPep3 && <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>PEP-3</span>}
@@ -1879,7 +1910,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                         <div className="prog-student-meta">{item.measureName} · {item.date}</div>
                       </div>
                       <span className="bdg b-gr" style={{ fontSize: '0.82rem', fontWeight: 800, flexShrink: 0 }}>
-                        {isMChat ? `النقاط الإيجابية: ${item.score || item.totalFailedCount || 0} / 20` : isConnersParent ? `الخام: ${item.score || 0} / 240` : isSensory ? `الخام: ${item.score || 0} / 90` : isFamily ? `الخام: ${item.score || 0} / 130` : isMyklebust ? `الخام: ${item.score || 0} / 120 (LQ=${item.lq || item.psychometrics?.learningQuotient || '—'})` : isSartawi ? `الخام: ${item.score || 0} / 250 (T=${item.tScore || item.psychometrics?.totalTScore || '—'})` : isLddrs ? `الدرجة الكلية: ${item.score || 0}` : isDevLd ? `الخام: ${item.score} / ${item.maxScore || 160}` : isLdes ? `معامل LDEQ: ${item.ldeq || item.score}` : isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
+                        {isAtec ? `الخام: ${item.score || item.rawScore || 0} / 179` : isMChat ? `النقاط الإيجابية: ${item.score || item.totalFailedCount || 0} / 20` : isConnersParent ? `الخام: ${item.score || 0} / 240` : isSensory ? `الخام: ${item.score || 0} / 90` : isFamily ? `الخام: ${item.score || 0} / 130` : isMyklebust ? `الخام: ${item.score || 0} / 120 (LQ=${item.lq || item.psychometrics?.learningQuotient || '—'})` : isSartawi ? `الخام: ${item.score || 0} / 250 (T=${item.tScore || item.psychometrics?.totalTScore || '—'})` : isLddrs ? `الدرجة الكلية: ${item.score || 0}` : isDevLd ? `الخام: ${item.score} / ${item.maxScore || 160}` : isLdes ? `معامل LDEQ: ${item.ldeq || item.score}` : isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
                       </span>
                     </div>
 
@@ -1949,6 +1980,16 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                         <span>حاصل صعوبات التعلم: <strong style={{ color: '#b45309' }}>{item.ldeq || item.score} LDEQ</strong></span>
                         <span>رتبة مئينية: <strong style={{ color: '#b45309' }}>{item.overallPercentile || item.percentile || '—'}%</strong></span>
                         <span>مجموع الدرجات المعيارية: <strong style={{ color: 'var(--text-main)' }}>{item.sumScaledScores || '—'} / 140</strong></span>
+                      </div>
+                    )}
+
+                    {isAtec && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>الدرجة الإجمالية: <strong style={{ color: '#1e3a8a' }}>{item.score || item.rawScore || 0} / 179</strong></span>
+                        <span>مستوى الشدة: <strong style={{ color: item.severityColor || '#1e3a8a' }}>{item.level || item.severityLabel || '—'}</strong></span>
+                        {item.domainScores && (
+                          <span>(كلام: {item.domainScores.speech || 0} | تواصل: {item.domainScores.sociability || 0} | حسي: {item.domainScores.sensory || 0} | صحة: {item.domainScores.health || 0})</span>
+                        )}
                       </div>
                     )}
 
@@ -2238,9 +2279,40 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                         {isCars && (
                           <button
                             type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewCarsReport(item)}
+                            style={{ fontWeight: 800, background: 'var(--pr)', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isCars && (
+                          <button
+                            type="button"
                             className="btn btn-xs btn-g"
                             onClick={() => openEditCarsAssessment(item)}
                             title="تعديل درجات البنود"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isAtec && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewAtecReport(item)}
+                            style={{ fontWeight: 800, background: '#1e3a8a', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isAtec && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditAtecAssessment(item)}
+                            title="تعديل درجات مقياس ATEC"
                           >
                             ✏️
                           </button>
@@ -2450,6 +2522,34 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
           onClose={() => setCarsReportOpen(false)}
           assessment={selectedCarsAssessment}
           onEdit={(item) => openEditCarsAssessment(item)}
+        />
+      )}
+
+      {/* MODAL: ATEC (AUTISM TREATMENT EVALUATION CHECKLIST) WORKSTATION */}
+      {atecModalOpen && (
+        <ATECAssessmentModal
+          isOpen={atecModalOpen}
+          onClose={() => {
+            setAtecModalOpen(false);
+            setAtecEditData(null);
+          }}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={atecEditData}
+        />
+      )}
+
+      {/* MODAL: ATEC OFFICIAL DIAGNOSTIC REPORT */}
+      {atecReportOpen && selectedAtecAssessment && (
+        <ATECReportModal
+          isOpen={atecReportOpen}
+          onClose={() => setAtecReportOpen(false)}
+          assessment={selectedAtecAssessment}
+          onEdit={(item) => openEditAtecAssessment(item)}
         />
       )}
 

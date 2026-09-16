@@ -384,7 +384,7 @@ export default function VisualAnalyticsHub({ data, go }) {
                   type="button"
                   className="btn btn-g btn-xs"
                   onClick={() => openAssessmentCenter('autism')}
-                  title="مقاييس التوحد: CARS-2، GARS-3، SRS-2، PEP-3"
+                  title="مقاييس التوحد: CARS-2، GARS-3، PEP-3"
                   style={{ fontSize: '0.72rem' }}
                 >
                   🧩 التوحد

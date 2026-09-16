@@ -847,6 +847,7 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
   if (rawId.includes('family') || rawId.includes('disintegration')) lookupKey = 'family_disintegration';
   else if (rawId.includes('myklebust') || rawId.includes('prs')) lookupKey = 'myklebust';
   else if (rawId.includes('sartawi') || rawId.includes('sarta')) lookupKey = 'sartawi';
+  else if (rawId.includes('atec')) lookupKey = 'atec';
   else if (rawId.includes('cars')) lookupKey = 'cars';
   else if (rawId.includes('ldes') || rawId.includes('learningdiff') || rawId.includes('learning')) lookupKey = 'learning_difficulties';
   else if (rawId.includes('pep3') || rawId.includes('pep')) lookupKey = 'pep3';
@@ -1026,6 +1027,49 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
             }));
           });
         }
+      }
+    });
+  } else if (lookupKey === 'atec') {
+    Object.entries(responses).forEach(([itemId, score]) => {
+      const numScore = Number(score);
+      const targetItem = items.find(it => String(it.id) === String(itemId));
+      if (!targetItem) return;
+
+      const itemMax = targetItem.domainId === 'health' ? 3 : 2;
+      const isDeficit = numScore >= 1;
+
+      if (isDeficit) {
+        const isCritical = numScore >= 2;
+        const priorityRank = numScore >= 3 ? 1 : numScore === 2 ? 2 : 3;
+        const priority = priorityRank === 1 ? 'critical' : priorityRank === 2 ? 'high' : 'medium';
+        const itemTitle = targetItem.title || `بند ATEC ${itemId}`;
+        const anchor = targetItem.anchors?.find(a => a.score === numScore);
+
+        const baseline = generatePlepBaseline(
+          itemTitle,
+          numScore,
+          itemMax,
+          `قصوراً في (${itemTitle}) - السلوك الملاحظ: "${anchor?.label || ''}: ${anchor?.description || ''}"`,
+          priorityRank === 1 ? 'تدخلاً مكثفاً وجلسات تأهيل فردية متعددة الحواس' : 'تدريباً سلوكياً وتواصلياً مدمجاً'
+        );
+
+        let domainLabel = 'التواصل والتخاطب';
+        if (targetItem.domainId === 'sociability') domainLabel = 'المهارات الاجتماعية والانفعالية';
+        else if (targetItem.domainId === 'sensory') domainLabel = 'الإدراك والتكامل الحسي والمعرفي';
+        else if (targetItem.domainId === 'health') domainLabel = 'السلوك التكيفي والصحة العامة';
+
+        recommended.push(buildGoalItem({
+          code: `ATEC-GOAL-${itemId}`,
+          domain: domainLabel,
+          title: itemTitle,
+          text: `أن ينمي التلميذ مهارة (${itemTitle}) ويحقق انخفاضاً في حدة القصور السلوكي بنسبة إتقان لا تقل عن 80% في مختلف البيئات الصفية والمنزلية.`,
+          mastery: 'إتقان 80% عبر جلستين متتاليتين',
+          reason: `مشتق من استمارة ATEC بند [${itemId}] بدرجة قصور (${numScore}/${itemMax}) - [${priority === 'critical' ? 'أولوية ملحة' : 'هدف أساسي'}]`,
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: isCritical ? 12 : 8,
+        }));
       }
     });
   } else if (lookupKey === 'sensory_integration_scale' || lookupKey === 'sensory_integration') {
