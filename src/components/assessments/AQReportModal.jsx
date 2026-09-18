@@ -11,6 +11,7 @@ export default function AQReportModal({
   isOpen,
   onClose,
   assessment,
+  onEdit,
   onOpenIepBridge,
 }) {
   const { center, toast } = useApp();
@@ -114,7 +115,7 @@ export default function AQReportModal({
         <div
           className="mhd"
           style={{
-            background: 'linear-gradient(135deg, #065f46 0%, #047857 100%)',
+            background: 'linear-gradient(135deg, #065f46 0%, #047857 50%, #0d9488 100%)',
             color: '#fff',
             padding: '14px 20px',
             display: 'flex',
@@ -139,7 +140,7 @@ export default function AQReportModal({
                     fontWeight: 700,
                   }}
                 >
-                  {assessment.version === 'adolescent' ? 'نسخة اليافعين 12-16' : 'نسخة الأطفال 4-11'}
+                  {assessment.version === 'adolescent' ? 'نسخة اليافعين 12–16 سنة' : 'نسخة الأطفال 4–11 سنة'}
                 </span>
               </div>
               <p style={{ margin: '2px 0 0 0', fontSize: '.75rem', color: '#d1fae5', opacity: 0.9 }}>
@@ -148,7 +149,26 @@ export default function AQReportModal({
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            {onEdit && (
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => {
+                  onEdit(assessment);
+                  onClose();
+                }}
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  color: '#fff',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  fontWeight: 700,
+                  fontSize: '.78rem',
+                }}
+              >
+                ✏️ تعديل التقييم
+              </button>
+            )}
             {onOpenIepBridge && (
               <button
                 type="button"
@@ -205,7 +225,7 @@ export default function AQReportModal({
         </div>
 
         {/* SCROLLABLE REPORT BODY */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px', background: '#f8fafc' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px', background: 'var(--bg-main, #f8fafc)' }}>
           <div
             ref={printRef}
             style={{
