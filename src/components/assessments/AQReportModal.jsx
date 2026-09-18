@@ -225,7 +225,7 @@ export default function AQReportModal({
         </div>
 
         {/* SCROLLABLE REPORT BODY */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px', background: 'var(--bg-main, #f8fafc)' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px', background: 'var(--bg-page)' }}>
           <div
             ref={printRef}
             style={{

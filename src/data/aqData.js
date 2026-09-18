@@ -516,6 +516,9 @@ export const AQ_ITEMS = [
   },
 ];
 
+export const AQ_CHILD_ITEMS = AQ_ITEMS;
+export const AQ_ADOLESCENT_ITEMS = AQ_ITEMS;
+
 /**
  * حساب درجات مقياس AQ والمؤشرات السيكومترية والفرز الإكلينيكي
  * @param {Object} responses - كائن يحتوي على الإجابات { [itemId]: 'def_agree' | 'slight_agree' | 'slight_disagree' | 'def_disagree' }

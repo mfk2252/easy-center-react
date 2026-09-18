@@ -1,137 +1,166 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { uid, todayStr, calcAge } from '../../utils/dateHelpers';
-import { lsAdd, lsUpd } from '../../hooks/useStorage';
 import {
-  AQ_ITEMS,
+  AQ_CHILD_ITEMS,
+  AQ_ADOLESCENT_ITEMS,
   AQ_DOMAINS,
   AQ_RESPONSE_OPTIONS,
   AQ_COPYRIGHT_INFO,
   calculateAQPsychometrics,
 } from '../../data/aqData';
-import { validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
+import { todayStr, uid, calcAge } from '../../utils/dateHelpers';
+import { lsAdd, lsUpd } from '../../hooks/useStorage';
 
-const EMPTY_AQ_FORM = {
-  mode: 'registered',
-  stuId: '',
+const EMPTY_FORM = {
+  id: '',
+  scaleId: 'aq_autism_quotient',
+  scaleType: 'aq',
+  scaleName: 'مقياس طيف التوحد للأطفال واليافعين — AQ',
   studentName: '',
-  dob: '',
+  stuId: '',
   age: '',
-  diagnosis: '',
+  dob: '',
   gender: 'ذكر',
-  grade: '',
-  school: '',
-  version: 'child', // 'child' (4-11y) or 'adolescent' (12-16y)
-  raterName: '',
-  raterRelation: 'الأم',
-  relationshipDuration: 'سنتان',
+  diagnosis: '',
   examinerName: '',
-  examinerRole: 'أخصائي نفسي / تشخيص وتعديل سلوك',
+  examinerRole: 'أخصائي نفسي / تشخيصي',
+  raterName: '',
+  raterRelation: 'الأم / الأب',
   date: todayStr(),
-  notes: '',
-  itemNotes: {},
-  scores: {},
+  version: 'child', // 'child' (4-11) or 'adolescent' (12-16)
+  scores: {},       // { [itemId]: 'def_agree' | 'slight_agree' | 'slight_disagree' | 'def_disagree' }
+  itemNotes: {},    // { [itemId]: string }
   clinicalSummary: '',
   recommendations: '',
+  mode: 'student',
 };
 
 export default function AQAssessmentModal({
   isOpen,
   onClose,
+  initialData,
   onSaved,
-  students = [],
-  emps = [],
-  initialData = null,
+  onOpenReport,
 }) {
-  const { toast, currentUser } = useApp();
+  const { students, currentEmployee, center, toast } = useApp();
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [activeDomainFilter, setActiveDomainFilter] = useState('all');
+  const [isManualEdit, setIsManualEdit] = useState(false);
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
+  const [showCopyrightInfo, setShowCopyrightInfo] = useState(false);
 
-  const [form, setForm] = useState(() => {
+  // Initialize or populate form on open
+  useEffect(() => {
+    if (!isOpen) return;
+
     if (initialData) {
-      return {
-        ...EMPTY_AQ_FORM,
+      setForm({
+        ...EMPTY_FORM,
         ...initialData,
+        version: initialData.version || initialData.aqVersion || 'child',
         scores: initialData.results || initialData.scores || {},
         itemNotes: initialData.itemNotes || {},
-        version: initialData.version || initialData.aqVersion || 'child',
-      };
+      });
+      setIsManualEdit(Boolean(initialData.isManualEdit));
+    } else {
+      const defaultExaminer = currentEmployee?.name || 'الأخصائي الفاحص';
+      setForm({
+        ...EMPTY_FORM,
+        id: uid(),
+        date: todayStr(),
+        examinerName: defaultExaminer,
+      });
+      setIsManualEdit(false);
     }
-    return {
-      ...EMPTY_AQ_FORM,
-      examinerName: currentUser?.name || '',
-      date: todayStr(),
-    };
-  });
+    setActiveDomainFilter('all');
+    setShowCopyrightInfo(false);
+  }, [isOpen, initialData, currentEmployee]);
 
-  const [activeDomainFilter, setActiveDomainFilter] = useState('all');
-  const [showCopyrightDetails, setShowCopyrightDetails] = useState(false);
-  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
-  const [isManualEdit, setIsManualEdit] = useState(false);
+  // Selected items list based on version
+  const activeItems = useMemo(() => {
+    return form.version === 'adolescent' ? AQ_ADOLESCENT_ITEMS : AQ_CHILD_ITEMS;
+  }, [form.version]);
 
+  // Filtered items based on active subscale tab
+  const filteredItems = useMemo(() => {
+    if (activeDomainFilter === 'all') return activeItems;
+    return activeItems.filter(item => item.domainId === activeDomainFilter);
+  }, [activeItems, activeDomainFilter]);
+
+  // Real-time Psychometrics calculation
+  const psychometrics = useMemo(() => {
+    return calculateAQPsychometrics(form.scores, form.version);
+  }, [form.scores, form.version]);
+
+  if (!isOpen) return null;
+
+  // Handle student selection from dropdown
   function handleSelectStudent(e) {
     const val = e.target.value;
     if (val === '__other__') {
       setForm(f => ({
         ...f,
-        mode: 'other',
         stuId: '',
         studentName: '',
         dob: '',
         age: '',
+        gender: 'ذكر',
         diagnosis: '',
-        grade: '',
-        school: '',
+        mode: 'other',
+      }));
+      setIsManualEdit(true);
+      return;
+    }
+
+    const s = students.find(x => x.id === val);
+    if (!s) {
+      setForm(f => ({
+        ...f,
+        stuId: '',
+        studentName: '',
+        dob: '',
+        age: '',
+        mode: 'student',
       }));
       return;
     }
-    const stu = students.find(s => String(s.id) === String(val));
-    if (!stu) {
-      setForm(f => ({ ...f, mode: 'registered', stuId: '', studentName: '' }));
-      return;
-    }
 
-    const valErr = validateStudentPick(stu);
-    if (valErr) {
-      toast?.(valErr, 'er');
-      return;
-    }
+    let calculatedAge = '';
+    let autoVersion = form.version;
 
-    const calculatedAge = stu.dob ? calcAge(stu.dob) : '';
-    const ageNum = parseInt(calculatedAge || stu.age || '0', 10);
-    const suggestedVersion = !isNaN(ageNum) && ageNum >= 12 ? 'adolescent' : 'child';
+    if (s.dob) {
+      calculatedAge = calcAge(s.dob);
+      const ageNum = parseInt(calculatedAge, 10);
+      if (!isNaN(ageNum)) {
+        if (ageNum >= 12 && ageNum <= 16) {
+          autoVersion = 'adolescent';
+        } else if (ageNum >= 4 && ageNum <= 11) {
+          autoVersion = 'child';
+        }
+      }
+    }
 
     setForm(f => ({
       ...f,
-      mode: 'registered',
-      stuId: stu.id,
-      studentName: stu.name || '',
-      dob: stu.dob || '',
-      diagnosis: stu.diagnosis || stu.disabilityType || 'اشتباه طيف توحد',
-      age: calculatedAge || stu.age || '',
-      gender: stu.gender || 'ذكر',
-      grade: stu.grade || stu.className || '',
-      school: stu.school || stu.schoolName || '',
-      version: suggestedVersion,
+      stuId: s.id,
+      studentName: s.name,
+      dob: s.dob || '',
+      age: calculatedAge || s.age || '',
+      gender: s.gender || 'ذكر',
+      diagnosis: s.diagnosis || s.category || 'طيف التوحد',
+      version: autoVersion,
+      parentPhone: s.parentPhone || s.phone || '',
+      mode: 'student',
     }));
+    setIsManualEdit(false);
   }
 
-  // Real-time Psychometrics Calculation
-  const psychometrics = useMemo(() => {
-    return calculateAQPsychometrics(form.scores, form.version);
-  }, [form.scores, form.version]);
-
-  const filteredItems = useMemo(() => {
-    if (activeDomainFilter === 'all') return AQ_ITEMS;
-    return AQ_ITEMS.filter(it => it.domainId === activeDomainFilter);
-  }, [activeDomainFilter]);
-
-  if (!isOpen) return null;
-
-  function handleAnswer(itemId, answerValue) {
+  function handleAnswer(itemId, optionValue) {
     setForm(prev => ({
       ...prev,
       scores: {
         ...prev.scores,
-        [itemId]: answerValue,
+        [itemId]: optionValue,
       },
     }));
   }
@@ -146,150 +175,113 @@ export default function AQAssessmentModal({
     }));
   }
 
+  // Quick automated test-cases helper
   function autoFillSample(type = 'autistic') {
-    const scores = {};
-    AQ_ITEMS.forEach(it => {
+    const newScores = {};
+    activeItems.forEach(item => {
       if (type === 'autistic') {
-        // High traits: score on almost all items
-        scores[it.id] = it.keying === 'AGREE' ? 'def_agree' : 'def_disagree';
+        // High autistic trait answers
+        newScores[item.id] = item.keying === 'AGREE' ? 'def_agree' : 'def_disagree';
       } else if (type === 'typical') {
-        // Typical: no trait points
-        scores[it.id] = it.keying === 'AGREE' ? 'def_disagree' : 'def_agree';
-      } else {
-        // Borderline / Moderate
-        if (it.id % 2 === 0) {
-          scores[it.id] = it.keying === 'AGREE' ? 'slight_agree' : 'slight_disagree';
+        // Typical / non-autistic answers
+        newScores[item.id] = item.keying === 'AGREE' ? 'def_disagree' : 'def_agree';
+      } else if (type === 'borderline') {
+        // ~30 points (borderline cut-off)
+        if (item.id <= 30) {
+          newScores[item.id] = item.keying === 'AGREE' ? 'slight_agree' : 'slight_disagree';
         } else {
-          scores[it.id] = it.keying === 'AGREE' ? 'slight_disagree' : 'slight_agree';
+          newScores[item.id] = item.keying === 'AGREE' ? 'slight_disagree' : 'slight_agree';
         }
       }
     });
 
-    setForm(prev => ({ ...prev, scores }));
-    toast?.(
-      `✨ تمت التعبئة السريعة للنموذج (${type === 'autistic' ? 'سمات توحد مرتفعة' : type === 'typical' ? 'أداء نمطي سليم' : 'حالة حدية'})`,
-      'ok'
-    );
+    setForm(f => ({
+      ...f,
+      scores: newScores,
+    }));
+    toast?.success?.('تم تعبئة نموذج الاستجابات التجريبي بنجاح!');
   }
 
   function handleReset() {
-    if (window.confirm('هل تريد حقاً مسح كافة إجابات الاستبيان والبدء من جديد؟')) {
-      setForm(f => ({ ...f, scores: {}, itemNotes: {} }));
-      toast?.('تمت إعادة ضبط النموذج', 'ok');
+    if (window.confirm('هل تريد مسح جميع إجابات بنود المقياس والبدء من جديد؟')) {
+      setForm(f => ({
+        ...f,
+        scores: {},
+        itemNotes: {},
+        clinicalSummary: '',
+        recommendations: '',
+      }));
     }
   }
 
   function handleGenerateSummary() {
-    const domainDetails = psychometrics.domainBreakdown
-      .map(d => `• ${d.name}: ${d.rawScore} / 10 (${d.level})`)
-      .join('\n');
-
-    const suggestedSummary =
-      `تقرير الفرز والتقييم الإكلينيكي لمقياس طيف التوحد للأطفال واليافعين (AQ):\n` +
-      `------------------------------------------------------------------------\n` +
-      `المفحوص: ${form.studentName || '—'} | العمر الزمني: ${form.age || '—'} | النسخة: ${form.version === 'adolescent' ? 'نسخة اليافعين (12–16 سنة)' : 'نسخة الأطفال (4–11 سنة)'}\n` +
-      `الدرجة الكلية لمعامل التوحد (AQ Score): [${psychometrics.totalScore} من 50] | عتبة القطع الإكلينيكية المعتمدة: [≥ 30]\n` +
-      `حالة عتبة القطع: [${psychometrics.isAboveCutoff ? 'تجاوز عتبة القطع الإكلينيكية (مؤشر إيجابي دال)' : 'أقل من عتبة القطع (ضمن النطاق الطبيعي)'}]\n` +
-      `مستوى الشدة والخطورة: [${psychometrics.severityLabel} — مستوى خطورة: ${psychometrics.riskLevel}]\n` +
-      `عدد البنود الدالة على سمات الطيف: [${psychometrics.flaggedItems.length} بنداً من أصل 50]\n\n` +
-      `الأداء التفصيلي على الأبعاد المعرفية والسلوكية الخمسة:\n${domainDetails}\n\n` +
-      `البيان الإكلينيكي:\n${psychometrics.clinicalSummary}`;
-
-    const suggestedRecs = psychometrics.severityKey === 'high'
-      ? '1. إحالة المفحوص لإجراء تقييم تشخيصي شامل ومعمق متعدد التخصصات (نفسي، تخاطبي، وظيفي) لتأكيد التشخيص السريري.\n' +
-        '2. إعداد خطة تربوية وتأهيلية فردية (IEP) تركز على تنمية المهارات الاجتماعية والتواصل التبادلي والمرونة السلوكية.\n' +
-        '3. إلحاق المفحوص ببرنامج تدريب على المهارات الاجتماعية (Social Skills Group) لتعزيز قراءة الإيماءات ونبرات الصوت والتفاعل مع الأقران.\n' +
-        '4. استخدام الجداول البصرية واستراتيجيات التهيئة المسبقة لتسهيل الانتقال بين الأنشطة وتقليل القلق المرتبط بتغير الروتين.\n' +
-        '5. برنامج دعم وإرشاد أسري وتنسيق مستمر مع البيئة المدرسية لتعميم الاستراتيجيات السلوكية والتكيفية.'
-      : psychometrics.severityKey === 'borderline'
-      ? '1. متابعة الملاحظة السريرية وتقديم الدعم الموجه في الأبعاد التي أظهرت درجات مرتفعة (خاصة المرونة والتواصل).\n' +
-        '2. تصميم أنشطة صفية ومنزلية تعزز التفاعل الاجتماعي غير الرسمي وتدعم مهارات حل المشكلات الاجتماعية.\n' +
-        '3. إعادة تطبيق المقياس بعد 6 أشهر لرصد أي تغيرات في الأداء السلوكي والتكيفي.'
-      : '1. نتائج المقياس تقع ضمن النطاق النمائي الطبيعي ولا تظهر مؤشرات دالة على اضطراب طيف التوحد في الوقت الراهن.\n' +
-        '2. الاستمرار في تعزيز وتنمية المهارات النمائية واللغوية والاجتماعية في البيئة الطبيعية والصفية.\n' +
-        '3. المتابعة الدورية في حال ظهور أي ملاحظات سلوكية أو تواصلية مستقبلاً.';
+    const recs = psychometrics.isAboveCutoff
+      ? `1. إحالة الطفل فوراً لتقييم تشخيصي رسمي متعدد التخصصات يشمل القياس الإكلينيكي المعياري (ADOS-2 / ADI-R).\n2. إعداد خطة تربوية فردية (IEP) تركز على المهارات الاجتماعية والتواصلية والمرونة السلوكية.\n3. تدريب الأسرة وفريق العمل المدرسي على استراتيجيات الدعم البصري والقصص الاجتماعية.\n4. إعادة تقييم التطور بعد 6 أشهر لمتابعة الأثر التدخلي.`
+      : `1. استمرار الملاحظة الدورية للتطور النمائي والتواصل الاجتماعي.\n2. تعزيز أنشطة اللعب التشاركي والتفاعل الجماعي مع الأقران.\n3. تقديم الدعم في المهارات التي تظهر سمات خفيفة حسب الحاجة.`;
 
     setForm(f => ({
       ...f,
-      clinicalSummary: suggestedSummary,
-      recommendations: suggestedRecs,
+      clinicalSummary: psychometrics.clinicalSummary,
+      recommendations: recs,
     }));
-
-    toast?.('✨ تم توليد الخلاصة التشخيصية الشاملة والتوصيات المعتمدة بنجاح', 'ok');
+    toast?.success?.('تم توليد الخلاصة السريرية والتوصيات بنجاح!');
   }
 
   function handleSave() {
-    if (!form.studentName || !form.studentName.trim()) {
-      toast?.('⚠️ يرجى اختيار الطالب أو كتابة اسم المفحوص أولاً', 'er');
-      return;
-    }
-
-    if (!form.date) {
-      toast?.('⚠️ يرجى إدخال تاريخ التقييم', 'er');
+    if (!form.studentName) {
+      toast?.error?.('يرجى اختيار أو كتابة اسم المفحوص أولاً!');
       return;
     }
 
     if (psychometrics.answeredCount < 50) {
-      if (!window.confirm(`⚠️ تم تقييم ${psychometrics.answeredCount} من أصل 50 بنداً. هل تود حفظ المقياس كمسودة؟`)) {
+      const remaining = 50 - psychometrics.answeredCount;
+      if (!window.confirm(`تنبيه: متبقي ${remaining} بنداً لم يتم الإجابة عليها. هل ترغب في حفظ التقييم كمسودة غير مكتملة؟`)) {
         return;
       }
     }
 
     const payload = {
       ...form,
-      id: initialData?.id || uid('aq'),
-      measureId: 'aq',
-      measureName: `مقياس طيف التوحد للأطفال واليافعين (AQ) — ${form.version === 'adolescent' ? 'نسخة اليافعين' : 'نسخة الأطفال'}`,
-      scaleId: 'aq',
+      id: form.id || uid(),
+      scaleId: 'aq_autism_quotient',
       scaleType: 'aq',
-      category: 'autism_spectrum',
-      categoryName: 'اضطراب طيف التوحد والنمو الشامل',
-      version: form.version,
-      versionLabel: form.version === 'adolescent' ? 'نسخة اليافعين (12–16 سنة)' : 'نسخة الأطفال (4–11 سنة)',
-      score: psychometrics.totalScore,
-      rawScore: psychometrics.totalScore,
-      totalScore: psychometrics.totalScore,
-      maxScore: 50,
-      cutoff: psychometrics.cutoffScore,
-      isAboveCutoff: psychometrics.isAboveCutoff,
-      percentage: Math.round((psychometrics.answeredCount / 50) * 100),
-      level: psychometrics.severityLabel,
-      severityLevel: psychometrics.severityLabel,
-      severityKey: psychometrics.severityKey,
-      severityColor: psychometrics.severityColor,
-      riskLevel: psychometrics.riskLevel,
+      scaleName: 'مقياس طيف التوحد للأطفال واليافعين — AQ',
+      scaleCategory: 'autism',
       results: form.scores,
-      scores: form.scores,
-      itemNotes: form.itemNotes,
-      domainScores: psychometrics.domainScores,
-      domainBreakdown: psychometrics.domainBreakdown,
-      psychometrics,
-      clinicalSummary: form.clinicalSummary || psychometrics.clinicalSummary,
-      recommendations: form.recommendations,
-      author: AQ_COPYRIGHT_INFO.authorsAr,
-      publisher: AQ_COPYRIGHT_INFO.publisherAr,
+      psychometrics: {
+        totalScore: psychometrics.totalScore,
+        maxScore: psychometrics.maxScore,
+        answeredCount: psychometrics.answeredCount,
+        isAboveCutoff: psychometrics.isAboveCutoff,
+        cutoffThreshold: 30,
+        severityLabel: psychometrics.severityLabel,
+        severityKey: psychometrics.severityKey,
+        riskLevel: psychometrics.riskLevel,
+        domainBreakdown: psychometrics.domainBreakdown,
+        flaggedItemsCount: psychometrics.flaggedItems.length,
+      },
       updatedAt: new Date().toISOString(),
     };
 
     if (initialData?.id) {
       lsUpd('studentAssessments', initialData.id, payload);
       lsUpd('assessments', initialData.id, payload);
-      toast?.('✅ تم تحديث تقييم مقياس طيف التوحد (AQ) بنجاح', 'ok');
+      toast?.success?.('تم تحديث تقييم مقياس طيف التوحد (AQ) بنجاح!');
     } else {
       payload.createdAt = new Date().toISOString();
       lsAdd('studentAssessments', payload);
       lsAdd('assessments', payload);
-      toast?.('✅ تم حفظ تطبيق مقياس طيف التوحد (AQ) بنجاح في السجل الإكلينيكي', 'ok');
+      toast?.success?.('تم حفظ تقييم مقياس طيف التوحد (AQ) بنجاح!');
     }
 
     if (onSaved) onSaved(payload);
+    if (onOpenReport) onOpenReport(payload);
     onClose();
   }
 
   function handleSafeClose() {
-    const answeredCount = Object.keys(form.scores || {}).length;
-    if (answeredCount > 0) {
-      if (window.confirm(`⚠️ تنبيه: تم رصد إجابات لـ (${answeredCount}) بنداً في المقياس. هل أنت متأكد من رغبتك في الإغلاق دون حفظ التغييرات؟`)) {
+    if (Object.keys(form.scores).length > 0 && !initialData) {
+      if (window.confirm('هل أنت متأكد من الخروج؟ سيتم فقدان البيانات غير المحفوظة.')) {
         onClose();
       }
     } else {
@@ -298,155 +290,143 @@ export default function AQAssessmentModal({
   }
 
   return (
-    <div className="mbg" style={{ zIndex: 1100 }} onClick={e => e.target === e.currentTarget && handleSafeClose()}>
+    <div className="mbg" onClick={e => e.target === e.currentTarget && handleSafeClose()} style={{ zIndex: 1100 }}>
       <div
         className="mb"
         style={{
-          maxWidth: 'min(1360px, calc(100vw - 24px))',
+          maxWidth: 'min(1250px, calc(100vw - 24px))',
           width: '100%',
+          maxHeight: 'min(94vh, calc(100dvh - 20px))',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: 0,
+          borderRadius: 16,
+          overflow: 'hidden',
+          background: 'var(--bg-card)',
+          color: 'var(--text-main)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
         }}
       >
-        {/* Modal Main Header */}
+        {/* MODAL HEADER */}
         <div
-          className="fhd modal-header-custom"
+          className="mhd modal-header-custom"
           style={{
-            padding: '14px 20px',
+            background: 'linear-gradient(135deg, #065f46 0%, #047857 50%, #0d9488 100%)',
+            color: '#ffffff',
+            padding: '12px 20px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            background: 'linear-gradient(135deg, #065f46 0%, #047857 50%, #0d9488 100%)',
-            color: '#fff',
             flexShrink: 0,
-            gap: 12,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: '1.8rem' }}>🧠</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: '1.6rem', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}>🧠</span>
+            <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h2 style={{ fontSize: '1.18rem', fontWeight: 800, margin: 0, color: '#fff' }}>
+                <h3 style={{ margin: 0, fontSize: '1.12rem', fontWeight: 800, color: '#ffffff' }}>
                   مقياس طيف التوحد للأطفال واليافعين (AQ)
-                </h2>
-                <span className="bdg" style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>
-                  50 بنداً استقصائياً · 5 أبعاد معرفية وسلوكية ({form.version === 'adolescent' ? 'نسخة اليافعين 12–16 سنة' : 'نسخة الأطفال 4–11 سنة'})
+                </h3>
+                <span
+                  style={{
+                    background: 'rgba(255,255,255,0.2)',
+                    color: '#ffffff',
+                    fontSize: '0.72rem',
+                    padding: '2px 8px',
+                    borderRadius: 999,
+                    fontWeight: 700,
+                  }}
+                >
+                  50 بنداً استقصائياً • 5 أبعاد معرفية وسلوكية ({form.version === 'adolescent' ? 'نسخة اليافعين 12–16 سنة' : 'نسخة الأطفال 4–11 سنة'})
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 3 }}>
-                <span className="bdg" style={{ background: '#022c22', color: '#a7f3d0', fontSize: '0.68rem', fontWeight: 800 }}>
-                  © Cambridge Autism Research Centre (ARC) / Prof. Simon Baron-Cohen
-                </span>
-                <span style={{ fontSize: '0.76rem', opacity: 0.95 }}>
-                  Autism Spectrum Quotient — الأداة الإكلينيكية المعيارية المفتوحة لفرز وتقدير سمات طيف التوحد ومتلازمة أسبرجر
+              <div style={{ fontSize: '0.74rem', color: '#d1fae5', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span>الأداة الإكلينيكية المعيارية المفتوحة لفرز وتقدير سمات طيف التوحد ومتلازمة أسبرجر — Autism Spectrum Quotient</span>
+                <span style={{ opacity: 0.9, background: 'rgba(0,0,0,0.2)', padding: '1px 6px', borderRadius: 4 }}>
+                  Cambridge Autism Research Centre (ARC) / Prof. Simon Baron-Cohen ©
                 </span>
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <button
               type="button"
               className="btn btn-xs"
-              onClick={() => setShowCopyrightDetails(s => !s)}
+              onClick={() => setShowCopyrightInfo(prev => !prev)}
               style={{
-                background: showCopyrightDetails ? '#fff' : 'rgba(255,255,255,0.2)',
-                color: showCopyrightDetails ? '#065f46' : '#fff',
-                border: '1px solid rgba(255,255,255,0.35)',
+                background: showCopyrightInfo ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.15)',
+                color: '#fff',
+                border: '1px solid rgba(255,255,255,0.3)',
                 fontWeight: 700,
+                fontSize: '0.74rem',
+                padding: '4px 8px',
               }}
+              title="عرض معلومات الترخيص المفتوح وحقوق الملكية"
             >
-              📜 {showCopyrightDetails ? 'إخفاء حقوق الاعتماد' : 'حقوق الملكية والاعتماد العلمي'}
+              📜 حقوق الملكية والاعتماد العلمي
             </button>
             <button
               type="button"
-              className="btn btn-xs"
+              className="btn btn-sm btn-g"
               onClick={handleSafeClose}
-              style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', fontWeight: 700 }}
+              style={{ color: '#fff', background: 'rgba(255,255,255,0.15)', border: 'none' }}
+              title="إغلاق النافذة"
             >
-              ✖ إغلاق
+              ✕ إغلاق
             </button>
           </div>
         </div>
 
-        {/* EXPANDABLE DETAILED COPYRIGHT NOTICE */}
-        {showCopyrightDetails && (
+        {/* OPEN ACCESS / COPYRIGHT ACCORDION */}
+        {showCopyrightInfo && (
           <div
             style={{
-              background: '#ecfdf5',
-              padding: '14px 20px',
-              borderBottom: '2px solid #6ee7b7',
-              fontSize: '0.82rem',
-              color: '#064e3b',
+              background: 'var(--g0)',
+              borderBottom: '1px solid var(--border-color)',
+              padding: '12px 20px',
+              fontSize: '0.78rem',
+              color: 'var(--text-main)',
               lineHeight: 1.6,
-              flexShrink: 0,
             }}
           >
-            <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>📜</span> إشعار حقوق الملكية الفكرية والاعتماد السيكومتري لمقياس AQ:
-            </div>
-
-            <div
-              style={{
-                background: '#d1fae5',
-                border: '1px solid #a7f3d0',
-                borderRadius: 8,
-                padding: '8px 12px',
-                marginBottom: 10,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: 8,
-                fontSize: '0.8rem',
-                color: '#065f46',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: '1.2rem' }}>⚖️</span>
-                <div>
-                  <strong>إشعار الترخيص المفتوح (Creative Commons / Open Access):</strong> مقياس AQ متاح للفرز السريري والبحث العلمي بدون رسوم تجارية من مركز أبحاث التوحد بجامعة كامبريدج بقيادة البروفيسور سيمون بارون-كوهين.
-                </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
+              <div>
+                <strong style={{ color: '#059669', display: 'block', marginBottom: 2 }}>
+                  🏛️ المطور وجهة النشر:
+                </strong>
+                {AQ_COPYRIGHT_INFO.publisherAr} بقيادة {AQ_COPYRIGHT_INFO.authorsAr}.
               </div>
-              <span style={{ fontSize: '0.72rem', background: '#a7f3d0', color: '#064e3b', padding: '3px 8px', borderRadius: 6, border: '1px solid #6ee7b7', fontWeight: 700 }}>
-                مفتوح الاستخدام الإكلينيكي المعتمد
-              </span>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, marginBottom: 8 }}>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #a7f3d0' }}>
-                <strong>المؤلفون:</strong> {AQ_COPYRIGHT_INFO.authorsAr} ({AQ_COPYRIGHT_INFO.authorsEn})
+              <div>
+                <strong style={{ color: '#059669', display: 'block', marginBottom: 2 }}>
+                  ⚖️ الوضع القانوني وحقوق الاستخدام:
+                </strong>
+                {AQ_COPYRIGHT_INFO.licensingStatus} — {AQ_COPYRIGHT_INFO.licensingNotice}
               </div>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #a7f3d0' }}>
-                <strong>الجهة المعتمدة:</strong> {AQ_COPYRIGHT_INFO.publisherAr}
+              <div>
+                <strong style={{ color: '#059669', display: 'block', marginBottom: 2 }}>
+                  🎯 الغرض والهدف الإكلينيكي:
+                </strong>
+                {AQ_COPYRIGHT_INFO.purpose}
               </div>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #a7f3d0' }}>
-                <strong>الفئات المستهدفة:</strong> {AQ_COPYRIGHT_INFO.targetAge}
-              </div>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #a7f3d0' }}>
-                <strong>عتبة القطع السريرية:</strong> الدرجة الكلية ≥ 30 تدل على وجود سمات توحد دالة سريرياً
-              </div>
-            </div>
-            <div style={{ fontSize: '0.78rem', color: '#065f46', background: '#d1fae5', padding: '8px 12px', borderRadius: 8 }}>
-              {AQ_COPYRIGHT_INFO.licensingNotice}
             </div>
           </div>
         )}
 
-        {/* Real-time Psychometrics & Diagnostic Strip */}
+        {/* REAL-TIME PSYCHOMETRICS & DIAGNOSTIC SUBBAR */}
         <div
-          className="modal-subbar"
           style={{
             background: 'var(--g0)',
-            padding: '10px 18px',
             borderBottom: '1px solid var(--border-color)',
+            padding: '10px 18px',
             display: 'flex',
-            justifyContent: 'space-between',
             alignItems: 'center',
+            justifyContent: 'space-between',
             gap: 12,
             flexWrap: 'wrap',
-            flexShrink: 0,
           }}
         >
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', flex: 1 }}>
             {/* Total AQ Score Metric */}
             <div
               style={{
@@ -469,7 +449,7 @@ export default function AQAssessmentModal({
             {/* Cut-off Status */}
             <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-color)', textAlign: 'center' }}>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>عتبة الفرز التشخيصي:</span>
-              <span style={{ fontSize: '1rem', fontWeight: 800, color: psychometrics.isAboveCutoff ? '#dc2626' : '#059669' }}>
+              <span style={{ fontSize: '0.95rem', fontWeight: 800, color: psychometrics.isAboveCutoff ? '#dc2626' : '#059669' }}>
                 {psychometrics.isAboveCutoff ? 'تجاوز عتبة القطع ⚠️' : 'أقل من عتبة القطع ✅'}
               </span>
             </div>
@@ -486,7 +466,7 @@ export default function AQAssessmentModal({
                   fontSize: '0.72rem',
                   fontWeight: form.version === 'child' ? 800 : 500,
                   background: form.version === 'child' ? '#047857' : undefined,
-                  color: form.version === 'child' ? '#fff' : undefined,
+                  color: form.version === 'child' ? '#ffffff' : 'var(--text-sub)',
                   border: form.version === 'child' ? 'none' : undefined,
                 }}
               >
@@ -501,7 +481,7 @@ export default function AQAssessmentModal({
                   fontSize: '0.72rem',
                   fontWeight: form.version === 'adolescent' ? 800 : 500,
                   background: form.version === 'adolescent' ? '#065f46' : undefined,
-                  color: form.version === 'adolescent' ? '#fff' : undefined,
+                  color: form.version === 'adolescent' ? '#ffffff' : 'var(--text-sub)',
                   border: form.version === 'adolescent' ? 'none' : undefined,
                 }}
               >
@@ -523,7 +503,7 @@ export default function AQAssessmentModal({
                 type="button"
                 className="btn btn-xs"
                 onClick={() => autoFillSample('autistic')}
-                style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca', fontWeight: 700, fontSize: '0.72rem', padding: '3px 7px' }}
+                style={{ background: 'var(--err-l)', color: 'var(--err)', border: '1px solid var(--err)', fontWeight: 700, fontSize: '0.72rem', padding: '3px 7px' }}
                 title="تعبئة سريعة لحالة تظهر سمات طيف توحد مرتفعة"
               >
                 ⚡ سمات مرتفعة
@@ -532,7 +512,7 @@ export default function AQAssessmentModal({
                 type="button"
                 className="btn btn-xs"
                 onClick={() => autoFillSample('borderline')}
-                style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', fontWeight: 700, fontSize: '0.72rem', padding: '3px 7px' }}
+                style={{ background: 'var(--warn-l)', color: 'var(--warn)', border: '1px solid var(--warn)', fontWeight: 700, fontSize: '0.72rem', padding: '3px 7px' }}
                 title="تعبئة سريعة لحالة حدية"
               >
                 ⚡ حدية
@@ -541,7 +521,7 @@ export default function AQAssessmentModal({
                 type="button"
                 className="btn btn-xs"
                 onClick={() => autoFillSample('typical')}
-                style={{ background: '#d1fae5', color: '#065f46', border: '1px solid #a7f3d0', fontWeight: 700, fontSize: '0.72rem', padding: '3px 7px' }}
+                style={{ background: 'var(--ok-l)', color: 'var(--ok)', border: '1px solid var(--ok)', fontWeight: 700, fontSize: '0.72rem', padding: '3px 7px' }}
                 title="تعبئة سريعة لأداء نمطي سليم"
               >
                 ⚡ نمطي
@@ -559,7 +539,7 @@ export default function AQAssessmentModal({
 
             {/* Progress */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>
                 {psychometrics.answeredCount} / 50 بنداً
               </span>
               <div style={{ width: 60, height: 8, background: 'var(--border-color)', borderRadius: 4, overflow: 'hidden' }}>
@@ -577,9 +557,9 @@ export default function AQAssessmentModal({
         </div>
 
         {/* Scrollable Form Body */}
-        <div className="modal-body-scroll" style={{ padding: '16px 20px', flex: 1, overflowY: 'auto' }}>
+        <div className="modal-body-scroll" style={{ padding: '16px 20px', flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
           
-          {/* 1. Student & Assessment Info Card - Compact Refactored Header */}
+          {/* 1. Student & Assessment Info Card */}
           <div
             style={{
               background: 'var(--g0)',
@@ -601,20 +581,21 @@ export default function AQAssessmentModal({
                 style={{
                   fontSize: '0.84rem',
                   fontWeight: 800,
-                  color: '#065f46',
+                  color: 'var(--text-main)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
                 }}
               >
-                <span>👦</span>
+                <span style={{ color: '#059669' }}>👦</span>
                 <span>بيانات المفحوص والاستمارة السريرية</span>
                 {form.studentName && (
                   <span
                     style={{
                       fontSize: '0.76rem',
-                      background: '#d1fae5',
-                      color: '#065f46',
+                      background: 'var(--ok-l)',
+                      color: 'var(--ok)',
+                      border: '1px solid var(--ok)',
                       padding: '2px 8px',
                       borderRadius: 6,
                       fontWeight: 700,
@@ -654,7 +635,7 @@ export default function AQAssessmentModal({
                     <div className="fl full">
                       <label style={{ fontSize: '0.76rem', marginBottom: 2 }}>اسم المستفيد الخارجي <span className="req">*</span></label>
                       <input
-                        style={{ height: 32, fontSize: '0.82rem' }}
+                        style={{ height: 32, fontSize: '0.82rem', background: 'var(--bg-input)', color: 'var(--text-main)' }}
                         value={form.studentName || ''}
                         onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
                         placeholder="اكتب اسم الطفل / المفحوص..."
@@ -675,7 +656,7 @@ export default function AQAssessmentModal({
                   <div className="fl" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الطالب المسجل <span className="req">*</span></label>
                     <select
-                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
+                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px', background: 'var(--bg-input)', color: 'var(--text-main)' }}
                       value={form.mode === 'other' ? '__other__' : (form.stuId || '')}
                       onChange={handleSelectStudent}
                     >
@@ -693,7 +674,7 @@ export default function AQAssessmentModal({
                   <div className="fl" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>العمر الزمني</label>
                     <input
-                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit ? 'var(--bg-input)' : 'var(--g0)' }}
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit ? 'var(--bg-input)' : 'var(--g0)', color: 'var(--text-main)' }}
                       value={form.age || (form.dob ? calcAge(form.dob) : '')}
                       readOnly={!isManualEdit}
                       onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
@@ -705,7 +686,7 @@ export default function AQAssessmentModal({
                   <div className="fl" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>التشخيص الطبي / التربوي</label>
                     <input
-                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)', color: 'var(--text-main)' }}
                       value={form.diagnosis || ''}
                       readOnly={!isManualEdit && form.mode !== 'other'}
                       onChange={e => setForm(f => ({ ...f, diagnosis: e.target.value }))}
@@ -719,7 +700,7 @@ export default function AQAssessmentModal({
                     <input
                       type="date"
                       dir="ltr"
-                      style={{ height: 32, fontSize: '0.82rem', textAlign: 'right', padding: '2px 8px' }}
+                      style={{ height: 32, fontSize: '0.82rem', textAlign: 'right', padding: '2px 8px', background: 'var(--bg-input)', color: 'var(--text-main)' }}
                       value={form.date || todayStr()}
                       onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
                     />
@@ -738,7 +719,7 @@ export default function AQAssessmentModal({
                   <div className="fl" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الأخصائي الفاحص</label>
                     <input
-                      style={{ height: 32, fontSize: '0.82rem' }}
+                      style={{ height: 32, fontSize: '0.82rem', background: 'var(--bg-input)', color: 'var(--text-main)' }}
                       type="text"
                       placeholder="اسم الأخصائي النفسي / الفاحص"
                       value={form.examinerName || ''}
@@ -750,7 +731,7 @@ export default function AQAssessmentModal({
                   <div className="fl" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>المستجيب (ولي أمر / معلم)</label>
                     <input
-                      style={{ height: 32, fontSize: '0.82rem' }}
+                      style={{ height: 32, fontSize: '0.82rem', background: 'var(--bg-input)', color: 'var(--text-main)' }}
                       type="text"
                       placeholder="اسم المستجيب على المقياس"
                       value={form.raterName || ''}
@@ -762,7 +743,7 @@ export default function AQAssessmentModal({
                   <div className="fl" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>نسخة المقياس المعتمدة</label>
                     <select
-                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px', fontWeight: 700, color: '#065f46' }}
+                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px', fontWeight: 700, color: 'var(--ok)', background: 'var(--bg-input)' }}
                       value={form.version}
                       onChange={e => setForm(f => ({ ...f, version: e.target.value }))}
                     >
@@ -775,7 +756,7 @@ export default function AQAssessmentModal({
                   <div className="fl" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>صلة القرابة / معرفة السلوك</label>
                     <input
-                      style={{ height: 32, fontSize: '0.82rem' }}
+                      style={{ height: 32, fontSize: '0.82rem', background: 'var(--bg-input)', color: 'var(--text-main)' }}
                       type="text"
                       placeholder="مثال: الأم، الأب، معلم التربية الخاصة..."
                       value={form.raterRelation || ''}
@@ -846,15 +827,15 @@ export default function AQAssessmentModal({
                 <div
                   key={item.id}
                   style={{
-                    background: 'var(--bg-card, #ffffff)',
+                    background: 'var(--bg-card)',
                     border: isTrait
-                      ? '1.5px solid #f87171'
+                      ? '1.5px solid var(--err)'
                       : isAnswered
-                      ? '1px solid var(--border-color, #cbd5e1)'
-                      : '1px dashed var(--border-color, #cbd5e1)',
+                      ? '1px solid var(--border-color)'
+                      : '1px dashed var(--border-color)',
                     borderRadius: 10,
                     padding: '12px 16px',
-                    boxShadow: isTrait ? '0 2px 8px rgba(239, 68, 68, 0.08)' : '0 1px 3px rgba(0,0,0,0.02)',
+                    boxShadow: isTrait ? '0 2px 8px rgba(239, 68, 68, 0.15)' : 'none',
                     transition: 'all 0.2s ease',
                   }}
                 >
@@ -868,21 +849,21 @@ export default function AQAssessmentModal({
                           width: 28,
                           height: 28,
                           borderRadius: 8,
-                          background: domain?.bgLight || '#f1f5f9',
-                          color: domain?.color || '#334155',
+                          background: 'var(--g1)',
+                          color: 'var(--text-main)',
                           fontWeight: 900,
                           fontSize: '.82rem',
                           flexShrink: 0,
-                          border: `1px solid ${domain?.borderColor || '#cbd5e1'}`,
+                          border: '1px solid var(--border-color)',
                         }}
                       >
                         {item.id}
                       </span>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '.92rem', fontWeight: 700, color: 'var(--text-main, #1e293b)', lineHeight: 1.5 }}>
+                        <div style={{ fontSize: '.92rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.5 }}>
                           {item.textAr}
                         </div>
-                        <div style={{ fontSize: '.75rem', color: 'var(--text-sub, #94a3b8)', direction: 'ltr', textAlign: 'right', marginTop: 2 }}>
+                        <div style={{ fontSize: '.75rem', color: 'var(--text-sub)', direction: 'ltr', textAlign: 'right', marginTop: 2 }}>
                           {item.textEn}
                         </div>
                       </div>
@@ -891,13 +872,13 @@ export default function AQAssessmentModal({
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                       <span
                         style={{
-                          fontSize: '.68rem',
+                          fontSize: '.7rem',
                           padding: '2px 8px',
                           borderRadius: 6,
-                          background: domain?.bgLight,
-                          color: domain?.color,
+                          background: 'var(--g1)',
+                          color: domain?.color || 'var(--text-main)',
                           fontWeight: 700,
-                          border: `1px solid ${domain?.borderColor || '#cbd5e1'}`,
+                          border: '1px solid var(--border-color)',
                         }}
                       >
                         {domain?.name}
@@ -905,13 +886,13 @@ export default function AQAssessmentModal({
                       {isTrait && (
                         <span
                           style={{
-                            fontSize: '.68rem',
+                            fontSize: '.7rem',
                             padding: '2px 8px',
                             borderRadius: 6,
-                            background: '#fee2e2',
-                            color: '#991b1b',
+                            background: 'var(--err-l)',
+                            color: 'var(--err)',
                             fontWeight: 800,
-                            border: '1px solid #fecaca',
+                            border: '1px solid var(--err)',
                           }}
                         >
                           +1 سمة طيف
@@ -936,17 +917,20 @@ export default function AQAssessmentModal({
                           key={opt.value}
                           type="button"
                           onClick={() => handleAnswer(item.id, opt.value)}
+                          className={`btn ${isSelected ? 'btn-p' : 'btn-g'}`}
                           style={{
                             padding: '8px 10px',
                             borderRadius: 8,
-                            fontSize: '.8rem',
-                            fontWeight: isSelected ? 800 : 600,
+                            fontSize: '.82rem',
+                            fontWeight: isSelected ? 800 : 500,
                             cursor: 'pointer',
+                            background: isSelected
+                              ? (isTrait ? '#dc2626' : '#059669')
+                              : 'var(--bg-input)',
+                            color: isSelected ? '#ffffff' : 'var(--text-main)',
                             border: isSelected
-                              ? '2px solid #047857'
-                              : '1px solid var(--border-color, #e2e8f0)',
-                            background: isSelected ? '#ecfdf5' : 'var(--bg-main, #f8fafc)',
-                            color: isSelected ? '#065f46' : 'var(--text-main, #475569)',
+                              ? `2px solid ${isTrait ? '#b91c1c' : '#047857'}`
+                              : '1px solid var(--border-color)',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
@@ -955,8 +939,16 @@ export default function AQAssessmentModal({
                             transition: 'all 0.15s ease',
                           }}
                         >
-                          <span>{opt.label}</span>
-                          <span style={{ fontSize: '.65rem', opacity: 0.7, direction: 'ltr' }}>{opt.labelEn}</span>
+                          <span>{opt.label} {isSelected && '✓'}</span>
+                          <span
+                            style={{
+                              fontSize: '.66rem',
+                              color: isSelected ? 'rgba(255,255,255,0.85)' : 'var(--text-sub)',
+                              direction: 'ltr',
+                            }}
+                          >
+                            {opt.labelEn}
+                          </span>
                         </button>
                       );
                     })}
@@ -971,10 +963,11 @@ export default function AQAssessmentModal({
                       placeholder="ملاحظات سريرية أو شواهد سلوكية على هذا البند (اختياري)..."
                       style={{
                         width: '100%',
-                        fontSize: '.75rem',
-                        padding: '4px 8px',
-                        background: 'var(--bg-main, #f8fafc)',
-                        border: '1px solid var(--border-color, #e2e8f0)',
+                        fontSize: '.78rem',
+                        padding: '6px 10px',
+                        background: 'var(--bg-input)',
+                        color: 'var(--text-main)',
+                        border: '1px dashed var(--border-color)',
                         borderRadius: 6,
                       }}
                     />
@@ -987,15 +980,15 @@ export default function AQAssessmentModal({
           {/* 4. DOMAIN PROFILE SCOREBOARD VISUALIZER */}
           <div
             style={{
-              background: 'var(--bg-card, #ffffff)',
-              border: '1px solid var(--border-color, #e2e8f0)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
               borderRadius: 12,
               padding: '14px 18px',
               marginBottom: 16,
               boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
             }}
           >
-            <div style={{ fontWeight: 800, fontSize: '.9rem', color: 'var(--text-main, #1e293b)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ fontWeight: 800, fontSize: '.9rem', color: 'var(--text-main)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
               <span>📊</span>
               <span>الملف السيكومتري للأبعاد المعرفية والسلوكية الخمسة (AQ Profile):</span>
             </div>
@@ -1004,17 +997,18 @@ export default function AQAssessmentModal({
                 <div
                   key={d.id}
                   style={{
-                    background: d.bgLight,
-                    border: `1px solid ${d.borderColor}`,
+                    background: 'var(--g0)',
+                    border: '1px solid var(--border-color)',
+                    borderRight: `4px solid ${d.color}`,
                     borderRadius: 8,
                     padding: '8px 12px',
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.76rem', fontWeight: 800 }}>
                     <span style={{ color: d.color }}>{d.name}</span>
-                    <span style={{ color: '#0f172a' }}>{d.rawScore} / 10 ({d.percentage}%)</span>
+                    <span style={{ color: 'var(--text-main)' }}>{d.rawScore} / 10 ({d.percentage}%)</span>
                   </div>
-                  <div style={{ width: '100%', height: 6, background: 'rgba(0,0,0,0.06)', borderRadius: 999, overflow: 'hidden', margin: '6px 0 4px 0' }}>
+                  <div style={{ width: '100%', height: 6, background: 'var(--border-color)', borderRadius: 999, overflow: 'hidden', margin: '6px 0 4px 0' }}>
                     <div
                       style={{
                         width: `${d.percentage}%`,
@@ -1025,7 +1019,7 @@ export default function AQAssessmentModal({
                       }}
                     />
                   </div>
-                  <div style={{ fontSize: '.68rem', color: d.levelColor, fontWeight: 700 }}>
+                  <div style={{ fontSize: '.7rem', color: d.levelColor || 'var(--text-sub)', fontWeight: 700 }}>
                     {d.level}
                   </div>
                 </div>
@@ -1036,25 +1030,25 @@ export default function AQAssessmentModal({
           {/* 5. CLINICAL SUMMARY & RECOMMENDATIONS TEXTAREAS */}
           <div
             style={{
-              background: 'var(--bg-card, #ffffff)',
-              border: '1px solid var(--border-color, #e2e8f0)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
               borderRadius: 12,
               padding: '14px 18px',
               boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
-              <div style={{ fontWeight: 800, fontSize: '.9rem', color: 'var(--text-main, #1e293b)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ fontWeight: 800, fontSize: '.9rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span>📝</span>
                 <span>التقرير الإكلينيكي والتوصيات التأهيلية المعتمدة:</span>
               </div>
               <button
                 type="button"
-                className="btn btn-xs"
+                className="btn btn-xs btn-p"
                 onClick={handleGenerateSummary}
                 style={{
                   background: '#047857',
-                  color: '#fff',
+                  color: '#ffffff',
                   fontWeight: 800,
                   padding: '4px 10px',
                   borderRadius: 6,
@@ -1073,7 +1067,7 @@ export default function AQAssessmentModal({
                   value={form.clinicalSummary || psychometrics.clinicalSummary}
                   onChange={e => setForm(f => ({ ...f, clinicalSummary: e.target.value }))}
                   placeholder="سيتم توليد الخلاصة السريرية تلقائياً بناءً على الدرجة الكلية وعتبة القطع..."
-                  style={{ fontSize: '.82rem', padding: '8px', width: '100%', lineHeight: 1.5 }}
+                  style={{ fontSize: '.82rem', padding: '8px', width: '100%', lineHeight: 1.5, background: 'var(--bg-input)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -1084,7 +1078,7 @@ export default function AQAssessmentModal({
                   value={form.recommendations}
                   onChange={e => setForm(f => ({ ...f, recommendations: e.target.value }))}
                   placeholder="مثال: إحالة لتقييم تشخيصي شامل، جلسات تنمية مهارات اجتماعية، تدريب المرونة السلوكية..."
-                  style={{ fontSize: '.82rem', padding: '8px', width: '100%', lineHeight: 1.5 }}
+                  style={{ fontSize: '.82rem', padding: '8px', width: '100%', lineHeight: 1.5, background: 'var(--bg-input)', color: 'var(--text-main)' }}
                 />
               </div>
             </div>
