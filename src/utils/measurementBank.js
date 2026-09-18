@@ -11,6 +11,8 @@ import { SENSORY_CHECKLIST_ITEMS, calculateSensoryChecklistScore } from '../data
 import { CONNERS_PARENT_ITEMS, calculateConnersParentScore } from "../data/connersParentData";
 import { MCHAT_ITEMS } from '../data/mchatData';
 import { ATEC_ITEMS } from '../data/atecData';
+import { SCQ_ITEMS, calculateSCQScore } from '../data/scqData';
+import { AQ_ITEMS, calculateAQPsychometrics } from '../data/aqData';
 
 export const MEASUREMENT_CATEGORIES = [
   {
@@ -522,6 +524,48 @@ const DEFAULT_SCALE_LIBRARY = [
       domain: it.domainId,
     })),
     thresholdText: '0-30: طيف خفيف جداً / استجابة نمائية عالية | 31-50: طيف خفيف إلى متوسط | 51-104: طيف متوسط إلى شديد | 105-180: طيف شديد جداً',
+    isDefault: true,
+  },
+  {
+    id: 'scq',
+    name: 'استبيان التواصل الاجتماعي المفتوح (SCQ)',
+    nameEn: 'Social Communication Questionnaire (SCQ) — Open DSM-5',
+    category: 'autism',
+    description: 'أداة الفرز والمسح العالمية المفتوحة المعتمدة على خوارزمية DSM-5 / ADI-R — 40 بنداً للفرز السريع والكشف عن مؤشرات اضطراب طيف التوحد (عتبة القطع = 15)',
+    icon: '📋',
+    color: '#059669',
+    scoreMode: 'subscale',
+    responseType: 'boolean',
+    minValue: 0,
+    maxValue: 1,
+    maxScore: 39,
+    items: SCQ_ITEMS.map(it => ({
+      id: String(it.id),
+      text: it.textAr,
+      domain: it.domainId,
+    })),
+    thresholdText: 'درجة القطع للفرز: 15 فأكثر = اشتباه إيجابي باضطراب طيف التوحد | 22 فأكثر = مؤشرات توحد كلاسيكي شديد | أقل من 15 = ضمن الحدود الطبيعية',
+    isDefault: true,
+  },
+  {
+    id: 'aq',
+    name: 'مقياس طيف التوحد للأطفال واليافعين (AQ)',
+    nameEn: 'Autism Spectrum Quotient (AQ - Child / Adolescent) — Cambridge ARC',
+    category: 'autism',
+    description: 'أداة الفرز والمسح السريرية العالمية من مركز أبحاث التوحد بجامعة كامبريدج (Simon Baron-Cohen) — 50 عبارة مقسمة على 5 أبعاد معرفية وسلوكية مع عتبة القطع الإكلينيكية (Cut-off ≥ 30)',
+    icon: '🧠',
+    color: '#059669',
+    scoreMode: 'subscale',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 1,
+    maxScore: 50,
+    items: AQ_ITEMS.map(it => ({
+      id: String(it.id),
+      text: it.textAr,
+      domain: it.domainId,
+    })),
+    thresholdText: 'عتبة القطع الإكلينيكية: 30 فأكثر = مؤشر مرتفع لسمات طيف التوحد (يتطلب تقييماً تشخيصياً شاملاً) | 26-29 = سمات متوسطة/حدية | 0-25 = ضمن النطاق النمائي الطبيعي',
     isDefault: true,
   },
   {
@@ -1314,6 +1358,25 @@ export function buildAssessmentResult(scale, answers = {}) {
         note: `المقياس غير مكتمل (${srsResult.answeredCount} من 65 بنداً تم الإجابة عليها). يتطلب الإجابة على جميع البنود لحساب الدرجة المعيارية ت والتشخيص الإكلينيكي.`,
       };
     }
+  }
+
+  if (scale?.id === 'aq') {
+    const psych = calculateAQPsychometrics(answers, scale?.version || 'child');
+    return {
+      total: psych.totalScore,
+      score: psych.totalScore,
+      maxScore: 50,
+      percentage: `${Math.round((psych.totalScore / 50) * 100)}%`,
+      percentageNum: Math.round((psych.totalScore / 50) * 100),
+      level: psych.severityLabel,
+      color: psych.severityColor,
+      severityColor: psych.severityColor,
+      cutoff: psych.cutoffScore,
+      isAboveCutoff: psych.isAboveCutoff,
+      domainScores: psych.domainScores,
+      psychometrics: psych,
+      note: psych.clinicalSummary,
+    };
   }
 
   const items = scale?.items || [];

@@ -11,6 +11,10 @@ import CARS2AssessmentModal from '../../components/assessments/CARS2AssessmentMo
 import CARS2ReportModal from '../../components/assessments/CARS2ReportModal';
 import ATECAssessmentModal from '../../components/assessments/ATECAssessmentModal';
 import ATECReportModal from '../../components/assessments/ATECReportModal';
+import SCQAssessmentModal from '../../components/assessments/SCQAssessmentModal';
+import SCQReportModal from '../../components/assessments/SCQReportModal';
+import AQAssessmentModal from '../../components/assessments/AQAssessmentModal';
+import AQReportModal from '../../components/assessments/AQReportModal';
 import GARS3AssessmentModal from '../../components/assessments/GARS3AssessmentModal';
 import GARS3ReportModal from '../../components/assessments/GARS3ReportModal';
 import SRS2AssessmentModal from '../../components/assessments/SRS2AssessmentModal';
@@ -54,6 +58,8 @@ import { SENSORY_INTEGRATION_ITEMS } from '../../data/sensoryIntegrationData';
 import { CONNERS_PARENT_ITEMS } from '../../data/connersParentData';
 import { MCHAT_ITEMS } from '../../data/mchatData';
 import { ATEC_ITEMS } from '../../data/atecData';
+import { SCQ_ITEMS } from '../../data/scqData';
+import { AQ_ITEMS } from '../../data/aqData';
 import InitialAssessmentModal from '../../components/assessments/InitialAssessmentModal';
 import IepBridgeModal from './IepBridgeModal';
 import { extractRecommendedGoals } from '../../utils/iepBridge';
@@ -182,6 +188,18 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
   const [atecEditData, setAtecEditData] = useState(null);
   const [atecReportOpen, setAtecReportOpen] = useState(false);
   const [selectedAtecAssessment, setSelectedAtecAssessment] = useState(null);
+
+  // SCQ Specific Specialized Modals States (Open Access DSM-5)
+  const [scqModalOpen, setScqModalOpen] = useState(false);
+  const [scqEditData, setScqEditData] = useState(null);
+  const [scqReportOpen, setScqReportOpen] = useState(false);
+  const [selectedScqAssessment, setSelectedScqAssessment] = useState(null);
+
+  // AQ-Child / Adolescent Specific Specialized Modals States (Cambridge ARC)
+  const [aqModalOpen, setAqModalOpen] = useState(false);
+  const [aqEditData, setAqEditData] = useState(null);
+  const [aqReportOpen, setAqReportOpen] = useState(false);
+  const [selectedAqAssessment, setSelectedAqAssessment] = useState(null);
 
   // GARS-3 Specific Specialized Modals States
   const [garsModalOpen, setGarsModalOpen] = useState(false);
@@ -359,6 +377,16 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     if (scaleId === 'atec') {
       setAtecEditData(null);
       setAtecModalOpen(true);
+      return;
+    }
+    if (scaleId === 'scq') {
+      setScqEditData(null);
+      setScqModalOpen(true);
+      return;
+    }
+    if (scaleId === 'aq' || scaleId === 'aq_scale' || scaleId === 'aq_child' || scaleId === 'aq_adolescent') {
+      setAqEditData(null);
+      setAqModalOpen(true);
       return;
     }
     if (scaleId === 'gars' || scaleId === 'gars3') {
@@ -607,6 +635,26 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     setAtecReportOpen(true);
   }
 
+  function openEditScqAssessment(item) {
+    setScqEditData(item);
+    setScqModalOpen(true);
+  }
+
+  function openViewScqReport(item) {
+    setSelectedScqAssessment(item);
+    setScqReportOpen(true);
+  }
+
+  function openEditAqAssessment(item) {
+    setAqEditData(item);
+    setAqModalOpen(true);
+  }
+
+  function openViewAqReport(item) {
+    setSelectedAqAssessment(item);
+    setAqReportOpen(true);
+  }
+
   function handleScaleOptionChange(itemId, value) {
     setScaleResponses(prev => ({
       ...prev,
@@ -672,6 +720,8 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
       setBridgeScaleItems(MCHAT_ITEMS);
     } else if (item.measureId === 'atec' || item.scaleType === 'atec') {
       setBridgeScaleItems(ATEC_ITEMS);
+    } else if (item.measureId === 'scq' || item.scaleType === 'scq') {
+      setBridgeScaleItems(SCQ_ITEMS);
     } else {
       const scale = allScales.find(s => s.id === item.measureId) || null;
       setBridgeScaleItems(scale?.items || []);
@@ -746,7 +796,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     // Prevent duplication: If the autism or speech featured cards are shown at the top,
     // we do not display those scales in the generic bottom list.
     const isAutismFeatured = (selectedCategoryFilter === 'all' || selectedCategoryFilter === 'autism') && !searchTerm;
-    const isAutismScale = ['cars', 'gars', 'gars3', 'srs', 'srs2', 'pep3', 'pep', 'mchat', 'mchat_r_f', 'mchat_rf', 'atec'].includes(s.id);
+    const isAutismScale = ['cars', 'gars', 'gars3', 'srs', 'srs2', 'pep3', 'pep', 'mchat', 'mchat_r_f', 'mchat_rf', 'atec', 'scq'].includes(s.id);
     if (isAutismFeatured && isAutismScale) {
       return false; 
     }
@@ -1323,6 +1373,42 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                       🚀 فتح أداة فحص وتطبيق ATEC
                     </button>
                   </div>
+
+                  {/* SCQ (Social Communication Questionnaire - Open Access DSM-5) */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.08), rgba(16, 185, 129, 0.04))',
+                      border: '1.5px solid #059669',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#d1fae5', color: '#065f46', fontWeight: 600, fontSize: '.72rem' }}>المسح والفرز النمائي — DSM-5</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>مفتوح بدون حقوق تجارية</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        📋 استبيان التواصل الاجتماعي (SCQ)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        40 بنداً للفرز المعتمد على خوارزمية DSM-5 / ADI-R · عتبة قطع تشخيصية سريعة (15 نقطة) · قياس التواصل والسلوك التكراري
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setScqEditData(null); setScqModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#059669', color: '#fff', width: '100%' }}
+                    >
+                      🚀 فتح أداة فحص وتطبيق SCQ
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -1859,6 +1945,8 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
               {filteredAssessments.map(item => {
                 const isCars = item.measureId === 'cars' || item.scaleType === 'cars2';
                 const isAtec = item.measureId === 'atec' || item.scaleType === 'atec';
+                const isScq = item.measureId === 'scq' || item.scaleType === 'scq';
+                const isAq = item.measureId === 'aq' || item.scaleType === 'aq' || item.scaleId === 'aq' || item.measureId === 'aq_scale';
                 const isGars = item.measureId === 'gars' || item.measureId === 'gars3' || item.scaleType === 'gars3';
                 const isSrs = item.measureId === 'srs' || item.scaleType === 'srs2' || item.measureId === 'srs2';
                 const isPep3 = item.measureId === 'pep3' || item.scaleType === 'pep3';
@@ -1880,8 +1968,8 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                     key={item.id}
                     className="prog-item-card"
                     style={{
-                      border: isAtec ? '1.5px solid #1e3a8a' : isMChat ? '1.5px solid #2563eb' : isConnersParent ? '1.5px solid #ea580c' : isSensory ? '1.5px solid #0284c7' : isFamily ? '1.5px solid #7c3aed' : isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
-                      boxShadow: isAtec ? '0 4px 12px rgba(30, 58, 138, 0.08)' : isMChat ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isConnersParent ? '0 4px 12px rgba(234, 88, 12, 0.08)' : isSensory ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isFamily ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
+                      border: isScq ? '1.5px solid #059669' : isAtec ? '1.5px solid #1e3a8a' : isMChat ? '1.5px solid #2563eb' : isConnersParent ? '1.5px solid #ea580c' : isSensory ? '1.5px solid #0284c7' : isFamily ? '1.5px solid #7c3aed' : isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
+                      boxShadow: isScq ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isAtec ? '0 4px 12px rgba(30, 58, 138, 0.08)' : isMChat ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isConnersParent ? '0 4px 12px rgba(234, 88, 12, 0.08)' : isSensory ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isFamily ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
@@ -1892,6 +1980,8 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                           {isConnersParent && <span className="bdg" style={{ background: '#ffedd5', color: '#c2410c', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>كونرز للوالدين (80)</span>}
                           {isCars && <span className="bdg b-bl" style={{ fontSize: '.68rem', padding: '1px 6px' }}>CARS-2</span>}
                           {isAtec && <span className="bdg" style={{ background: '#dbeafe', color: '#1e3a8a', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>ATEC (77 بند)</span>}
+                          {isScq && <span className="bdg" style={{ background: '#d1fae5', color: '#065f46', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>SCQ (40 بند)</span>}
+                          {isAq && <span className="bdg" style={{ background: '#d1fae5', color: '#047857', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>AQ طيف التوحد (50 بند)</span>}
                           {isGars && <span className="bdg" style={{ background: '#ccfbf1', color: '#0f766e', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>GARS-3</span>}
                           {isSrs && <span className="bdg" style={{ background: '#d1fae5', color: '#047857', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>SRS-2</span>}
                           {isPep3 && <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>PEP-3</span>}
@@ -1910,7 +2000,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                         <div className="prog-student-meta">{item.measureName} · {item.date}</div>
                       </div>
                       <span className="bdg b-gr" style={{ fontSize: '0.82rem', fontWeight: 800, flexShrink: 0 }}>
-                        {isAtec ? `الخام: ${item.score || item.rawScore || 0} / 179` : isMChat ? `النقاط الإيجابية: ${item.score || item.totalFailedCount || 0} / 20` : isConnersParent ? `الخام: ${item.score || 0} / 240` : isSensory ? `الخام: ${item.score || 0} / 90` : isFamily ? `الخام: ${item.score || 0} / 130` : isMyklebust ? `الخام: ${item.score || 0} / 120 (LQ=${item.lq || item.psychometrics?.learningQuotient || '—'})` : isSartawi ? `الخام: ${item.score || 0} / 250 (T=${item.tScore || item.psychometrics?.totalTScore || '—'})` : isLddrs ? `الدرجة الكلية: ${item.score || 0}` : isDevLd ? `الخام: ${item.score} / ${item.maxScore || 160}` : isLdes ? `معامل LDEQ: ${item.ldeq || item.score}` : isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
+                        {isAq ? `الدرجة الإجمالية: ${item.score || item.psychometrics?.totalScore || 0} / 50` : isScq ? `النقاط: ${item.score || item.psychometrics?.totalScore || 0} / 39` : isAtec ? `الخام: ${item.score || item.rawScore || 0} / 179` : isMChat ? `النقاط الإيجابية: ${item.score || item.totalFailedCount || 0} / 20` : isConnersParent ? `الخام: ${item.score || 0} / 240` : isSensory ? `الخام: ${item.score || 0} / 90` : isFamily ? `الخام: ${item.score || 0} / 130` : isMyklebust ? `الخام: ${item.score || 0} / 120 (LQ=${item.lq || item.psychometrics?.learningQuotient || '—'})` : isSartawi ? `الخام: ${item.score || 0} / 250 (T=${item.tScore || item.psychometrics?.totalTScore || '—'})` : isLddrs ? `الدرجة الكلية: ${item.score || 0}` : isDevLd ? `الخام: ${item.score} / ${item.maxScore || 160}` : isLdes ? `معامل LDEQ: ${item.ldeq || item.score}` : isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
                       </span>
                     </div>
 
@@ -1989,6 +2079,29 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                         <span>مستوى الشدة: <strong style={{ color: item.severityColor || '#1e3a8a' }}>{item.level || item.severityLabel || '—'}</strong></span>
                         {item.domainScores && (
                           <span>(كلام: {item.domainScores.speech || 0} | تواصل: {item.domainScores.sociability || 0} | حسي: {item.domainScores.sensory || 0} | صحة: {item.domainScores.health || 0})</span>
+                        )}
+                      </div>
+                    )}
+
+                    {isScq && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>الدرجة الكلية: <strong style={{ color: '#059669' }}>{item.score || item.psychometrics?.totalScore || 0} / 39</strong></span>
+                        <span>عتبة القطع (Cutoff 15): <strong style={{ color: (item.score || item.psychometrics?.totalScore || 0) >= (item.cutoff || 15) ? '#dc2626' : '#16a34a' }}>{(item.score || item.psychometrics?.totalScore || 0) >= (item.cutoff || 15) ? 'تجاوز العتبة ⚠️' : 'أقل من العتبة ✅'}</strong></span>
+                        <span>التصنيف الإكلينيكي: <strong style={{ color: item.severityColor || '#059669' }}>{item.level || item.psychometrics?.severityLabel || '—'}</strong></span>
+                        {item.domainScores && (
+                          <span>(تفاعل: {item.domainScores.reciprocalSocial || 0} | تواصل: {item.domainScores.communication || 0} | نمطي: {item.domainScores.repetitiveBehavior || 0})</span>
+                        )}
+                      </div>
+                    )}
+
+                    {isAq && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>الدرجة الإجمالية: <strong style={{ color: item.severityColor || '#047857' }}>{item.score || item.psychometrics?.totalScore || 0} / 50</strong></span>
+                        <span>عتبة القطع (Cut-off ≥ 30): <strong style={{ color: (item.score || item.psychometrics?.totalScore || 0) >= 30 ? '#dc2626' : '#16a34a' }}>{(item.score || item.psychometrics?.totalScore || 0) >= 30 ? 'تجاوز عتبة القطع ⚠️' : 'ضمن النطاق الطبيعي ✅'}</strong></span>
+                        <span>التصنيف الإكلينيكي: <strong style={{ color: item.severityColor || '#047857' }}>{item.level || item.psychometrics?.severityLabel || '—'}</strong></span>
+                        <span>النسخة: <strong style={{ color: 'var(--text-main)' }}>{item.version === 'adolescent' ? 'اليافعين (12-16 سنة)' : 'الأطفال (4-11 سنة)'}</strong></span>
+                        {item.domainScores && (
+                          <span>(اجتماعي: {item.domainScores.social || 0} | مرونة: {item.domainScores.attentionSwitching || 0} | تفاصيل: {item.domainScores.attentionToDetail || 0} | تواصل: {item.domainScores.communication || 0} | خيال: {item.domainScores.imagination || 0})</span>
                         )}
                       </div>
                     )}
@@ -2318,6 +2431,48 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                           </button>
                         )}
 
+                        {isScq && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewScqReport(item)}
+                            style={{ fontWeight: 800, background: '#059669', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isScq && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditScqAssessment(item)}
+                            title="تعديل درجات استبيان SCQ"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isAq && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewAqReport(item)}
+                            style={{ fontWeight: 800, background: '#047857', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isAq && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditAqAssessment(item)}
+                            title="تعديل درجات مقياس AQ"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
                         {isGars && (
                           <button
                             type="button"
@@ -2550,6 +2705,63 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
           onClose={() => setAtecReportOpen(false)}
           assessment={selectedAtecAssessment}
           onEdit={(item) => openEditAtecAssessment(item)}
+        />
+      )}
+
+      {/* MODAL: SCQ (SOCIAL COMMUNICATION QUESTIONNAIRE) WORKSTATION */}
+      {scqModalOpen && (
+        <SCQAssessmentModal
+          isOpen={scqModalOpen}
+          onClose={() => {
+            setScqModalOpen(false);
+            setScqEditData(null);
+          }}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={scqEditData}
+        />
+      )}
+
+      {/* MODAL: SCQ OFFICIAL DIAGNOSTIC REPORT */}
+      {scqReportOpen && selectedScqAssessment && (
+        <SCQReportModal
+          isOpen={scqReportOpen}
+          onClose={() => setScqReportOpen(false)}
+          assessment={selectedScqAssessment}
+          onEdit={(item) => openEditScqAssessment(item)}
+        />
+      )}
+
+      {/* MODAL: AQ (AUTISM SPECTRUM QUOTIENT) WORKSTATION */}
+      {aqModalOpen && (
+        <AQAssessmentModal
+          isOpen={aqModalOpen}
+          onClose={() => {
+            setAqModalOpen(false);
+            setAqEditData(null);
+          }}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={aqEditData}
+        />
+      )}
+
+      {/* MODAL: AQ OFFICIAL DIAGNOSTIC REPORT */}
+      {aqReportOpen && selectedAqAssessment && (
+        <AQReportModal
+          isOpen={aqReportOpen}
+          onClose={() => setAqReportOpen(false)}
+          assessment={selectedAqAssessment}
+          onEdit={(item) => openEditAqAssessment(item)}
+          onOpenIepBridge={(item) => handleOpenBridge(item)}
         />
       )}
 

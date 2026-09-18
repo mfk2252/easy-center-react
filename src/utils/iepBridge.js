@@ -1072,6 +1072,150 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
         }));
       }
     });
+  } else if (lookupKey === 'scq') {
+    Object.entries(responses).forEach(([itemId, val]) => {
+      const targetItem = items.find(it => String(it.id) === String(itemId) || String(it.number) === String(itemId));
+      if (!targetItem || targetItem.id === 1) return;
+
+      const isDeficit = (val === 'yes' && targetItem.yesScore === 1) || (val === 'no' && targetItem.noScore === 1);
+      if (isDeficit) {
+        const isCritical = targetItem.id === 10 || targetItem.id === 8 || targetItem.id === 22 || targetItem.id === 19;
+        const priorityRank = isCritical ? 1 : 2;
+        const priority = isCritical ? 'critical' : 'high';
+        const itemTitle = targetItem.textAr || targetItem.title || `بند SCQ ${itemId}`;
+
+        let domainLabel = 'التواصل والتخاطب';
+        if (targetItem.domainId === 'social') domainLabel = 'المهارات الاجتماعية والتفاعل';
+        else if (targetItem.domainId === 'repetitive') domainLabel = 'تعديل السلوك والأنماط التكرارية';
+
+        let goalText = `أن يظهر التلميذ تحسناً ملموساً واستجابة تكيفية في مهارة (${itemTitle}) بنسبة إتقان 80% في البيئة الصفية.`;
+        if (targetItem.domainId === 'social') {
+          goalText = `أن ينمي التلميذ مهارة التفاعل والمشاركة الاجتماعية في (${itemTitle}) مع الأخصائي والأقران بنسبة نجاح 80% عبر 3 مواقف مختلفة.`;
+        } else if (targetItem.domainId === 'communication') {
+          goalText = `أن يوظف التلميذ التواصل الوظيفي البديل والفعال في (${itemTitle}) بنسبة دقة 80% في المواقف اليومية.`;
+        } else if (targetItem.domainId === 'repetitive') {
+          goalText = `أن يقلل التلميذ من حدة وتكرار سلوك (${itemTitle}) بنسبة لا تقل عن 75% مع استخدام فنيات التهدئة والبدائل الإيجابية.`;
+        }
+
+        const baseline = generatePlepBaseline(
+          itemTitle,
+          1,
+          1,
+          `مؤشر قصور نمائي دال على اضطراب التواصل في (${itemTitle})`,
+          isCritical ? 'تدخل سلوكي فردي مكثف وتحليل سلوك تطبيقي (ABA)' : 'أنشطة جماعية مدعومة واستراتيجيات الدعم البصري'
+        );
+
+        recommended.push(buildGoalItem({
+          code: `SCQ-GOAL-${itemId}`,
+          domain: domainLabel,
+          title: itemTitle.length > 35 ? `${itemTitle.slice(0, 35)}...` : itemTitle,
+          text: goalText,
+          mastery: 'إتقان 80% عبر جلستين متتاليتين',
+          reason: `مشتق من استبيان التواصل الاجتماعي SCQ بند [${itemId}] - مؤشر قصور سريري`,
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: isCritical ? 12 : 8,
+        }));
+      }
+    });
+  } else if (lookupKey === 'aq' || lookupKey === 'aq_scale' || lookupKey === 'aq_child' || lookupKey === 'aq_adolescent') {
+    Object.entries(responses).forEach(([itemId, val]) => {
+      const targetItem = items.find(it => String(it.id) === String(itemId));
+      if (!targetItem) return;
+
+      const isAgree = val === 'def_agree' || val === 'slight_agree';
+      const isDisagree = val === 'def_disagree' || val === 'slight_disagree';
+      const isDeficit = (targetItem.keying === 'AGREE' && isAgree) || (targetItem.keying === 'DISAGREE' && isDisagree);
+
+      if (isDeficit) {
+        const isCritical = targetItem.id === 22 || targetItem.id === 26 || targetItem.id === 45 || targetItem.id === 2;
+        const priorityRank = isCritical ? 1 : 2;
+        const priority = isCritical ? 'critical' : 'high';
+        const itemTitle = targetItem.textAr || targetItem.title || `بند AQ ${itemId}`;
+
+        let domainLabel = 'المهارات الاجتماعية والتكيف';
+        if (targetItem.domainId === 'attention_switching') domainLabel = 'المرونة السلوكية وتحويل الانتباه';
+        else if (targetItem.domainId === 'attention_detail') domainLabel = 'المعالجة المعرفية والتنظيمية';
+        else if (targetItem.domainId === 'communication') domainLabel = 'التواصل والبراغماتية اللغوية';
+        else if (targetItem.domainId === 'imagination') domainLabel = 'الخيال والتفكير المجرد واللعب الرمزي';
+
+        const customGoal = targetItem.iepGoal || `أن يظهر التلميذ تحسناً واستجابة تكيفية في مهارة (${itemTitle}) بنسبة إتقان 80% عبر بيئات متعددة.`;
+
+        const baseline = generatePlepBaseline(
+          itemTitle,
+          1,
+          1,
+          `وجود سمة قصور ونمطية مرتبطة بطيف التوحد في (${itemTitle}) وفق مقياس AQ`,
+          isCritical ? 'جلسات تعديل سلوك مكثفة وتدريب مهارات اجتماعية تخصصية' : 'أنشطة جماعية وتدريب تفاعلي مدعوم بالوسائل البصرية'
+        );
+
+        recommended.push(buildGoalItem({
+          code: `AQ-GOAL-${itemId}`,
+          domain: domainLabel,
+          title: itemTitle.length > 35 ? `${itemTitle.slice(0, 35)}...` : itemTitle,
+          text: customGoal,
+          mastery: 'إتقان 80% عبر جلستين متتاليتين',
+          reason: `مشتق من مقياس AQ لسمات التوحد بند [${itemId}] - سمة دالة سريرياً`,
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: isCritical ? 12 : 8,
+        }));
+      }
+    });
+  } else if (lookupKey === 'mchat' || lookupKey === 'mchat_r_f') {
+    Object.entries(responses).forEach(([itemId, val]) => {
+      const targetItem = items.find(it => String(it.id) === String(itemId) || String(it.code) === String(itemId));
+      if (!targetItem) return;
+
+      const valUpper = String(val).trim().toUpperCase();
+      const isFail = valUpper === targetItem.failResponse;
+
+      if (isFail) {
+        // Critical M-CHAT items (e.g. Q2, Q5, Q12)
+        const isCritical = targetItem.id === 2 || targetItem.id === 5 || targetItem.id === 12 || targetItem.id === 15;
+        const priorityRank = isCritical ? 1 : 2;
+        const priority = isCritical ? 'critical' : 'high';
+        const itemTitle = targetItem.text || `بند M-CHAT ${itemId}`;
+
+        let domainLabel = 'التواصل المبكر والاهتمام المشترك';
+        if (targetItem.domainId === 'social_play_interaction') domainLabel = 'التفاعل واللعب التخيلي المبكر';
+        else if (targetItem.domainId === 'motor_sensory_behavioral') domainLabel = 'التكامل الحسي والتكيف السلوكي المبكر';
+
+        let goalText = `أن يكتسب الطفل مهارة (${itemTitle}) ويستجيب للمثيرات الاجتماعية بنسبة نجاح 80% في جلسات التدخل المبكر.`;
+        if (targetItem.id === 1) {
+          goalText = 'أن يتتبع الطفل إشارة الفاحص/المربي نحو الأشياء في الغرفة بالنظر المستقل بنسبة دقة 80% في 4 من أصل 5 محاولات.';
+        } else if (targetItem.id === 5) {
+          goalText = 'أن يضع الطفل يديه أو يغير تعبيرات وجهه تعبيراً عن حركات نمطية أو إيماءات غير ملائمة، وأن يستبدلها بحركات وظيفية بديلة.';
+        } else if (targetItem.id === 7) {
+          goalText = 'أن يشير الطفل بسبابته للأشياء التي يرغب في لفت انتباه الآخرين إليها بنسبة نجاح 80% في المواقف اليومية.';
+        } else if (targetItem.id === 12) {
+          goalText = 'أن يستجيب الطفل لمناداته باسمه بالالتفات والتواصل البصري المباشر في غضون 3 ثوانٍ بنسبة 80% من المرات.';
+        }
+
+        const baseline = generatePlepBaseline(
+          itemTitle,
+          1,
+          1,
+          `مؤشر خطر نمائي مبكر في (${itemTitle}) عند عمر (16-30 شهراً)`,
+          'برامج التدخل المبكر المكثفة وتدريب الاهتمام المشترك (Joint Attention) والتواصل الطبيعي (ESDM/ABA)'
+        );
+
+        recommended.push(buildGoalItem({
+          code: `MCHAT-GOAL-${itemId}`,
+          domain: domainLabel,
+          title: itemTitle.length > 35 ? `${itemTitle.slice(0, 35)}...` : itemTitle,
+          text: goalText,
+          mastery: 'إتقان بنسبة 80% في 4 جلسات تدخل مبكر متتالية',
+          reason: `مشتق من قائمة تفقد التوحد المعدلة M-CHAT-R/F (بند ${itemId}) - مؤشر خطر نمائي`,
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: isCritical ? 12 : 8,
+        }));
+      }
+    });
   } else if (lookupKey === 'sensory_integration_scale' || lookupKey === 'sensory_integration') {
     Object.entries(responses).forEach(([itemId, score]) => {
       const numScore = Number(score);
