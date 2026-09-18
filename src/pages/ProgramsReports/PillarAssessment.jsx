@@ -1409,6 +1409,42 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                       🚀 فتح أداة فحص وتطبيق SCQ
                     </button>
                   </div>
+
+                  {/* AQ (Autism Spectrum Quotient - Cambridge ARC) */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(4, 120, 87, 0.08), rgba(13, 148, 136, 0.04))',
+                      border: '1.5px solid #047857',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#d1fae5', color: '#047857', fontWeight: 600, fontSize: '.72rem' }}>Cambridge ARC / Baron-Cohen</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>مفتوح Open Access</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        🧠 مقياس طيف التوحد (AQ) للأطفال واليافعين
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        50 بنداً استقصائياً · 5 مجالات نمائية وسلوكية · نسختان معتمدتان (الأطفال 4–11 سنة واليافعين 12–16 سنة) · عتبة قطع ≥ 30
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setAqEditData(null); setAqModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: '#047857', color: '#fff', width: '100%' }}
+                    >
+                      🚀 فتح أداة فحص وتطبيق مقياس AQ
+                    </button>
+                  </div>
                 </div>
               )}
 

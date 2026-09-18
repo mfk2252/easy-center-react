@@ -9,7 +9,7 @@ import {
   calculateAQPsychometrics,
 } from '../../data/aqData';
 import { todayStr, uid, calcAge } from '../../utils/dateHelpers';
-import { lsAdd, lsUpd } from '../../hooks/useStorage';
+import { lsAdd, lsUpd, lsGet } from '../../hooks/useStorage';
 
 const EMPTY_FORM = {
   id: '',
@@ -38,11 +38,31 @@ const EMPTY_FORM = {
 export default function AQAssessmentModal({
   isOpen,
   onClose,
-  initialData,
+  initialData = null,
   onSaved,
   onOpenReport,
+  students = [],
+  emps = [],
 }) {
-  const { students, currentEmployee, center, toast } = useApp();
+  const { currentUser, center, toast } = useApp();
+
+  const showToast = (msg, type = 'ok') => {
+    if (typeof toast === 'function') {
+      toast(msg, type === 'error' ? 'er' : type === 'success' ? 'ok' : type);
+    }
+  };
+
+  // Safe students fallback list
+  const allStudents = useMemo(() => {
+    if (Array.isArray(students) && students.length > 0) return students;
+    try {
+      const fromLs = lsGet('students');
+      return Array.isArray(fromLs) ? fromLs : [];
+    } catch {
+      return [];
+    }
+  }, [students]);
+
   const [form, setForm] = useState(EMPTY_FORM);
   const [activeDomainFilter, setActiveDomainFilter] = useState('all');
   const [isManualEdit, setIsManualEdit] = useState(false);
@@ -63,7 +83,7 @@ export default function AQAssessmentModal({
       });
       setIsManualEdit(Boolean(initialData.isManualEdit));
     } else {
-      const defaultExaminer = currentEmployee?.name || 'الأخصائي الفاحص';
+      const defaultExaminer = currentUser?.name || 'الأخصائي الفاحص';
       setForm({
         ...EMPTY_FORM,
         id: uid(),
@@ -74,7 +94,7 @@ export default function AQAssessmentModal({
     }
     setActiveDomainFilter('all');
     setShowCopyrightInfo(false);
-  }, [isOpen, initialData, currentEmployee]);
+  }, [isOpen, initialData, currentUser]);
 
   // Selected items list based on version
   const activeItems = useMemo(() => {
@@ -112,7 +132,7 @@ export default function AQAssessmentModal({
       return;
     }
 
-    const s = students.find(x => x.id === val);
+    const s = allStudents.find(x => x.id === val);
     if (!s) {
       setForm(f => ({
         ...f,
@@ -199,7 +219,7 @@ export default function AQAssessmentModal({
       ...f,
       scores: newScores,
     }));
-    toast?.success?.('تم تعبئة نموذج الاستجابات التجريبي بنجاح!');
+    showToast('تم تعبئة نموذج الاستجابات التجريبي بنجاح!', 'ok');
   }
 
   function handleReset() {
@@ -224,12 +244,12 @@ export default function AQAssessmentModal({
       clinicalSummary: psychometrics.clinicalSummary,
       recommendations: recs,
     }));
-    toast?.success?.('تم توليد الخلاصة السريرية والتوصيات بنجاح!');
+    showToast('تم توليد الخلاصة السريرية والتوصيات بنجاح!', 'ok');
   }
 
   function handleSave() {
     if (!form.studentName) {
-      toast?.error?.('يرجى اختيار أو كتابة اسم المفحوص أولاً!');
+      showToast('يرجى اختيار أو كتابة اسم المفحوص أولاً!', 'error');
       return;
     }
 
@@ -245,6 +265,7 @@ export default function AQAssessmentModal({
       id: form.id || uid(),
       scaleId: 'aq_autism_quotient',
       scaleType: 'aq',
+      measureId: 'aq',
       scaleName: 'مقياس طيف التوحد للأطفال واليافعين — AQ',
       scaleCategory: 'autism',
       results: form.scores,
@@ -266,12 +287,12 @@ export default function AQAssessmentModal({
     if (initialData?.id) {
       lsUpd('studentAssessments', initialData.id, payload);
       lsUpd('assessments', initialData.id, payload);
-      toast?.success?.('تم تحديث تقييم مقياس طيف التوحد (AQ) بنجاح!');
+      showToast('تم تحديث تقييم مقياس طيف التوحد (AQ) بنجاح!', 'ok');
     } else {
       payload.createdAt = new Date().toISOString();
       lsAdd('studentAssessments', payload);
       lsAdd('assessments', payload);
-      toast?.success?.('تم حفظ تقييم مقياس طيف التوحد (AQ) بنجاح!');
+      showToast('تم حفظ تقييم مقياس طيف التوحد (AQ) بنجاح!', 'ok');
     }
 
     if (onSaved) onSaved(payload);
@@ -661,7 +682,7 @@ export default function AQAssessmentModal({
                       onChange={handleSelectStudent}
                     >
                       <option value="">— اختر من الطلاب المسجلين بالمركز —</option>
-                      {students.map(s => (
+                      {allStudents.map(s => (
                         <option key={s.id} value={s.id}>
                           {s.name}
                         </option>
