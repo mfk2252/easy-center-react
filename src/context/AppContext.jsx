@@ -22,11 +22,11 @@ function applyTheme(color) {
 }
 
 export const FONT_OPTIONS = [
-  { id: 'dubai', name: 'خط دبي (Dubai Font) ⭐ الافتراضي', family: "'Dubai', 'Dubai-Regular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
+  { id: 'almarai', name: 'خط المراعي (Almarai) ⭐ الافتراضي', family: "'Almarai', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
+  { id: 'dubai', name: 'خط دبي (Dubai Font)', family: "'Dubai', 'Dubai-Regular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
   { id: 'arabicui', name: 'خط ون يو آي (Arabic UI One UI)', family: "'Arabic UI One UI', 'ArabicUIOneUI', 'ArabicUI', 'MainFont', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
   { id: 'tajawal', name: 'خط تجوال (Tajawal)', family: "'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
   { id: 'cairo', name: 'خط كايرو (Cairo)', family: "'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
-  { id: 'almarai', name: 'خط المراعي (Almarai)', family: "'Almarai', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
   { id: 'alexandria', name: 'خط الإسكندرية (Alexandria)', family: "'Alexandria', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
   { id: 'calibri', name: 'خط كاليبري (Calibri)', family: "'Calibri', 'Carlito', 'Segoe UI', Arial, sans-serif" },
   { id: 'system', name: 'خط النظام', family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" },
@@ -64,7 +64,7 @@ export function applyFontVariables(size, weight) {
 }
 
 export function applyFontFamily(fontId) {
-  const selected = FONT_OPTIONS.find(f => f.id === fontId) || FONT_OPTIONS[0];
+  const selected = FONT_OPTIONS.find(f => f.id === fontId) || FONT_OPTIONS.find(f => f.id === 'almarai') || FONT_OPTIONS[0];
   document.documentElement.style.setProperty('--font-main', selected.family);
   localStorage.setItem('scs_fontfamily', selected.id);
   return selected.id;
@@ -130,9 +130,24 @@ export function AppProvider({ children }) {
   useEffect(() => {
     const dm = localStorage.getItem('darkMode') === '1';
     if (dm) { document.body.classList.add('dark'); setDarkMode(true); }
-    const fs = localStorage.getItem('scs_fontsize') || '15';
+
+    // ترقية وتعيين خط المراعي و16px كافتراضي دائم للنظام
+    const fontMigrationVer = localStorage.getItem('scs_font_ver');
+    if (fontMigrationVer !== 'almarai_16_v2') {
+      const storedFf = localStorage.getItem('scs_fontfamily');
+      if (!storedFf || storedFf === 'dubai' || storedFf === 'arabicui') {
+        localStorage.setItem('scs_fontfamily', 'almarai');
+      }
+      const storedFs = localStorage.getItem('scs_fontsize');
+      if (!storedFs || storedFs === '15') {
+        localStorage.setItem('scs_fontsize', '16');
+      }
+      localStorage.setItem('scs_font_ver', 'almarai_16_v2');
+    }
+
+    const fs = localStorage.getItem('scs_fontsize') || '16';
     const fw = localStorage.getItem('scs_fontweight') || '400';
-    const ff = localStorage.getItem('scs_fontfamily') || center.fontFamily || 'dubai';
+    const ff = localStorage.getItem('scs_fontfamily') || center.fontFamily || 'almarai';
     const col = localStorage.getItem('scs_color') || center.color || '#1a56db';
     applyFontVariables(fs, fw);
     applyFontFamily(ff);
@@ -397,9 +412,9 @@ export function AppProvider({ children }) {
       shifts: c.shifts,
     });
     if (c.color) localStorage.setItem('scs_color', c.color);
-    const centerFs = localStorage.getItem('scs_fontsize') || data.fontSize || '15';
+    const centerFs = localStorage.getItem('scs_fontsize') || data.fontSize || '16';
     const centerFw = localStorage.getItem('scs_fontweight') || data.fontWeight || '400';
-    const centerFf = localStorage.getItem('scs_fontfamily') || data.fontFamily || 'arabicui';
+    const centerFf = localStorage.getItem('scs_fontfamily') || data.fontFamily || 'almarai';
     applyFontVariables(centerFs, centerFw);
     applyFontFamily(centerFf);
     if (data.fontSize && !localStorage.getItem('scs_fontsize')) localStorage.setItem('scs_fontsize', String(data.fontSize));

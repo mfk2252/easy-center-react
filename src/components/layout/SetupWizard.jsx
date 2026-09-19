@@ -38,8 +38,8 @@ export default function SetupWizard() {
     eveningFrom: '16:00',
     eveningTo: '20:00',
     color: '#1a56db',
-    fontSize: localStorage.getItem('scs_fontsize') || '15',
-    fontWeight: localStorage.getItem('scs_fontweight') || '600',
+    fontSize: localStorage.getItem('scs_fontsize') || '16',
+    fontWeight: localStorage.getItem('scs_fontweight') || '400',
     platformLang: lang,
   });
 
