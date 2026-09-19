@@ -83,26 +83,12 @@ const formatDate = (val) => {
   }
 };
 
-function getSafeRgba(colorHex, alpha = 0.12) {
-  if (!colorHex) return `rgba(26, 86, 219, ${alpha})`;
-  if (typeof colorHex === 'string' && colorHex.startsWith('#') && colorHex.length === 7) {
-    const r = parseInt(colorHex.slice(1, 3), 16);
-    const g = parseInt(colorHex.slice(3, 5), 16);
-    const b = parseInt(colorHex.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  }
-  return colorHex;
-}
-
 export default function Settings() {
   const { center, currentUser, persistConfig, updateCenterColor, toast, loadCenterData, subscriptionStatus } = useApp();
   const { t } = useLang();
   const [fontSize, setFontSize] = useState(() => Number(localStorage.getItem('scs_fontsize')) || 16);
   const [fontWeight, setFontWeight] = useState(() => localStorage.getItem('scs_fontweight') || '400');
   const [fontFamily, setFontFamily] = useState(() => localStorage.getItem('scs_fontfamily') || center.fontFamily || 'almarai');
-  const [previewTheme, setPreviewTheme] = useState('current');
-  const [previewTab, setPreviewTab] = useState('all');
-  const [previewTestText, setPreviewTestText] = useState('ريان خالد العتيبي');
   const [tab, setTab] = useState('center');
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -1211,27 +1197,6 @@ export default function Settings() {
                 )}
               </div>
               <div className="wg-b" style={{ padding: '22px' }}>
-                
-                {/* تنبيه توضيحي */}
-                <div style={{
-                  padding: '12px 16px',
-                  background: 'rgba(26, 86, 219, 0.06)',
-                  border: '1px solid rgba(26, 86, 219, 0.18)',
-                  borderRadius: 12,
-                  marginBottom: 20,
-                  fontSize: '.86rem',
-                  lineHeight: 1.6,
-                  color: 'var(--text-main)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10
-                }}>
-                  <span style={{ fontSize: '1.2rem' }}>💡</span>
-                  <div>
-                    <strong>ملاحظة هامة:</strong> يمكنك تجربة تغيير نوع الخط والحجم والوزن والألوان بحرية تامة دون أن تتأثر صفحات المنصة، ولن يتم اعتماد وتطبيق أي تعديل على النظام إلا بعد الضغط على زر <strong>"💾 حفظ وتطبيق إعدادات المظهر"</strong> بالأسفل.
-                  </div>
-                </div>
-
                 {/* اختيار الخط */}
                 <div style={{ marginBottom: 24, padding: '18px', background: 'var(--g0)', borderRadius: 14, border: '1px solid var(--border-color)' }}>
                   <label style={{ fontWeight: 800, display: 'block', marginBottom: 6, fontSize: '.98rem', color: 'var(--text-main)' }}>
@@ -1436,376 +1401,55 @@ export default function Settings() {
                   </div>
                 </div>
 
-                {/* لوحة المعاينة التفاعلية الحية قبل الحفظ - شاملة لكافة الحالات */}
+                {/* معاينة حية للمظهر والخط */}
                 <div
                   className="live-preview-box"
                   style={{
                     marginBottom: 24,
                     padding: '20px',
-                    background: previewTheme === 'light' ? '#ffffff' : (previewTheme === 'dark' ? '#151d2b' : 'var(--bg-card)'),
-                    color: previewTheme === 'light' ? '#0f172a' : (previewTheme === 'dark' ? '#ddeeff' : 'var(--text-main)'),
-                    borderRadius: 16,
-                    border: `2px solid ${previewTheme === 'dark' ? '#334560' : 'var(--border-color)'}`,
-                    boxShadow: 'var(--sh2)',
-                    position: 'relative',
-                    transition: 'all 0.25s ease'
+                    background: 'var(--g0)',
+                    borderRadius: 14,
+                    border: '1px solid var(--border-color)',
+                    direction: 'rtl'
                   }}
                 >
-                  {/* رأس شريط المعاينة والتحكم بالحالات والمظهر */}
                   <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: 12,
-                    marginBottom: 16,
-                    borderBottom: `1px solid ${previewTheme === 'dark' ? '#253347' : 'var(--border-color)'}`,
-                    paddingBottom: 12
+                    fontSize: '.84rem',
+                    fontWeight: 700,
+                    color: 'var(--text-sub)',
+                    marginBottom: 12
                   }}>
-                    <div>
-                      <div style={{ fontWeight: 900, fontSize: '.98rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span>🖼️ معاينة حية لاختياراتك الحالية (داخل هذا الإطار فقط):</span>
-                      </div>
-                      <div style={{ fontSize: '.8rem', color: previewTheme === 'dark' ? '#9ab8d0' : 'var(--text-sub)', marginTop: 4 }}>
-                        الخط المختار: <strong style={{ color: selColor }}>{selectedFontObj.name}</strong> | الحجم: <strong style={{ color: selColor }}>{fontSize}px</strong> | الوزن: <strong>{fontWeight}</strong>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                      {/* محاكي وضع الإضاءة الداخلي */}
-                      <span style={{ fontSize: '.78rem', color: previewTheme === 'dark' ? '#9ab8d0' : 'var(--text-sub)' }}>تجربة المظهر:</span>
-                      <div style={{ display: 'inline-flex', background: previewTheme === 'dark' ? '#1e2736' : 'var(--g1)', padding: 3, borderRadius: 8, border: `1px solid ${previewTheme === 'dark' ? '#334560' : 'var(--border-color)'}` }}>
-                        <button
-                          type="button"
-                          onClick={() => setPreviewTheme('current')}
-                          style={{
-                            padding: '4px 10px',
-                            borderRadius: 6,
-                            border: 'none',
-                            background: previewTheme === 'current' ? selColor : 'transparent',
-                            color: previewTheme === 'current' ? '#fff' : 'inherit',
-                            fontSize: '.75rem',
-                            fontWeight: 700,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          🌓 مظهر النظام
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPreviewTheme('light')}
-                          style={{
-                            padding: '4px 10px',
-                            borderRadius: 6,
-                            border: 'none',
-                            background: previewTheme === 'light' ? selColor : 'transparent',
-                            color: previewTheme === 'light' ? '#fff' : 'inherit',
-                            fontSize: '.75rem',
-                            fontWeight: 700,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          ☀️ نهاري
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPreviewTheme('dark')}
-                          style={{
-                            padding: '4px 10px',
-                            borderRadius: 6,
-                            border: 'none',
-                            background: previewTheme === 'dark' ? selColor : 'transparent',
-                            color: previewTheme === 'dark' ? '#fff' : 'inherit',
-                            fontSize: '.75rem',
-                            fontWeight: 700,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          🌙 ليلي
-                        </button>
-                      </div>
-                    </div>
+                    معاينة حية للمظهر والخط:
                   </div>
 
-                  {/* تبويبات فلترة حالات المعاينة */}
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-                    {[
-                      { id: 'all', label: '🌟 كافة الحالات الشاملة' },
-                      { id: 'typography', label: '📝 النصوص والعناوين' },
-                      { id: 'actions', label: '🔘 الأزرار والشارات' },
-                      { id: 'forms', label: '📋 حقول النماذج والإدخال' },
-                      { id: 'tables', label: '📊 جداول وسجلات الطلاب' },
-                    ].map(tabItem => {
-                      const isActive = previewTab === tabItem.id;
-                      return (
-                        <button
-                          key={tabItem.id}
-                          type="button"
-                          onClick={() => setPreviewTab(tabItem.id)}
-                          style={{
-                            padding: '5px 12px',
-                            borderRadius: 8,
-                            fontSize: '.78rem',
-                            fontWeight: isActive ? 800 : 600,
-                            border: `1px solid ${isActive ? selColor : (previewTheme === 'dark' ? '#334560' : 'var(--border-color)')}`,
-                            background: isActive ? getSafeRgba(selColor, 0.14) : 'transparent',
-                            color: isActive ? selColor : 'inherit',
-                            cursor: 'pointer',
-                            transition: 'all .15s'
-                          }}
-                        >
-                          {tabItem.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* الحاوية التي تطبق الإعدادات المختارة حصراً للمعاينة */}
                   <div
                     style={{
                       fontFamily: selectedFontObj.family,
                       fontSize: `${fontSize}px`,
                       fontWeight: fontWeight,
-                      lineHeight: 1.6,
-                      padding: '20px',
-                      borderRadius: 14,
-                      background: previewTheme === 'light' ? '#f8fafc' : (previewTheme === 'dark' ? '#1e2736' : 'var(--g0)'),
-                      border: `1px solid ${previewTheme === 'dark' ? '#2d4060' : 'var(--border-color)'}`,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 18,
-                      direction: 'rtl'
+                      lineHeight: 1.7,
+                      color: 'var(--text-main)'
                     }}
                   >
-                    {/* الحالة 1: النصوص والعناوين والفقرات */}
-                    {(previewTab === 'all' || previewTab === 'typography') && (
-                      <div style={{
-                        paddingBottom: previewTab === 'all' ? 16 : 0,
-                        borderBottom: previewTab === 'all' ? `1px dashed ${previewTheme === 'dark' ? '#334560' : 'var(--border-color)'}` : 'none'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 8 }}>
-                          <h4 style={{
-                            margin: 0,
-                            fontSize: `${Math.round(fontSize * 1.25)}px`,
-                            fontWeight: Math.min(900, Number(fontWeight) + 300),
-                            color: selColor,
-                            fontFamily: selectedFontObj.family
-                          }}>
-                            🏥 {center.name || 'مركز الأمل للتأهيل والتربية الخاصة'}
-                          </h4>
-                          <span style={{
-                            background: getSafeRgba(selColor, 0.15),
-                            color: selColor,
-                            border: `1px solid ${getSafeRgba(selColor, 0.35)}`,
-                            padding: '4px 14px',
-                            borderRadius: 20,
-                            fontSize: `${Math.max(11, Math.round(fontSize * 0.8))}px`,
-                            fontWeight: Math.min(900, Number(fontWeight) + 200),
-                            fontFamily: selectedFontObj.family
-                          }}>
-                            ⭐ خطة فردية علاجية معتمدة
-                          </span>
-                        </div>
-
-                        <p style={{
-                          margin: '0 0 10px 0',
-                          color: previewTheme === 'dark' ? '#ddeeff' : 'var(--text-main)',
-                          fontSize: `${fontSize}px`,
-                          lineHeight: 1.65,
-                          fontFamily: selectedFontObj.family
-                        }}>
-                          تم تطبيق مقياس طيف التوحد للأطفال (AQ) ومقياس جيليام (GARS-3) لعام 2026، وأظهرت النتائج تطوراً ملحوظاً في التواصل بنسبة 85% ومشاركة فعالة في الجلسات اليومية.
-                        </p>
-
-                        <div style={{
-                          fontSize: `${Math.max(12, Math.round(fontSize * 0.86))}px`,
-                          color: previewTheme === 'dark' ? '#9ab8d0' : 'var(--text-sub)',
-                          direction: 'ltr',
-                          textAlign: 'left',
-                          fontFamily: selectedFontObj.family
-                        }}>
-                          Almarai 16px English & Numbers: 0123456789 - Clinical Rehabilitation & Diagnostic System.
-                        </div>
-                      </div>
-                    )}
-
-                    {/* الحالة 2: الأزرار والشارات التفاعلية */}
-                    {(previewTab === 'all' || previewTab === 'actions') && (
-                      <div style={{
-                        paddingBottom: previewTab === 'all' ? 16 : 0,
-                        borderBottom: previewTab === 'all' ? `1px dashed ${previewTheme === 'dark' ? '#334560' : 'var(--border-color)'}` : 'none'
-                      }}>
-                        <div style={{ fontSize: '.82rem', fontWeight: 700, color: previewTheme === 'dark' ? '#9ab8d0' : 'var(--text-sub)', marginBottom: 8 }}>
-                          🔘 حالة الأزرار والشارات التفاعلية:
-                        </div>
-                        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                          <button
-                            type="button"
-                            style={{
-                              background: selColor,
-                              color: '#ffffff',
-                              border: 'none',
-                              borderRadius: 8,
-                              padding: '8px 18px',
-                              fontSize: `${fontSize}px`,
-                              fontWeight: Math.min(900, Number(fontWeight) + 200),
-                              fontFamily: selectedFontObj.family,
-                              cursor: 'pointer',
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-                            }}
-                          >
-                            💾 حفظ البيانات باللون المختار
-                          </button>
-
-                          <button
-                            type="button"
-                            style={{
-                              background: 'transparent',
-                              color: selColor,
-                              border: `1.5px solid ${selColor}`,
-                              borderRadius: 8,
-                              padding: '7px 16px',
-                              fontSize: `${fontSize}px`,
-                              fontWeight: Math.min(900, Number(fontWeight) + 150),
-                              fontFamily: selectedFontObj.family,
-                              cursor: 'pointer'
-                            }}
-                          >
-                            📄 طباعة التقرير
-                          </button>
-
-                          <span style={{
-                            background: 'rgba(5, 150, 105, 0.12)',
-                            color: '#059669',
-                            border: '1px solid rgba(5, 150, 105, 0.25)',
-                            padding: '4px 10px',
-                            borderRadius: 16,
-                            fontSize: `${Math.max(11, Math.round(fontSize * 0.8))}px`,
-                            fontWeight: 700,
-                            fontFamily: selectedFontObj.family
-                          }}>
-                            ✓ نشط ومكتمل
-                          </span>
-
-                          <span style={{
-                            background: 'rgba(217, 119, 6, 0.12)',
-                            color: '#d97706',
-                            border: '1px solid rgba(217, 119, 6, 0.25)',
-                            padding: '4px 10px',
-                            borderRadius: 16,
-                            fontSize: `${Math.max(11, Math.round(fontSize * 0.8))}px`,
-                            fontWeight: 700,
-                            fontFamily: selectedFontObj.family
-                          }}>
-                            ⏳ قيد المراجعة
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* الحالة 3: حقول النماذج والإدخال */}
-                    {(previewTab === 'all' || previewTab === 'forms') && (
-                      <div style={{
-                        paddingBottom: previewTab === 'all' ? 16 : 0,
-                        borderBottom: previewTab === 'all' ? `1px dashed ${previewTheme === 'dark' ? '#334560' : 'var(--border-color)'}` : 'none'
-                      }}>
-                        <div style={{ fontSize: '.82rem', fontWeight: 700, color: previewTheme === 'dark' ? '#9ab8d0' : 'var(--text-sub)', marginBottom: 8 }}>
-                          📋 حالة حقول النماذج والإدخال التفاعلية (يمكنك الكتابة للتجربة):
-                        </div>
-                        <div style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                          gap: 12
-                        }}>
-                          <div>
-                            <label style={{ display: 'block', fontSize: `${Math.max(12, Math.round(fontSize * 0.84))}px`, fontWeight: 700, marginBottom: 4, fontFamily: selectedFontObj.family }}>
-                              اسم المستفيد / الطالب:
-                            </label>
-                            <input
-                              type="text"
-                              value={previewTestText}
-                              onChange={e => setPreviewTestText(e.target.value)}
-                              style={{
-                                width: '100%',
-                                padding: '8px 12px',
-                                fontSize: `${fontSize}px`,
-                                fontWeight: fontWeight,
-                                fontFamily: selectedFontObj.family,
-                                borderRadius: 8,
-                                border: `1px solid ${previewTheme === 'dark' ? '#334560' : 'var(--border-color)'}`,
-                                background: previewTheme === 'dark' ? '#253347' : '#ffffff',
-                                color: previewTheme === 'dark' ? '#ddeeff' : 'var(--text-main)',
-                                outline: 'none'
-                              }}
-                            />
-                          </div>
-
-                          <div>
-                            <label style={{ display: 'block', fontSize: `${Math.max(12, Math.round(fontSize * 0.84))}px`, fontWeight: 700, marginBottom: 4, fontFamily: selectedFontObj.family }}>
-                              نوع الجلسة المجدولة:
-                            </label>
-                            <select
-                              defaultValue="جلسة علاج وظيفي وتخاطب (45 دقيقة)"
-                              style={{
-                                width: '100%',
-                                padding: '8px 12px',
-                                fontSize: `${fontSize}px`,
-                                fontWeight: fontWeight,
-                                fontFamily: selectedFontObj.family,
-                                borderRadius: 8,
-                                border: `1px solid ${previewTheme === 'dark' ? '#334560' : 'var(--border-color)'}`,
-                                background: previewTheme === 'dark' ? '#253347' : '#ffffff',
-                                color: previewTheme === 'dark' ? '#ddeeff' : 'var(--text-main)',
-                                outline: 'none'
-                              }}
-                            >
-                              <option>جلسة علاج وظيفي وتخاطب (45 دقيقة)</option>
-                              <option>تقييم تشخيصي - مقياس طيف التوحد (AQ)</option>
-                              <option>خطة تعديل سلوك وتنمية مهارات</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* الحالة 4: جداول وسجلات الطلاب */}
-                    {(previewTab === 'all' || previewTab === 'tables') && (
-                      <div>
-                        <div style={{ fontSize: '.82rem', fontWeight: 700, color: previewTheme === 'dark' ? '#9ab8d0' : 'var(--text-sub)', marginBottom: 8 }}>
-                          📊 حالة جداول البيانات وسجلات التقييم:
-                        </div>
-                        <div style={{ overflowX: 'auto', borderRadius: 8, border: `1px solid ${previewTheme === 'dark' ? '#334560' : 'var(--border-color)'}` }}>
-                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: `${Math.max(12, Math.round(fontSize * 0.88))}px`, fontFamily: selectedFontObj.family }}>
-                            <thead>
-                              <tr style={{ background: previewTheme === 'dark' ? '#151d2b' : 'var(--g1)', borderBottom: `1px solid ${previewTheme === 'dark' ? '#334560' : 'var(--border-color)'}` }}>
-                                <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 800 }}>اسم الطالب</th>
-                                <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 800 }}>المقياس المطبق</th>
-                                <th style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 800 }}>النتيجة</th>
-                                <th style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 800 }}>الحالة</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr style={{ borderBottom: `1px solid ${previewTheme === 'dark' ? '#253347' : 'var(--border-color)'}` }}>
-                                <td style={{ padding: '8px 12px', fontWeight: 700 }}>فهد السبيعي</td>
-                                <td style={{ padding: '8px 12px' }}>مقياس طيف التوحد (AQ)</td>
-                                <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 800, color: '#dc2626' }}>34 / 50 (مؤشر مرتفع)</td>
-                                <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                                  <span style={{ padding: '2px 8px', borderRadius: 12, background: 'rgba(5,150,105,0.12)', color: '#059669', fontSize: '.78rem', fontWeight: 700 }}>معتمد ✓</span>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td style={{ padding: '8px 12px', fontWeight: 700 }}>سارة الشمري</td>
-                                <td style={{ padding: '8px 12px' }}>مقياس جيليام (GARS-3)</td>
-                                <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 800, color: selColor }}>88 (احتمال مؤكد)</td>
-                                <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                                  <span style={{ padding: '2px 8px', borderRadius: 12, background: 'rgba(217,119,6,0.12)', color: '#d97706', fontSize: '.78rem', fontWeight: 700 }}>متابعة</span>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
+                    <div style={{
+                      fontSize: `${Math.round(fontSize * 1.25)}px`,
+                      fontWeight: Math.min(900, Number(fontWeight) + 300),
+                      color: selColor,
+                      marginBottom: 8
+                    }}>
+                      {center.name || 'مركز التأهيل والتربية الخاصة'}
+                    </div>
+                    <p style={{ margin: '0 0 10px 0' }}>
+                      هذا النص مخصص لتجربة ومعاينة المظهر ونوع الخط وحجمه وسماكته وتناسق الألوان قبل الاعتماد. أبجد هوز حطي كلمن سعفص قرشت ثخذ ضظغ — 1234567890
+                    </p>
+                    <div style={{
+                      fontSize: `${Math.max(12, Math.round(fontSize * 0.88))}px`,
+                      color: 'var(--text-sub)',
+                      direction: 'ltr',
+                      textAlign: 'left'
+                    }}>
+                      English text & numbers: The quick brown fox jumps over the lazy dog. 0123456789
+                    </div>
                   </div>
                 </div>
 
