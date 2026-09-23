@@ -167,88 +167,35 @@ export function AppProvider({ children }) {
 
     let unsubscribe = () => {};
 
-    // 1. أولاً: التحقق الفوري من وجود رابط دخول تجريبي مباشر في الرابط ?demo= أو ?demo_token=
-    const checkDemoUrl = async () => {
-      try {
-        const params = new URLSearchParams(window.location.search);
-        const demoToken = params.get('demo') || params.get('demo_token') || params.get('token');
-        if (demoToken) {
-          clearTimeout(loadingTimeout);
-          const { autoLoginDemoToken } = await import('../firebase/auth');
-          const demoUser = await autoLoginDemoToken(demoToken);
-          if (demoUser) {
-            window.history.replaceState({}, document.title, window.location.pathname);
-            await login(demoUser);
-            return true;
-          }
+    const savedSession = (() => {
+      try { return JSON.parse(localStorage.getItem('scs_session') || 'null'); }
+      catch(e) { return null; }
+    })();
+
+    if (savedSession?.centerId) {
+      clearTimeout(loadingTimeout);
+      localStorage.setItem('scs_current_uid', savedSession.centerId);
+      (async () => {
+        const centerData = await getCenterSettings(savedSession.centerId);
+        const subStatus = checkSubscriptionStatus(centerData);
+        const updatedUser = { ...savedSession, subscription: subStatus };
+        localStorage.setItem('scs_session', JSON.stringify(updatedUser));
+        setCurrentUser(updatedUser);
+        setSubscriptionStatus(subStatus);
+        if (!subStatus.allowed) {
+          setScreen('subscription');
+          return;
         }
-      } catch (err) {
-        console.warn('Demo URL check note:', err);
-      }
-      return false;
-    };
-
-    checkDemoUrl().then(handled => {
-      if (handled) return;
-
-      const savedSession = (() => {
-        try { return JSON.parse(localStorage.getItem('scs_session') || 'null'); }
-        catch(e) { return null; }
+        if (centerData) {
+          applyCenter(centerData);
+        } else {
+          applyCenter(getCenterPrintMeta());
+        }
+        setSyncing(true);
+        syncFromFirebase(savedSession.centerId, ALL_KEYS)
+          .finally(() => { setSyncing(false); setScreen('app'); });
       })();
-
-      if (savedSession?.isDemo) {
-        clearTimeout(loadingTimeout);
-        localStorage.setItem('scs_current_uid', savedSession.centerId || 'demo_center');
-        setCurrentUser(savedSession);
-        setSubscriptionStatus(savedSession.subscription || { allowed: true, reason: 'demo', daysLeft: 5, status: 'trial' });
-
-        // تأكيد تهيئة بيانات الديمو المعزولة
-        import('../utils/demoData').then(({ initDemoData }) => {
-          const cName = savedSession.demoAccount?.centerName || 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)';
-          initDemoData(savedSession.centerId, savedSession.name, cName, savedSession.demoAccount?.daysLeft || 3);
-        });
-
-        const localDemoCenter = JSON.parse(localStorage.getItem(`scs_center_settings_${savedSession.centerId}`) || 'null');
-        const cName = savedSession.demoAccount?.centerName || localDemoCenter?.name || 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)';
-        applyCenter(localDemoCenter || {
-          name: cName,
-          centerName: cName,
-          color: '#1a56db',
-          configured: true,
-          isSetup: true,
-          setupCompleted: true,
-        });
-        setScreen('app');
-        setActiveView('dash');
-        return;
-      }
-
-      if (savedSession?.centerId) {
-        clearTimeout(loadingTimeout);
-        localStorage.setItem('scs_current_uid', savedSession.centerId);
-        (async () => {
-          const centerData = await getCenterSettings(savedSession.centerId);
-          const subStatus = checkSubscriptionStatus(centerData);
-          const updatedUser = { ...savedSession, subscription: subStatus };
-          localStorage.setItem('scs_session', JSON.stringify(updatedUser));
-          setCurrentUser(updatedUser);
-          setSubscriptionStatus(subStatus);
-          if (!subStatus.allowed) {
-            setScreen('subscription');
-            return;
-          }
-          if (centerData) {
-            applyCenter(centerData);
-          } else {
-            applyCenter(getCenterPrintMeta());
-          }
-          setSyncing(true);
-          syncFromFirebase(savedSession.centerId, ALL_KEYS)
-            .finally(() => { setSyncing(false); setScreen('app'); });
-        })();
-        return;
-      }
-
+    } else {
       unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
         clearTimeout(loadingTimeout);
         if (fbUser) {
@@ -310,7 +257,7 @@ export function AppProvider({ children }) {
           setScreen('login');
         }
       });
-    });
+    }
 
     return () => {
       clearTimeout(loadingTimeout);
@@ -464,26 +411,6 @@ export function AppProvider({ children }) {
     localStorage.setItem('scs_current_uid', user.centerId || user.uid);
     setCurrentUser(user);
     setSubscriptionStatus(user.subscription);
-
-    if (user.isDemo) {
-      const { initDemoData } = await import('../utils/demoData');
-      const cName = user.demoAccount?.centerName || 'مركز الأمل للتأهيل والتربية الخاصة (بيئة تجريبية)';
-      initDemoData(user.centerId, user.name, cName, user.demoAccount?.daysLeft || 3);
-
-      const localDemoCenter = JSON.parse(localStorage.getItem(`scs_center_settings_${user.centerId}`) || 'null');
-      applyCenter(localDemoCenter || {
-        name: cName,
-        centerName: cName,
-        color: '#1a56db',
-        configured: true,
-        isSetup: true,
-        setupCompleted: true,
-      });
-      toast(`🎉 مرحباً بك في العرض التجريبي المخصص لـ ${cName}`, 'ok');
-      setScreen('app');
-      setActiveView('dash');
-      return;
-    }
 
     if (user.isPlatformAdmin) {
       const centerData = await getCenterSettings(user.centerId || user.uid);

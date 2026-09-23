@@ -48,22 +48,6 @@ export default function Navbar() {
           {center.logo
             ? <img src={center.logo} alt={center.name || ''} style={{ height: 36, borderRadius: 8, objectFit: 'cover' }}/>
             : <div className="nav-brand-ph">🏥</div>}
-          {currentUser?.isDemo && (
-            <span
-              className="bdg b-bl"
-              style={{
-                fontSize: '.7rem',
-                fontWeight: 800,
-                padding: '2px 7px',
-                background: 'rgba(2, 132, 199, 0.15)',
-                color: '#0284c7',
-                border: '1px solid rgba(2, 132, 199, 0.3)'
-              }}
-              title="أنت في وضع المعاينة والعرض التجريبي (Demo)"
-            >
-              🎮 ديمو
-            </span>
-          )}
         </div>
 
         {NAV_ITEMS.filter(item => canSeeTab(role, item.id)).map(item => {

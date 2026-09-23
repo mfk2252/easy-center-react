@@ -74,10 +74,3 @@ export function isSecretary(role) {
 export function canManageUsers(role) {
   return role === 'manager';
 }
-
-/** إدارة وإنشاء العروض التجريبية (ديمو) محصورة حصرياً بمالك المنصة */
-export function canManageDemos(user) {
-  if (!user) return false;
-  if (user.isDemo) return false;
-  return user.isPlatformAdmin === true || user.isPlatformOwner === true;
-}

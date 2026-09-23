@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLang, getWelcomeMessage } from '../../context/LanguageContext';
 import {
   signInWithGoogle, signInWithEmailPassword, signInStaffOrParent,
-  signUpManagerWithEmailPassword, authenticateDemoAccount, autoLoginDemoToken
+  signUpManagerWithEmailPassword
 } from '../../firebase/auth';
 
 const FEATURES = [
@@ -26,34 +26,6 @@ export default function LoginScreen() {
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [demoAutoLoading, setDemoAutoLoading] = useState(false);
-
-  useEffect(() => {
-    async function checkDirectDemo() {
-      try {
-        const params = new URLSearchParams(window.location.search);
-        const demoToken = params.get('demo') || params.get('demo_token') || params.get('token');
-        if (demoToken) {
-          setDemoAutoLoading(true);
-          const demoUser = await autoLoginDemoToken(demoToken);
-          if (demoUser) {
-            toast(`🎮 مرحباً بك في العرض التجريبي المباشر لنظام إدارة المراكز (${demoUser.demoAccount?.centerName || 'المركز'})! تم الدخول بدون تسجيل.`, 'ok');
-            // إزالة المعامل من الرابط للحفاظ على نظافته
-            window.history.replaceState({}, document.title, window.location.pathname);
-            login(demoUser);
-            return;
-          } else {
-            setErr('⚠️ الرابط التجريبي أو رمز الديمو غير صحيح أو غير موجود.');
-          }
-        }
-      } catch (ex) {
-        setErr(ex.message || 'تعذر الدخول إلى العرض التجريبي');
-      } finally {
-        setDemoAutoLoading(false);
-      }
-    }
-    checkDirectDemo();
-  }, []);
 
   function switchMode(next) {
     setMode(next);
@@ -82,15 +54,7 @@ export default function LoginScreen() {
     if (!password) { setErr(t('loginErrPass')); return; }
     setLoading(true);
     try {
-      // 1. التحقق إن كان حساب ديمو تجريبي مؤقت أنشأه المدير
-      const demoUser = await authenticateDemoAccount(identifier, password);
-      if (demoUser) {
-        toast(`🎮 مرحباً بك في الحساب التجريبي لـ ${demoUser.demoAccount?.centerName || 'المركز'} (متبقي ${demoUser.subscription?.daysLeft} يوم)`, 'ok');
-        login(demoUser);
-        return;
-      }
-
-      // 2. تسجيل دخول مدير مركز ببريد/كلمة مرور أو موظف باسم مستخدم
+      // تسجيل دخول مدير مركز ببريد/كلمة مرور أو موظف باسم مستخدم
       const isEmailFormat = identifier.includes('@');
       const user = isEmailFormat
         ? await signInWithEmailPassword(identifier, password)
@@ -219,31 +183,7 @@ export default function LoginScreen() {
         </div>
 
         {/* لوحة النموذج */}
-        <div className="login-panel" style={{ position: 'relative' }}>
-          {demoAutoLoading && (
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(4px)',
-              zIndex: 50,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '24px',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '3rem', animation: 'bounce 1s infinite' }}>🎮</div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--pr)', marginTop: 12, marginBottom: 6 }}>
-                جارٍ فتح العرض التجريبي المباشر...
-              </h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-sub)', maxWidth: 300, lineHeight: 1.6 }}>
-                يتم الآن تجهيز بيانات المركز النموذجية وتفعيل بيئة العرض التفاعلية بدون تسجيل دخول.
-              </p>
-              <div style={{ marginTop: 16, width: 40, height: 40, border: '3px solid #e2e8f0', borderTopColor: 'var(--pr)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-            </div>
-          )}
+        <div className="login-panel">
           <div className="login-box">
             <div className="login-hd">
               <div style={{ fontSize: '2.2rem', marginBottom: 6 }}>🏥</div>
