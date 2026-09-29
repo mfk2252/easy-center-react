@@ -225,6 +225,25 @@ export default function ConnersParentReportModal({
               </div>
             </div>
 
+            {/* ETHICAL CLINICAL DISCLAIMER & COPYRIGHT NOTICE */}
+            <div
+              style={{
+                background: '#fff7ed',
+                border: '1px solid #ffedd5',
+                borderRadius: 8,
+                padding: '10px 14px',
+                marginBottom: 20,
+                fontSize: '.78rem',
+                color: '#9a3412',
+                lineHeight: 1.5,
+              }}
+            >
+              <b>⚖️ إشعار حقوق الملكية الفكرية والأمانة العلمية:</b> مقياس كونرز لتقدير سلوك الطفل للوالدين (CPRS-R:L) · إعداد: <b>د. كيث كونرز (C. Keith Conners, Ph.D.)</b> · ناشر النسخة الأصلية: <b>Multi-Health Systems (MHS)</b>.
+              <div style={{ marginTop: 4, color: '#c2410c', fontWeight: 600 }}>
+                💡 <b>تنويه إخلاء المسؤولية الإكلينيكية:</b> استمارة ملاحظة وتقييم إكلينيكي للأغراض التأهيلية والتربوية الداخلية بالمركز. الدرجات الموضحة تشكل مؤشرات فرز وتأهيل مساندة للخطة التربوية الفردية (IEP) وليست تشخيصاً طبياً نائياً بمفردها.
+              </div>
+            </div>
+
             {/* STUDENT & EXAMINER PROFILE */}
             <div
               style={{
