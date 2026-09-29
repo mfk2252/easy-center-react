@@ -434,151 +434,168 @@ export default function AQAssessmentModal({
           </div>
         )}
 
-        {/* REAL-TIME PSYCHOMETRICS & DIAGNOSTIC SUBBAR */}
-        <div
-          style={{
-            background: 'var(--g0)',
-            borderBottom: '1px solid var(--border-color)',
-            padding: '10px 18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-            flexWrap: 'wrap',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', flex: 1 }}>
-            {/* Total AQ Score Metric */}
+        {/* Scrollable Form Body */}
+        <div className="modal-body-scroll" style={{ padding: '16px 20px', flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
+          
+          {/* REAL-TIME PSYCHOMETRICS & DIAGNOSTIC SUMMARY DASHBOARD */}
+          <div
+            style={{
+              background: 'var(--g0)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 12,
+              padding: '14px 18px',
+              marginBottom: 16,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: '1.2rem' }}>📊</span>
+                <strong style={{ fontSize: '0.92rem', color: 'var(--pr)', fontWeight: 800 }}>
+                  المؤشرات السيكومترية الفورية ومستوى الفرز (AQ Diagnostics):
+                </strong>
+              </div>
+
+              {/* Quick Actions and Sample Auto-fill */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', fontWeight: 600 }}>تعبئة سريعة للمعاينة:</span>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-s"
+                  onClick={() => autoFillSample('typical')}
+                  style={{ fontSize: '0.72rem', padding: '3px 8px' }}
+                  title="تعبئة سريعة لأداء نمطي سليم (<26)"
+                >
+                  نمطي (&lt;26)
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-w"
+                  onClick={() => autoFillSample('borderline')}
+                  style={{ fontSize: '0.72rem', padding: '3px 8px' }}
+                  title="تعبئة سريعة لحالة حدية (26-29)"
+                >
+                  حدي (26-29)
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-d"
+                  onClick={() => autoFillSample('autistic')}
+                  style={{ fontSize: '0.72rem', padding: '3px 8px' }}
+                  title="تعبئة سريعة لسمات توحد بارزة (≥30)"
+                >
+                  مرتفع (≥30)
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-g"
+                  onClick={handleReset}
+                  style={{ fontSize: '0.72rem', padding: '3px 8px' }}
+                  title="مسح كافة الإجابات"
+                >
+                  تفريغ
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-p"
+                  onClick={handleGenerateSummary}
+                  style={{ fontSize: '0.74rem', padding: '4px 10px', fontWeight: 700 }}
+                  title="توليد الخلاصة الإكلينيكية والتوصيات التلقائية"
+                >
+                  ✨ توليد الخلاصة
+                </button>
+              </div>
+            </div>
+
+            {/* Metric KPI Cards Grid */}
             <div
               style={{
-                background: 'var(--bg-card)',
-                padding: '6px 12px',
-                borderRadius: 8,
-                border: `1.5px solid ${psychometrics.isAboveCutoff ? '#dc2626' : '#059669'}`,
-                textAlign: 'center',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+                gap: 10,
               }}
             >
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>معامل طيف التوحد (AQ):</span>
-              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: psychometrics.severityColor }}>
-                {psychometrics.totalScore} <small style={{ fontSize: '0.75rem', color: 'var(--text-sub)' }}>/ 50</small>
-              </span>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-sub)', marginRight: 4 }}>
-                (عتبة القطع: ≥ 30)
-              </span>
-            </div>
+              {/* Metric 1: Total AQ Score */}
+              <div style={{ background: 'var(--bg-card)', border: `1.5px solid ${psychometrics.isAboveCutoff ? '#dc2626' : 'var(--pr)'}`, borderRadius: 10, padding: '10px 14px' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block', fontWeight: 600 }}>معامل طيف التوحد (AQ):</span>
+                <div style={{ fontSize: '1.35rem', fontWeight: 900, color: psychometrics.severityColor, lineHeight: 1.2, marginTop: 2 }}>
+                  {psychometrics.totalScore} <span style={{ fontSize: '0.78rem', color: 'var(--text-sub)', fontWeight: 600 }}>/ 50</span>
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-sub)', marginTop: 3 }}>
+                  عتبة القطع الإكلينيكية: ≥ 30
+                </div>
+              </div>
 
-            {/* Cut-off Status */}
-            <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-color)', textAlign: 'center' }}>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>عتبة الفرز التشخيصي:</span>
-              <span style={{ fontSize: '0.95rem', fontWeight: 800, color: psychometrics.isAboveCutoff ? '#dc2626' : '#059669' }}>
-                {psychometrics.isAboveCutoff ? 'تجاوز عتبة القطع ⚠️' : 'أقل من عتبة القطع ✅'}
-              </span>
-            </div>
+              {/* Metric 2: Cut-off Status */}
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '10px 14px' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block', fontWeight: 600 }}>عتبة الفرز التشخيصي:</span>
+                <div style={{ fontSize: '1rem', fontWeight: 800, color: psychometrics.isAboveCutoff ? '#dc2626' : '#059669', lineHeight: 1.2, marginTop: 4 }}>
+                  {psychometrics.isAboveCutoff ? 'تجاوز عتبة القطع ⚠️' : 'أقل من عتبة القطع ✅'}
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-sub)', marginTop: 3 }}>
+                  {psychometrics.isAboveCutoff ? 'مؤشر إيجابي لسمات التوحد' : 'ضمن النطاق النمائي الطبيعي'}
+                </div>
+              </div>
 
-            {/* Version Toggle */}
-            <div style={{ background: 'var(--bg-card)', padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>النسخة:</span>
-              <button
-                type="button"
-                className={`btn btn-xs ${form.version === 'child' ? 'btn-p' : 'btn-g'}`}
-                onClick={() => setForm(f => ({ ...f, version: 'child' }))}
-                style={{
-                  padding: '3px 8px',
-                  fontSize: '0.72rem',
-                  fontWeight: form.version === 'child' ? 800 : 500,
-                  background: form.version === 'child' ? '#047857' : undefined,
-                  color: form.version === 'child' ? '#ffffff' : 'var(--text-sub)',
-                  border: form.version === 'child' ? 'none' : undefined,
-                }}
-              >
-                🧒 الأطفال (4–11)
-              </button>
-              <button
-                type="button"
-                className={`btn btn-xs ${form.version === 'adolescent' ? 'btn-p' : 'btn-g'}`}
-                onClick={() => setForm(f => ({ ...f, version: 'adolescent' }))}
-                style={{
-                  padding: '3px 8px',
-                  fontSize: '0.72rem',
-                  fontWeight: form.version === 'adolescent' ? 800 : 500,
-                  background: form.version === 'adolescent' ? '#065f46' : undefined,
-                  color: form.version === 'adolescent' ? '#ffffff' : 'var(--text-sub)',
-                  border: form.version === 'adolescent' ? 'none' : undefined,
-                }}
-              >
-                🧑‍🎓 اليافعين (12–16)
-              </button>
-            </div>
+              {/* Metric 3: Version Selection */}
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '10px 14px' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block', fontWeight: 600 }}>النسخة المطبقة:</span>
+                <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                  <button
+                    type="button"
+                    className={`btn btn-xs ${form.version === 'child' ? 'btn-p' : 'btn-g'}`}
+                    onClick={() => setForm(f => ({ ...f, version: 'child' }))}
+                    style={{ flex: 1, fontSize: '0.72rem', padding: '4px 6px', fontWeight: form.version === 'child' ? 800 : 500 }}
+                  >
+                    🧒 أطفال (4–11)
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn btn-xs ${form.version === 'adolescent' ? 'btn-p' : 'btn-g'}`}
+                    onClick={() => setForm(f => ({ ...f, version: 'adolescent' }))}
+                    style={{ flex: 1, fontSize: '0.72rem', padding: '4px 6px', fontWeight: form.version === 'adolescent' ? 800 : 500 }}
+                  >
+                    🧑‍🎓 يافعين (12–16)
+                  </button>
+                </div>
+              </div>
 
-            {/* Diagnosis Result Badge */}
-            <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>التصنيف والشدة:</span>
-              <span className={`bdg ${psychometrics.severityKey === 'high' ? 'b-rd' : psychometrics.severityKey === 'borderline' ? 'b-or' : 'b-gr'}`} style={{ fontWeight: 800, fontSize: '0.78rem' }}>
-                {psychometrics.severityLabel}
-              </span>
-            </div>
+              {/* Metric 4: Diagnostic Severity Classification */}
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '10px 14px' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block', fontWeight: 600 }}>التصنيف والشدة:</span>
+                <div style={{ marginTop: 4 }}>
+                  <span className={`bdg ${psychometrics.severityKey === 'high' ? 'b-rd' : psychometrics.severityKey === 'borderline' ? 'b-or' : 'b-gr'}`} style={{ fontWeight: 800, fontSize: '0.8rem', padding: '4px 10px' }}>
+                    {psychometrics.severityLabel}
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-sub)', marginTop: 4 }}>
+                  مستوى الخطورة: {psychometrics.riskLevel}
+                </div>
+              </div>
 
-            {/* Quick Fill Actions */}
-            <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-              <button
-                type="button"
-                className="btn btn-xs"
-                onClick={() => autoFillSample('autistic')}
-                style={{ background: 'var(--err-l)', color: 'var(--err)', border: '1px solid var(--err)', fontWeight: 700, fontSize: '0.72rem', padding: '3px 7px' }}
-                title="تعبئة سريعة لحالة تظهر سمات طيف توحد مرتفعة"
-              >
-                ⚡ سمات مرتفعة
-              </button>
-              <button
-                type="button"
-                className="btn btn-xs"
-                onClick={() => autoFillSample('borderline')}
-                style={{ background: 'var(--warn-l)', color: 'var(--warn)', border: '1px solid var(--warn)', fontWeight: 700, fontSize: '0.72rem', padding: '3px 7px' }}
-                title="تعبئة سريعة لحالة حدية"
-              >
-                ⚡ حدية
-              </button>
-              <button
-                type="button"
-                className="btn btn-xs"
-                onClick={() => autoFillSample('typical')}
-                style={{ background: 'var(--ok-l)', color: 'var(--ok)', border: '1px solid var(--ok)', fontWeight: 700, fontSize: '0.72rem', padding: '3px 7px' }}
-                title="تعبئة سريعة لأداء نمطي سليم"
-              >
-                ⚡ نمطي
-              </button>
-              <button
-                type="button"
-                className="btn btn-xs btn-g"
-                onClick={handleReset}
-                style={{ fontSize: '0.72rem', padding: '3px 7px' }}
-                title="مسح كافة الإجابات"
-              >
-                🗑️ تفريغ
-              </button>
-            </div>
-
-            {/* Progress */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                {psychometrics.answeredCount} / 50 بنداً
-              </span>
-              <div style={{ width: 60, height: 8, background: 'var(--border-color)', borderRadius: 4, overflow: 'hidden' }}>
-                <div
-                  style={{
-                    width: `${(psychometrics.answeredCount / 50) * 100}%`,
-                    height: '100%',
-                    background: psychometrics.answeredCount === 50 ? 'var(--ok)' : '#059669',
-                    transition: 'width 0.3s',
-                  }}
-                />
+              {/* Metric 5: Progress Completion */}
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '10px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', fontWeight: 600 }}>اكتمال الإجابات:</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                    {psychometrics.answeredCount} / 50
+                  </span>
+                </div>
+                <div style={{ width: '100%', height: 7, background: 'var(--border-color)', borderRadius: 4, overflow: 'hidden', marginTop: 8 }}>
+                  <div
+                    style={{
+                      width: `${(psychometrics.answeredCount / 50) * 100}%`,
+                      height: '100%',
+                      background: psychometrics.answeredCount === 50 ? 'var(--ok)' : 'var(--pr)',
+                      transition: 'width 0.3s',
+                    }}
+                  />
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-sub)', marginTop: 4 }}>
+                  {psychometrics.answeredCount === 50 ? '✅ تم استكمال جميع البنود' : `متبقي ${50 - psychometrics.answeredCount} بنداً`}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Scrollable Form Body */}
-        <div className="modal-body-scroll" style={{ padding: '16px 20px', flex: 1, overflowY: 'auto', background: 'var(--bg-page)' }}>
           
           {/* 1. Student & Assessment Info Card */}
           <div

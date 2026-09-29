@@ -272,6 +272,25 @@ export default function AQReportModal({
               </div>
             </div>
 
+            {/* ETHICAL CLINICAL DISCLAIMER & COPYRIGHT NOTICE */}
+            <div
+              style={{
+                background: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                borderRadius: 8,
+                padding: '10px 14px',
+                marginBottom: 20,
+                fontSize: '.78rem',
+                color: '#166534',
+                lineHeight: 1.5,
+              }}
+            >
+              <b>⚖️ إشعار حقوق الملكية الفكرية والأمانة العلمية:</b> مقياس طيف التوحد (Autism Spectrum Quotient - AQ) · إعداد: <b>البروفيسور سايمون بارون كوهين (Simon Baron-Cohen et al.)</b> · جهة التطوير: <b>مركز أبحاث التوحد بجامعة كامبريدج (Autism Research Centre - ARC)</b> · ترخيص الاستخدام: <b>أداة مفتوحة ومجانية للأغراض الإكلينيكية والبحثية (Open Access Clinical Tool)</b>.
+              <div style={{ marginTop: 4, color: '#15803d', fontWeight: 600 }}>
+                💡 <b>تنويه إخلاء المسؤولية الإكلينيكية:</b> أداة فرز ومسح نمائي مساندة لتحديد سمات طيف التوحد للأغراض التأهيلية والتربوية والتدخل المبكر. الدرجات الموضحة تشكل مؤشرات فرز مساندة للخطة الفردية (IEP) وليست تشخيصاً طبياً منفرداً.
+              </div>
+            </div>
+
             {/* STUDENT & EXAMINER DETAILS TABLE */}
             <div style={{ marginBottom: 20 }}>
               <div style={{ fontSize: '.9rem', fontWeight: 800, color: '#0f172a', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
