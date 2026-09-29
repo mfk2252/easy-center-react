@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { uid, todayStr, calcAge } from '../../utils/dateHelpers';
 import { lsAdd, lsUpd } from '../../hooks/useStorage';
 import { validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
+import { sanitizeAssessmentForm, sanitizeInput } from '../../utils/sanitize';
 import {
   PLS5_COPYRIGHT_INFO,
   PLS5_RECEPTIVE_ITEMS,
@@ -345,35 +346,42 @@ export default function PLS5AssessmentModal({
       return;
     }
 
+    const cleanedForm = sanitizeAssessmentForm(form);
+
     const recScores = {};
     const expScores = {};
-    Object.entries(form.scores).forEach(([k, v]) => {
+    Object.entries(cleanedForm.scores).forEach(([k, v]) => {
       if (k.startsWith('r_')) recScores[k.replace('r_', '')] = v;
       if (k.startsWith('e_')) expScores[k.replace('e_', '')] = v;
     });
 
+    const recordId = cleanedForm.id || uid();
+    const studentIdVal = cleanedForm.stuId || cleanedForm.studentId || '';
+
     const record = {
-      id: form.id || uid(),
+      id: recordId,
+      assessmentId: recordId,
+      studentId: studentIdVal,
+      stuId: studentIdVal,
       measureId: 'pls_5',
       measureName: PLS5_COPYRIGHT_INFO.measureNameAr,
       measureNameEn: PLS5_COPYRIGHT_INFO.measureNameEn,
-      stuId: form.stuId || '',
-      studentName: form.studentName,
-      dob: form.dob,
-      age: form.age || `${Math.floor(studentAgeMonths / 12)} سنة و ${studentAgeMonths % 12} شهر`,
-      diagnosis: form.diagnosis,
-      grade: form.grade,
-      school: form.school,
-      raterName: form.raterName,
-      raterRelation: form.raterRelation,
-      examinerName: form.examinerName,
-      specialistName: form.examinerName,
-      date: form.date || todayStr(),
-      scores: form.scores,
-      results: form.scores,
+      studentName: cleanedForm.studentName,
+      dob: cleanedForm.dob,
+      age: cleanedForm.age || `${Math.floor(studentAgeMonths / 12)} سنة و ${studentAgeMonths % 12} شهر`,
+      diagnosis: cleanedForm.diagnosis,
+      grade: cleanedForm.grade,
+      school: cleanedForm.school,
+      raterName: cleanedForm.raterName,
+      raterRelation: cleanedForm.raterRelation,
+      examinerName: cleanedForm.examinerName,
+      specialistName: cleanedForm.examinerName,
+      date: cleanedForm.date || todayStr(),
+      scores: cleanedForm.scores,
+      results: cleanedForm.scores,
       resultsReceptive: recScores,
       resultsExpressive: expScores,
-      itemNotes: form.itemNotes,
+      itemNotes: cleanedForm.itemNotes,
       psychometrics: {
         receptiveRawScore: psychometrics.receptiveRawScore,
         expressiveRawScore: psychometrics.expressiveRawScore,
@@ -391,17 +399,19 @@ export default function PLS5AssessmentModal({
         clinicalClassification: psychometrics.clinicalClassification,
         severityColor: psychometrics.severityColor,
       },
-      clinicalSummary: form.clinicalSummary,
-      recommendations: form.recommendations,
-      notes: form.notes,
+      clinicalSummary: cleanedForm.clinicalSummary,
+      recommendations: cleanedForm.recommendations,
+      notes: cleanedForm.notes,
       updatedAt: new Date().toISOString(),
     };
 
     if (form.id) {
-      lsUpd('assessments', record);
+      lsUpd('studentAssessments', form.id, record);
+      lsUpd('assessments', form.id, record);
       toast?.('تم تحديث تقييم PLS-5 بنجاح ✓', 'success');
     } else {
       record.createdAt = new Date().toISOString();
+      lsAdd('studentAssessments', record);
       lsAdd('assessments', record);
       toast?.('تم حفظ تقييم PLS-5 الجديد بنجاح ✓', 'success');
     }

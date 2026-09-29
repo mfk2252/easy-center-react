@@ -10,6 +10,7 @@ import {
   calculateDownSyndromeScore,
 } from '../../data/downSyndromeData';
 import { validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
+import { sanitizeAssessmentForm } from '../../utils/sanitize';
 
 const EMPTY_DS_FORM = {
   mode: 'registered',
@@ -215,9 +216,16 @@ export default function DownSyndromeAssessmentModal({
       return;
     }
 
+    const cleanedForm = sanitizeAssessmentForm(form);
+    const payloadId = initialData?.id || form.id || uid();
+    const studentIdVal = cleanedForm.stuId || cleanedForm.studentId || '';
+
     const payload = {
-      ...form,
-      id: initialData?.id || uid(),
+      ...cleanedForm,
+      id: payloadId,
+      assessmentId: payloadId,
+      studentId: studentIdVal,
+      stuId: studentIdVal,
       measureId: activeScale.id,
       measureName: activeScale.name,
       measureNameEn: activeScale.nameEn,
@@ -241,7 +249,7 @@ export default function DownSyndromeAssessmentModal({
     };
 
     if (initialData?.id) {
-      lsUpd('studentAssessments', payload);
+      lsUpd('studentAssessments', initialData.id, payload);
       toast(`✅ تم تحديث نتيجة ${activeScale.name} بنجاح`, 'ok');
     } else {
       lsAdd('studentAssessments', payload);
