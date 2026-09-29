@@ -9,6 +9,7 @@ import {
   calculateATECPsychometrics,
 } from '../../data/atecData';
 import { validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
+import { sanitizeAssessmentForm } from '../../utils/sanitize';
 
 const EMPTY_ATEC_FORM = {
   mode: 'registered',
@@ -156,12 +157,19 @@ export default function ATECAssessmentModal({
     }
 
     // Auto generate impression if blank
-    const finalClinicalSummary = form.clinicalSummary.trim() || psychometrics.clinicalImpression;
-    const finalRecommendations = form.recommendations.trim() || psychometrics.recommendations;
+    const cleanedForm = sanitizeAssessmentForm(form);
+    const finalClinicalSummary = cleanedForm.clinicalSummary?.trim() || psychometrics.clinicalImpression;
+    const finalRecommendations = cleanedForm.recommendations?.trim() || psychometrics.recommendations;
+
+    const payloadId = cleanedForm.id || uid();
+    const studentIdVal = cleanedForm.stuId || cleanedForm.studentId || '';
 
     const payload = {
-      ...form,
-      id: form.id || uid(),
+      ...cleanedForm,
+      id: payloadId,
+      assessmentId: payloadId,
+      studentId: studentIdVal,
+      stuId: studentIdVal,
       measureId: 'atec',
       scaleType: 'atec',
       measureName: ATEC_COPYRIGHT_INFO.scaleFullNameAr,
@@ -184,7 +192,7 @@ export default function ATECAssessmentModal({
     };
 
     if (form.id) {
-      lsUpd('studentAssessments', payload);
+      lsUpd('studentAssessments', form.id, payload);
       toast?.success?.('تم تحديث تقييم ATEC بنجاح.');
     } else {
       payload.createdAt = new Date().toISOString();

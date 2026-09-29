@@ -1,22 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { lsGet, lsAdd, lsUpd } from '../../hooks/useStorage';
 import { uid, todayStr } from '../../utils/dateHelpers';
 import { domainLabel } from '../../utils/goalsBank';
 import { getStrategiesForDomain } from '../../data/strategiesData';
+import { extractRecommendedGoals } from '../../utils/iepBridge';
 
 export default function IepBridgeModal({
   isOpen,
   onClose,
   assessmentData,
   recommendedGoals = [],
+  scaleItems = [],
+  student,
+  assessment,
+  scaleType,
   onApplied,
 }) {
   const { toast } = useApp();
 
+  const activeAssessmentData = useMemo(() => {
+    if (assessmentData) return assessmentData;
+    if (assessment) {
+      return {
+        stuId: assessment.stuId || assessment.studentId || student?.studentId || '',
+        studentName: assessment.studentName || student?.studentName || '',
+        measureId: assessment.measureId || assessment.scaleId || scaleType || 'cars',
+        measureName: assessment.measureName || assessment.scaleName || 'التقييم التشخيصي',
+        date: assessment.date || todayStr(),
+        score: assessment.score || 0,
+        results: assessment.results || assessment.scores || assessment.responses || {},
+      };
+    }
+    return {};
+  }, [assessmentData, assessment, student, scaleType]);
+
+  const activeRecommendedGoals = useMemo(() => {
+    if (recommendedGoals && recommendedGoals.length > 0) return recommendedGoals;
+
+    const measureId = activeAssessmentData?.measureId || scaleType || 'cars';
+    const responses = activeAssessmentData?.results || activeAssessmentData?.scores || activeAssessmentData?.responses || {};
+
+    return extractRecommendedGoals(measureId, responses, scaleItems);
+  }, [recommendedGoals, activeAssessmentData, scaleItems, scaleType]);
+
   // Internal state of goals with full clinical override capability
   const [goalsList, setGoalsList] = useState(() => {
-    return recommendedGoals.map(g => {
+    return activeRecommendedGoals.map(g => {
       const domStrategies = getStrategiesForDomain(g.domain);
       return {
         ...g,
@@ -36,7 +66,7 @@ export default function IepBridgeModal({
 
   // Selected goal IDs for export
   const [selectedGoalIds, setSelectedGoalIds] = useState(
-    () => new Set(recommendedGoals.map(g => g.id))
+    () => new Set(activeRecommendedGoals.map(g => g.id))
   );
 
   // Active filter for priority staging
@@ -46,15 +76,15 @@ export default function IepBridgeModal({
   const [targetPlanMode, setTargetPlanMode] = useState('existing'); // 'existing' | 'new'
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [newPlanTitle, setNewPlanTitle] = useState(
-    assessmentData?.studentName
-      ? `خطة التدخل الفردية (IEP) - مستندة لمقياس ${assessmentData?.measureName || 'التقييم'}`
+    activeAssessmentData?.studentName
+      ? `خطة التدخل الفردية (IEP) - مستندة لمقياس ${activeAssessmentData?.measureName || 'التقييم'}`
       : 'خطة تربوية فردية جديدة (IEP)'
   );
 
   if (!isOpen) return null;
 
   const existingPlans = (lsGet('progPrograms') || []).filter(
-    p => p.stuId === assessmentData?.stuId || p.studentName === assessmentData?.studentName
+    p => p.stuId === activeAssessmentData?.stuId || p.studentName === activeAssessmentData?.studentName
   );
 
   // Toggle goal selection

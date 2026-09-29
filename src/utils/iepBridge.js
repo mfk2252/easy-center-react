@@ -860,6 +860,7 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
   else if (rawId.includes('speech') || rawId.includes('artic')) lookupKey = 'speech_screening';
   else if (rawId.includes('ppvt') || rawId.includes('peabody')) lookupKey = 'ppvt5';
   else if (rawId.includes('pls5') || rawId.includes('pls')) lookupKey = 'pls5';
+  else if (rawId.includes('down') || rawId.includes('syndrome') || rawId.startsWith('ds') || rawId.includes('ds_')) lookupKey = 'down_syndrome';
   else if (rawId.includes('beh')) lookupKey = 'behavior_adjustment';
   else if (SCALE_GOAL_TEMPLATES[measureId]) lookupKey = measureId;
 
@@ -1370,6 +1371,43 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
           priority,
           baseline,
           durationWeeks: priorityRank === 1 ? 10 : 8,
+        }));
+      }
+    });
+  } else if (lookupKey === 'down_syndrome' || rawId.startsWith('ds') || rawId.includes('ds_') || rawId.includes('down')) {
+    items.forEach((it) => {
+      const respVal = responses[it.id] !== undefined && responses[it.id] !== null ? Number(responses[it.id]) : null;
+      if (respVal !== null && respVal <= 0.5) {
+        const isCritical = respVal === 0.0;
+        const priorityRank = isCritical ? 1 : 2;
+        const priority = isCritical ? 'critical' : 'high';
+        const itemTitle = it.text || `بند ${it.id}`;
+
+        const baseline = generatePlepBaseline(
+          itemTitle,
+          respVal,
+          1.0,
+          isCritical
+            ? `عدم اكتساب المهارة النمائية (${itemTitle}) - تقييم (0.0/1.0)`
+            : `مهارة في طور الاكتساب المبدئي (${itemTitle}) - تقييم (0.5/1.0)`,
+          isCritical
+            ? 'تدريب فردي مكثف واستخدام التلقين المتدرج والدعم الحسي'
+            : 'تعزيز المهارة الناشئة وتطبيق أنشطة التكرار والتدريب الموجه'
+        );
+
+        const goalText = it.iepGoal || `أن يكتسب التلميذ مهارة (${itemTitle}) ويظهر إتقاناً بنسبة 80% في المواقف الصفية واليومية.`;
+
+        recommended.push(buildGoalItem({
+          code: `DS-${it.domain ? String(it.domain).slice(0, 4).toUpperCase() : 'DEV'}-${it.id}`,
+          domain: it.domain || 'down_syndrome',
+          title: itemTitle.length > 35 ? `${itemTitle.slice(0, 35)}...` : itemTitle,
+          text: goalText,
+          mastery: 'إتقان بنسبة 80% عبر 3 جلسات متتالية',
+          reason: `مشتق من مقياس متلازمة داون (بند ${it.id}) بدرجة (${respVal === 0.0 ? 'غير مكتسب 0.0' : 'في طور الاكتساب 0.5'})`,
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: isCritical ? 10 : 8,
         }));
       }
     });

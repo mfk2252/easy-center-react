@@ -10,6 +10,7 @@ import {
   calculateDownSyndromeScore,
 } from '../../data/downSyndromeData';
 import { validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
+import { sanitizeAssessmentForm } from '../../utils/sanitize';
 
 const EMPTY_DS_FORM = {
   mode: 'registered',
@@ -132,6 +133,17 @@ export default function DownSyndromeAssessmentModal({
 
   if (!isOpen) return null;
 
+  // Unsaved Changes Guard / Modal Protection System
+  function safeClose() {
+    if (totalAnsweredCount > 0) {
+      if (window.confirm(`⚠️ تنبيه: تم رصد إجابات لـ (${totalAnsweredCount}) بنداً في (${activeScale.name}). هل أنت متأكد من رغبتك في الإغلاق دون حفظ التغييرات؟`)) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  }
+
   function handleScoreSelect(itemId, scoreValue) {
     setForm(prev => ({
       ...prev,
@@ -215,9 +227,16 @@ export default function DownSyndromeAssessmentModal({
       return;
     }
 
+    const cleanedForm = sanitizeAssessmentForm(form);
+    const payloadId = initialData?.id || form.id || uid();
+    const studentIdVal = cleanedForm.stuId || cleanedForm.studentId || '';
+
     const payload = {
-      ...form,
-      id: initialData?.id || uid(),
+      ...cleanedForm,
+      id: payloadId,
+      assessmentId: payloadId,
+      studentId: studentIdVal,
+      stuId: studentIdVal,
       measureId: activeScale.id,
       measureName: activeScale.name,
       measureNameEn: activeScale.nameEn,
@@ -241,7 +260,7 @@ export default function DownSyndromeAssessmentModal({
     };
 
     if (initialData?.id) {
-      lsUpd('studentAssessments', payload);
+      lsUpd('studentAssessments', initialData.id, payload);
       toast(`✅ تم تحديث نتيجة ${activeScale.name} بنجاح`, 'ok');
     } else {
       lsAdd('studentAssessments', payload);
@@ -253,7 +272,7 @@ export default function DownSyndromeAssessmentModal({
   }
 
   return (
-    <div className="mbg" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="mbg" onClick={e => e.target === e.currentTarget && safeClose()}>
       <div
         className="mb mb-xl"
         style={{
@@ -308,9 +327,6 @@ export default function DownSyndromeAssessmentModal({
                 <span className="bdg b-bl" style={{ fontSize: '.72rem', fontWeight: 700 }}>
                   بطارية الـ 14 مقياساً النمائية
                 </span>
-                <span className="bdg b-gr" style={{ fontSize: '.72rem', fontWeight: 600 }}>
-                  Easy Center Clinical Edition
-                </span>
               </div>
               <div style={{ fontSize: '0.76rem', color: 'var(--text-sub)', marginTop: 2 }}>
                 {activeScale.name} — ({activeScale.items?.length || 0} بنداً تشخيصياً)
@@ -336,7 +352,7 @@ export default function DownSyndromeAssessmentModal({
             <button
               type="button"
               className="btn btn-xs btn-p"
-              onClick={onClose}
+              onClick={safeClose}
               style={{ fontWeight: 700 }}
             >
               ✖ إغلاق
@@ -401,7 +417,7 @@ export default function DownSyndromeAssessmentModal({
                 </span>
               </div>
 
-              {/* 4 Details Grid */}
+              {/* Details Grid */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10, marginBottom: 10 }}>
                 <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #fde68a' }}>
                   <strong>المؤلف الأصلي / الجهة:</strong> {activeScale.originalAuthor || 'المرجعيات النمائية العالمية'}
@@ -412,9 +428,6 @@ export default function DownSyndromeAssessmentModal({
                 <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #fde68a' }}>
                   <strong>صفة التشخيص:</strong> {activeScale.diagnosticNature || 'مخصص للتشخيص والتقييم التربوي والنمائي المعتمد'}
                 </div>
-                <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #fde68a' }}>
-                  <strong>المشغل الرقمي:</strong> {activeScale.hostPlatform || 'منصة إيزي سنتر لتشغيل وتطبيق المقاييس الرقمية (Host Platform)'}
-                </div>
               </div>
 
               {/* Notice text */}
@@ -424,72 +437,6 @@ export default function DownSyndromeAssessmentModal({
             </div>
           )}
 
-          {/* SCALE PICKER TABS BAR (14 SCALES SWITCHER) */}
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: '.84rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span>📑 اختيار المقياس المطلوب تطبيقه من بطارية متلازمة داون:</span>
-                <span className="bdg b-bl" style={{ fontSize: '.7rem' }}>14 مقياساً</span>
-              </span>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                gap: 6,
-                overflowX: 'auto',
-                paddingBottom: 6,
-                scrollbarWidth: 'thin',
-              }}
-            >
-              {DOWN_SYNDROME_SCALES.map((s, idx) => {
-                const isCurrent = s.id === selectedScaleId;
-                const itemsCount = s.items?.length || 0;
-                const answered = (s.items || []).filter(it => form.scores[it.id] !== undefined).length;
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedScaleId(s.id);
-                      setActiveDomainFilter('all');
-                    }}
-                    style={{
-                      flexShrink: 0,
-                      padding: '8px 12px',
-                      borderRadius: 10,
-                      border: isCurrent ? '2px solid #0891b2' : '1px solid var(--border-color)',
-                      background: isCurrent ? 'linear-gradient(135deg, rgba(8, 145, 178, 0.15), rgba(6, 182, 212, 0.05))' : 'var(--g0)',
-                      color: isCurrent ? '#0e7490' : 'var(--text-main)',
-                      fontWeight: isCurrent ? 800 : 600,
-                      fontSize: '.78rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <span>{s.icon || '🧬'}</span>
-                    <span>{idx + 1}. {s.name.split('(')[0].trim()}</span>
-                    {answered > 0 && (
-                      <span
-                        className="bdg"
-                        style={{
-                          background: answered === itemsCount ? '#d1fae5' : '#fef3c7',
-                          color: answered === itemsCount ? '#065f46' : '#92400e',
-                          fontSize: '.65rem',
-                          padding: '1px 5px',
-                        }}
-                      >
-                        {answered}/{itemsCount}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
 
           {/* STUDENT & EXAMINER PROFILE CARD WITH TOGGLE */}
           <div
@@ -940,7 +887,7 @@ export default function DownSyndromeAssessmentModal({
             <button
               type="button"
               className="btn btn-g"
-              onClick={onClose}
+              onClick={safeClose}
               style={{ fontWeight: 700 }}
             >
               إلغاء
