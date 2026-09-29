@@ -47,6 +47,9 @@ import ConnersParentAssessmentModal from '../../components/assessments/ConnersPa
 import ConnersParentReportModal from '../../components/assessments/ConnersParentReportModal';
 import MChatAssessmentModal from '../../components/assessments/MChatAssessmentModal';
 import MChatReportModal from '../../components/assessments/MChatReportModal';
+import DownSyndromeAssessmentModal from '../../components/assessments/DownSyndromeAssessmentModal';
+import DownSyndromeReportModal from '../../components/assessments/DownSyndromeReportModal';
+import { DOWN_SYNDROME_SCALES } from '../../data/downSyndromeData';
 import { PEP3_ITEMS } from '../../data/pep3Data';
 import { LDES_ITEMS } from '../../data/ldesData';
 import { DEV_LD_ITEMS } from '../../data/devLdData';
@@ -297,6 +300,13 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
   const [mchatReportOpen, setMchatReportOpen] = useState(false);
   const [selectedMchatAssessment, setSelectedMchatAssessment] = useState(null);
 
+  // Down Syndrome Assessment Battery States
+  const [dsModalOpen, setDsModalOpen] = useState(false);
+  const [dsEditData, setDsEditData] = useState(null);
+  const [dsInitialScaleId, setDsInitialScaleId] = useState('ds_developmental');
+  const [dsReportOpen, setDsReportOpen] = useState(false);
+  const [selectedDsAssessment, setSelectedDsAssessment] = useState(null);
+
   // IEP Bridge State
   const [bridgeOpen, setBridgeOpen] = useState(false);
   const [bridgeAssessment, setBridgeAssessment] = useState(null);
@@ -349,6 +359,12 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
 
   // Scales Form Handlers
   function openNewScaleAssessment(scaleId) {
+    if (scaleId?.startsWith('ds_') || scaleId === 'down_syndrome') {
+      setDsEditData(null);
+      setDsInitialScaleId(scaleId?.startsWith('ds_') ? scaleId : 'ds_developmental');
+      setDsModalOpen(true);
+      return;
+    }
     if (scaleId === 'mchat' || scaleId === 'mchat_r_f' || scaleId === 'mchat_r') {
       setMchatEditData(null);
       setMchatModalOpen(true);
@@ -655,6 +671,17 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     setAqReportOpen(true);
   }
 
+  function openEditDsAssessment(item) {
+    setDsEditData(item);
+    setDsInitialScaleId(item.measureId || item.scaleId || 'ds_developmental');
+    setDsModalOpen(true);
+  }
+
+  function openViewDsReport(item) {
+    setSelectedDsAssessment(item);
+    setDsReportOpen(true);
+  }
+
   function handleScaleOptionChange(itemId, value) {
     setScaleResponses(prev => ({
       ...prev,
@@ -722,6 +749,9 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
       setBridgeScaleItems(ATEC_ITEMS);
     } else if (item.measureId === 'scq' || item.scaleType === 'scq') {
       setBridgeScaleItems(SCQ_ITEMS);
+    } else if (item.isDownSyndrome || item.category === 'down_syndrome' || item.measureId?.startsWith('ds_')) {
+      const currentScale = DOWN_SYNDROME_SCALES.find(s => s.id === (item.measureId || item.scaleId)) || DOWN_SYNDROME_SCALES[0];
+      setBridgeScaleItems(currentScale.items || []);
     } else {
       const scale = allScales.find(s => s.id === item.measureId) || null;
       setBridgeScaleItems(scale?.items || []);
@@ -2034,19 +2064,21 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                 const isSensory = item.measureId === 'sensory_integration_scale' || item.scaleType === 'sensory_integration' || item.isSensoryIntegration;
                 const isConnersParent = item.measureId === 'conners_parent' || item.scaleType === 'conners_parent' || item.type === 'conners_parent' || item.isConnersParent;
                 const isMChat = item.measureId === 'mchat' || item.scaleType === 'mchat_r_f' || item.scaleType === 'mchat' || item.measureId === 'mchat_r_f' || item.isMChat;
+                const isDownSyndrome = item.isDownSyndrome || item.category === 'down_syndrome' || item.measureId?.startsWith('ds_') || item.scaleType === 'down_syndrome';
                 return (
                   <div
                     key={item.id}
                     className="prog-item-card"
                     style={{
-                      border: isScq ? '1.5px solid #059669' : isAtec ? '1.5px solid #1e3a8a' : isMChat ? '1.5px solid #2563eb' : isConnersParent ? '1.5px solid #ea580c' : isSensory ? '1.5px solid #0284c7' : isFamily ? '1.5px solid #7c3aed' : isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
-                      boxShadow: isScq ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isAtec ? '0 4px 12px rgba(30, 58, 138, 0.08)' : isMChat ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isConnersParent ? '0 4px 12px rgba(234, 88, 12, 0.08)' : isSensory ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isFamily ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
+                      border: isDownSyndrome ? '1.5px solid #0891b2' : isScq ? '1.5px solid #059669' : isAtec ? '1.5px solid #1e3a8a' : isMChat ? '1.5px solid #2563eb' : isConnersParent ? '1.5px solid #ea580c' : isSensory ? '1.5px solid #0284c7' : isFamily ? '1.5px solid #7c3aed' : isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
+                      boxShadow: isDownSyndrome ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isScq ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isAtec ? '0 4px 12px rgba(30, 58, 138, 0.08)' : isMChat ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isConnersParent ? '0 4px 12px rgba(234, 88, 12, 0.08)' : isSensory ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isFamily ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
                       <div>
                         <div className="prog-student-name" style={{ fontSize: '1.02rem', display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span>{item.studentName}</span>
+                          {isDownSyndrome && <span className="bdg" style={{ background: '#cffafe', color: '#0e7490', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>🧬 متلازمة داون</span>}
                           {isMChat && <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>M-CHAT-R/F (20)</span>}
                           {isConnersParent && <span className="bdg" style={{ background: '#ffedd5', color: '#c2410c', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>كونرز للوالدين (80)</span>}
                           {isCars && <span className="bdg b-bl" style={{ fontSize: '.68rem', padding: '1px 6px' }}>CARS-2</span>}
@@ -2685,6 +2717,27 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                             type="button"
                             className="btn btn-xs btn-g"
                             onClick={() => openEditPls5Assessment(item)}
+                            title="تعديل درجات البنود"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isDownSyndrome && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewDsReport(item)}
+                            style={{ fontWeight: 800, background: '#0891b2', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isDownSyndrome && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditDsAssessment(item)}
                             title="تعديل درجات البنود"
                           >
                             ✏️
@@ -3374,6 +3427,36 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
           onClose={() => setMchatReportOpen(false)}
           assessment={selectedMchatAssessment}
           onEdit={(item) => openEditMchatAssessment(item)}
+        />
+      )}
+
+      {/* MODAL: DOWN SYNDROME SPECIALIZED ASSESSMENT WORKSTATION */}
+      {dsModalOpen && (
+        <DownSyndromeAssessmentModal
+          isOpen={dsModalOpen}
+          onClose={() => {
+            setDsModalOpen(false);
+            setDsEditData(null);
+          }}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={dsEditData}
+          initialScaleId={dsInitialScaleId}
+        />
+      )}
+
+      {/* MODAL: DOWN SYNDROME OFFICIAL DIAGNOSTIC REPORT */}
+      {dsReportOpen && selectedDsAssessment && (
+        <DownSyndromeReportModal
+          isOpen={dsReportOpen}
+          onClose={() => setDsReportOpen(false)}
+          assessment={selectedDsAssessment}
+          onEdit={(item) => openEditDsAssessment(item)}
+          onOpenIepBridge={(item) => handleOpenBridge(item)}
         />
       )}
     </div>
