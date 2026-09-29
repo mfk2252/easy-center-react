@@ -457,6 +457,27 @@ export default function DownSyndromeReportModal({
               </div>
             )}
 
+            {/* SCIENTIFIC REFERENCE & COPYRIGHT ATTRIBUTION */}
+            <div
+              style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: 8,
+                padding: '10px 14px',
+                marginBottom: 20,
+                fontSize: '.75rem',
+                color: '#475569',
+                lineHeight: 1.5,
+              }}
+            >
+              <div style={{ fontWeight: 800, color: '#0e7490', marginBottom: 4 }}>
+                ⚖️ الاعتماد العلمي وحقوق الملكية الفكرية ({scale.name}):
+              </div>
+              <div><b>المؤلف والجهة الأصلية:</b> {scale.originalAuthor || 'المرجعيات النمائية العالمية'} · <b>التقنين:</b> {scale.adaptationAndNorms || 'معايير التأهيل المقننة'}</div>
+              <div><b>المشغل الرقمي:</b> {scale.hostPlatform || 'منصة إيزي سنتر لتشغيل وتطبيق المقاييس الرقمية (Host Platform)'}</div>
+              <div style={{ marginTop: 3, fontStyle: 'italic' }}>{scale.copyrightNotice}</div>
+            </div>
+
             {/* OFFICIAL SIGNATURES BLOCK */}
             <div
               style={{
@@ -464,7 +485,7 @@ export default function DownSyndromeReportModal({
                 justifyContent: 'space-between',
                 borderTop: '1px dashed #94a3b8',
                 paddingTop: 18,
-                marginTop: 30,
+                marginTop: 20,
               }}
             >
               <div>

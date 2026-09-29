@@ -318,14 +318,20 @@ export default function DownSyndromeAssessmentModal({
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <button
               type="button"
-              className="btn btn-xs btn-g"
+              className="btn btn-xs"
               onClick={() => setShowCopyrightDetails(!showCopyrightDetails)}
-              style={{ fontWeight: 600, fontSize: '.76rem' }}
+              style={{
+                background: showCopyrightDetails ? '#0891b2' : 'rgba(8, 145, 178, 0.15)',
+                color: showCopyrightDetails ? '#fff' : '#0e7490',
+                border: '1px solid #0891b2',
+                fontWeight: 700,
+                fontSize: '.78rem',
+              }}
             >
-              📜 الحقوق والمرجعيات
+              📜 {showCopyrightDetails ? 'إخفاء حقوق المقياس' : 'إظهار حقوق المقياس'}
             </button>
             <button
               type="button"
@@ -340,33 +346,80 @@ export default function DownSyndromeAssessmentModal({
 
         {/* MODAL BODY */}
         <div className="modal-body-scroll" style={{ padding: '16px 20px', flex: 1, overflowY: 'auto' }}>
-          {/* COPYRIGHT & SCIENTIFIC CITATIONS COLLAPSIBLE BANNER */}
+          {/* EXPANDABLE DYNAMIC COPYRIGHT & SCIENTIFIC CITATIONS CARD */}
           {showCopyrightDetails && (
             <div
               style={{
-                background: '#f0fdfa',
-                border: '1px solid #99f6e4',
+                background: '#fffdf5',
+                border: '1.5px solid #fcd34d',
                 borderRadius: 12,
-                padding: '12px 16px',
+                padding: '14px 18px',
                 marginBottom: 16,
                 fontSize: '.82rem',
-                color: '#0f766e',
+                color: '#78350f',
                 lineHeight: 1.6,
+                boxShadow: '0 4px 12px rgba(217, 119, 6, 0.08)',
               }}
             >
-              <div style={{ fontWeight: 800, marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
-                <span>📜 المرجعيات العلمية والأمانة الأكاديمية:</span>
+              <div style={{ fontWeight: 800, fontSize: '.92rem', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span>📜</span> إشعار حقوق الملكية الفكرية والاعتماد العلمي لـ {activeScale.name}:
+                </span>
                 <span
-                  style={{ cursor: 'pointer', opacity: 0.7 }}
+                  style={{ cursor: 'pointer', opacity: 0.7, fontSize: '.8rem', fontWeight: 600 }}
                   onClick={() => setShowCopyrightDetails(false)}
                 >
-                  ✖ إغلاق
+                  ✖ إخفاء
                 </span>
               </div>
-              <div><b>الناشر والاعتماد:</b> {DS_COPYRIGHT_INFO.publisherAr} ({DS_COPYRIGHT_INFO.publisherEn})</div>
-              <div><b>المرجعيات المقننة:</b> {DS_COPYRIGHT_INFO.academicAttribution}</div>
-              <div style={{ marginTop: 4, fontSize: '.76rem', opacity: 0.85 }}>
-                <b>الإخلاء الإكلينيكي:</b> {DS_COPYRIGHT_INFO.ethicalDisclaimer}
+
+              {/* Top Banner Notice */}
+              <div
+                style={{
+                  background: '#fffbeb',
+                  border: '1px solid #fde68a',
+                  borderRadius: 8,
+                  padding: '8px 12px',
+                  marginBottom: 10,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 8,
+                  fontSize: '.8rem',
+                  color: '#92400e',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '1.2rem' }}>⚖️</span>
+                  <div>
+                    <strong>إشعار حقوق الملكية الفكرية والاعتماد العلمي:</strong> {activeScale.name} — إعداد {activeScale.originalAuthor || 'المؤسسات العلمية المعنية'} · {activeScale.adaptationAndNorms || 'معايير التأهيل المقننة'}.
+                  </div>
+                </div>
+                <span style={{ fontSize: '.72rem', background: '#fef3c7', padding: '3px 8px', borderRadius: 6, border: '1px solid #fcd34d', fontWeight: 700 }}>
+                  {activeScale.diagnosticNature || 'مخصص للتشخيص والتقييم التربوي والنمائي المعتمد'}
+                </span>
+              </div>
+
+              {/* 4 Details Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10, marginBottom: 10 }}>
+                <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #fde68a' }}>
+                  <strong>المؤلف الأصلي / الجهة:</strong> {activeScale.originalAuthor || 'المرجعيات النمائية العالمية'}
+                </div>
+                <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #fde68a' }}>
+                  <strong>التقنين والتكييف:</strong> {activeScale.adaptationAndNorms || 'النسخ المقننة لمتلازمة داون'}
+                </div>
+                <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #fde68a' }}>
+                  <strong>صفة التشخيص:</strong> {activeScale.diagnosticNature || 'مخصص للتشخيص والتقييم التربوي والنمائي المعتمد'}
+                </div>
+                <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #fde68a' }}>
+                  <strong>المشغل الرقمي:</strong> {activeScale.hostPlatform || 'منصة إيزي سنتر لتشغيل وتطبيق المقاييس الرقمية (Host Platform)'}
+                </div>
+              </div>
+
+              {/* Notice text */}
+              <div style={{ fontSize: '.78rem', color: '#92400e', background: '#fef3c7', padding: '8px 12px', borderRadius: 8 }}>
+                {activeScale.copyrightNotice}
               </div>
             </div>
           )}
