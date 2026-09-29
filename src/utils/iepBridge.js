@@ -1591,9 +1591,22 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
             durationWeeks: 8,
           }));
         });
+      } else if (it.iepGoal && (isDeficit || Object.keys(responses).length === 0)) {
+        recommended.push(buildGoalItem({
+          code: `DS-${it.id}`,
+          domain: it.domain || 'down_syndrome',
+          title: it.text || it.title,
+          text: it.iepGoal,
+          mastery: 'إتقان 80% عبر 3 جلسات متتالية',
+          reason: `مشتق من مقياس متلازمة داون: ${it.text}`,
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: 8,
+        }));
       } else if (isDeficit) {
         recommended.push(buildGoalItem({
-          code: `GOAL-${it.id.toUpperCase()}`,
+          code: `GOAL-${String(it.id).toUpperCase()}`,
           domain: it.domain || 'general',
           title: it.text || it.title,
           text: `أن يظهر التلميذ تحسناً ملموساً في مهارة (${it.text}) بنسبة إتقان لا تقل عن 80% في المواقف الصفية واليومية.`,

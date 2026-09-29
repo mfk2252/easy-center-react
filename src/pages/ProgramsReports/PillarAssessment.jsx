@@ -770,6 +770,41 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     printItem({ html }, 'evaluation', center?.logo, center?.name);
   }
 
+  function printScaleAssessmentItem(item) {
+    const html = `
+      <div style="direction:rtl;text-align:right;font-family:'Tajawal',sans-serif;">
+        <h2 style="color:#0891b2;border-bottom:2px solid #0891b2;padding-bottom:8px;margin-bottom:14px;">
+          📊 تقرير نتيجة مقياس: ${item.measureName || 'المقياس المقنن'}
+        </h2>
+        <table style="width:100%;margin-bottom:14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;">
+          <tr>
+            <td><b>اسم الطالب:</b> ${item.studentName || '—'}</td>
+            <td><b>العمر الزمني:</b> ${item.age || '—'}</td>
+            <td><b>تاريخ التقييم:</b> ${item.date || '—'}</td>
+          </tr>
+          <tr>
+            <td><b>التشخيص:</b> ${item.diagnosis || '—'}</td>
+            <td><b>المقياس:</b> ${item.measureName || '—'}</td>
+            <td><b>الفئة:</b> ${item.category || 'متلازمة داون والتأهيل النمائي'}</td>
+          </tr>
+        </table>
+
+        <div style="background:#f0fdfa;border:2px solid #5eead4;border-radius:8px;padding:14px;margin-bottom:16px;">
+          <div style="font-size:1.1rem;font-weight:800;color:#0f766e;margin-bottom:6px;">الدرجة المحققة: ${item.score} من أصل ${item.maxScore} (${item.percentage})</div>
+          <div style="font-size:0.95rem;font-weight:700;color:#0d9488;">المستوى التقديري والتشخيصي: ${item.level}</div>
+        </div>
+
+        ${item.notes ? `<h3>📝 الملاحظات والتوصيات الإكلينيكية:</h3><p style="white-space:pre-wrap;">${item.notes}</p>` : ''}
+        
+        <div style="margin-top:30px;display:flex;justify-content:space-between;border-top:1px dashed #94a3b8;padding-top:16px;">
+          <div><b>الأخصائي الفاحص:</b> _______________</div>
+          <div><b>اعتماد مدير المركز:</b> _______________</div>
+        </div>
+      </div>
+    `;
+    printItem({ html }, 'assessment_result', center?.logo, center?.name);
+  }
+
   // Filtered lists
   const filteredEvals = evaluations.filter(e => {
     const matchSearch = !searchTerm || (e.studentName && e.studentName.includes(searchTerm)) || (e.domain && e.domain.includes(searchTerm));
@@ -2657,7 +2692,15 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                         )}
                       </div>
 
-                      <div style={{ display: 'flex', gap: 6 }}>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          className="btn btn-xs btn-bl"
+                          onClick={() => printScaleAssessmentItem(item)}
+                          title="طباعة التقرير والنتيجة الرسمية"
+                        >
+                          🖨️ طباعة
+                        </button>
                         {item.parentPhone && (
                           <button
                             type="button"
@@ -2921,17 +2964,21 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                         {idx + 1}. {it.text}
                       </div>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        {options.map(val => (
-                          <label key={val} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', border: '1px solid var(--border-color)', borderRadius: 6, cursor: 'pointer', background: scaleResponses[it.id] === val ? 'var(--pr-l)' : 'transparent' }}>
-                            <input
-                              type="radio"
-                              name={`scale_item_${it.id}`}
-                              checked={scaleResponses[it.id] === val}
-                              onChange={() => handleScaleOptionChange(it.id, val)}
-                            />
-                            <span style={{ fontSize: '.8rem' }}>درجة {val}</span>
-                          </label>
-                        ))}
+                        {options.map((opt, oIdx) => {
+                          const val = typeof opt === 'object' && opt !== null ? opt.value : opt;
+                          const label = typeof opt === 'object' && opt !== null ? opt.label : `درجة ${val}`;
+                          return (
+                            <label key={oIdx} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', border: '1px solid var(--border-color)', borderRadius: 6, cursor: 'pointer', background: scaleResponses[it.id] === val ? 'var(--pr-l)' : 'transparent' }}>
+                              <input
+                                type="radio"
+                                name={`scale_item_${it.id}`}
+                                checked={scaleResponses[it.id] === val}
+                                onChange={() => handleScaleOptionChange(it.id, val)}
+                              />
+                              <span style={{ fontSize: '.8rem' }}>{label}</span>
+                            </label>
+                          );
+                        })}
                       </div>
                     </div>
                   );

@@ -13,8 +13,22 @@ import { MCHAT_ITEMS } from '../data/mchatData';
 import { ATEC_ITEMS } from '../data/atecData';
 import { SCQ_ITEMS, calculateSCQScore } from '../data/scqData';
 import { AQ_ITEMS, calculateAQPsychometrics } from '../data/aqData';
+import {
+  DOWN_SYNDROME_SCALES,
+  DS_SCALE_3_OPTIONS,
+  DS_YESNO_MEDICAL_OPTIONS,
+  calculateDownSyndromeScore,
+} from '../data/downSyndromeData';
 
 export const MEASUREMENT_CATEGORIES = [
+  {
+    id: 'down_syndrome',
+    name: 'مقاييس وتأهيل متلازمة داون',
+    nameEn: 'Down Syndrome Diagnostic & Developmental Scales',
+    icon: '🧬',
+    color: '#0891b2',
+    description: 'بطاريات تقييم النمو الحركي، التطور اللغوي، المؤشرات الصحية، الاستقلالية الذاتية، والجاهزية للدمج لمتلازمة داون (14 مقياساً مقنناً)',
+  },
   {
     id: 'autism',
     name: 'مقاييس اضطرابات طيف التوحد',
@@ -1193,6 +1207,7 @@ const DEFAULT_SCALE_LIBRARY = [
     thresholdText: "المتوسط الفرضي لتقييم الاضطراب الحسي.",
     isDefault: true,
   },
+  ...DOWN_SYNDROME_SCALES,
 ];
 
 export function getScaleById(scaleId) {
@@ -1204,6 +1219,8 @@ export function getScaleOptions(scale) {
 
   if (scale.responseType === 'yesno') return ['لا', 'نعم'];
   if (scale.responseType === 'number') return Array.from({ length: 11 }, (_, i) => i);
+  if (scale.responseType === 'scale_3') return DS_SCALE_3_OPTIONS;
+  if (scale.responseType === 'yesno_medical') return DS_YESNO_MEDICAL_OPTIONS;
 
   const minValue = Number(scale.minValue ?? 1);
   const maxValue = Number(scale.maxValue ?? 4);
@@ -1219,13 +1236,15 @@ export function getScaleOptions(scale) {
 
 // Category ID Normalization & Aliasing for Backward Compatibility
 export function normalizeCategoryId(catId) {
-  if (!catId) return 'autism';
+  if (!catId) return 'down_syndrome';
   const legacyMap = {
     speech: 'speech_language',
     learning: 'learning_academic',
     sensory: 'sensory_motor',
     psychology: 'behavioral_emotional',
     development: 'developmental_early',
+    down: 'down_syndrome',
+    ds: 'down_syndrome',
     other: 'autism',
   };
   return legacyMap[catId] || catId;
@@ -1246,6 +1265,22 @@ function getScaleMax(scale) {
 }
 
 export function buildAssessmentResult(scale, answers = {}) {
+  if (scale?.category === 'down_syndrome' || scale?.id?.startsWith('ds_')) {
+    const dsResult = calculateDownSyndromeScore(scale.id, answers);
+    return {
+      total: dsResult.score,
+      score: dsResult.score,
+      maxScore: dsResult.maxScore,
+      percentage: `${dsResult.percentage}%`,
+      percentageNum: dsResult.percentage,
+      level: dsResult.level,
+      color: dsResult.severityColor,
+      severityColor: dsResult.severityColor,
+      note: scale?.thresholdText || 'تم تقييم التطور النمائي لمتلازمة داون بنجاح',
+      isDownSyndrome: true,
+    };
+  }
+
   if (scale?.id === "sensory_checklist") {
     const scResult = calculateSensoryChecklistScore(answers);
     return {
