@@ -474,7 +474,6 @@ export default function DownSyndromeReportModal({
                 ⚖️ الاعتماد العلمي وحقوق الملكية الفكرية ({scale.name}):
               </div>
               <div><b>المؤلف والجهة الأصلية:</b> {scale.originalAuthor || 'المرجعيات النمائية العالمية'} · <b>التقنين:</b> {scale.adaptationAndNorms || 'معايير التأهيل المقننة'}</div>
-              <div><b>المشغل الرقمي:</b> {scale.hostPlatform || 'منصة إيزي سنتر لتشغيل وتطبيق المقاييس الرقمية (Host Platform)'}</div>
               <div style={{ marginTop: 3, fontStyle: 'italic' }}>{scale.copyrightNotice}</div>
             </div>
 
