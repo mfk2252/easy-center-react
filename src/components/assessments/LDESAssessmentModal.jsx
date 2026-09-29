@@ -276,7 +276,7 @@ export default function LDESAssessmentModal({
   }
 
   return (
-    <div className="mbg">
+    <div className="mbg" onClick={e => e.target === e.currentTarget && handleSafeClose()}>
       <div
         className="mb"
         style={{

@@ -157,8 +157,20 @@ export default function SensoryIntegrationAssessmentModal({
 
   if (!isOpen) return null;
 
+  const answeredCount = Object.keys(responses || {}).filter(k => responses[k] !== undefined && responses[k] !== null).length;
+
+  function safeClose() {
+    if (answeredCount > 0) {
+      if (window.confirm(`⚠️ تنبيه: تم رصد إجابات لـ (${answeredCount}) بنداً في مقياس التكامل الحسي. هل أنت متأكد من رغبتك في الإغلاق دون حفظ التغييرات؟`)) {
+        if (onClose) onClose();
+      }
+    } else {
+      if (onClose) onClose();
+    }
+  }
+
   return (
-    <div className="mbg" style={{ zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="mbg" style={{ zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => e.target === e.currentTarget && safeClose()}>
       <div className="mb mb-xl">
         
         {/* HEADER */}
@@ -184,7 +196,7 @@ export default function SensoryIntegrationAssessmentModal({
           <button
             type="button"
             className="btn btn-sm btn-g"
-            onClick={onClose}
+            onClick={safeClose}
             style={{ color: 'var(--border-color)', borderColor: 'rgba(255,255,255,0.2)', width: 34, height: 34, padding: 0 }}
           >
             ✕
@@ -551,7 +563,7 @@ export default function SensoryIntegrationAssessmentModal({
             <button
               type="button"
               className="btn btn-g"
-              onClick={onClose}
+              onClick={safeClose}
               style={{ fontWeight: 700 }}
             >
               إلغاء

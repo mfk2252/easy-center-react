@@ -145,8 +145,18 @@ export default function FamilyDisintegrationAssessmentModal({
     return it.domainId === activeDomainFilter;
   });
 
+  function safeClose() {
+    if (answeredCount > 0) {
+      if (window.confirm(`⚠️ تنبيه: تم رصد إجابات لـ (${answeredCount}) بنداً في مقياس التفكك الأسري. هل أنت متأكد من رغبتك في الإغلاق دون حفظ التغييرات؟`)) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  }
+
   return (
-    <div className="mbg" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="mbg" onClick={e => { if (e.target === e.currentTarget) safeClose(); }}>
       <div className="mb mb-xl"
         
       >
@@ -177,7 +187,7 @@ export default function FamilyDisintegrationAssessmentModal({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={safeClose}
             style={{
               background: 'rgba(255,255,255,0.15)',
               border: 'none',
@@ -601,7 +611,7 @@ export default function FamilyDisintegrationAssessmentModal({
             المفحوص: <strong>{form.studentName || 'لم يتم التحديد'}</strong> · الدرجة الكلية: <strong>{results.totalRawScore}/{results.maxPossible}</strong>
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
-            <button type="button" className="btn btn-g" onClick={onClose}>
+            <button type="button" className="btn btn-g" onClick={safeClose}>
               إلغاء
             </button>
             <button

@@ -243,8 +243,18 @@ export default function IepBridgeModal({
     toast(`✅ تم إنشاء خطة تربوية فردية جديدة بعنوان "${newPlan.title}" وتضمين ${goals.length} أهداف بدقة`, 'ok');
   };
 
+  function safeClose() {
+    if (selectedGoalIds.size > 0) {
+      if (window.confirm(`⚠️ تنبيه: تم تحديد (${selectedGoalIds.size}) أهداف في الجسر التربوي ولم تسند بعد. هل أنت متأكد من رغبتك في الإغلاق؟`)) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  }
+
   return (
-    <div className="mbg" style={{ zIndex: 1100 }} onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="mbg" style={{ zIndex: 1100 }} onClick={e => e.target === e.currentTarget && safeClose()}>
       <div className="mb mb-xl" style={{ padding: 0, overflow: 'hidden', borderRadius: 16, maxHeight: 'min(94vh, calc(100dvh - 20px))', display: 'flex', flexDirection: 'column' }}>
         
         {/* Header */}
@@ -269,7 +279,7 @@ export default function IepBridgeModal({
             type="button"
             className="btn btn-xs"
             style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', fontWeight: 700 }}
-            onClick={onClose}
+            onClick={safeClose}
           >
             ✕ إغلاق
           </button>
@@ -658,7 +668,7 @@ export default function IepBridgeModal({
           >
             🚀 اعتماد وتضمين الأهداف ({selectedGoalIds.size}) في الخطة الفردية
           </button>
-          <button type="button" className="btn btn-g" onClick={onClose}>
+          <button type="button" className="btn btn-g" onClick={safeClose}>
             إلغاء
           </button>
         </div>

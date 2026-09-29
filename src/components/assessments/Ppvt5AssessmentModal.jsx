@@ -323,7 +323,7 @@ export default function Ppvt5AssessmentModal({
   if (!isOpen) return null;
 
   return (
-    <div className="mbg">
+    <div className="mbg" onClick={e => e.target === e.currentTarget && handleSafeClose()}>
       <div
         className="mb"
         style={{

@@ -578,7 +578,7 @@ ${psychometrics.clinicalImpression}
   if (!isOpen) return null;
 
   return (
-    <div className="mbg" style={{ zIndex: 1100 }}>
+    <div className="mbg" style={{ zIndex: 1100 }} onClick={e => e.target === e.currentTarget && handleSafeClose()}>
       <div
         className="mb"
         style={{

@@ -470,6 +470,16 @@ export default function StudentsPage() {
   }
 
   // Modal 4: Class Handler
+  function closeSecModal() {
+    if (secForm.name?.trim()) {
+      if (window.confirm('⚠️ هناك بيانات مدخلة في نموذج الصف. هل أنت متأكد من الإغلاق دون حفظ؟')) {
+        setShowSecModal(false);
+      }
+    } else {
+      setShowSecModal(false);
+    }
+  }
+
   function openSecForm(sec = null) {
     if (sec) { 
       setSecForm({ ...EMPTY_SEC, ...sec }); 
@@ -543,6 +553,16 @@ export default function StudentsPage() {
   }
 
   // Modal 5: Category Handler
+  function closeCatModal() {
+    if (catForm.name?.trim()) {
+      if (window.confirm('⚠️ هناك بيانات مدخلة في نموذج القسم/الفئة. هل أنت متأكد من الإغلاق دون حفظ؟')) {
+        setShowCatModal(false);
+      }
+    } else {
+      setShowCatModal(false);
+    }
+  }
+
   function openCatForm(cat = null) {
     if (cat && typeof cat === 'object') {
       const existing = categories.find(c => c.id === cat.id || c.name === cat.name);
@@ -1715,11 +1735,11 @@ export default function StudentsPage() {
 
       {/* 8️⃣ MODAL 4: ADD / EDIT CLASS (إضافة وتعديل بيانات الصف) */}
       {showSecModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }} onClick={e => e.target === e.currentTarget && closeSecModal()}>
           <div className="wg" style={{ width: '100%', maxWidth: '560px', margin: 0 }}>
             <div className="wg-h" style={{ borderBottom: '2px solid var(--border-color)', padding: '16px 20px' }}>
               <h3 style={{ fontSize: '1.15rem', fontWeight: '800' }}>🏫 {secEditId ? 'تعديل كافة بيانات الصف' : 'إضافة صف / شعبة جديدة'}</h3>
-              <button onClick={() => setShowSecModal(false)} className="btn btn-g btn-xs"><X style={{ width: '14px', height: '14px' }} /></button>
+              <button onClick={closeSecModal} className="btn btn-g btn-xs"><X style={{ width: '14px', height: '14px' }} /></button>
             </div>
             <div className="wg-b fg c2" style={{ padding: '20px' }}>
               <div className="fl">
@@ -1817,7 +1837,7 @@ export default function StudentsPage() {
               </div>
             </div>
             <div style={{ padding: '14px 20px', background: 'var(--g0)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button onClick={() => setShowSecModal(false)} className="btn btn-g">إلغاء</button>
+              <button onClick={closeSecModal} className="btn btn-g">إلغاء</button>
               <button onClick={saveSec} className="btn btn-p">حفظ بيانات الصف</button>
             </div>
           </div>
@@ -1826,11 +1846,11 @@ export default function StudentsPage() {
 
       {/* 9️⃣ MODAL 5: ADD / EDIT CATEGORY / DEPARTMENT (إضافة وتعديل الفئة والقسم) */}
       {showCatModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }} onClick={e => e.target === e.currentTarget && closeCatModal()}>
           <div className="wg" style={{ width: '100%', maxWidth: '560px', margin: 0 }}>
             <div className="wg-h" style={{ borderBottom: '2px solid var(--border-color)', padding: '16px 20px' }}>
               <h3 style={{ fontSize: '1.15rem', fontWeight: '800' }}>📂 {catEditId ? 'تعديل كافة بيانات الفئة / القسم' : 'إضافة قسم / فئة تشخيصية جديدة'}</h3>
-              <button onClick={() => setShowCatModal(false)} className="btn btn-g btn-xs"><X style={{ width: '14px', height: '14px' }} /></button>
+              <button onClick={closeCatModal} className="btn btn-g btn-xs"><X style={{ width: '14px', height: '14px' }} /></button>
             </div>
             <div className="wg-b fg c2" style={{ padding: '20px' }}>
               <div className="fl">
@@ -1913,7 +1933,7 @@ export default function StudentsPage() {
               </div>
             </div>
             <div style={{ padding: '14px 20px', background: 'var(--g0)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button onClick={() => setShowCatModal(false)} className="btn btn-g">إلغاء</button>
+              <button onClick={closeCatModal} className="btn btn-g">إلغاء</button>
               <button onClick={saveCat} className="btn btn-p">حفظ بيانات الفئة</button>
             </div>
           </div>

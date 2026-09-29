@@ -131,6 +131,18 @@ export default function PEP3AssessmentModal({
 
   if (!isOpen) return null;
 
+  const totalAnsweredCount = Object.keys(form.scores || {}).filter(k => form.scores[k] !== undefined && form.scores[k] !== null).length;
+
+  function safeClose() {
+    if (totalAnsweredCount > 0) {
+      if (window.confirm(`⚠️ تنبيه: تم رصد إجابات لـ (${totalAnsweredCount}) بنداً في مقياس PEP-3. هل أنت متأكد من رغبتك في الإغلاق دون حفظ التغييرات؟`)) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  }
+
   function handleScoreSelect(itemId, value) {
     setForm(prev => ({
       ...prev,
@@ -316,7 +328,7 @@ ${psychometrics.interpretation}`;
         padding: 12,
       }}
       onClick={e => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) safeClose();
       }}
     >
       <div
@@ -420,7 +432,7 @@ ${psychometrics.interpretation}`;
 
             <button
               type="button"
-              onClick={onClose}
+              onClick={safeClose}
               style={{
                 background: 'rgba(255, 255, 255, 0.15)',
                 color: '#ffffff',
@@ -1146,7 +1158,7 @@ ${psychometrics.interpretation}`;
           <button
             type="button"
             className="btn"
-            onClick={onClose}
+            onClick={safeClose}
             style={{
               background: 'transparent',
               border: '1px solid var(--border-color, #cbd5e1)',

@@ -422,6 +422,16 @@ export default function PLS5AssessmentModal({
 
   // Count answered items
   const answeredCount = Object.keys(form.scores).length;
+
+  function safeClose() {
+    if (answeredCount > 0) {
+      if (window.confirm(`⚠️ تنبيه: تم رصد إجابات لـ (${answeredCount}) بنداً في مقياس PLS-5. هل أنت متأكد من رغبتك في الإغلاق دون حفظ التغييرات؟`)) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  }
   const receptiveAnswered = Object.keys(form.scores).filter(k => k.startsWith('r_')).length;
   const expressiveAnswered = Object.keys(form.scores).filter(k => k.startsWith('e_')).length;
 
@@ -507,7 +517,7 @@ export default function PLS5AssessmentModal({
             <button
               type="button"
               className="btn btn-xs"
-              onClick={onClose}
+              onClick={safeClose}
               style={{
                 background: 'rgba(255, 255, 255, 0.2)',
                 border: '1px solid rgba(255, 255, 255, 0.3)',
@@ -1332,7 +1342,7 @@ export default function PLS5AssessmentModal({
             <button
               type="button"
               className="btn btn-g"
-              onClick={onClose}
+              onClick={safeClose}
               style={{ fontSize: '0.86rem', padding: '8px 18px' }}
             >
               إلغاء
