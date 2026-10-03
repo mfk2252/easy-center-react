@@ -4,7 +4,6 @@ import { uid, todayStr, calcAge } from '../../utils/dateHelpers';
 import { lsAdd, lsUpd } from '../../hooks/useStorage';
 import {
   SB5_ITEMS,
-  SB5_DOMAINS,
   SB5_FACTORS,
   SB5_SUBTESTS,
   SB5_RESPONSE_OPTIONS,
@@ -66,6 +65,8 @@ export default function StanfordBinet5AssessmentModal({
   const [activeFactorFilter, setActiveFactorFilter] = useState('all');
   const [activeDomainFilter, setActiveDomainFilter] = useState('all'); // 'all' | 'nonverbal' | 'verbal'
   const [showCopyrightDetails, setShowCopyrightDetails] = useState(false);
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
+  const [isManualEdit, setIsManualEdit] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('items'); // 'items' | 'subtests_raw'
 
@@ -321,74 +322,38 @@ export default function StanfordBinet5AssessmentModal({
         style={{
           maxWidth: 'min(1360px, calc(100vw - 24px))',
           width: '100%',
-          maxHeight: 'min(94vh, calc(100dvh - 20px))',
-          display: 'flex',
-          flexDirection: 'column',
-          borderRadius: 16,
-          overflow: 'hidden',
-          background: 'var(--bg-card)',
-          border: '1.5px solid var(--border-color)',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          fontFamily: "'Tajawal', sans-serif",
         }}
       >
-        {/* MODAL HEADER */}
+        {/* MODAL MAIN HEADER */}
         <div
-          className="modal-header-custom"
+          className="fhd modal-header-custom"
           style={{
             padding: '14px 20px',
-            background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%)',
-            color: '#fff',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%)',
+            color: '#fff',
             flexShrink: 0,
             gap: 12,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                background: 'rgba(255,255,255,0.2)',
-                color: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.4rem',
-                flexShrink: 0,
-                boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
-              }}
-            >
-              🧠
-            </div>
-            <div style={{ minWidth: 0 }}>
+            <span style={{ fontSize: '1.8rem' }}>🧠</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h2 style={{ margin: 0, fontSize: '1.18rem', fontWeight: 800, color: '#fff' }}>
+                <h2 style={{ fontSize: '1.18rem', fontWeight: 800, margin: 0, color: '#fff' }}>
                   مقياس ستانفورد - بينيه للذكاء (الصورة الخامسة SB5)
                 </h2>
-                <span
-                  className="bdg"
-                  style={{
-                    background: 'rgba(255,255,255,0.25)',
-                    color: '#fff',
-                    fontSize: '.72rem',
-                    fontWeight: 700,
-                  }}
-                >
+                <span className="bdg" style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>
                   النموذج ثنائي الأبعاد · 5 عوامل معرفية · 10 اختبارات فرعية
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 3 }}>
-                <span
-                  className="bdg"
-                  style={{ background: '#0f172a', color: '#93c5fd', fontSize: '0.68rem', fontWeight: 800 }}
-                >
+                <span className="bdg" style={{ background: '#0f172a', color: '#93c5fd', fontSize: '0.68rem', fontWeight: 800 }}>
                   © Riverside Insights / Gale H. Roid
                 </span>
-                <span style={{ fontSize: '0.76rem', color: '#dbeafe', opacity: 0.95 }}>
+                <span style={{ fontSize: '0.76rem', opacity: 0.95 }}>
                   Stanford-Binet Intelligence Scales (5th Edition) — التقييم السيكومتري الشامل
                 </span>
               </div>
@@ -405,21 +370,15 @@ export default function StanfordBinet5AssessmentModal({
                 color: showCopyrightDetails ? '#1e3a8a' : '#fff',
                 border: '1px solid rgba(255,255,255,0.35)',
                 fontWeight: 700,
-                fontSize: '.78rem',
               }}
             >
-              📜 {showCopyrightDetails ? 'إخفاء حقوق المقياس' : 'إظهار حقوق المقياس'}
+              📜 {showCopyrightDetails ? 'إخفاء حقوق الملكية' : 'حقوق الملكية الفكرية'}
             </button>
             <button
               type="button"
               className="btn btn-xs"
               onClick={safeClose}
-              style={{
-                background: 'rgba(255,255,255,0.2)',
-                border: '1px solid rgba(255,255,255,0.3)',
-                color: '#fff',
-                fontWeight: 700,
-              }}
+              style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', fontWeight: 700 }}
             >
               ✖ إغلاق
             </button>
@@ -719,95 +678,219 @@ export default function StanfordBinet5AssessmentModal({
         </div>
 
         {/* MODAL MAIN BODY SCROLLABLE */}
-        <div style={{ padding: '16px 20px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* STUDENT & EXAMINER INFO SECTION */}
+        <div className="modal-body-scroll" style={{ padding: '16px 20px', flex: 1, overflowY: 'auto' }}>
+          {/* STUDENT & ASSESSMENT INFO CARD */}
           <div
             style={{
               background: 'var(--g0)',
-              padding: '14px 16px',
-              borderRadius: 12,
+              padding: '10px 14px',
+              borderRadius: 10,
+              marginBottom: 14,
               border: '1px solid var(--border-color)',
             }}
           >
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
-                  👤 الطالب المفحوص:
-                </label>
-                <select
-                  className="in"
-                  style={{ width: '100%', fontSize: '0.85rem' }}
-                  value={form.mode === 'other' ? '__other__' : form.stuId}
-                  onChange={handleSelectStudent}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: isHeaderCollapsed ? 0 : 8,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '0.84rem',
+                  fontWeight: 800,
+                  color: '#1e40af',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span>👦</span>
+                <span>بيانات المفحوص والفحص الإكلينيكي</span>
+                {form.studentName && (
+                  <span
+                    style={{
+                      fontSize: '0.76rem',
+                      background: '#dbeafe',
+                      color: '#1e40af',
+                      padding: '2px 8px',
+                      borderRadius: 6,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {form.studentName}
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsManualEdit(prev => !prev)}
+                  className="btn btn-xs btn-g"
+                  style={{ fontSize: '0.72rem', padding: '3px 8px', height: 24 }}
+                  title="تفعيل التعديل اليدوي على البيانات المجلوبة تلقائياً"
                 >
-                  <option value="">— اختر طالباً من المسجلين —</option>
-                  {students.map(s => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} ({s.age ? `${s.age} سنة` : 'غير محدد'})
-                    </option>
-                  ))}
-                  <option value="__other__">✏️ اسم آخر / فحص خارجي...</option>
-                </select>
-              </div>
-
-              {form.mode === 'other' && (
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
-                    اسم المفحوص (يدوي):
-                  </label>
-                  <input
-                    type="text"
-                    className="in"
-                    placeholder="اكتب اسم الطالب..."
-                    value={form.studentName}
-                    onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
-                  />
-                </div>
-              )}
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
-                  العمر الزمني:
-                </label>
-                <input
-                  type="text"
-                  className="in"
-                  placeholder="مثال: 9 سنوات و 4 أشهر"
-                  value={form.age}
-                  onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
-                  👨‍⚕️ الأخصائي النفسي الفاحص:
-                </label>
-                <select
-                  className="in"
-                  value={form.examinerName}
-                  onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
+                  {isManualEdit ? '🔒 قفل التعديل' : '✏️ تعديل يدوي'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsHeaderCollapsed(prev => !prev)}
+                  className="btn btn-xs btn-g"
+                  style={{ fontSize: '0.72rem', padding: '3px 8px', height: 24, fontWeight: 700 }}
                 >
-                  <option value="">— اختر الأخصائي الفاحص —</option>
-                  {emps.map(e => (
-                    <option key={e.id} value={e.name}>
-                      {e.name} ({e.jobTitle || 'أخصائي'})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
-                  📅 تاريخ التطبيق:
-                </label>
-                <input
-                  type="date"
-                  className="in"
-                  value={form.date}
-                  onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                />
+                  {isHeaderCollapsed ? '⬇️ إظهار التفاصيل' : '⬆️ إخفاء التفاصيل'}
+                </button>
               </div>
             </div>
+
+            {!isHeaderCollapsed && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                {/* Mode toggle if other */}
+                {form.mode === 'other' && (
+                  <div style={{ marginBottom: 4 }}>
+                    <div className="fl full">
+                      <label style={{ fontSize: '0.76rem', marginBottom: 2 }}>اسم المستفيد الخارجي <span className="req">*</span></label>
+                      <input
+                        style={{ height: 32, fontSize: '0.82rem' }}
+                        value={form.studentName || ''}
+                        onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
+                        placeholder="اكتب اسم الطالب / المستفيد..."
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* ROW 1: Clinical Essentials (4 Columns) */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 8,
+                  }}
+                >
+                  {/* 1. Student Selection */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الطالب المسجل <span className="req">*</span></label>
+                    <select
+                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
+                      value={form.mode === 'other' ? '__other__' : (form.stuId || '')}
+                      onChange={handleSelectStudent}
+                    >
+                      <option value="">— اختر من الطلاب المسجلين بالمركز —</option>
+                      {students.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.name} ({s.age ? `${s.age} سنة` : 'غير محدد'})
+                        </option>
+                      ))}
+                      <option value="__other__">➕ مستفيد خارجي (غير مسجل)</option>
+                    </select>
+                  </div>
+
+                  {/* 2. Chronological Age */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>العمر الزمني</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.age || (form.dob ? calcAge(form.dob) : '')}
+                      readOnly={!isManualEdit}
+                      onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
+                      placeholder="تلقائي حسب تاريخ الميلاد"
+                    />
+                  </div>
+
+                  {/* 3. Medical / Educational Diagnosis */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>التشخيص الطبي / التربوي</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.diagnosis || ''}
+                      readOnly={!isManualEdit && form.mode !== 'other'}
+                      onChange={e => setForm(f => ({ ...f, diagnosis: e.target.value }))}
+                      placeholder="مثال: بطء تعلم، إعاقة فكرية..."
+                    />
+                  </div>
+
+                  {/* 4. Assessment Date */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>تاريخ التقييم</label>
+                    <input
+                      type="date"
+                      dir="ltr"
+                      style={{ height: 32, fontSize: '0.82rem', textAlign: 'right', padding: '2px 8px' }}
+                      value={form.date || todayStr()}
+                      onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                {/* ROW 2: Respondent and Testing Details (4 Columns) */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 8,
+                  }}
+                >
+                  {/* 1. Examiner Name */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الأخصائي النفسي الفاحص</label>
+                    <select
+                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
+                      value={form.examinerName || ''}
+                      onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
+                    >
+                      <option value="">— اختر الأخصائي الفاحص —</option>
+                      {emps.map(e => (
+                        <option key={e.id} value={e.name}>
+                          {e.name} ({e.jobTitle || 'أخصائي'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 2. Respondent Name */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>المستجيب / المرافق</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      type="text"
+                      placeholder="اسم المرافق أو معلم الطالب"
+                      value={form.raterName || ''}
+                      onChange={e => setForm(f => ({ ...f, raterName: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* 3. Grade / Academic Level */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الصف / المستوى الدراسي</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      type="text"
+                      placeholder="مثال: الصف الثالث الابتدائي"
+                      value={form.grade || ''}
+                      readOnly={!isManualEdit && form.mode !== 'other'}
+                      onChange={e => setForm(f => ({ ...f, grade: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* 4. School / Center */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>المدرسة / المركز</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      type="text"
+                      placeholder="اسم المدرسة أو المركز"
+                      value={form.school || ''}
+                      readOnly={!isManualEdit && form.mode !== 'other'}
+                      onChange={e => setForm(f => ({ ...f, school: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* FACTOR AND DOMAIN FILTER BUTTONS */}
@@ -818,7 +901,8 @@ export default function StanfordBinet5AssessmentModal({
               alignItems: 'center',
               flexWrap: 'wrap',
               gap: 10,
-              paddingBottom: 4,
+              paddingBottom: 8,
+              marginBottom: 12,
               borderBottom: '1px solid var(--border-color)',
             }}
           >
@@ -920,6 +1004,7 @@ export default function StanfordBinet5AssessmentModal({
                 border: '1px solid var(--border-color)',
                 borderRadius: 12,
                 padding: 16,
+                marginBottom: 16,
               }}
             >
               <div style={{ fontWeight: 800, fontSize: '0.95rem', marginBottom: 12, color: 'var(--text-main)' }}>
@@ -1011,7 +1096,7 @@ export default function StanfordBinet5AssessmentModal({
 
           {/* VIEW MODE 2: DIAGNOSTIC ITEMS LIST */}
           {viewMode === 'items' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
               {filteredItems.map(item => {
                 const currentScore = form.scores[item.id];
                 const subtest = SB5_SUBTESTS.find(s => s.id === item.subtestId);
@@ -1024,8 +1109,8 @@ export default function StanfordBinet5AssessmentModal({
                     style={{
                       background: 'var(--bg-card)',
                       border: currentScore !== undefined ? '1.5px solid #2563eb' : '1px solid var(--border-color)',
-                      borderRadius: 12,
-                      padding: '14px 16px',
+                      borderRadius: 10,
+                      padding: '12px 16px',
                       transition: 'all 0.15s ease',
                       boxShadow: currentScore !== undefined ? '0 4px 12px rgba(37, 99, 235, 0.06)' : 'none',
                     }}
@@ -1075,7 +1160,7 @@ export default function StanfordBinet5AssessmentModal({
                         <h4
                           style={{
                             margin: '4px 0 2px 0',
-                            fontSize: '0.98rem',
+                            fontSize: '0.92rem',
                             fontWeight: 700,
                             color: 'var(--text-main)',
                             lineHeight: 1.4,
@@ -1169,6 +1254,7 @@ export default function StanfordBinet5AssessmentModal({
               padding: 16,
               borderRadius: 12,
               border: '1px solid var(--border-color)',
+              marginTop: 16,
             }}
           >
             <div
@@ -1181,7 +1267,7 @@ export default function StanfordBinet5AssessmentModal({
                 gap: 8,
               }}
             >
-              <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)' }}>
+              <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)' }}>
                 📝 التقرير الإكلينيكي وتوصيات الخطة التربوية الفردية (IEP):
               </h3>
               <button
@@ -1228,16 +1314,15 @@ export default function StanfordBinet5AssessmentModal({
 
         {/* MODAL FOOTER */}
         <div
-          className="modal-footer-custom"
           style={{
-            padding: '12px 20px',
+            padding: '10px 20px',
             background: 'var(--g0)',
             borderTop: '1px solid var(--border-color)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexShrink: 0,
-            gap: 12,
+            gap: 10,
             flexWrap: 'wrap',
           }}
         >
@@ -1265,12 +1350,12 @@ export default function StanfordBinet5AssessmentModal({
           </div>
 
           <div style={{ display: 'flex', gap: 8 }}>
-            <button type="button" className="btn btn-sm btn-g" onClick={safeClose} style={{ fontWeight: 700 }}>
+            <button type="button" className="btn btn-g" onClick={safeClose} style={{ fontWeight: 700 }}>
               إلغاء ✖
             </button>
             <button
               type="button"
-              className="btn btn-sm btn-p"
+              className="btn btn-p"
               onClick={handleSave}
               style={{
                 fontWeight: 800,

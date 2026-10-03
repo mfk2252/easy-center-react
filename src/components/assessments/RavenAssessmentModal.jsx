@@ -8,7 +8,6 @@ import {
   RAVEN_SETS_META,
   RAVEN_CPM_ITEMS,
   RAVEN_SPM_ITEMS,
-  RAVEN_CLASSIFICATION_GRADES,
   calculateRavenPsychometrics,
 } from '../../data/ravenData';
 import { validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
@@ -67,6 +66,8 @@ export default function RavenAssessmentModal({
 
   const [activeSetFilter, setActiveSetFilter] = useState('all');
   const [showCopyrightDetails, setShowCopyrightDetails] = useState(false);
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
+  const [isManualEdit, setIsManualEdit] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [inputMode, setInputMode] = useState('items'); // 'items' | 'sets_direct'
 
@@ -207,24 +208,19 @@ export default function RavenAssessmentModal({
     const scores = {};
     const items = currentItems;
     items.forEach((it, idx) => {
-      // Simulate typical progressive difficulty: earlier items are easier
       const itemPosInSet = (idx % 12) + 1;
-      const setIdx = Math.floor(idx / 12); // 0, 1, 2...
+      const setIdx = Math.floor(idx / 12);
 
       if (level === 'gifted') {
-        // High accuracy across all sets
         scores[it.id] = (itemPosInSet <= 11 || Math.random() > 0.1) ? 1 : 0;
       } else if (level === 'average') {
-        // Good on early sets, moderate on later items
         if (setIdx === 0) scores[it.id] = itemPosInSet <= 10 ? 1 : 0;
         else if (setIdx === 1) scores[it.id] = itemPosInSet <= 8 ? 1 : 0;
         else scores[it.id] = itemPosInSet <= 5 ? 1 : 0;
       } else if (level === 'borderline') {
-        // Below average
         if (setIdx === 0) scores[it.id] = itemPosInSet <= 6 ? 1 : 0;
         else scores[it.id] = itemPosInSet <= 3 ? 1 : 0;
       } else {
-        // Intellectual Disability
         scores[it.id] = (setIdx === 0 && itemPosInSet <= 3) ? 1 : 0;
       }
     });
@@ -375,364 +371,482 @@ export default function RavenAssessmentModal({
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-2 sm:p-4 overflow-y-auto"
-      dir="rtl"
-      style={{ fontFamily: 'Tajawal, sans-serif' }}
-    >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-200">
-        {/* Modal Top Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-blue-700 via-indigo-700 to-sky-700 text-white">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center text-2xl border border-white/20 shadow-inner">
-              ▦
-            </div>
-            <div>
-              <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
-                مقياس مصفوفات رافن المتتابعة للذكاء غير اللفظي (RPM)
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-400 text-slate-900 border border-emerald-300">
+    <div className="mbg" onClick={e => e.target === e.currentTarget && safeClose()}>
+      <div
+        className="mb"
+        style={{
+          maxWidth: 'min(1360px, calc(100vw - 24px))',
+          width: '100%',
+        }}
+      >
+        {/* MODAL MAIN HEADER */}
+        <div
+          className="fhd modal-header-custom"
+          style={{
+            padding: '14px 20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 50%, #0284c7 100%)',
+            color: '#fff',
+            flexShrink: 0,
+            gap: 12,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: '1.8rem' }}>▦</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h2 style={{ fontSize: '1.18rem', fontWeight: 800, margin: 0, color: '#fff' }}>
+                  مقياس مصفوفات رافن المتتابعة للذكاء غير اللفظي (RPM)
+                </h2>
+                <span className="bdg" style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>
                   {currentVersionMeta.name}
                 </span>
-              </h2>
-              <p className="text-xs text-blue-100 mt-0.5">
-                أداة قياس القدرة الاستدلالية العامة والتفكير المنطقي المجرد (جون رافن / Pearson)
-              </p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 3 }}>
+                <span className="bdg" style={{ background: '#0f172a', color: '#93c5fd', fontSize: '0.68rem', fontWeight: 800 }}>
+                  © John C. Raven / Pearson Assessment
+                </span>
+                <span style={{ fontSize: '0.76rem', opacity: 0.95 }}>
+                  أداة قياس القدرة الاستدلالية العامة والتفكير المنطقي المجرد الخالية من التحيز اللغوي
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <button
-              onClick={safeClose}
               type="button"
-              className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-lg font-bold transition mr-1"
+              className="btn btn-xs"
+              onClick={() => setShowCopyrightDetails(s => !s)}
+              style={{
+                background: showCopyrightDetails ? '#fff' : 'rgba(255,255,255,0.2)',
+                color: showCopyrightDetails ? '#1e40af' : '#fff',
+                border: '1px solid rgba(255,255,255,0.35)',
+                fontWeight: 700,
+              }}
             >
-              ✕
+              📜 {showCopyrightDetails ? 'إخفاء حقوق الملكية' : 'حقوق الملكية الفكرية'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={safeClose}
+              style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', fontWeight: 700 }}
+            >
+              ✖ إغلاق
             </button>
           </div>
         </div>
 
-        {/* Modal Body Container */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 bg-slate-50/50">
-          {/* IP Attribution Card */}
-          <div className="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50/80 to-indigo-50/60 p-4 text-xs text-slate-700 shadow-xs">
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-sm text-blue-900">
-                    📜 بطاقة توثيق المقياس والمرجعية العلمية (IP Attribution Card)
-                  </span>
-                  <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[11px] font-semibold border border-blue-200">
-                    Pearson Assessment
-                  </span>
-                </div>
-                <p className="leading-relaxed text-slate-600">
-                  <strong>المؤلف والناشر الأصلي:</strong> د. جون رافن (John C. Raven) / Pearson Assessment. أداة مسحية معيارية خالية من التحيز الثقافي واللغوي لقياس القدرة العقلية العامة (g factor) والاستدلال التجريدي البصري (Educative Ability).
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowCopyrightDetails(v => !v)}
-                className="shrink-0 px-2.5 py-1 rounded-md bg-white border border-blue-200 text-blue-700 text-xs font-semibold hover:bg-blue-50 transition"
-              >
-                {showCopyrightDetails ? 'إخفاء التفاصيل' : 'تفاصيل التوثيق ▾'}
-              </button>
+        {/* EXPANDABLE COPYRIGHT & IP ATTRIBUTION CARD */}
+        {showCopyrightDetails && (
+          <div
+            style={{
+              background: '#f0f9ff',
+              padding: '14px 20px',
+              borderBottom: '2px solid #7dd3fc',
+              fontSize: '0.82rem',
+              color: '#0369a1',
+              lineHeight: 1.6,
+              flexShrink: 0,
+            }}
+          >
+            <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>📜</span> إشعار حقوق الملكية الفكرية والاعتماد العلمي لمقياس مصفوفات رافن (RPM):
             </div>
 
-            {showCopyrightDetails && (
-              <div className="mt-3 pt-3 border-t border-blue-200/80 grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px] leading-relaxed animate-in fade-in">
+            <div
+              style={{
+                background: '#e0f2fe',
+                border: '1px solid #bae6fd',
+                borderRadius: 8,
+                padding: '8px 12px',
+                marginBottom: 10,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 8,
+                fontSize: '0.8rem',
+                color: '#075985',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: '1.2rem' }}>⚖️</span>
                 <div>
-                  <span className="font-bold text-blue-950">الفئات المستهدفة: </span>
-                  {RAVEN_COPYRIGHT_INFO.targetAge}
+                  <strong>إشعار حقوق الملكية والاعتماد:</strong> مقياس مصفوفات رافن — إعداد د. جون رافن (John C. Raven) · الناشر الدولي: Pearson Assessment.
                 </div>
-                <div>
-                  <span className="font-bold text-blue-950">طبيعة التقييم: </span>
-                  {RAVEN_COPYRIGHT_INFO.diagnosticNature}
+              </div>
+              <span style={{ fontSize: '0.72rem', background: '#bae6fd', color: '#0369a1', padding: '3px 8px', borderRadius: 6, border: '1px solid #7dd3fc', fontWeight: 700 }}>
+                أداة تقييم غير لفظي معتمدة عالمياً
+              </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10, marginBottom: 8 }}>
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #bae6fd' }}>
+                <strong>الفئات المستهدفة:</strong> {RAVEN_COPYRIGHT_INFO.targetAge}
+              </div>
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #bae6fd' }}>
+                <strong>طبيعة التقييم:</strong> {RAVEN_COPYRIGHT_INFO.diagnosticNature}
+              </div>
+            </div>
+            <div style={{ fontSize: '0.78rem', color: '#075985', background: '#e0f2fe', padding: '8px 12px', borderRadius: 8 }}>
+              {RAVEN_COPYRIGHT_INFO.notice}
+            </div>
+          </div>
+        )}
+
+        {/* REAL-TIME DIAGNOSTIC PSYCHOMETRICS STRIP */}
+        <div
+          className="modal-subbar"
+          style={{
+            background: 'var(--g0)',
+            padding: '10px 18px',
+            borderBottom: '1px solid var(--border-color)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
+            flexWrap: 'wrap',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* Raw Score */}
+            <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-color)', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>الدرجة الخام الإجمالية:</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                {psychometrics.totalRaw} <small style={{ fontSize: '0.7rem', color: 'var(--text-sub)' }}>/ {psychometrics.maxRawScore}</small>
+              </span>
+            </div>
+
+            {/* Percentile Rank */}
+            <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1.5px solid #0284c7', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>الرتبة المئينية (Percentile):</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0284c7' }}>
+                {psychometrics.percentile}%
+              </span>
+            </div>
+
+            {/* Equivalent IQ */}
+            <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1.5px solid #7c3aed', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>مكافئ IQ التقريبي:</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#7c3aed' }}>
+                {psychometrics.equivalentIQ}
+              </span>
+            </div>
+
+            {/* Classification Badge */}
+            <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>التصنيف:</span>
+              <span className="bdg" style={{ background: psychometrics.severityBg, color: psychometrics.severityColor, border: `1px solid ${psychometrics.severityBorder}`, fontWeight: 800, fontSize: '0.78rem' }}>
+                {psychometrics.grade} · {psychometrics.shortClassification}
+              </span>
+            </div>
+          </div>
+
+          {/* Version Switcher & Quick Samples */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 4, background: 'var(--bg-input)', padding: 3, borderRadius: 8, border: '1px solid var(--border-color)' }}>
+              {RAVEN_VERSIONS.map(v => (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => handleVersionChange(v.id)}
+                  className={`btn btn-xs ${form.version === v.id ? 'btn-p' : ''}`}
+                  style={{ fontSize: '0.72rem', fontWeight: 700 }}
+                >
+                  {v.name}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', fontWeight: 600 }}>⚡ تجربة:</span>
+              <button type="button" className="btn btn-xs" onClick={() => autoFillSample('gifted')} style={{ background: '#dbeafe', color: '#1e40af', border: '1px solid #93c5fd', fontSize: '.72rem' }}>موهبة</button>
+              <button type="button" className="btn btn-xs" onClick={() => autoFillSample('average')} style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', fontSize: '.72rem' }}>طبيعي</button>
+              <button type="button" className="btn btn-xs" onClick={() => autoFillSample('borderline')} style={{ background: '#ffedd5', color: '#c2410c', border: '1px solid #fdba74', fontSize: '.72rem' }}>أقل من المتوسط</button>
+            </div>
+          </div>
+        </div>
+
+        {/* MODAL MAIN BODY SCROLLABLE */}
+        <div className="modal-body-scroll" style={{ padding: '16px 20px', flex: 1, overflowY: 'auto' }}>
+          {/* STUDENT & ASSESSMENT INFO CARD */}
+          <div
+            style={{
+              background: 'var(--g0)',
+              padding: '10px 14px',
+              borderRadius: 10,
+              marginBottom: 14,
+              border: '1px solid var(--border-color)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: isHeaderCollapsed ? 0 : 8,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '0.84rem',
+                  fontWeight: 800,
+                  color: '#1e40af',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span>👤</span>
+                <span>بيانات المفحوص ونموذج التقييم</span>
+                {form.studentName && (
+                  <span
+                    style={{
+                      fontSize: '0.76rem',
+                      background: '#dbeafe',
+                      color: '#1e40af',
+                      padding: '2px 8px',
+                      borderRadius: 6,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {form.studentName}
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsManualEdit(prev => !prev)}
+                  className="btn btn-xs btn-g"
+                  style={{ fontSize: '0.72rem', padding: '3px 8px', height: 24 }}
+                  title="تفعيل التعديل اليدوي على البيانات المجلوبة تلقائياً"
+                >
+                  {isManualEdit ? '🔒 قفل التعديل' : '✏️ تعديل يدوي'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsHeaderCollapsed(prev => !prev)}
+                  className="btn btn-xs btn-g"
+                  style={{ fontSize: '0.72rem', padding: '3px 8px', height: 24, fontWeight: 700 }}
+                >
+                  {isHeaderCollapsed ? '⬇️ إظهار التفاصيل' : '⬆️ إخفاء التفاصيل'}
+                </button>
+              </div>
+            </div>
+
+            {!isHeaderCollapsed && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                {form.mode === 'other' && (
+                  <div style={{ marginBottom: 4 }}>
+                    <div className="fl full">
+                      <label style={{ fontSize: '0.76rem', marginBottom: 2 }}>اسم المستفيد الخارجي <span className="req">*</span></label>
+                      <input
+                        style={{ height: 32, fontSize: '0.82rem' }}
+                        value={form.studentName || ''}
+                        onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
+                        placeholder="اكتب اسم الطالب / المستفيد..."
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* ROW 1 */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8 }}>
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الطالب المسجل <span className="req">*</span></label>
+                    <select
+                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
+                      value={form.mode === 'other' ? '__other__' : (form.stuId || '')}
+                      onChange={handleSelectStudent}
+                    >
+                      <option value="">— اختر من الطلاب المسجلين —</option>
+                      {students.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.name} ({s.dob ? `${calcAge(s.dob)} سنة` : s.age || '—'})
+                        </option>
+                      ))}
+                      <option value="__other__">➕ مستفيد خارجي (غير مسجل)</option>
+                    </select>
+                  </div>
+
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>العمر الزمني (سنوات)</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.age || (form.dob ? calcAge(form.dob) : '')}
+                      readOnly={!isManualEdit}
+                      onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
+                      placeholder="مثال: 8.5"
+                    />
+                  </div>
+
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>التشخيص / الملاحظات الأولية</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.diagnosis || ''}
+                      readOnly={!isManualEdit && form.mode !== 'other'}
+                      onChange={e => setForm(f => ({ ...f, diagnosis: e.target.value }))}
+                      placeholder="مثال: صعوبات تعلم، اضطراب لغوي..."
+                    />
+                  </div>
+
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>تاريخ التقييم</label>
+                    <input
+                      type="date"
+                      dir="ltr"
+                      style={{ height: 32, fontSize: '0.82rem', textAlign: 'right', padding: '2px 8px' }}
+                      value={form.date || todayStr()}
+                      onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                    />
+                  </div>
                 </div>
-                <div className="md:col-span-2 text-slate-500 italic">
-                  {RAVEN_COPYRIGHT_INFO.notice}
+
+                {/* ROW 2 */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8 }}>
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الفاحص / الأخصائي</label>
+                    <select
+                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
+                      value={form.examinerName || ''}
+                      onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
+                    >
+                      <option value="">— اختر الفاحص —</option>
+                      {emps.map(e => (
+                        <option key={e.id} value={e.name}>
+                          {e.name} ({e.jobTitle || 'أخصائي'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الصف الدراسي</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.grade || ''}
+                      readOnly={!isManualEdit && form.mode !== 'other'}
+                      onChange={e => setForm(f => ({ ...f, grade: e.target.value }))}
+                      placeholder="الصف..."
+                    />
+                  </div>
+
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>المدرسة / المركز</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.school || ''}
+                      readOnly={!isManualEdit && form.mode !== 'other'}
+                      onChange={e => setForm(f => ({ ...f, school: e.target.value }))}
+                      placeholder="اسم المدرسة أو المركز..."
+                    />
+                  </div>
+
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>صفة الفاحص / المرافق</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      value={form.raterRelation || ''}
+                      onChange={e => setForm(f => ({ ...f, raterRelation: e.target.value }))}
+                      placeholder="الصفة..."
+                    />
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Model Switcher & Student Pick */}
-          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
-              <span className="font-bold text-sm text-slate-800 flex items-center gap-1.5">
-                <span>👤</span> بيانات المستفيد ونموذج المصفوفات
-              </span>
-
-              {/* Version Toggle (CPM vs SPM) */}
-              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
-                {RAVEN_VERSIONS.map(v => (
-                  <button
-                    key={v.id}
-                    type="button"
-                    onClick={() => handleVersionChange(v.id)}
-                    className={`px-3 py-1 text-xs font-bold rounded-md transition ${
-                      form.version === v.id
-                        ? 'bg-blue-600 text-white shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    {v.name}
-                  </button>
-                ))}
-              </div>
+          {/* SETS BREAKDOWN CARDS */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 6 }}>
+              📊 توزيع الأداء على مجموعات مصفوفات رافن:
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">اختيار الطالب / المستفيد</label>
-                <select
-                  value={form.mode === 'other' ? '__other__' : form.stuId}
-                  onChange={handleSelectStudent}
-                  className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-blue-500 focus:outline-hidden bg-slate-50/50"
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8 }}>
+              {psychometrics.setResults.map(s => (
+                <div
+                  key={s.setId}
+                  style={{
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
+                    borderRight: `4px solid ${s.color}`,
+                    borderRadius: 8,
+                    padding: '8px 10px',
+                  }}
                 >
-                  <option value="">— اختر من قائمة الطلاب —</option>
-                  {students.map(s => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} ({s.dob ? `${calcAge(s.dob)} سنة` : s.age || '—'})
-                    </option>
-                  ))}
-                  <option value="__other__">➕ إدخال يدوي لطالب آخر</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">اسم الطالب</label>
-                <input
-                  type="text"
-                  value={form.studentName}
-                  onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
-                  placeholder="اسم المفحوص كاملاً"
-                  className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-blue-500 focus:outline-hidden"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">العمر الزمني (سنوات)</label>
-                <input
-                  type="text"
-                  value={form.age}
-                  onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
-                  placeholder="مثال: 8.5"
-                  className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-blue-500 focus:outline-hidden"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">تاريخ التقييم</label>
-                <input
-                  type="date"
-                  value={form.date}
-                  onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                  className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-blue-500 focus:outline-hidden"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">اسم الفاحص / الأخصائي</label>
-                <input
-                  type="text"
-                  value={form.examinerName}
-                  onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
-                  placeholder="الأخصائي النفسي"
-                  className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-blue-500 focus:outline-hidden"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">التشخيص / الملاحظات الأولية</label>
-                <input
-                  type="text"
-                  value={form.diagnosis}
-                  onChange={e => setForm(f => ({ ...f, diagnosis: e.target.value }))}
-                  placeholder="مثال: صعوبات تعلم / اضطراب لغوي"
-                  className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-blue-500 focus:outline-hidden"
-                />
-              </div>
-
-              <div className="space-y-1 sm:col-span-2">
-                <label className="font-semibold text-slate-700">الصف والمدرسة / المركز</label>
-                <input
-                  type="text"
-                  value={form.school}
-                  onChange={e => setForm(f => ({ ...f, school: e.target.value }))}
-                  placeholder="اسم المدرسة أو المركز التأهيلي"
-                  className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-blue-500 focus:outline-hidden"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Real-time Psychometrics Dashboard Card */}
-          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2 flex-wrap gap-2">
-              <span className="font-bold text-sm text-slate-800 flex items-center gap-1.5">
-                <span>📊</span> لوحة المؤشرات السيكومترية الفورية لمصفوفات رافن
-              </span>
-              <span className="text-xs text-slate-500">
-                العمر المعتمد للمعايرة: <strong className="text-slate-800">{numericAge} سنة</strong>
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="text-xs text-slate-500 font-semibold">الدرجة الخام الكلية</div>
-                <div className="text-2xl font-black text-slate-900 mt-1">
-                  {psychometrics.totalRaw}{' '}
-                  <span className="text-xs font-normal text-slate-400">/ {psychometrics.maxRawScore}</span>
-                </div>
-                <div className="text-[11px] text-slate-500 mt-0.5">نسبة الإنجاز: {psychometrics.percentage}%</div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-200">
-                <div className="text-xs text-blue-700 font-semibold">الرتبة المئينية (Percentile)</div>
-                <div className="text-2xl font-black text-blue-900 mt-1">
-                  {psychometrics.percentile}%
-                </div>
-                <div className="text-[11px] text-blue-600 mt-0.5">المئين المعياري للعمر</div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-200">
-                <div className="text-xs text-indigo-700 font-semibold">مكافئ معامل الذكاء (IQ)</div>
-                <div className="text-2xl font-black text-indigo-900 mt-1">
-                  {psychometrics.equivalentIQ}
-                </div>
-                <div className="text-[11px] text-indigo-600 mt-0.5">مكافئ الذكاء التقريبي</div>
-              </div>
-
-              <div
-                className="p-3 rounded-xl border flex flex-col justify-center"
-                style={{
-                  background: psychometrics.severityBg,
-                  borderColor: psychometrics.severityBorder,
-                }}
-              >
-                <div className="text-xs font-bold" style={{ color: psychometrics.severityColor }}>
-                  {psychometrics.grade}
-                </div>
-                <div className="text-sm font-black mt-1 leading-tight" style={{ color: psychometrics.severityColor }}>
-                  {psychometrics.shortClassification}
-                </div>
-                <div className="text-[10px] mt-0.5 text-slate-600 truncate" title={psychometrics.classification}>
-                  {psychometrics.classification}
-                </div>
-              </div>
-            </div>
-
-            {/* Set by Set Breakdown Bar */}
-            <div className="pt-2">
-              <div className="text-xs font-bold text-slate-700 mb-2">توزيع الأداء على مجموعات المصفوفات:</div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                {psychometrics.setResults.map(s => (
-                  <div
-                    key={s.setId}
-                    className="p-2.5 rounded-lg border bg-slate-50/80 flex flex-col justify-between text-xs"
-                    style={{ borderRight: `4px solid ${s.color}` }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-800">{s.setId}</span>
-                      <span className="font-black text-slate-900">
-                        {s.rawScore} <span className="text-[10px] text-slate-400">/ 12</span>
-                      </span>
-                    </div>
-                    <div className="text-[10px] text-slate-500 mt-1 line-clamp-1" title={s.cognitiveSkill}>
-                      {s.cognitiveSkill}
-                    </div>
-                    <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mt-1.5">
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{ width: `${s.percentage}%`, background: s.color }}
-                      />
-                    </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 800, fontSize: '0.82rem' }}>مجموعة {s.setId}</span>
+                    <span style={{ fontWeight: 900, fontSize: '0.9rem' }}>
+                      {s.rawScore} <small style={{ fontSize: '0.7rem', color: 'var(--text-sub)' }}>/ 12</small>
+                    </span>
                   </div>
-                ))}
-              </div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-sub)', marginTop: 2 }} className="truncate" title={s.cognitiveSkill}>
+                    {s.cognitiveSkill}
+                  </div>
+                  <div style={{ width: '100%', height: 4, background: 'var(--border-color)', borderRadius: 2, marginTop: 6, overflow: 'hidden' }}>
+                    <div style={{ width: `${s.percentage}%`, height: '100%', background: s.color }} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Assessment Mode Switch & Sample Auto-Fill Buttons */}
-          <div className="flex items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 flex-wrap">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-700">نمط الإدخال:</span>
+          {/* INPUT MODE BAR */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>نمط الإدخال:</span>
               <button
                 type="button"
+                className={`btn btn-xs ${inputMode === 'items' ? 'btn-p' : 'btn-g'}`}
                 onClick={() => setInputMode('items')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${
-                  inputMode === 'items'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
+                style={{ fontWeight: 700 }}
               >
-                📝 استجابة كل مصفوفة بنداً بنداً ({currentItems.length} بنداً)
+                📝 استجابة مصفوفة بنداً بنداً ({currentItems.length})
               </button>
               <button
                 type="button"
+                className={`btn btn-xs ${inputMode === 'sets_direct' ? 'btn-p' : 'btn-g'}`}
                 onClick={() => setInputMode('sets_direct')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${
-                  inputMode === 'sets_direct'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
+                style={{ fontWeight: 700 }}
               >
-                ⚡ إدخال مباشر لدرجات المجموعات / الخام الإجمالي
+                ⚡ إدخال درجات المجموعات المباشرة
               </button>
             </div>
 
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs text-slate-500 font-semibold">تعبئة نموذجية سريعة:</span>
-              <button
-                type="button"
-                onClick={() => autoFillSample('gifted')}
-                className="px-2 py-1 text-[11px] font-bold rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition border border-indigo-200"
-              >
-                فائق / موهبة
-              </button>
-              <button
-                type="button"
-                onClick={() => autoFillSample('average')}
-                className="px-2 py-1 text-[11px] font-bold rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition border border-emerald-200"
-              >
-                متوسط
-              </button>
-              <button
-                type="button"
-                onClick={() => autoFillSample('borderline')}
-                className="px-2 py-1 text-[11px] font-bold rounded bg-amber-50 text-amber-700 hover:bg-amber-100 transition border border-amber-200"
-              >
-                أقل من المتوسط
-              </button>
-              <button
-                type="button"
-                onClick={() => autoFillSample('impaired')}
-                className="px-2 py-1 text-[11px] font-bold rounded bg-red-50 text-red-700 hover:bg-red-100 transition border border-red-200"
-              >
-                قصور
-              </button>
-            </div>
+            {inputMode === 'items' && (
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <input
+                  type="text"
+                  className="in in-sm"
+                  placeholder="🔍 بحث في البنود..."
+                  style={{ width: 160, fontSize: '.78rem' }}
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Direct Score Override Mode */}
+          {/* DIRECT OVERRIDE MODE */}
           {inputMode === 'sets_direct' && (
-            <div className="bg-white rounded-xl border border-blue-200 p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="font-bold text-sm text-slate-800">
-                  إدخال الدرجات الخام مباشرة لكل مجموعة أو الإجمالي
-                </span>
-                <span className="text-xs text-slate-500">الدرجة القصوى لكل مجموعة: 12</span>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 10, padding: 14, marginBottom: 16 }}>
+              <div style={{ fontWeight: 800, fontSize: '0.88rem', marginBottom: 10 }}>
+                إدخال الدرجات الخام المباشرة لكل مجموعة أو الإجمالي:
               </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
                 {currentVersionMeta.sets.map(setId => {
                   const meta = RAVEN_SETS_META[setId];
                   return (
-                    <div key={setId} className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
-                      <div className="font-bold text-xs text-slate-700">المجموعة {setId}</div>
-                      <div className="text-[10px] text-slate-500 truncate" title={meta.name}>
-                        {meta.name}
-                      </div>
+                    <div key={setId} style={{ background: 'var(--g0)', padding: 10, borderRadius: 8, border: '1px solid var(--border-color)', textAlign: 'center' }}>
+                      <div style={{ fontWeight: 800, fontSize: '0.78rem' }}>مجموعة {setId}</div>
+                      <div style={{ fontSize: '0.68rem', color: 'var(--text-sub)' }} className="truncate">{meta.name}</div>
                       <input
                         type="number"
                         min="0"
@@ -740,15 +854,16 @@ export default function RavenAssessmentModal({
                         value={form.rawOverrides[setId] ?? ''}
                         onChange={e => handleSetRawOverride(setId, e.target.value)}
                         placeholder="0 - 12"
-                        className="mt-2 w-full text-center font-bold text-base rounded-lg border border-slate-300 p-1.5 focus:border-blue-500 focus:outline-hidden"
+                        className="in in-sm"
+                        style={{ textAlign: 'center', fontWeight: 800, fontSize: '0.95rem', marginTop: 6 }}
                       />
                     </div>
                   );
                 })}
 
-                <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-center">
-                  <div className="font-bold text-xs text-blue-900">الخام الإجمالي</div>
-                  <div className="text-[10px] text-blue-600">من {currentVersionMeta.totalItems}</div>
+                <div style={{ background: '#e0f2fe', padding: 10, borderRadius: 8, border: '1.5px solid #0284c7', textAlign: 'center' }}>
+                  <div style={{ fontWeight: 800, fontSize: '0.78rem', color: '#0369a1' }}>الخام الإجمالي</div>
+                  <div style={{ fontSize: '0.68rem', color: '#0369a1' }}>من {currentVersionMeta.totalItems}</div>
                   <input
                     type="number"
                     min="0"
@@ -756,60 +871,46 @@ export default function RavenAssessmentModal({
                     value={form.rawOverrides.total ?? ''}
                     onChange={e => handleTotalRawOverride(e.target.value)}
                     placeholder={`0 - ${currentVersionMeta.totalItems}`}
-                    className="mt-2 w-full text-center font-black text-base rounded-lg border border-blue-300 p-1.5 focus:border-blue-600 focus:outline-hidden text-blue-900"
+                    className="in in-sm"
+                    style={{ textAlign: 'center', fontWeight: 900, fontSize: '0.95rem', marginTop: 6, color: '#0369a1' }}
                   />
                 </div>
               </div>
             </div>
           )}
 
-          {/* Item-by-Item Mode */}
+          {/* ITEMS MODE */}
           {inputMode === 'items' && (
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-4">
-              {/* Filter by Set & Search */}
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-xs font-bold text-slate-700">المجموعة:</span>
+            <div style={{ marginBottom: 16 }}>
+              {/* Filter by Set */}
+              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 6, marginBottom: 10 }}>
+                <button
+                  type="button"
+                  className={`tab ${activeSetFilter === 'all' ? 'on' : ''}`}
+                  onClick={() => setActiveSetFilter('all')}
+                  style={{ fontSize: '0.78rem', padding: '6px 12px' }}
+                >
+                  الكل ({currentItems.length})
+                </button>
+                {currentVersionMeta.sets.map(setId => (
                   <button
+                    key={setId}
                     type="button"
-                    onClick={() => setActiveSetFilter('all')}
-                    className={`px-3 py-1 text-xs font-semibold rounded-lg transition ${
-                      activeSetFilter === 'all'
-                        ? 'bg-slate-900 text-white'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
+                    className={`tab ${activeSetFilter === setId ? 'on' : ''}`}
+                    onClick={() => setActiveSetFilter(setId)}
+                    style={{
+                      fontSize: '0.78rem',
+                      padding: '6px 12px',
+                      borderRight: `3px solid ${RAVEN_SETS_META[setId]?.color || '#0284c7'}`,
+                    }}
                   >
-                    الكل ({currentItems.length})
+                    مجموعة {setId}
                   </button>
-                  {currentVersionMeta.sets.map(setId => (
-                    <button
-                      key={setId}
-                      type="button"
-                      onClick={() => setActiveSetFilter(setId)}
-                      className={`px-3 py-1 text-xs font-semibold rounded-lg transition ${
-                        activeSetFilter === setId
-                          ? 'bg-blue-600 text-white shadow-xs'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                      }`}
-                    >
-                      المجموعة {setId}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="w-full sm:w-64">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="بحث في المصفوفات أو الأهداف..."
-                    className="w-full rounded-lg border border-slate-200 p-1.5 text-xs focus:border-blue-500 focus:outline-hidden"
-                  />
-                </div>
+                ))}
               </div>
 
-              {/* Items List */}
-              <div className="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
+              {/* Items Grid */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {filteredItems.map(item => {
                   const currentScore = form.scores[item.id];
                   const isAnswered = currentScore !== undefined && currentScore !== '';
@@ -819,55 +920,65 @@ export default function RavenAssessmentModal({
                   return (
                     <div
                       key={item.id}
-                      className={`p-3 rounded-xl border transition-all ${
-                        isAnswered
+                      style={{
+                        background: 'var(--bg-card)',
+                        border: isAnswered
                           ? isCorrect
-                            ? 'bg-emerald-50/40 border-emerald-300'
-                            : 'bg-rose-50/40 border-rose-300'
-                          : 'bg-slate-50/60 border-slate-200 hover:border-slate-300'
-                      }`}
+                            ? '1.5px solid #16a34a'
+                            : '1.5px solid #dc2626'
+                          : '1px solid var(--border-color)',
+                        borderRadius: 10,
+                        padding: '12px 16px',
+                        transition: 'all 0.15s ease',
+                      }}
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-1 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: 260 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
                             <span
-                              className="px-2 py-0.5 rounded-md text-[11px] font-bold text-white shadow-xs"
-                              style={{ background: setMeta.color }}
+                              className="bdg"
+                              style={{ background: setMeta?.color || '#0284c7', color: '#fff', fontWeight: 800, fontSize: '.72rem' }}
                             >
                               {item.title}
                             </span>
-                            <span className="text-xs font-bold text-slate-800">
+                            <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-main)' }}>
                               {item.prompt}
                             </span>
                           </div>
-                          <div className="text-[11px] text-slate-500">
-                            <strong>هدف الخطة الفردية (IEP):</strong> {item.iepGoal}
-                          </div>
+                          {item.iepGoal && (
+                            <div style={{ fontSize: '0.74rem', color: 'var(--text-sub)', marginTop: 4 }}>
+                              🎯 <strong>هدف الخطة الفردية:</strong> {item.iepGoal}
+                            </div>
+                          )}
                         </div>
 
-                        {/* Quick Scoring Buttons: Correct (1) or Incorrect (0) */}
-                        <div className="flex items-center gap-1.5 shrink-0">
+                        {/* Correct / Incorrect Buttons */}
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                           <button
                             type="button"
                             onClick={() => handleScoreSelect(item.id, true)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
-                              isAnswered && isCorrect
-                                ? 'bg-emerald-600 text-white shadow-xs'
-                                : 'bg-white border border-emerald-300 text-emerald-700 hover:bg-emerald-50'
-                            }`}
+                            className={`btn btn-xs ${isAnswered && isCorrect ? 'btn-p' : 'btn-g'}`}
+                            style={{
+                              padding: '5px 12px',
+                              fontWeight: isAnswered && isCorrect ? 800 : 500,
+                              background: isAnswered && isCorrect ? '#16a34a' : undefined,
+                              color: isAnswered && isCorrect ? '#fff' : undefined,
+                            }}
                           >
-                            <span>✓</span> صواب (1)
+                            ✓ صواب (1)
                           </button>
                           <button
                             type="button"
                             onClick={() => handleScoreSelect(item.id, false)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
-                              isAnswered && !isCorrect
-                                ? 'bg-rose-600 text-white shadow-xs'
-                                : 'bg-white border border-rose-300 text-rose-700 hover:bg-rose-50'
-                            }`}
+                            className={`btn btn-xs ${isAnswered && !isCorrect ? 'btn-p' : 'btn-g'}`}
+                            style={{
+                              padding: '5px 12px',
+                              fontWeight: isAnswered && !isCorrect ? 800 : 500,
+                              background: isAnswered && !isCorrect ? '#dc2626' : undefined,
+                              color: isAnswered && !isCorrect ? '#fff' : undefined,
+                            }}
                           >
-                            <span>✗</span> خطأ (0)
+                            ✖ خطأ (0)
                           </button>
                         </div>
                       </div>
@@ -878,96 +989,115 @@ export default function RavenAssessmentModal({
             </div>
           )}
 
-          {/* Clinical Narrative Summary & IEP Recommendations */}
-          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2 flex-wrap gap-2">
-              <span className="font-bold text-sm text-slate-800 flex items-center gap-1.5">
-                <span>📝</span> التقرير التشخيصي وتوصيات الخطة التربوية الفردية (IEP)
-              </span>
+          {/* CLINICAL SUMMARY & RECOMMENDATIONS TEXTAREAS */}
+          <div
+            style={{
+              background: 'var(--g0)',
+              padding: 16,
+              borderRadius: 12,
+              border: '1px solid var(--border-color)',
+              marginTop: 16,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+              <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                📝 التقرير التشخيصي وتوصيات الخطة التربوية الفردية (IEP):
+              </h3>
               <button
                 type="button"
+                className="btn btn-sm btn-p"
                 onClick={applyAutoClinicalSummary}
-                className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                style={{ fontWeight: 800, fontSize: '.78rem', background: '#1e40af', border: 'none' }}
               >
-                <span>✨</span> توليد الخلاصة السريرية والتوصيات آلياً
+                ✨ صياغة الخلاصة السريرية والتوصيات تلقائياً
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-700">
-                  الخلاصة الإكلينيكية وتفسير الأداء الاستدلالي
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                  الخلاصة الإكلينيكية وتفسير الأداء الاستدلالي:
                 </label>
                 <textarea
+                  className="in"
                   rows={5}
+                  style={{ width: '100%', fontSize: '0.82rem', lineHeight: 1.5 }}
+                  placeholder="سيظهر التقرير السريري هنا تلقائياً..."
                   value={form.clinicalSummary}
                   onChange={e => setForm(f => ({ ...f, clinicalSummary: e.target.value }))}
-                  placeholder="انقر فوق زر 'توليد الخلاصة آلياً' أو اكتب الملاحظات السريرية للفاحص..."
-                  className="w-full rounded-xl border border-slate-200 p-2.5 text-xs focus:border-blue-500 focus:outline-hidden leading-relaxed font-sans"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-700">
-                  توصيات التدخل وأهداف الخطة الفردية (IEP Bridge)
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                  توصيات التدخل وأهداف الخطة الفردية (IEP):
                 </label>
                 <textarea
+                  className="in"
                   rows={5}
+                  style={{ width: '100%', fontSize: '0.82rem', lineHeight: 1.5 }}
+                  placeholder="التوصيات التربوية والتدخلية للمفحوص..."
                   value={form.recommendations}
                   onChange={e => setForm(f => ({ ...f, recommendations: e.target.value }))}
-                  placeholder="التوصيات التربوية والتدخلية المساندة للمفحوص..."
-                  className="w-full rounded-xl border border-slate-200 p-2.5 text-xs focus:border-blue-500 focus:outline-hidden leading-relaxed font-sans"
                 />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Modal Bottom Footer Actions */}
-        <div className="px-6 py-4 border-t border-slate-200 bg-white flex items-center justify-between flex-wrap gap-2">
-          <div className="text-xs text-slate-500 flex items-center gap-2">
-            <span>الدرجة الإجمالية:</span>
-            <strong className="text-slate-900 text-sm">
-              {psychometrics.totalRaw} / {psychometrics.maxRawScore}
-            </strong>
-            <span>·</span>
-            <span>المئين:</span>
-            <strong className="text-blue-700 text-sm">{psychometrics.percentile}%</strong>
-            <span>·</span>
-            <span
-              className="px-2 py-0.5 rounded text-[11px] font-bold"
-              style={{ background: psychometrics.severityBg, color: psychometrics.severityColor }}
-            >
-              {psychometrics.shortClassification}
+        {/* MODAL FOOTER */}
+        <div
+          style={{
+            padding: '10px 20px',
+            background: 'var(--g0)',
+            borderTop: '1px solid var(--border-color)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexShrink: 0,
+            gap: 10,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>
+              الخام: <strong>{psychometrics.totalRaw} / {psychometrics.maxRawScore}</strong> · المئين: <strong style={{ color: '#0284c7' }}>{psychometrics.percentile}%</strong>
             </span>
-          </div>
-
-          <div className="flex items-center gap-2">
             {onOpenIepBridge && (
               <button
                 type="button"
+                className="btn btn-sm"
                 onClick={() => handleSave(true)}
-                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-900 text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
-                title="حفظ نتيجة المقياس ونقل الأهداف إلى جسر الخطة التربوية الفردية"
+                style={{
+                  background: '#f0fdf4',
+                  color: '#15803d',
+                  border: '1px solid #86efac',
+                  fontWeight: 700,
+                  fontSize: '.78rem',
+                }}
               >
-                <span>🎯</span> حفظ ونقل إلى جسر الخطة (IEP)
+                🎯 حفظ ونقل إلى جسر الخطة (IEP)
               </button>
             )}
+          </div>
 
-            <button
-              type="button"
-              onClick={safeClose}
-              className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 transition"
-            >
-              إلغاء
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" className="btn btn-g" onClick={safeClose} style={{ fontWeight: 700 }}>
+              إلغاء ✖
             </button>
-
             <button
               type="button"
-              onClick={handleSave}
-              className="px-6 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5"
+              className="btn btn-p"
+              onClick={() => handleSave(false)}
+              style={{
+                fontWeight: 800,
+                background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
+                color: '#fff',
+                border: 'none',
+                padding: '8px 18px',
+              }}
             >
-              <span>💾</span> حفظ نتيجة التقييم
+              💾 حفظ نتيجة تقييم رافن
             </button>
           </div>
         </div>
