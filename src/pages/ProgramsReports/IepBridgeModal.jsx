@@ -41,7 +41,7 @@ export default function IepBridgeModal({
     const measureId = activeAssessmentData?.measureId || scaleType || 'cars';
     const responses = activeAssessmentData?.results || activeAssessmentData?.scores || activeAssessmentData?.responses || {};
 
-    return extractRecommendedGoals(measureId, responses, scaleItems);
+    return extractRecommendedGoals(measureId, responses, scaleItems, activeAssessmentData);
   }, [recommendedGoals, activeAssessmentData, scaleItems, scaleType]);
 
   // Internal state of goals with full clinical override capability

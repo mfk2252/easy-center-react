@@ -839,7 +839,7 @@ export const SCALE_GOAL_TEMPLATES = {
  * @param {Array} items - قائمة بنود المقياس
  * @returns {Array} قائمة الأهداف مرتبة بالأولوية ومكتملة البيانات
  */
-export function extractRecommendedGoals(measureId, responses = {}, items = []) {
+export function extractRecommendedGoals(measureId, responses = {}, items = [], extraData = null) {
   const recommended = [];
   const rawId = (measureId || 'cars').toLowerCase().replace(/[-_]/g, '');
   
@@ -861,7 +861,10 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
   else if (rawId.includes('ppvt') || rawId.includes('peabody')) lookupKey = 'ppvt5';
   else if (rawId.includes('pls5') || rawId.includes('pls')) lookupKey = 'pls5';
   else if (rawId.includes('wisc') || rawId.includes('wechsler')) lookupKey = 'wisc_5';
-  else if (rawId.includes('down') || rawId.includes('syndrome') || rawId.startsWith('ds') || rawId.includes('ds_')) lookupKey = 'down_syndrome';
+  else if (rawId.includes('binet') || rawId.includes('sb5') || rawId.includes('stanford')) lookupKey = 'stanford_binet_5';
+  else if (rawId.includes('leiter')) lookupKey = 'leiter_3';
+  else if (rawId.includes('raven') || rawId.includes('rpm')) lookupKey = 'raven_rpm';
+  else if (rawId.includes('down') || rawId.includes('syndrome') || rawId.startsWith('ds')) lookupKey = 'down_syndrome';
   else if (rawId.includes('beh')) lookupKey = 'behavior_adjustment';
   else if (SCALE_GOAL_TEMPLATES[measureId]) lookupKey = measureId;
 
@@ -1412,6 +1415,212 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
         }));
       }
     });
+  } else if (lookupKey === 'stanford_binet_5' || rawId.includes('binet') || rawId.includes('sb5')) {
+    items.forEach((it) => {
+      const respVal = responses[it.id] !== undefined && responses[it.id] !== null ? Number(responses[it.id]) : null;
+      if (respVal !== null && respVal <= 1) {
+        const isCritical = respVal === 0;
+        const priorityRank = isCritical ? 1 : 2;
+        const priority = isCritical ? 'critical' : 'high';
+        const itemTitle = it.title || it.text || `بند ${it.id}`;
+
+        const baseline = generatePlepBaseline(
+          itemTitle,
+          respVal,
+          3,
+          isCritical
+            ? `قصور واستجابة غير صحيحة في (${itemTitle} - ${it.subtest || ''}) بدرجة (0/3)`
+            : `استجابة جزئية غير مكتملة في (${itemTitle} - ${it.subtest || ''}) بدرجة (1/3)`,
+          isCritical
+            ? 'تدريب فردي مكثف على مهارات التفكير والاستدلال المعرفي واستخدام استراتيجيات الدعم المتدرج'
+            : 'تعزيز مهارات التحليل المنطقي والذاكرة العاملة والمعالجة البصرية المكانية وحل المشكلات'
+        );
+
+        const goalText = it.iepGoal || `أن يطور التلميذ مهارة (${itemTitle}) ويظهر استجابة صحيحة ومتقنة بنسبة 80% في مهام الاستدلال المعرفي والقدرات العقلية.`;
+
+        recommended.push(buildGoalItem({
+          code: `SB5-${it.factorId ? String(it.factorId).toUpperCase() : 'COG'}-${it.id}`,
+          domain: 'cognitive_reasoning',
+          title: itemTitle.length > 40 ? `${itemTitle.slice(0, 40)}...` : itemTitle,
+          text: goalText,
+          mastery: 'إتقان بنسبة 80% في 4 من أصل 5 جلسات تدريبية',
+          reason: `مشتق من مقياس ستانفورد - بينيه للذكاء SB5 (${it.subtest || ''} - بند ${it.id}) بدرجة (${respVal}/3 - ${isCritical ? 'عجز/استجابة خاطئة' : 'أداء جزئي/منخفض'})`,
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: isCritical ? 10 : 8,
+        }));
+      }
+    });
+  } else if (lookupKey === 'leiter_3' || rawId.includes('leiter')) {
+    const rawOverrides = extraData?.rawOverrides || responses.rawOverrides || {};
+    const psychometrics = extraData?.psychometrics || null;
+    const scoresMap = responses.results || responses.scores || responses || {};
+
+    // 1. Check item-by-item responses
+    items.forEach((it) => {
+      const val = scoresMap[it.id] !== undefined ? scoresMap[it.id] : (scoresMap[String(it.id)] !== undefined ? scoresMap[String(it.id)] : null);
+      const respVal = val !== null && val !== undefined && val !== '' ? Number(val) : null;
+      if (respVal !== null && respVal <= 1) {
+        const isCritical = respVal === 0;
+        const priorityRank = isCritical ? 1 : 2;
+        const priority = isCritical ? 'critical' : 'high';
+        const itemTitle = it.title || it.text || `بند ${it.id}`;
+
+        const baseline = generatePlepBaseline(
+          itemTitle,
+          respVal,
+          3,
+          isCritical
+            ? `عجز معرفي بصري في (${itemTitle} - ${it.subtest || ''}) بدرجة (0/3)`
+            : `أداء غير لفظي محدود في (${itemTitle} - ${it.subtest || ''}) بدرجة (1/3)`,
+          isCritical
+            ? 'تدريب بصري حركي مكثف عبر الإشارة والنمذجة واستخدام البطاقات والمثيرات الملموسة'
+            : 'تعزيز مهارات الترتيب المنطقي والإغلاق البصري والانتباه المستمر للمثيرات'
+        );
+
+        const goalText = it.iepGoal || `أن يطور التلميذ مهارة (${itemTitle}) ويحقق مستوى إتقان لا يقل عن 80% في الأنشطة المعرفية البصرية غير اللفظية.`;
+
+        recommended.push(buildGoalItem({
+          code: `LEITER3-${it.subtestId ? String(it.subtestId).toUpperCase() : 'NVIQ'}-${it.id}`,
+          domain: 'cognitive_reasoning',
+          title: itemTitle.length > 40 ? `${itemTitle.slice(0, 40)}...` : itemTitle,
+          text: goalText,
+          mastery: 'إتقان بنسبة 80% في 4 من أصل 5 جلسات تدريبية',
+          reason: `مشتق من مقياس ليتر-3 غير اللفظي Leiter-3 (${it.subtest || ''} - بند ${it.id}) بدرجة (${respVal}/3 - ${isCritical ? 'عجز/استجابة خاطئة' : 'أداء جزئي/منخفض'})`,
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: isCritical ? 10 : 8,
+        }));
+      }
+    });
+
+    // 2. If subtest raw scores or psychometrics are provided (or if item goals are empty)
+    const subtestDeficits = [
+      { id: 'so', name: 'الترتيب التسلسلي (SO)', goal: 'أن يكتشف التلميذ القواعد المنطقية ويرتب المثيرات البصرية المتسلسلة وفق الحجم واللون والاتجاه بنسبة إتقان 80%.' },
+      { id: 'fc', name: 'الإتمام البصري (FC)', goal: 'أن يطور التلميذ مهارة الإغلاق البصري وإدراك الكل من الأجزاء الهندسية المنفصلة في 4 من أصل 5 محاولات.' },
+      { id: 'ca', name: 'التصنيف والمكعبات (CA)', goal: 'أن يستنتج التلميذ أوجه الشبه والتناظر وفئات التصنيف المجردة بين الأشكال البصرية بدقة لا تقل عن 80%.' },
+      { id: 'fg', name: 'المطابقة والشكل والأرضية (FG)', goal: 'أن يميز التلميذ الأشكال والرموز المستهدفة داخل خلفيات ومصفوفات بصرية مشتتة بنسبة نجاح 85%.' },
+      { id: 'sm', name: 'الذاكرة الفضائية (SM)', goal: 'أن يسترجع التلميذ الترتيب المكاني لمصفوفة من الرموز الهندسية المعروضة لفترة وجيزة بدقة 80%.' },
+      { id: 'sa', name: 'الانتباه المستمر (SA)', goal: 'أن يحافظ التلميذ على تركيزه وانتباهه البصري نحو المهمة المستمرة لمدة لا تقل عن 5 دقائق دون تشتت.' },
+      { id: 'fm', name: 'ذاكرة الأشكال (FM)', goal: 'أن يستحضر التلميذ تتابعاً بصرياً من الأشكال المعروضة بترتيبها الصحيح بنسبة نجاح لا تقل عن 80%.' },
+    ];
+
+    if (recommended.length === 0 || Object.keys(rawOverrides).length > 0) {
+      subtestDeficits.forEach((st) => {
+        const rawVal = rawOverrides[st.id] !== undefined ? Number(rawOverrides[st.id]) : null;
+        const subResult = psychometrics?.subtests?.find(s => s.id === st.id);
+        const scaledScore = subResult?.scaledScore;
+        const isLow = (scaledScore !== undefined && scaledScore <= 7) || (rawVal !== null && rawVal <= 6);
+
+        if (isLow || (recommended.length === 0 && rawVal !== null)) {
+          const isCritical = scaledScore <= 5 || (rawVal !== null && rawVal <= 3);
+          recommended.push(buildGoalItem({
+            code: `LEITER3-SUB-${st.id.toUpperCase()}`,
+            domain: 'cognitive_reasoning',
+            title: `ليتر-3: ${st.name}`,
+            text: st.goal,
+            mastery: 'إتقان بنسبة 80% عبر 4 جلسات تدريبية متتالية',
+            reason: `مشتق من الاختبار الفرعي (${st.name}) بمقياس ليتر-3 - ${scaledScore ? `درجة معيارية (${scaledScore}/19)` : `درجة خام (${rawVal})`}`,
+            priorityRank: isCritical ? 1 : 2,
+            priority: isCritical ? 'critical' : 'high',
+            baseline: generatePlepBaseline(
+              st.name,
+              scaledScore || rawVal || 5,
+              scaledScore ? 19 : 12,
+              `أداء غير لفظي منخفض في (${st.name})`,
+              'جلسات تدريب فردية مكثفة على المعالجة البصرية المكانية والذاكرة غير اللفظية'
+            ),
+            durationWeeks: isCritical ? 10 : 8,
+          }));
+        }
+      });
+    }
+  } else if (lookupKey === 'raven_rpm' || rawId.includes('raven') || rawId.includes('rpm')) {
+    const rawOverrides = extraData?.rawOverrides || responses.rawOverrides || {};
+    const psychometrics = extraData?.psychometrics || null;
+    const scoresMap = responses.results || responses.scores || responses || {};
+
+    // 1. Process item-by-item responses (0 = failed matrix, 1 = correct)
+    items.forEach((it) => {
+      const val = scoresMap[it.id] !== undefined ? scoresMap[it.id] : (scoresMap[String(it.id)] !== undefined ? scoresMap[String(it.id)] : null);
+      const respVal = val !== null && val !== undefined && val !== '' ? Number(val) : null;
+      if (respVal !== null && respVal === 0) {
+        const setCode = it.set || (it.id?.includes('_a_') ? 'A' : it.id?.includes('_ab_') ? 'Ab' : it.id?.includes('_b_') ? 'B' : it.id?.includes('_c_') ? 'C' : it.id?.includes('_d_') ? 'D' : it.id?.includes('_e_') ? 'E' : 'RPM');
+        const isFoundational = setCode === 'A' || setCode === 'Ab';
+        const priorityRank = isFoundational ? 1 : (setCode === 'B' || setCode === 'C' ? 2 : 3);
+        const priority = priorityRank === 1 ? 'critical' : (priorityRank === 2 ? 'high' : 'medium');
+        const itemTitle = it.title || `مصفوفة ${it.number || it.id}`;
+        const cleanPrompt = it.prompt || 'إكمال واستدلال النمط البصري المفقود في المصفوفة';
+
+        const baseline = generatePlepBaseline(
+          itemTitle,
+          0,
+          1,
+          `إخفاق في حل (${itemTitle} - ${cleanPrompt}) بمقياس مصفوفات رافن`,
+          'تدريب على الاستدلال غير اللفظي وتحليل الأنماط والتماثل الهندسي باستخدام بطاقات ومحاكاة ملموسة'
+        );
+
+        const goalText = it.iepGoal || `أن يطور التلميذ مهارة الاستدلال البصري في (${itemTitle}: ${cleanPrompt}) ويصل لنسبة دقة 80% في مهام التفكير المجرد.`;
+
+        recommended.push(buildGoalItem({
+          code: `RPM-${setCode}-${it.number || it.id}`,
+          domain: 'cognitive_reasoning',
+          title: `${itemTitle}: ${cleanPrompt.slice(0, 32)}...`,
+          text: goalText,
+          mastery: 'إتقان بنسبة 80% في 4 من أصل 5 محاولات متتالية',
+          reason: `مشتق من مقياس مصفوفات رافن المتتابعة (${itemTitle} - مجموعة ${setCode}) - استجابة غير صحيحة (0)`,
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: isFoundational ? 10 : 8,
+        }));
+      }
+    });
+
+    // 2. If therapist entered total raw score override or items resulted in few goals, derive set-level goals
+    const ravenSetGoals = [
+      { set: 'A', name: 'المجموعة A (إكمال النمط البصري المستمر)', goal: 'أن ينمي التلميذ قدرته على إدراك العلاقات البصرية المتصلة وإكمال الأنماط الهندسية والخطوط المفقودة بنسبة دقة 85%.' },
+      { set: 'Ab', name: 'المجموعة Ab (إدراك الأنماط المنفصلة والتحول)', goal: 'أن يطور التلميذ مهارة التماثل والتحول الفراغي وإدراك الأنماط المنفصلة في مصفوفات 2×2 بدقة 80%.' },
+      { set: 'B', name: 'المجموعة B (الاستدلال التناظري والتطابق القياسي)', goal: 'أن يستنتج التلميذ قواعد التماثل القياسي والاستدلال التناظري (أ : ب كـ ج : د) بين الأشكال الهندسية بنسبة إتقان 80%.' },
+      { set: 'C', name: 'المجموعة C (التغير التدرجي في المصفوفات 3×3)', goal: 'أن يكتشف التلميذ القواعد المنطقية للتغير التدرجي في مصفوفات 3×3 ويحدد البديل المتمم بدقة واستقلالية.' },
+      { set: 'D', name: 'المجموعة D (التبديل والتركيب الهندسي المعقد)', goal: 'أن يقوم التلميذ بتركيب وتحويل وتبديل الأشكال الهندسية المعقدة وحل مشكلات الاستدلال الصامت بدقة 80%.' },
+      { set: 'E', name: 'المجموعة E (التجريد المنظومي والدمج الفائق)', goal: 'أن يستخلص التلميذ القواعد التجريدية المتقدمة ودمج العمليات المنطقية البصرية بنسبة إتقان لا تقل عن 80%.' },
+    ];
+
+    if (recommended.length === 0 || (rawOverrides && rawOverrides.total !== undefined)) {
+      const deficitSets = psychometrics?.deficitSets || [];
+      const setResults = psychometrics?.setResults || [];
+
+      ravenSetGoals.forEach((sg) => {
+        const foundDeficit = deficitSets.find(d => d.id === sg.set);
+        const sRes = setResults.find(r => r.id === sg.set);
+        const isLow = Boolean(foundDeficit) || (sRes && sRes.rawScore <= 5);
+
+        if (isLow || (recommended.length === 0 && (sg.set === 'A' || sg.set === 'Ab' || sg.set === 'B'))) {
+          const isCritical = sg.set === 'A' || (sRes && sRes.rawScore <= 3);
+          recommended.push(buildGoalItem({
+            code: `RPM-SET-${sg.set}`,
+            domain: 'cognitive_reasoning',
+            title: `مصفوفات رافن: ${sg.name}`,
+            text: sg.goal,
+            mastery: 'إتقان بنسبة 80% في 4 جلسات تدريبية متتالية',
+            reason: `مشتق من تحليل أداء مجموعة (${sg.set}) بمقياس رافن الاستدلالي ${sRes ? `(${sRes.rawScore}/${sRes.maxRaw})` : ''}`,
+            priorityRank: isCritical ? 1 : 2,
+            priority: isCritical ? 'critical' : 'high',
+            baseline: generatePlepBaseline(
+              sg.name,
+              sRes?.rawScore || 0,
+              sRes?.maxRaw || 12,
+              `قصور في الاستدلال غير اللفظي وحل مشكلات (${sg.name})`,
+              'برنامج التفكير المعرفي البصري والتدريب على استنتاج القواعد المنطقية للمصفوفات'
+            ),
+            durationWeeks: isCritical ? 10 : 8,
+          }));
+        }
+      });
+    }
   } else if (lookupKey === 'down_syndrome' || rawId.startsWith('ds') || rawId.includes('ds_') || rawId.includes('down')) {
     items.forEach((it) => {
       const respVal = responses[it.id] !== undefined && responses[it.id] !== null ? Number(responses[it.id]) : null;

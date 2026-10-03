@@ -51,6 +51,15 @@ import DownSyndromeAssessmentModal from '../../components/assessments/DownSyndro
 import DownSyndromeReportModal from '../../components/assessments/DownSyndromeReportModal';
 import WISC5AssessmentModal from '../../components/assessments/WISC5AssessmentModal';
 import WISC5ReportModal from '../../components/assessments/WISC5ReportModal';
+import StanfordBinet5AssessmentModal from '../../components/assessments/StanfordBinet5AssessmentModal';
+import StanfordBinet5ReportModal from '../../components/assessments/StanfordBinet5ReportModal';
+import Leiter3AssessmentModal from '../../components/assessments/Leiter3AssessmentModal';
+import Leiter3ReportModal from '../../components/assessments/Leiter3ReportModal';
+import RavenAssessmentModal from '../../components/assessments/RavenAssessmentModal';
+import RavenReportModal from '../../components/assessments/RavenReportModal';
+import { RAVEN_CPM_ITEMS, RAVEN_SPM_ITEMS } from '../../data/ravenData';
+import { LEITER3_ITEMS } from '../../data/leiter3Data';
+import { SB5_ITEMS } from '../../data/sb5Data';
 import { WISC5_ITEMS } from '../../data/wisc5Data';
 import { DOWN_SYNDROME_SCALES } from '../../data/downSyndromeData';
 import { PEP3_ITEMS } from '../../data/pep3Data';
@@ -261,6 +270,24 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
   const [wisc5ReportOpen, setWisc5ReportOpen] = useState(false);
   const [selectedWisc5Assessment, setSelectedWisc5Assessment] = useState(null);
 
+  // Stanford-Binet 5 (SB5) Specific Specialized Modals States
+  const [sb5ModalOpen, setSb5ModalOpen] = useState(false);
+  const [sb5EditData, setSb5EditData] = useState(null);
+  const [sb5ReportOpen, setSb5ReportOpen] = useState(false);
+  const [selectedSb5Assessment, setSelectedSb5Assessment] = useState(null);
+
+  // Leiter-3 (Nonverbal Scale) Specific Specialized Modals States
+  const [leiter3ModalOpen, setLeiter3ModalOpen] = useState(false);
+  const [leiter3EditData, setLeiter3EditData] = useState(null);
+  const [leiter3ReportOpen, setLeiter3ReportOpen] = useState(false);
+  const [selectedLeiter3Assessment, setSelectedLeiter3Assessment] = useState(null);
+
+  // Raven Progressive Matrices (RPM) Specific Specialized Modals States
+  const [ravenModalOpen, setRavenModalOpen] = useState(false);
+  const [ravenEditData, setRavenEditData] = useState(null);
+  const [ravenReportOpen, setRavenReportOpen] = useState(false);
+  const [selectedRavenAssessment, setSelectedRavenAssessment] = useState(null);
+
   // Developmental LD Checklist (Pre-school) States
   const [devLdModalOpen, setDevLdModalOpen] = useState(false);
   const [devLdEditData, setDevLdEditData] = useState(null);
@@ -439,6 +466,21 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
       setWisc5ModalOpen(true);
       return;
     }
+    if (scaleId === 'stanford_binet_5' || scaleId === 'sb5' || scaleId === 'stanford_binet' || scaleId === 'binet') {
+      setSb5EditData(null);
+      setSb5ModalOpen(true);
+      return;
+    }
+    if (scaleId === 'leiter_3' || scaleId === 'leiter3' || scaleId === 'leiter') {
+      setLeiter3EditData(null);
+      setLeiter3ModalOpen(true);
+      return;
+    }
+    if (scaleId === 'raven_rpm' || scaleId === 'raven' || scaleId === 'rpm' || scaleId === 'cpm' || scaleId === 'spm') {
+      setRavenEditData(null);
+      setRavenModalOpen(true);
+      return;
+    }
     if (scaleId === 'dev_learning_difficulties' || scaleId === 'dev_ld_preschool') {
       setDevLdEditData(null);
       setDevLdModalOpen(true);
@@ -583,6 +625,36 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
   function openViewWisc5Report(item) {
     setSelectedWisc5Assessment(item);
     setWisc5ReportOpen(true);
+  }
+
+  function openEditSb5Assessment(item) {
+    setSb5EditData(item);
+    setSb5ModalOpen(true);
+  }
+
+  function openViewSb5Report(item) {
+    setSelectedSb5Assessment(item);
+    setSb5ReportOpen(true);
+  }
+
+  function openEditLeiter3Assessment(item) {
+    setLeiter3EditData(item);
+    setLeiter3ModalOpen(true);
+  }
+
+  function openViewLeiter3Report(item) {
+    setSelectedLeiter3Assessment(item);
+    setLeiter3ReportOpen(true);
+  }
+
+  function openEditRavenAssessment(item) {
+    setRavenEditData(item);
+    setRavenModalOpen(true);
+  }
+
+  function openViewRavenReport(item) {
+    setSelectedRavenAssessment(item);
+    setRavenReportOpen(true);
   }
 
   function openEditDevLdAssessment(item) {
@@ -753,6 +825,13 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
       setBridgeScaleItems(PEP3_ITEMS);
     } else if (item.measureId === 'wisc_5' || item.scaleType === 'wisc5' || item.isWisc5 || item.measureId?.includes('wisc')) {
       setBridgeScaleItems(WISC5_ITEMS);
+    } else if (item.measureId === 'stanford_binet_5' || item.scaleType === 'stanford_binet_5' || item.scaleType === 'sb5' || item.measureId === 'sb5' || item.isSB5 || item.isSb5 || item.measureId?.includes('binet') || item.measureId?.includes('sb5')) {
+      setBridgeScaleItems(SB5_ITEMS);
+    } else if (item.measureId === 'leiter_3' || item.scaleType === 'leiter3' || item.scaleType === 'leiter_3' || item.isLeiter3 || item.measureId?.includes('leiter')) {
+      setBridgeScaleItems(LEITER3_ITEMS);
+    } else if (item.measureId === 'raven_rpm' || item.scaleType === 'raven_rpm' || item.isRaven || item.measureId?.includes('raven') || item.scaleType?.includes('raven')) {
+      const isSpm = item.version === 'spm' || item.ravenVersion === 'spm';
+      setBridgeScaleItems(isSpm ? RAVEN_SPM_ITEMS : RAVEN_CPM_ITEMS);
     } else if (item.measureId === 'learning_difficulties' || item.scaleType === 'learning_difficulties' || item.measureId === 'ldes') {
       setBridgeScaleItems(LDES_ITEMS);
     } else if (item.measureId === 'dev_learning_difficulties' || item.scaleType === 'dev_learning_difficulties' || item.measureId === 'dev_ld_preschool') {
@@ -911,7 +990,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     }
 
     const isIntelligenceFeatured = (selectedCategoryFilter === 'all' || selectedCategoryFilter === 'intelligence_cognitive') && !searchTerm;
-    const isIntelligenceScale = ['wisc_5', 'wisc5', 'wisc', 'wechsler'].includes(s.id);
+    const isIntelligenceScale = ['wisc_5', 'wisc5', 'wisc', 'wechsler', 'stanford_binet_5', 'sb5', 'stanford_binet', 'binet', 'leiter_3', 'leiter3', 'leiter', 'raven_rpm', 'raven', 'rpm', 'cpm', 'spm'].includes(s.id);
     if (isIntelligenceFeatured && isIntelligenceScale) {
       return false;
     }
@@ -1986,6 +2065,114 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                       🚀 تطبيق وفحص مقياس وكسلر (WISC-V)
                     </button>
                   </div>
+
+                  {/* Stanford-Binet Intelligence Scales (5th Edition - SB5) Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(79, 70, 229, 0.04))',
+                      border: '1.5px solid #4f46e5',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#e0e7ff', color: '#3730a3', fontWeight: 600, fontSize: '.72rem' }}>ريفرسايد إنسايتس (Riverside Insights)</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>SB5 المقنن (10 اختبارات فرعية · 5 عوامل)</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        🧠 مقياس ستانفورد - بينيه للذكاء — الصورة الخامسة (SB5)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        البطارية القياسية الرائدة عالمياً لتقييم الذكاء والقدرات العقلية العامة (FSIQ) والذكاء اللفظي وغير اللفظي عبر العوامل الخمسة (الاستدلال السيالي، المعرفة، الكمي، البصري المكاني، الذاكرة العاملة) مع اشتقاق مباشر لأهداف الخطة الفردية IEP
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setSb5EditData(null); setSb5ModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: 'linear-gradient(135deg, #4f46e5, #4338ca)', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص مقياس ستانفورد - بينيه (SB5)
+                    </button>
+                  </div>
+
+                  {/* Leiter International Performance Scale (3rd Edition - Leiter-3) Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(8, 145, 178, 0.08), rgba(6, 182, 212, 0.04))',
+                      border: '1.5px solid #0891b2',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#cffafe', color: '#0e7490', fontWeight: 600, fontSize: '.72rem' }}>ستولتينغ الأمريكية (Stoelting Co.)</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>Leiter-3 غير اللفظي التام (NVIQ + AMI)</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        🧩 مقياس ليتر العالمي المعدل للتقييم غير اللفظي (Leiter-3)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        الأداة المعيارية الذهبية للتقييم غير اللفظي التام للأطفال والأفراد ذوي اضطرابات طيف التوحد، ضعف السمع، والتأخر اللغوي الحاد · حساب نسبة الذكاء غير اللفظي (NVIQ) ومؤشر الذاكرة والانتباه (AMI) عبر 7 اختبارات فرعية واشتقاق مباشر لأهداف الخطة الفردية IEP
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setLeiter3EditData(null); setLeiter3ModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: 'linear-gradient(135deg, #0891b2, #0e7490)', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص مقياس ليتر-3 (Leiter-3)
+                    </button>
+                  </div>
+
+                  {/* Raven's Progressive Matrices (RPM - CPM & SPM) Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(2, 132, 199, 0.04))',
+                      border: '1.5px solid #2563eb',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontWeight: 600, fontSize: '.72rem' }}>بيرسون (Pearson Assessment)</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>مصفوفات رافن (CPM الملونة / SPM القياسية)</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        ▦ مقياس مصفوفات رافن المتتابعة (RPM)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        الأداة المعيارية العالمية الرائدة لقياس الاستدلال المعرفي والقدرة العقلية العامة (g factor) والتفكير التجريدي غير اللفظي دون تحيز لغوي أو ثقافي · حساب الرتب المئينية والتصنيف الخماسي المعياري واشتقاق أهداف الخطة الفردية IEP
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setRavenEditData(null); setRavenModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص مقياس مصفوفات رافن (RPM)
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -2146,19 +2333,25 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                 const isMChat = item.measureId === 'mchat' || item.scaleType === 'mchat_r_f' || item.scaleType === 'mchat' || item.measureId === 'mchat_r_f' || item.isMChat;
                 const isDownSyndrome = item.isDownSyndrome || item.category === 'down_syndrome' || item.measureId?.startsWith('ds_') || item.scaleType === 'down_syndrome';
                 const isWisc5 = item.measureId === 'wisc_5' || item.scaleType === 'wisc5' || item.isWisc5 || item.measureId?.includes('wisc');
+                const isSb5 = item.measureId === 'stanford_binet_5' || item.scaleType === 'stanford_binet_5' || item.scaleType === 'sb5' || item.measureId === 'sb5' || item.isSB5 || item.isSb5 || item.measureId?.includes('binet') || item.measureId?.includes('sb5');
+                const isLeiter3 = item.measureId === 'leiter_3' || item.scaleType === 'leiter3' || item.scaleType === 'leiter_3' || item.isLeiter3 || item.measureId?.includes('leiter');
+                const isRaven = item.measureId === 'raven_rpm' || item.scaleType === 'raven_rpm' || item.isRaven || item.measureId?.includes('raven') || item.measureId?.includes('rpm');
                 return (
                   <div
                     key={item.id}
                     className="prog-item-card"
                     style={{
-                      border: isWisc5 ? '1.5px solid #7c3aed' : isDownSyndrome ? '1.5px solid #0891b2' : isScq ? '1.5px solid #059669' : isAtec ? '1.5px solid #1e3a8a' : isMChat ? '1.5px solid #2563eb' : isConnersParent ? '1.5px solid #ea580c' : isSensory ? '1.5px solid #0284c7' : isFamily ? '1.5px solid #7c3aed' : isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
-                      boxShadow: isWisc5 ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isDownSyndrome ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isScq ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isAtec ? '0 4px 12px rgba(30, 58, 138, 0.08)' : isMChat ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isConnersParent ? '0 4px 12px rgba(234, 88, 12, 0.08)' : isSensory ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isFamily ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
+                      border: isRaven ? '1.5px solid #2563eb' : isLeiter3 ? '1.5px solid #0891b2' : isSb5 ? '1.5px solid #4f46e5' : isWisc5 ? '1.5px solid #7c3aed' : isDownSyndrome ? '1.5px solid #0891b2' : isScq ? '1.5px solid #059669' : isAtec ? '1.5px solid #1e3a8a' : isMChat ? '1.5px solid #2563eb' : isConnersParent ? '1.5px solid #ea580c' : isSensory ? '1.5px solid #0284c7' : isFamily ? '1.5px solid #7c3aed' : isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
+                      boxShadow: isRaven ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isLeiter3 ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSb5 ? '0 4px 12px rgba(79, 70, 229, 0.08)' : isWisc5 ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isDownSyndrome ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isScq ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isAtec ? '0 4px 12px rgba(30, 58, 138, 0.08)' : isMChat ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isConnersParent ? '0 4px 12px rgba(234, 88, 12, 0.08)' : isSensory ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isFamily ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
                       <div>
                         <div className="prog-student-name" style={{ fontSize: '1.02rem', display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span>{item.studentName}</span>
+                          {isRaven && <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>مصفوفات رافن (RPM)</span>}
+                          {isLeiter3 && <span className="bdg" style={{ background: '#cffafe', color: '#0e7490', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>ليتر-3 غير اللفظي (NVIQ)</span>}
+                          {isSb5 && <span className="bdg" style={{ background: '#e0e7ff', color: '#3730a3', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>ستانفورد بينيه SB5 (IQ)</span>}
                           {isWisc5 && <span className="bdg" style={{ background: '#f5f3ff', color: '#6d28d9', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>وكسلر WISC-V (IQ)</span>}
                           {isDownSyndrome && <span className="bdg" style={{ background: '#cffafe', color: '#0e7490', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>🧬 متلازمة داون</span>}
                           {isMChat && <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>M-CHAT-R/F (20)</span>}
@@ -2185,7 +2378,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                         <div className="prog-student-meta">{item.measureName} · {item.date}</div>
                       </div>
                       <span className="bdg b-gr" style={{ fontSize: '0.82rem', fontWeight: 800, flexShrink: 0 }}>
-                        {isAq ? `الدرجة الإجمالية: ${item.score || item.psychometrics?.totalScore || 0} / 50` : isScq ? `النقاط: ${item.score || item.psychometrics?.totalScore || 0} / 39` : isAtec ? `الخام: ${item.score || item.rawScore || 0} / 179` : isMChat ? `النقاط الإيجابية: ${item.score || item.totalFailedCount || 0} / 20` : isConnersParent ? `الخام: ${item.score || 0} / 240` : isSensory ? `الخام: ${item.score || 0} / 90` : isFamily ? `الخام: ${item.score || 0} / 130` : isMyklebust ? `الخام: ${item.score || 0} / 120 (LQ=${item.lq || item.psychometrics?.learningQuotient || '—'})` : isSartawi ? `الخام: ${item.score || 0} / 250 (T=${item.tScore || item.psychometrics?.totalTScore || '—'})` : isLddrs ? `الدرجة الكلية: ${item.score || 0}` : isDevLd ? `الخام: ${item.score} / ${item.maxScore || 160}` : isLdes ? `معامل LDEQ: ${item.ldeq || item.score}` : isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
+                        {isRaven ? `مصفوفات رافن (الخام: ${item.rawScore || item.score || 0} · مئين: ${item.percentile || item.psychometrics?.percentile || '—'}%)` : isLeiter3 ? `معامل الذكاء غير اللفظي (NVIQ): ${item.nviq || item.psychometrics?.nviq || item.score || '—'}` : isSb5 ? `معامل الذكاء (FSIQ): ${item.fsiq || item.psychometrics?.fsiq || item.score || '—'}` : isWisc5 ? `معامل الذكاء (FSIQ): ${item.fsiq || item.psychometrics?.fsiq || item.score || '—'}` : isAq ? `الدرجة الإجمالية: ${item.score || item.psychometrics?.totalScore || 0} / 50` : isScq ? `النقاط: ${item.score || item.psychometrics?.totalScore || 0} / 39` : isAtec ? `الخام: ${item.score || item.rawScore || 0} / 179` : isMChat ? `النقاط الإيجابية: ${item.score || item.totalFailedCount || 0} / 20` : isConnersParent ? `الخام: ${item.score || 0} / 240` : isSensory ? `الخام: ${item.score || 0} / 90` : isFamily ? `الخام: ${item.score || 0} / 130` : isMyklebust ? `الخام: ${item.score || 0} / 120 (LQ=${item.lq || item.psychometrics?.learningQuotient || '—'})` : isSartawi ? `الخام: ${item.score || 0} / 250 (T=${item.tScore || item.psychometrics?.totalTScore || '—'})` : isLddrs ? `الدرجة الكلية: ${item.score || 0}` : isDevLd ? `الخام: ${item.score} / ${item.maxScore || 160}` : isLdes ? `معامل LDEQ: ${item.ldeq || item.score}` : isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
                       </span>
                     </div>
 
@@ -2264,6 +2457,34 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                         <span>رتبة مئينية: <strong style={{ color: '#6d28d9' }}>{item.overallPercentile || item.percentile || '—'}%</strong></span>
                         <span>مجموع الدرجات المعيارية: <strong style={{ color: 'var(--text-main)' }}>{item.sumScaledScores || '—'} / 95</strong></span>
                         <span>التصنيف: <strong style={{ color: item.severityColor || '#6d28d9' }}>{item.level || '—'}</strong></span>
+                      </div>
+                    )}
+
+                    {isSb5 && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>نسبة الذكاء الكلية: <strong style={{ color: item.severityColor || '#4f46e5' }}>{item.fsiq || item.psychometrics?.fsiq || item.score || '—'} FSIQ</strong></span>
+                        <span>غير لفظي NVIQ: <strong style={{ color: '#0891b2' }}>{item.nviq || item.psychometrics?.nviq || '—'}</strong></span>
+                        <span>لفظي VIQ: <strong style={{ color: '#7c3aed' }}>{item.viq || item.psychometrics?.viq || '—'}</strong></span>
+                        <span>رتبة مئينية: <strong style={{ color: '#4f46e5' }}>{item.overallPercentile || item.psychometrics?.fsiqPercentile || '—'}%</strong></span>
+                        <span>التصنيف: <strong style={{ color: item.severityColor || '#4f46e5' }}>{item.level || item.psychometrics?.classification || '—'}</strong></span>
+                      </div>
+                    )}
+
+                    {isLeiter3 && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>معامل الذكاء غير اللفظي: <strong style={{ color: item.severityColor || '#0891b2' }}>{item.nviq || item.psychometrics?.nviq || item.score || '—'} NVIQ</strong></span>
+                        <span>مؤشر الانتباه والذاكرة AMI: <strong style={{ color: '#0284c7' }}>{item.ami || item.psychometrics?.ami || '—'}</strong></span>
+                        <span>رتبة مئينية: <strong style={{ color: '#0891b2' }}>{item.overallPercentile || item.psychometrics?.nviqPercentile || '—'}%</strong></span>
+                        <span>التصنيف: <strong style={{ color: item.severityColor || '#0891b2' }}>{item.level || item.psychometrics?.classification || '—'}</strong></span>
+                      </div>
+                    )}
+
+                    {isRaven && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>الدرجة الخام: <strong style={{ color: item.severityColor || '#2563eb' }}>{item.rawScore || item.score} / {item.maxScore || 36}</strong></span>
+                        <span>الرتبة المئينية: <strong style={{ color: '#2563eb' }}>{item.percentile || item.overallPercentile || item.psychometrics?.percentile || '—'}%</strong></span>
+                        <span>مكافئ الذكاء IQ: <strong style={{ color: '#1d4ed8' }}>{item.equivalentIQ || item.psychometrics?.equivalentIQ || '—'}</strong></span>
+                        <span>المستوى: <strong style={{ color: item.severityColor || '#2563eb' }}>{item.grade || item.psychometrics?.grade || ''} ({item.level || item.psychometrics?.classification || '—'})</strong></span>
                       </div>
                     )}
 
@@ -2600,6 +2821,102 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                             className="btn btn-xs btn-g"
                             onClick={() => openEditWisc5Assessment(item)}
                             title="تعديل درجات مقياس وكسلر"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isSb5 && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewSb5Report(item)}
+                            style={{ fontWeight: 800, background: '#4f46e5', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isSb5 && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => handleOpenBridge(item)}
+                            style={{ fontWeight: 800, background: 'linear-gradient(135deg, #4338ca, #3730a3)', color: '#fff' }}
+                            title="اشتقاق أهداف الخطة الفردية (IEP) من مقياس ستانفورد بينيه"
+                          >
+                            🎯 جسر الخطة (IEP)
+                          </button>
+                        )}
+                        {isSb5 && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditSb5Assessment(item)}
+                            title="تعديل درجات مقياس ستانفورد بينيه"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isLeiter3 && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewLeiter3Report(item)}
+                            style={{ fontWeight: 800, background: '#0891b2', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isLeiter3 && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => handleOpenBridge(item)}
+                            style={{ fontWeight: 800, background: 'linear-gradient(135deg, #0284c7, #0369a1)', color: '#fff' }}
+                            title="اشتقاق أهداف الخطة الفردية (IEP) من مقياس ليتر-3"
+                          >
+                            🎯 جسر الخطة (IEP)
+                          </button>
+                        )}
+                        {isLeiter3 && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditLeiter3Assessment(item)}
+                            title="تعديل درجات مقياس ليتر-3"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isRaven && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewRavenReport(item)}
+                            style={{ fontWeight: 800, background: '#2563eb', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isRaven && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => handleOpenBridge(item)}
+                            style={{ fontWeight: 800, background: 'linear-gradient(135deg, #1d4ed8, #2563eb)', color: '#fff' }}
+                            title="اشتقاق أهداف الخطة الفردية (IEP) من مقياس مصفوفات رافن"
+                          >
+                            🎯 جسر الخطة (IEP)
+                          </button>
+                        )}
+                        {isRaven && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditRavenAssessment(item)}
+                            title="تعديل درجات مقياس مصفوفات رافن"
                           >
                             ✏️
                           </button>
@@ -3183,11 +3500,14 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
             parentPhone: bridgeAssessment.parentPhone,
           }}
           assessmentData={{
+            ...bridgeAssessment,
             measureId: bridgeAssessment.measureId || bridgeAssessment.scaleType || 'cars',
             measureName: bridgeAssessment.measureName || 'المقياس المقنن',
             date: bridgeAssessment.date,
             score: bridgeAssessment.score,
             results: bridgeAssessment.results || bridgeAssessment.scores || bridgeAssessment.responses || {},
+            rawOverrides: bridgeAssessment.rawOverrides || {},
+            psychometrics: bridgeAssessment.psychometrics || null,
           }}
           scaleItems={bridgeScaleItems}
         />
@@ -3600,6 +3920,117 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
           onEdit={() => {
             setWisc5ReportOpen(false);
             openEditWisc5Assessment(selectedWisc5Assessment);
+          }}
+        />
+      )}
+
+      {/* MODAL: STANFORD-BINET 5 (SB5) SPECIALIZED ASSESSMENT WORKSTATION */}
+      {sb5ModalOpen && (
+        <StanfordBinet5AssessmentModal
+          isOpen={sb5ModalOpen}
+          onClose={() => {
+            setSb5ModalOpen(false);
+            setSb5EditData(null);
+          }}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={sb5EditData}
+          onOpenIepBridge={(item) => handleOpenBridge(item)}
+        />
+      )}
+
+      {/* MODAL: STANFORD-BINET 5 (SB5) OFFICIAL DIAGNOSTIC REPORT & IEP EXPORT */}
+      {sb5ReportOpen && selectedSb5Assessment && (
+        <StanfordBinet5ReportModal
+          isOpen={sb5ReportOpen}
+          onClose={() => setSb5ReportOpen(false)}
+          assessment={selectedSb5Assessment}
+          assessmentData={selectedSb5Assessment}
+          onEdit={() => {
+            setSb5ReportOpen(false);
+            openEditSb5Assessment(selectedSb5Assessment);
+          }}
+          onOpenIepBridge={(item) => {
+            setSb5ReportOpen(false);
+            handleOpenBridge(item);
+          }}
+        />
+      )}
+
+      {/* MODAL: LEITER-3 SPECIALIZED ASSESSMENT WORKSTATION */}
+      {leiter3ModalOpen && (
+        <Leiter3AssessmentModal
+          isOpen={leiter3ModalOpen}
+          onClose={() => {
+            setLeiter3ModalOpen(false);
+            setLeiter3EditData(null);
+          }}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={leiter3EditData}
+          onOpenIepBridge={(item) => handleOpenBridge(item)}
+        />
+      )}
+
+      {/* MODAL: LEITER-3 OFFICIAL DIAGNOSTIC REPORT & IEP EXPORT */}
+      {leiter3ReportOpen && selectedLeiter3Assessment && (
+        <Leiter3ReportModal
+          isOpen={leiter3ReportOpen}
+          onClose={() => setLeiter3ReportOpen(false)}
+          assessment={selectedLeiter3Assessment}
+          assessmentData={selectedLeiter3Assessment}
+          onEdit={() => {
+            setLeiter3ReportOpen(false);
+            openEditLeiter3Assessment(selectedLeiter3Assessment);
+          }}
+          onOpenIepBridge={(item) => {
+            setLeiter3ReportOpen(false);
+            handleOpenBridge(item);
+          }}
+        />
+      )}
+
+      {/* MODAL: RAVEN'S PROGRESSIVE MATRICES (RPM) WORKSTATION */}
+      {ravenModalOpen && (
+        <RavenAssessmentModal
+          isOpen={ravenModalOpen}
+          onClose={() => {
+            setRavenModalOpen(false);
+            setRavenEditData(null);
+          }}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={ravenEditData}
+          onOpenIepBridge={(item) => handleOpenBridge(item)}
+        />
+      )}
+
+      {/* MODAL: RAVEN'S PROGRESSIVE MATRICES (RPM) OFFICIAL DIAGNOSTIC REPORT */}
+      {ravenReportOpen && selectedRavenAssessment && (
+        <RavenReportModal
+          isOpen={ravenReportOpen}
+          onClose={() => setRavenReportOpen(false)}
+          assessment={selectedRavenAssessment}
+          assessmentData={selectedRavenAssessment}
+          onEdit={() => {
+            setRavenReportOpen(false);
+            openEditRavenAssessment(selectedRavenAssessment);
+          }}
+          onOpenIepBridge={(item) => {
+            setRavenReportOpen(false);
+            handleOpenBridge(item);
           }}
         />
       )}

@@ -24,6 +24,21 @@ import {
   WISC5_COPYRIGHT_INFO,
   calculateWISC5Psychometrics,
 } from '../data/wisc5Data';
+import {
+  SB5_ITEMS,
+  SB5_COPYRIGHT_INFO,
+  calculateSB5Psychometrics,
+} from '../data/sb5Data';
+import {
+  LEITER3_ITEMS,
+  LEITER3_COPYRIGHT_INFO,
+  calculateLeiter3Psychometrics,
+} from '../data/leiter3Data';
+import {
+  RAVEN_CPM_ITEMS,
+  RAVEN_COPYRIGHT_INFO,
+  calculateRavenPsychometrics,
+} from '../data/ravenData';
 
 export const MEASUREMENT_CATEGORIES = [
   {
@@ -876,25 +891,71 @@ const DEFAULT_SCALE_LIBRARY = [
   },
   {
     id: 'stanford_binet_5',
-    name: 'مقياس ستانفورد بينيه للذكاء - الصورة الخامسة (SB-5)',
-    nameEn: 'Stanford-Binet Intelligence Scales (5th Ed.)',
+    name: 'مقياس ستانفورد - بينيه للذكاء — الصورة الخامسة (SB5)',
+    nameEn: 'Stanford-Binet Intelligence Scales — Fifth Edition (SB5)',
+    author: 'د. جيل هـ. رويد (Gale H. Roid) ونخبة من باحثي القياس',
+    publisher: 'ريفرسايد إنسايتس (Riverside Insights)',
     category: 'intelligence_cognitive',
-    description: 'بطارية قياس نسبة الذكاء (IQ) والاستدلال التحليلي اللفظي وغير اللفظي والذاكرة العاملة',
+    description: 'البطارية القياسية الرائدة عالمياً لقياس نسبة الذكاء الكلي (FSIQ) ونسبة الذكاء غير اللفظي واللفظي عبر العوامل الخمسة (الاستدلال السيالي، المعرفة، الكمي، البصري المكاني، الذاكرة العاملة) مع اشتقاق خطط IEP.',
     icon: '🧠',
-    color: '#7c3aed',
+    color: '#4f46e5',
     scoreMode: 'subscale',
     responseType: 'scale',
-    minValue: 1,
-    maxValue: 5,
-    maxScore: 50,
-    items: [
-      { id: 'sb_1', text: 'الاستدلال السائل غير اللفظي (حل المشكلات والمصفوفات)', domain: 'fluid_reasoning' },
-      { id: 'sb_2', text: 'المعرفة والمعلومات العامة والمفاهيم اللفظية', domain: 'knowledge' },
-      { id: 'sb_3', text: 'الاستدلال الكمي والحسابي والمسائل الرياضية', domain: 'quantitative' },
-      { id: 'sb_4', text: 'المعالجة البصرية المكانية وتركيب الأنماط', domain: 'visual_spatial' },
-      { id: 'sb_5', text: 'الذاكرة العاملة وحفظ السلاسل الرقمية والبصرية', domain: 'working_memory' },
-    ],
-    thresholdText: 'نسبة الذكاء العام (FSIQ): 90-109 متوسط | 70-79 حدّي | أقل من 70 يشير إلى قصور عقلي',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 120,
+    items: SB5_ITEMS.map(it => ({
+      id: it.id,
+      text: `${it.subtest}: ${it.title}`,
+      domain: it.factorId,
+    })),
+    thresholdText: 'معامل الذكاء الكلي (FSIQ): 130+ موهبة وتفوق استثنائي | 120-129 متفوق | 110-119 متوسط مرتفع | 90-109 متوسط طبيعي | 80-89 متوسط منخفض | 70-79 حدّي / بطء تعلم | أقل من 70 قصور فكري',
+    isDefault: true,
+  },
+  {
+    id: 'leiter_3',
+    name: 'مقياس ليتر العالمي المعدل للتقييم غير اللفظي — الإصدار الثالث (Leiter-3)',
+    nameEn: 'Leiter International Performance Scale — Third Edition (Leiter-3)',
+    author: 'د. غيل أيدرسون وزملاؤه (Gale H. Roid, Mark Pomplun, et al.)',
+    publisher: 'ستولتينغ الأمريكية (Stoelting Company)',
+    category: 'intelligence_cognitive',
+    description: 'الأداة المعيارية الرائدة عالمياً للتقييم غير اللفظي التام للذكاء (NVIQ) والذاكرة والانتباه للأطفال والأفراد ذوي التوحد والتأخر اللغوي وضعف السمع.',
+    icon: '🧩',
+    color: '#0891b2',
+    scoreMode: 'subscale',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 84,
+    items: LEITER3_ITEMS.map(it => ({
+      id: it.id,
+      text: `${it.subtest}: ${it.title}`,
+      domain: it.subtestId,
+    })),
+    thresholdText: 'معامل الذكاء غير اللفظي (NVIQ): 130+ موهبة وتفوق | 120-129 متفوق | 110-119 متوسط مرتفع | 90-109 متوسط طبيعي | 80-89 متوسط منخفض | 70-79 حدّي / بطء تعلم | أقل من 70 قصور فكري',
+    isDefault: true,
+  },
+  {
+    id: 'raven_rpm',
+    name: 'مقياس مصفوفات رافن المتتابعة للذكاء غير اللفظي (RPM - CPM/SPM)',
+    nameEn: "Raven's Progressive Matrices (RPM)",
+    author: 'د. جون رافن (John C. Raven)',
+    publisher: 'بيرسون للتقييم النفسي والتربوي (Pearson Assessment)',
+    category: 'intelligence_cognitive',
+    description: 'الأداة المعيارية العالمية الرائدة لقياس الاستدلال المعرفي والقدرة العقلية العامة (g factor) والتفكير التجريدي غير اللفظي دون تحيز لغوي.',
+    icon: '▦',
+    color: '#2563eb',
+    scoreMode: 'sum',
+    responseType: 'choice',
+    minValue: 0,
+    maxValue: 1,
+    maxScore: 36,
+    items: RAVEN_CPM_ITEMS.map(it => ({
+      id: it.id,
+      text: `${it.title}: ${it.prompt}`,
+      domain: it.set,
+    })),
+    thresholdText: 'المستوى الأول: ذكاء متميز (مئين 95%+) | المستوى الثاني: فوق المتوسط (مئين 75-94%) | المستوى الثالث: متوسط طبيعي (مئين 25-74%) | المستوى الرابع: أقل من المتوسط (مئين 5-24%) | المستوى الخامس: قصور معرفي (مئين < 5%)',
     isDefault: true,
   },
 
@@ -1457,6 +1518,71 @@ export function buildAssessmentResult(scale, answers = {}) {
       severityColor: psych.severityColor,
       overallPercentile: psych.overallPercentile,
       domainScores: psych.domainResults,
+      psychometrics: psych,
+      note: psych.clinicalImpression,
+    };
+  }
+
+  if (scale?.id === 'stanford_binet_5' || scale?.id === 'sb5') {
+    const psych = calculateSB5Psychometrics(answers);
+    return {
+      total: psych.fsiq,
+      score: psych.fsiq,
+      fsiq: psych.fsiq,
+      nviq: psych.nviq,
+      viq: psych.viq,
+      maxScore: 160,
+      sumScaledScores: psych.sumScaledScores,
+      percentage: `${psych.completionPercentage}%`,
+      percentageNum: psych.completionPercentage,
+      level: psych.classification,
+      color: psych.severityColor,
+      severityColor: psych.severityColor,
+      overallPercentile: psych.fsiqPercentile,
+      factorScores: psych.factorResults,
+      subtestScores: psych.subtestResults,
+      psychometrics: psych,
+      note: psych.clinicalImpression,
+    };
+  }
+
+  if (scale?.id === 'leiter_3' || scale?.id === 'leiter3' || scale?.id === 'leiter') {
+    const psych = calculateLeiter3Psychometrics(answers);
+    return {
+      total: psych.nviq,
+      score: psych.nviq,
+      nviq: psych.nviq,
+      ami: psych.ami,
+      maxScore: 160,
+      percentage: `${psych.completionPercentage}%`,
+      percentageNum: psych.completionPercentage,
+      level: psych.classification,
+      color: psych.severityColor,
+      severityColor: psych.severityColor,
+      overallPercentile: psych.nviqPercentile,
+      subtestScores: psych.subtestResults,
+      psychometrics: psych,
+      note: psych.clinicalImpression,
+    };
+  }
+
+  if (scale?.id === 'raven_rpm' || scale?.id === 'raven' || scale?.id === 'rpm' || scale?.id === 'cpm' || scale?.id === 'spm') {
+    const psych = calculateRavenPsychometrics(answers, {}, 'cpm', 8.0);
+    return {
+      total: psych.totalRaw,
+      score: psych.totalRaw,
+      rawScore: psych.totalRaw,
+      percentile: psych.percentile,
+      overallPercentile: psych.percentile,
+      equivalentIQ: psych.equivalentIQ,
+      maxScore: psych.maxRawScore,
+      percentage: `${psych.percentage}%`,
+      percentageNum: psych.percentage,
+      level: psych.classification,
+      grade: psych.grade,
+      color: psych.severityColor,
+      severityColor: psych.severityColor,
+      setScores: psych.setResults,
       psychometrics: psych,
       note: psych.clinicalImpression,
     };

@@ -162,6 +162,24 @@ export const STRATEGY_DOMAINS = {
       { id: 'joint_attention_bubbles', title: 'أنشطة الانتباه المشترك (الفقاعات والألعاب التفاعلية)', desc: 'جذب نظرات الطفل والتواصل البصري مع المدرب أثناء اللعب.' },
     ],
     materials: ['كتاب وملصقات بيكس PECS', 'صناديق مهام تيتش المنظمة', 'جداول بصرية ثلاثية الأبعاد', 'معززات حسية ومضيئة']
+  },
+
+  cognitive_reasoning: {
+    id: 'cognitive_reasoning',
+    name: 'الاستدلال المعرفي والقدرات العقلية والذكاء غير اللفظي',
+    icon: '🧠',
+    strategies: [
+      { id: 'visual_component_analysis', title: 'التحليل البصري التفكيكي (Component Analysis)', desc: 'تفكيك النمط البصري إلى عناصره الأولية (الشكل، الحجم، الاتجاه، التظليل) لتحليل المتغيرات.' },
+      { id: 'symmetry_mapping', title: 'التناظر والمطابقة الدورانية (Rotational Mapping)', desc: 'تدريب التلميذ على رسم محاور التناظر وتتبع تدوير الزوايا الفراغية بزاوية 45 و 90 درجة.' },
+      { id: 'inductive_rule_discovery', title: 'الاستقراء واكتشاف القواعد المنطقية (Inductive Reasoning)', desc: 'تشجيع التلميذ على استنتاج القاعدة الشاملة للمصفوفة وصياغتها ذهنياً قبل فحص البدائل.' },
+      { id: 'systematic_elimination', title: 'استبعاد المشتتات والخيارات غير المتسقة (Elimination)', desc: 'استبعاد البدائل التي تخالف قاعدة الصف أو العمود للوصول إلى الخيار المتطابق بدقة.' },
+    ],
+    activities: [
+      { id: 'progressive_matrices_game', title: 'حل مصفوفات الأنماط التجريدية المتدرجة', desc: 'إكمال أنماط مصفوفية 2×2 و 3×3 باستخدام بطاقات ومحاكاة حاسوبية.' },
+      { id: 'spatial_rotation_puzzles', title: 'ألغاز التدوير الفراغي وتطابق الأشكال', desc: 'مطابقة الأشكال المنعكسة والمدورة وتوقع الشكل المتمم.' },
+      { id: 'visual_analogy_cards', title: 'بطاقات التماثل الشكلي (أ : ب كـ ج : د)', desc: 'اكتشاف العلاقة التحويلية بين زوج الأشكال الأول وتطبيقها على الزوج الثاني.' },
+    ],
+    materials: ['مصفوفات رافن وليتر التدريبية الملونة', 'ألواح الأشكال الهندسية ومكعبات كوهز', 'بطاقات الدوران المكاني والمرايا البصرية', 'برمجيات التفكير المنطقي التفاعلية']
   }
 };
 
@@ -173,6 +191,9 @@ export function getStrategiesForDomain(domainKey) {
   
   const key = String(domainKey).toLowerCase();
 
+  if (key.includes('cognit') || key.includes('reason') || key.includes('matrix') || key.includes('raven') || key.includes('leiter') || key.includes('wisc') || key.includes('binet') || key.includes('intel') || key.includes('معرفي') || key.includes('استدلال') || key.includes('ذكاء')) {
+    return STRATEGY_DOMAINS.cognitive_reasoning;
+  }
   if (key.includes('auditory') || key.includes('comp') || key.includes('listen') || key.includes('سمع')) {
     return STRATEGY_DOMAINS.auditory_comprehension;
   }
