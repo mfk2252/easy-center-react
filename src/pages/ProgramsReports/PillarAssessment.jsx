@@ -49,6 +49,9 @@ import MChatAssessmentModal from '../../components/assessments/MChatAssessmentMo
 import MChatReportModal from '../../components/assessments/MChatReportModal';
 import DownSyndromeAssessmentModal from '../../components/assessments/DownSyndromeAssessmentModal';
 import DownSyndromeReportModal from '../../components/assessments/DownSyndromeReportModal';
+import WISC5AssessmentModal from '../../components/assessments/WISC5AssessmentModal';
+import WISC5ReportModal from '../../components/assessments/WISC5ReportModal';
+import { WISC5_ITEMS } from '../../data/wisc5Data';
 import { DOWN_SYNDROME_SCALES } from '../../data/downSyndromeData';
 import { PEP3_ITEMS } from '../../data/pep3Data';
 import { LDES_ITEMS } from '../../data/ldesData';
@@ -252,6 +255,12 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
   const [ldesReportOpen, setLdesReportOpen] = useState(false);
   const [selectedLdesAssessment, setSelectedLdesAssessment] = useState(null);
 
+  // WISC-V Specific Specialized Modals States
+  const [wisc5ModalOpen, setWisc5ModalOpen] = useState(false);
+  const [wisc5EditData, setWisc5EditData] = useState(null);
+  const [wisc5ReportOpen, setWisc5ReportOpen] = useState(false);
+  const [selectedWisc5Assessment, setSelectedWisc5Assessment] = useState(null);
+
   // Developmental LD Checklist (Pre-school) States
   const [devLdModalOpen, setDevLdModalOpen] = useState(false);
   const [devLdEditData, setDevLdEditData] = useState(null);
@@ -425,6 +434,11 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
       setLdesModalOpen(true);
       return;
     }
+    if (scaleId === 'wisc_5' || scaleId === 'wisc5' || scaleId === 'wechsler' || scaleId === 'wisc') {
+      setWisc5EditData(null);
+      setWisc5ModalOpen(true);
+      return;
+    }
     if (scaleId === 'dev_learning_difficulties' || scaleId === 'dev_ld_preschool') {
       setDevLdEditData(null);
       setDevLdModalOpen(true);
@@ -559,6 +573,16 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
   function openViewLdesReport(item) {
     setSelectedLdesAssessment(item);
     setLdesReportOpen(true);
+  }
+
+  function openEditWisc5Assessment(item) {
+    setWisc5EditData(item);
+    setWisc5ModalOpen(true);
+  }
+
+  function openViewWisc5Report(item) {
+    setSelectedWisc5Assessment(item);
+    setWisc5ReportOpen(true);
   }
 
   function openEditDevLdAssessment(item) {
@@ -727,6 +751,8 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
   function handleOpenBridge(item) {
     if (item.measureId === 'pep3' || item.scaleType === 'pep3') {
       setBridgeScaleItems(PEP3_ITEMS);
+    } else if (item.measureId === 'wisc_5' || item.scaleType === 'wisc5' || item.isWisc5 || item.measureId?.includes('wisc')) {
+      setBridgeScaleItems(WISC5_ITEMS);
     } else if (item.measureId === 'learning_difficulties' || item.scaleType === 'learning_difficulties' || item.measureId === 'ldes') {
       setBridgeScaleItems(LDES_ITEMS);
     } else if (item.measureId === 'dev_learning_difficulties' || item.scaleType === 'dev_learning_difficulties' || item.measureId === 'dev_ld_preschool') {
@@ -1909,10 +1935,58 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                 </div>
               )}
 
+              {/* Featured Intelligence & Cognitive Scale Card (WISC-V) if intelligence_cognitive or All is active */}
+              {(selectedCategoryFilter === 'all' || selectedCategoryFilter === 'intelligence_cognitive') && !searchTerm && (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                    gap: 14,
+                    marginBottom: 20,
+                  }}
+                >
+                  {/* WISC-V (Wechsler Intelligence Scale for Children - Fifth Edition) Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(99, 102, 241, 0.04))',
+                      border: '1.5px solid #7c3aed',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#f5f3ff', color: '#6d28d9', fontWeight: 600, fontSize: '.72rem' }}>بيرسون للتقييم الإكلينيكي (Pearson)</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>WISC-V المقنن (32 مهمة معرفية)</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        🧠 مقياس وكسلر لذكاء الأطفال — الطبعة الخامسة (WISC-V)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        المقياس الأوسع انتشاراً عالمياً لقياس القدرات المعرفية والأكاديمية للأطفال (من 6 إلى 16 سنة) · يمنح معامل ذكاء كلي (FSIQ) و5 مؤشرات أولية (الفهم اللفظي، البصري الفضائي، الاستدلال التحليلي، الذاكرة العاملة، وسرعة المعالجة) مع ربط مباشر بالخطة الفردية IEP
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setWisc5EditData(null); setWisc5ModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص مقياس وكسلر (WISC-V)
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* SCALES GRID */}
               {filteredScales.length === 0 ? (
-                // Only show EmptyState if we are NOT already showing featured cards inside autism or speech or LD or ADHD categories
-                !((selectedCategoryFilter === 'autism' || selectedCategoryFilter === 'speech_language' || selectedCategoryFilter === 'learning_academic' || selectedCategoryFilter === 'adhd') && !searchTerm) && (
+                // Only show EmptyState if we are NOT already showing featured cards inside autism or speech or LD or ADHD or Intelligence categories
+                !((selectedCategoryFilter === 'autism' || selectedCategoryFilter === 'speech_language' || selectedCategoryFilter === 'learning_academic' || selectedCategoryFilter === 'adhd' || selectedCategoryFilter === 'intelligence_cognitive') && !searchTerm) && (
                   <EmptyState
                     icon="🔍"
                     title="لم يتم العثور على مقاييس تطابق البحث أو الفئة المختارة"
@@ -2065,19 +2139,21 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                 const isConnersParent = item.measureId === 'conners_parent' || item.scaleType === 'conners_parent' || item.type === 'conners_parent' || item.isConnersParent;
                 const isMChat = item.measureId === 'mchat' || item.scaleType === 'mchat_r_f' || item.scaleType === 'mchat' || item.measureId === 'mchat_r_f' || item.isMChat;
                 const isDownSyndrome = item.isDownSyndrome || item.category === 'down_syndrome' || item.measureId?.startsWith('ds_') || item.scaleType === 'down_syndrome';
+                const isWisc5 = item.measureId === 'wisc_5' || item.scaleType === 'wisc5' || item.isWisc5 || item.measureId?.includes('wisc');
                 return (
                   <div
                     key={item.id}
                     className="prog-item-card"
                     style={{
-                      border: isDownSyndrome ? '1.5px solid #0891b2' : isScq ? '1.5px solid #059669' : isAtec ? '1.5px solid #1e3a8a' : isMChat ? '1.5px solid #2563eb' : isConnersParent ? '1.5px solid #ea580c' : isSensory ? '1.5px solid #0284c7' : isFamily ? '1.5px solid #7c3aed' : isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
-                      boxShadow: isDownSyndrome ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isScq ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isAtec ? '0 4px 12px rgba(30, 58, 138, 0.08)' : isMChat ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isConnersParent ? '0 4px 12px rgba(234, 88, 12, 0.08)' : isSensory ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isFamily ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
+                      border: isWisc5 ? '1.5px solid #7c3aed' : isDownSyndrome ? '1.5px solid #0891b2' : isScq ? '1.5px solid #059669' : isAtec ? '1.5px solid #1e3a8a' : isMChat ? '1.5px solid #2563eb' : isConnersParent ? '1.5px solid #ea580c' : isSensory ? '1.5px solid #0284c7' : isFamily ? '1.5px solid #7c3aed' : isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
+                      boxShadow: isWisc5 ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isDownSyndrome ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isScq ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isAtec ? '0 4px 12px rgba(30, 58, 138, 0.08)' : isMChat ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isConnersParent ? '0 4px 12px rgba(234, 88, 12, 0.08)' : isSensory ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isFamily ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
                       <div>
                         <div className="prog-student-name" style={{ fontSize: '1.02rem', display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span>{item.studentName}</span>
+                          {isWisc5 && <span className="bdg" style={{ background: '#f5f3ff', color: '#6d28d9', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>وكسلر WISC-V (IQ)</span>}
                           {isDownSyndrome && <span className="bdg" style={{ background: '#cffafe', color: '#0e7490', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>🧬 متلازمة داون</span>}
                           {isMChat && <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>M-CHAT-R/F (20)</span>}
                           {isConnersParent && <span className="bdg" style={{ background: '#ffedd5', color: '#c2410c', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>كونرز للوالدين (80)</span>}
@@ -2173,6 +2249,15 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                         <span>حاصل صعوبات التعلم: <strong style={{ color: '#b45309' }}>{item.ldeq || item.score} LDEQ</strong></span>
                         <span>رتبة مئينية: <strong style={{ color: '#b45309' }}>{item.overallPercentile || item.percentile || '—'}%</strong></span>
                         <span>مجموع الدرجات المعيارية: <strong style={{ color: 'var(--text-main)' }}>{item.sumScaledScores || '—'} / 140</strong></span>
+                      </div>
+                    )}
+
+                    {isWisc5 && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>معامل الذكاء الكلي: <strong style={{ color: item.severityColor || '#6d28d9' }}>{item.fsiq || item.score} FSIQ</strong></span>
+                        <span>رتبة مئينية: <strong style={{ color: '#6d28d9' }}>{item.overallPercentile || item.percentile || '—'}%</strong></span>
+                        <span>مجموع الدرجات المعيارية: <strong style={{ color: 'var(--text-main)' }}>{item.sumScaledScores || '—'} / 95</strong></span>
+                        <span>التصنيف: <strong style={{ color: item.severityColor || '#6d28d9' }}>{item.level || '—'}</strong></span>
                       </div>
                     )}
 
@@ -2488,6 +2573,27 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                             className="btn btn-xs btn-g"
                             onClick={() => openEditLdesAssessment(item)}
                             title="تعديل درجات مقياس LDES"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isWisc5 && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewWisc5Report(item)}
+                            style={{ fontWeight: 800, background: '#7c3aed', color: '#fff' }}
+                          >
+                            📄 التقرير
+                          </button>
+                        )}
+                        {isWisc5 && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditWisc5Assessment(item)}
+                            title="تعديل درجات مقياس وكسلر"
                           >
                             ✏️
                           </button>
@@ -3457,6 +3563,38 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
           assessment={selectedDsAssessment}
           onEdit={(item) => openEditDsAssessment(item)}
           onOpenIepBridge={(item) => handleOpenBridge(item)}
+        />
+      )}
+
+      {/* MODAL: WISC-V SPECIALIZED ASSESSMENT WORKSTATION */}
+      {wisc5ModalOpen && (
+        <WISC5AssessmentModal
+          isOpen={wisc5ModalOpen}
+          onClose={() => {
+            setWisc5ModalOpen(false);
+            setWisc5EditData(null);
+          }}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={wisc5EditData}
+          onOpenIepBridge={(item) => handleOpenBridge(item)}
+        />
+      )}
+
+      {/* MODAL: WISC-V OFFICIAL DIAGNOSTIC REPORT & IEP EXPORT */}
+      {wisc5ReportOpen && selectedWisc5Assessment && (
+        <WISC5ReportModal
+          isOpen={wisc5ReportOpen}
+          onClose={() => setWisc5ReportOpen(false)}
+          assessment={selectedWisc5Assessment}
+          onEdit={() => {
+            setWisc5ReportOpen(false);
+            openEditWisc5Assessment(selectedWisc5Assessment);
+          }}
         />
       )}
     </div>

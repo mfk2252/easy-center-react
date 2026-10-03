@@ -860,6 +860,7 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
   else if (rawId.includes('speech') || rawId.includes('artic')) lookupKey = 'speech_screening';
   else if (rawId.includes('ppvt') || rawId.includes('peabody')) lookupKey = 'ppvt5';
   else if (rawId.includes('pls5') || rawId.includes('pls')) lookupKey = 'pls5';
+  else if (rawId.includes('wisc') || rawId.includes('wechsler')) lookupKey = 'wisc_5';
   else if (rawId.includes('down') || rawId.includes('syndrome') || rawId.startsWith('ds') || rawId.includes('ds_')) lookupKey = 'down_syndrome';
   else if (rawId.includes('beh')) lookupKey = 'behavior_adjustment';
   else if (SCALE_GOAL_TEMPLATES[measureId]) lookupKey = measureId;
@@ -1371,6 +1372,43 @@ export function extractRecommendedGoals(measureId, responses = {}, items = []) {
           priority,
           baseline,
           durationWeeks: priorityRank === 1 ? 10 : 8,
+        }));
+      }
+    });
+  } else if (lookupKey === 'wisc_5' || rawId.includes('wisc')) {
+    items.forEach((it) => {
+      const respVal = responses[it.id] !== undefined && responses[it.id] !== null ? Number(responses[it.id]) : null;
+      if (respVal !== null && respVal <= 1) {
+        const isCritical = respVal === 0;
+        const priorityRank = isCritical ? 1 : 2;
+        const priority = isCritical ? 'critical' : 'high';
+        const itemTitle = it.title || it.text || `بند ${it.id}`;
+
+        const baseline = generatePlepBaseline(
+          itemTitle,
+          respVal,
+          3,
+          isCritical
+            ? `عجز معرفي وإدراكي في (${itemTitle} - ${it.subtest || ''}) بدرجة (0/3)`
+            : `أداء معرفي محدود أو جزئي في (${itemTitle} - ${it.subtest || ''}) بدرجة (1/3)`,
+          isCritical
+            ? 'تدريب معرفي مكثف واستراتيجيات التعلم متعدد الحواس والتحليل المفاهيمي'
+            : 'تعزيز استراتيجيات التفكير والتدريب على حل المشكلات المعرفية والربط المنطقي'
+        );
+
+        const goalText = it.iepGoal || `أن يطور الطالب مهارة (${itemTitle}) ويحقق مستوى إتقان لا يقل عن 80% في الأنشطة المعرفية والأكاديمية.`;
+
+        recommended.push(buildGoalItem({
+          code: `WISC-${it.domainId ? String(it.domainId).toUpperCase() : 'COG'}-${it.id}`,
+          domain: 'cognitive_reasoning',
+          title: itemTitle.length > 40 ? `${itemTitle.slice(0, 40)}...` : itemTitle,
+          text: goalText,
+          mastery: 'إتقان بنسبة 80% في 4 من أصل 5 جلسات تدريبية',
+          reason: `مشتق من مقياس وكسلر لذكاء الأطفال WISC-V (${it.subtest || ''} - بند ${it.id}) بدرجة (${respVal}/3 - ${isCritical ? 'عجز/استجابة خاطئة' : 'أداء منخفض/جزئي'})`,
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: isCritical ? 10 : 8,
         }));
       }
     });

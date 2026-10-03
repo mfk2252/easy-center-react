@@ -19,6 +19,11 @@ import {
   DS_YESNO_MEDICAL_OPTIONS,
   calculateDownSyndromeScore,
 } from '../data/downSyndromeData';
+import {
+  WISC5_ITEMS,
+  WISC5_COPYRIGHT_INFO,
+  calculateWISC5Psychometrics,
+} from '../data/wisc5Data';
 
 export const MEASUREMENT_CATEGORIES = [
   {
@@ -847,6 +852,29 @@ const DEFAULT_SCALE_LIBRARY = [
 
   // 4. Intelligence & Cognitive Ability Scales (القدرات العقلية والذكاء)
   {
+    id: 'wisc_5',
+    name: 'مقياس وكسلر لذكاء الأطفال — الطبعة الخامسة (WISC-V)',
+    nameEn: 'Wechsler Intelligence Scale for Children — 5th Edition (WISC-V)',
+    author: 'د. ديفيد وكسلر (David Wechsler, Ph.D.)',
+    publisher: 'بيرسون للتقييم الإكلينيكي (Pearson Clinical Assessment)',
+    category: 'intelligence_cognitive',
+    description: 'المقياس الأوسع انتشاراً عالمياً لقياس القدرات المعرفية والأكاديمية للأطفال (من 6 إلى 16 سنة). يمنح معامل ذكاء كلي (FSIQ) ومؤشرات فرعية: الفهم اللفظي، البصري الفضائي، الاستدلال التحليلي، الذاكرة العاملة، وسرعة المعالجة، مع ربط مباشر بالخطط التربوية الفردية (IEP).',
+    icon: '🧠',
+    color: '#7c3aed',
+    scoreMode: 'subscale',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 96,
+    items: WISC5_ITEMS.map(it => ({
+      id: it.id,
+      text: `${it.subtest}: ${it.title}`,
+      domain: it.domainId,
+    })),
+    thresholdText: 'معامل الذكاء الكلي (FSIQ): 130+ موهبة وتفوق استثنائي | 120-129 متفوق | 110-119 متوسط مرتفع | 90-109 متوسط طبيعي | 80-89 متوسط منخفض | 70-79 حدّي / بطء تعلم | أقل من 70 قصور فكري',
+    isDefault: true,
+  },
+  {
     id: 'stanford_binet_5',
     name: 'مقياس ستانفورد بينيه للذكاء - الصورة الخامسة (SB-5)',
     nameEn: 'Stanford-Binet Intelligence Scales (5th Ed.)',
@@ -1411,6 +1439,26 @@ export function buildAssessmentResult(scale, answers = {}) {
       domainScores: psych.domainScores,
       psychometrics: psych,
       note: psych.clinicalSummary,
+    };
+  }
+
+  if (scale?.id === 'wisc_5' || scale?.id === 'wisc5') {
+    const psych = calculateWISC5Psychometrics(answers);
+    return {
+      total: psych.fsiq,
+      score: psych.fsiq,
+      fsiq: psych.fsiq,
+      maxScore: 160,
+      sumScaledScores: psych.sumScaledScores,
+      percentage: `${psych.completionPercentage}%`,
+      percentageNum: psych.completionPercentage,
+      level: psych.classification,
+      color: psych.severityColor,
+      severityColor: psych.severityColor,
+      overallPercentile: psych.overallPercentile,
+      domainScores: psych.domainResults,
+      psychometrics: psych,
+      note: psych.clinicalImpression,
     };
   }
 
