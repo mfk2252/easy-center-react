@@ -65,6 +65,8 @@ export default function Leiter3AssessmentModal({
   const [activeBatteryFilter, setActiveBatteryFilter] = useState('all'); // 'all' | 'cognitive' | 'attention_memory'
   const [activeSubtestFilter, setActiveSubtestFilter] = useState('all');
   const [showCopyrightDetails, setShowCopyrightDetails] = useState(false);
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
+  const [isManualEdit, setIsManualEdit] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('items'); // 'items' | 'subtests_raw'
 
@@ -313,394 +315,522 @@ export default function Leiter3AssessmentModal({
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-2 sm:p-4 overflow-y-auto"
-      dir="rtl"
-      style={{ fontFamily: 'Tajawal, sans-serif' }}
-    >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[94vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-200">
-        {/* Top Header */}
-        <div className="flex items-center justify-between px-6 py-3.5 border-b border-slate-200 bg-gradient-to-r from-indigo-700 via-blue-700 to-indigo-800 text-white shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-2xl border border-white/20 shadow-inner">
-              🧩
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold tracking-tight">
-                  مقياس ليتر العالمي للتقييم غير اللفظي — الإصدار الثالث
+    <div className="mbg" onClick={e => e.target === e.currentTarget && safeClose()}>
+      <div
+        className="mb"
+        style={{
+          maxWidth: 'min(1360px, calc(100vw - 24px))',
+          width: '100%',
+        }}
+      >
+        {/* MODAL MAIN HEADER */}
+        <div
+          className="fhd modal-header-custom"
+          style={{
+            padding: '14px 20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: 'linear-gradient(135deg, #4338ca 0%, #3730a3 50%, #1e1b4b 100%)',
+            color: '#fff',
+            flexShrink: 0,
+            gap: 12,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: '1.8rem' }}>🧩</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h2 style={{ fontSize: '1.18rem', fontWeight: 800, margin: 0, color: '#fff' }}>
+                  مقياس ليتر العالمي للتقييم غير اللفظي (Leiter-3)
                 </h2>
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-cyan-400 text-slate-900 border border-cyan-300 shadow-2xs">
-                  Leiter-3
-                </span>
-                <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-white/15 text-white">
-                  Stoelting Co.
+                <span className="bdg" style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>
+                  الإصدار الثالث · NVIQ & AMI
                 </span>
               </div>
-              <p className="text-xs text-indigo-100 mt-0.5 font-medium">
-                بطارية التقييم السيكومتري غير اللفظي التام (الذكاء NVIQ + الانتباه والذاكرة AMI)
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 3 }}>
+                <span className="bdg" style={{ background: '#0f172a', color: '#a5b4fc', fontSize: '0.68rem', fontWeight: 800 }}>
+                  © Stoelting Company / Gale H. Roid
+                </span>
+                <span style={{ fontSize: '0.76rem', opacity: 0.95 }}>
+                  بطارية التقييم السيكومتري غير اللفظي التام لقياس القدرات العقلية والانتباه
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <button
-              onClick={() => setShowCopyrightDetails(!showCopyrightDetails)}
               type="button"
-              className="text-xs px-2.5 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white transition flex items-center gap-1 font-semibold border border-white/20"
-              title="توثيق الملكية الفكرية والاعتماد"
+              className="btn btn-xs"
+              onClick={() => setShowCopyrightDetails(s => !s)}
+              style={{
+                background: showCopyrightDetails ? '#fff' : 'rgba(255,255,255,0.2)',
+                color: showCopyrightDetails ? '#3730a3' : '#fff',
+                border: '1px solid rgba(255,255,255,0.35)',
+                fontWeight: 700,
+              }}
             >
-              <span>🛡️</span> الملكية الفكرية
+              📜 {showCopyrightDetails ? 'إخفاء حقوق الملكية' : 'حقوق الملكية الفكرية'}
             </button>
             <button
-              onClick={safeClose}
               type="button"
-              className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-lg font-bold transition mr-1"
-              title="إغلاق"
+              className="btn btn-xs"
+              onClick={safeClose}
+              style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', fontWeight: 700 }}
             >
-              ✕
+              ✖ إغلاق
             </button>
           </div>
         </div>
 
-        {/* IP Attribution Card Collapsible */}
+        {/* EXPANDABLE COPYRIGHT & IP ATTRIBUTION CARD */}
         {showCopyrightDetails && (
-          <div className="bg-indigo-50 border-b border-indigo-200 px-6 py-3 text-xs text-indigo-950 shrink-0">
-            <div className="flex items-center justify-between font-bold mb-1">
-              <span className="flex items-center gap-1.5 text-indigo-900">
-                <span>🛡️</span> بطاقة توثيق الملكية الفكرية والاعتماد الإكلينيكي:
-              </span>
-              <span className="text-[11px] font-mono text-indigo-700">Stoelting Company / Gale H. Roid, Ph.D.</span>
+          <div
+            style={{
+              background: '#eef2ff',
+              padding: '14px 20px',
+              borderBottom: '2px solid #a5b4fc',
+              fontSize: '0.82rem',
+              color: '#312e81',
+              lineHeight: 1.6,
+              flexShrink: 0,
+            }}
+          >
+            <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>📜</span> إشعار حقوق الملكية الفكرية والاعتماد العلمي لمقياس ليتر-3 (Leiter-3):
             </div>
-            <p className="leading-relaxed text-indigo-800 text-[11px]">
+
+            <div
+              style={{
+                background: '#e0e7ff',
+                border: '1px solid #c7d2fe',
+                borderRadius: 8,
+                padding: '8px 12px',
+                marginBottom: 10,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 8,
+                fontSize: '0.8rem',
+                color: '#3730a3',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: '1.2rem' }}>⚖️</span>
+                <div>
+                  <strong>إشعار حقوق الملكية والاعتماد:</strong> مقياس ليتر العالمي 3 — إعداد د. جيل رويد وآخرون · الناشر الدولي: Stoelting Company.
+                </div>
+              </div>
+              <span style={{ fontSize: '0.72rem', background: '#c7d2fe', color: '#312e81', padding: '3px 8px', borderRadius: 6, border: '1px solid #a5b4fc', fontWeight: 700 }}>
+                بطارية تقييم سيكومتري غير لفظي مقننة
+              </span>
+            </div>
+
+            <div style={{ fontSize: '0.78rem', color: '#3730a3', background: '#e0e7ff', padding: '8px 12px', borderRadius: 8 }}>
               {LEITER3_COPYRIGHT_INFO.notice} {LEITER3_COPYRIGHT_INFO.disclaimer}
-            </p>
+            </div>
           </div>
         )}
 
-        {/* Live Gauges Bar */}
-        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white px-6 py-2.5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
-          <div className="flex items-center gap-4 flex-wrap">
+        {/* REAL-TIME DIAGNOSTIC PSYCHOMETRICS STRIP */}
+        <div
+          className="modal-subbar"
+          style={{
+            background: 'var(--g0)',
+            padding: '10px 18px',
+            borderBottom: '1px solid var(--border-color)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
+            flexWrap: 'wrap',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
             {/* NVIQ Metric */}
-            <div className="flex items-baseline gap-1.5 bg-white/10 px-3 py-1 rounded-lg border border-white/15">
-              <span className="text-slate-300 font-medium">معامل الذكاء غير اللفظي (NVIQ):</span>
-              <span className="text-base font-black text-cyan-300">{psychometrics.nviq}</span>
-              <span className="text-[10px] text-slate-400">({psychometrics.nviqPercentile}%)</span>
+            <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1.5px solid #0284c7', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>معامل الذكاء غير اللفظي (NVIQ):</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0284c7' }}>
+                {psychometrics.nviq} <small style={{ fontSize: '0.7rem', color: 'var(--text-sub)' }}>({psychometrics.nviqPercentile}%)</small>
+              </span>
             </div>
 
             {/* AMI Metric */}
-            <div className="flex items-baseline gap-1.5 bg-white/10 px-3 py-1 rounded-lg border border-white/15">
-              <span className="text-slate-300 font-medium">مؤشر الانتباه والذاكرة (AMI):</span>
-              <span className="text-base font-black text-amber-300">{psychometrics.ami}</span>
-              <span className="text-[10px] text-slate-400">({psychometrics.amiPercentile}%)</span>
+            <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1.5px solid #d97706', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>مؤشر الانتباه والذاكرة (AMI):</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#d97706' }}>
+                {psychometrics.ami} <small style={{ fontSize: '0.7rem', color: 'var(--text-sub)' }}>({psychometrics.amiPercentile}%)</small>
+              </span>
             </div>
 
-            {/* Classification */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-400">التصنيف الإكلينيكي:</span>
-              <span
-                className="font-extrabold px-2.5 py-0.5 rounded text-[11px]"
-                style={{ backgroundColor: `${psychometrics.severityColor}33`, color: '#38bdf8' }}
-              >
+            {/* Classification Badge */}
+            <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>التصنيف الإكلينيكي:</span>
+              <span className="bdg b-bl" style={{ fontWeight: 800, fontSize: '0.78rem' }}>
                 {psychometrics.classification}
               </span>
             </div>
+
+            {/* Completion */}
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-sub)' }}>
+              البنود المقيّمة: {psychometrics.totalAnswered} / {psychometrics.totalItems} ({psychometrics.completionPercentage}%)
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-slate-400 text-[11px]">
-              البنود المقيّمة: {psychometrics.totalAnswered} / {psychometrics.totalItems} ({psychometrics.completionPercentage}%)
-            </span>
-            <div className="w-24 bg-slate-700 h-2 rounded-full overflow-hidden">
-              <div
-                className="bg-cyan-400 h-full transition-all duration-300"
-                style={{ width: `${psychometrics.completionPercentage}%` }}
-              />
-            </div>
+          {/* Quick Presets */}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', fontWeight: 600 }}>⚡ تجربة:</span>
+            <button type="button" className="btn btn-xs" onClick={() => autoFillSample('gifted')} style={{ background: '#dbeafe', color: '#1e40af', border: '1px solid #93c5fd', fontSize: '.72rem' }}>موهبة (130+)</button>
+            <button type="button" className="btn btn-xs" onClick={() => autoFillSample('average')} style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', fontSize: '.72rem' }}>متوسط (100)</button>
+            <button type="button" className="btn btn-xs" onClick={() => autoFillSample('borderline')} style={{ background: '#ffedd5', color: '#c2410c', border: '1px solid #fdba74', fontSize: '.72rem' }}>حدّي (75)</button>
+            <button type="button" className="btn btn-xs" onClick={() => autoFillSample('id')} style={{ background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5', fontSize: '.72rem' }}>قصور فكري (&lt;70)</button>
           </div>
         </div>
 
-        {/* Main Workstation Layout */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5 bg-slate-50/60">
-          {/* Student Picker & Demographics */}
-          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
-            <h3 className="text-xs font-bold text-slate-700 mb-3 flex items-center gap-1.5">
-              <span>👤</span> بيانات المفحوص وجلسة التقييم:
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-              <div>
-                <label className="block text-slate-500 mb-1 font-semibold">المفحوص / الطالب:</label>
-                <select
-                  value={form.mode === 'other' ? '__other__' : form.stuId}
-                  onChange={handleSelectStudent}
-                  className="w-full border border-slate-300 rounded-lg p-2 font-medium bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
-                >
-                  <option value="">— اختر طالباً مسجلاً —</option>
-                  {students.map(s => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} {s.diagnosis ? `(${s.diagnosis})` : ''}
-                    </option>
-                  ))}
-                  <option value="__other__">➕ طالب / مفحوص آخر (يدوي)</option>
-                </select>
+        {/* MODAL MAIN BODY SCROLLABLE */}
+        <div className="modal-body-scroll" style={{ padding: '16px 20px', flex: 1, overflowY: 'auto' }}>
+          {/* STUDENT & ASSESSMENT INFO CARD */}
+          <div
+            style={{
+              background: 'var(--g0)',
+              padding: '10px 14px',
+              borderRadius: 10,
+              marginBottom: 14,
+              border: '1px solid var(--border-color)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: isHeaderCollapsed ? 0 : 8,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '0.84rem',
+                  fontWeight: 800,
+                  color: '#3730a3',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span>👤</span>
+                <span>بيانات المفحوص وجلسة التقييم</span>
+                {form.studentName && (
+                  <span
+                    style={{
+                      fontSize: '0.76rem',
+                      background: '#e0e7ff',
+                      color: '#3730a3',
+                      padding: '2px 8px',
+                      borderRadius: 6,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {form.studentName}
+                  </span>
+                )}
               </div>
 
-              {form.mode === 'other' ? (
-                <div>
-                  <label className="block text-slate-500 mb-1 font-semibold">اسم المفحوص:</label>
-                  <input
-                    type="text"
-                    value={form.studentName}
-                    onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
-                    className="w-full border border-slate-300 rounded-lg p-2 font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
-                    placeholder="الاسم الكامل"
-                  />
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-slate-500 mb-1 font-semibold">العمر الزمني:</label>
-                  <input
-                    type="text"
-                    value={form.age}
-                    onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
-                    className="w-full border border-slate-300 rounded-lg p-2 font-medium bg-slate-50"
-                    placeholder="مثال: 8 سنوات"
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="block text-slate-500 mb-1 font-semibold">التشخيص / الحالة:</label>
-                <input
-                  type="text"
-                  value={form.diagnosis}
-                  onChange={e => setForm(f => ({ ...f, diagnosis: e.target.value }))}
-                  className="w-full border border-slate-300 rounded-lg p-2 font-medium"
-                  placeholder="مثال: طيف توحد / اضطراب لغوي"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-500 mb-1 font-semibold">الفاحص / الأخصائي:</label>
-                <input
-                  type="text"
-                  value={form.examinerName}
-                  onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
-                  className="w-full border border-slate-300 rounded-lg p-2 font-medium"
-                  placeholder="اسم الأخصائي"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Profile Samples & Mode Toggle Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-600 flex items-center gap-1">
-                <span>⚡</span> تعبئة سريعة نموذجية:
-              </span>
-              <button
-                type="button"
-                onClick={() => autoFillSample('gifted')}
-                className="px-2.5 py-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition border border-indigo-200"
-              >
-                موهبة (130+)
-              </button>
-              <button
-                type="button"
-                onClick={() => autoFillSample('average')}
-                className="px-2.5 py-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition border border-emerald-200"
-              >
-                متوسط (100)
-              </button>
-              <button
-                type="button"
-                onClick={() => autoFillSample('borderline')}
-                className="px-2.5 py-1 rounded bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-bold transition border border-amber-200"
-              >
-                حدّي (75)
-              </button>
-              <button
-                type="button"
-                onClick={() => autoFillSample('id')}
-                className="px-2.5 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition border border-rose-200"
-              >
-                قصور فكري (&lt;70)
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 font-semibold">طريقة التقييم:</span>
-              <div className="inline-flex rounded-lg border border-slate-300 p-0.5 bg-slate-100 text-xs font-bold">
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                 <button
                   type="button"
-                  onClick={() => setViewMode('items')}
-                  className={`px-3 py-1 rounded-md transition ${
-                    viewMode === 'items' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                  onClick={() => setIsManualEdit(prev => !prev)}
+                  className="btn btn-xs btn-g"
+                  style={{ fontSize: '0.72rem', padding: '3px 8px', height: 24 }}
+                  title="تفعيل التعديل اليدوي على البيانات المجلوبة تلقائياً"
                 >
-                  بنود المقياس (28 بنداً)
+                  {isManualEdit ? '🔒 قفل التعديل' : '✏️ تعديل يدوي'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setViewMode('subtests_raw')}
-                  className={`px-3 py-1 rounded-md transition ${
-                    viewMode === 'subtests_raw' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                  onClick={() => setIsHeaderCollapsed(prev => !prev)}
+                  className="btn btn-xs btn-g"
+                  style={{ fontSize: '0.72rem', padding: '3px 8px', height: 24, fontWeight: 700 }}
                 >
-                  إدخال الدرجات الخام المباشرة (7 اختبارات)
+                  {isHeaderCollapsed ? '⬇️ إظهار التفاصيل' : '⬆️ إخفاء التفاصيل'}
                 </button>
               </div>
             </div>
+
+            {!isHeaderCollapsed && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                {form.mode === 'other' && (
+                  <div style={{ marginBottom: 4 }}>
+                    <div className="fl full">
+                      <label style={{ fontSize: '0.76rem', marginBottom: 2 }}>اسم المستفيد الخارجي <span className="req">*</span></label>
+                      <input
+                        style={{ height: 32, fontSize: '0.82rem' }}
+                        value={form.studentName || ''}
+                        onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
+                        placeholder="اكتب اسم الطالب / المستفيد..."
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* ROW 1 */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8 }}>
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الطالب المسجل <span className="req">*</span></label>
+                    <select
+                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
+                      value={form.mode === 'other' ? '__other__' : (form.stuId || '')}
+                      onChange={handleSelectStudent}
+                    >
+                      <option value="">— اختر من الطلاب المسجلين —</option>
+                      {students.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.name} ({s.dob ? `${calcAge(s.dob)} سنة` : s.age || '—'})
+                        </option>
+                      ))}
+                      <option value="__other__">➕ مستفيد خارجي (غير مسجل)</option>
+                    </select>
+                  </div>
+
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>العمر الزمني</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.age || (form.dob ? calcAge(form.dob) : '')}
+                      readOnly={!isManualEdit}
+                      onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
+                      placeholder="تلقائي حسب تاريخ الميلاد"
+                    />
+                  </div>
+
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>التشخيص / الحالة</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.diagnosis || ''}
+                      readOnly={!isManualEdit && form.mode !== 'other'}
+                      onChange={e => setForm(f => ({ ...f, diagnosis: e.target.value }))}
+                      placeholder="مثال: طيف توحد، اضطراب لغوي..."
+                    />
+                  </div>
+
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>تاريخ التقييم</label>
+                    <input
+                      type="date"
+                      dir="ltr"
+                      style={{ height: 32, fontSize: '0.82rem', textAlign: 'right', padding: '2px 8px' }}
+                      value={form.date || todayStr()}
+                      onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                {/* ROW 2 */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8 }}>
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الفاحص / الأخصائي</label>
+                    <select
+                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
+                      value={form.examinerName || ''}
+                      onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
+                    >
+                      <option value="">— اختر الفاحص —</option>
+                      {emps.map(e => (
+                        <option key={e.id} value={e.name}>
+                          {e.name} ({e.jobTitle || 'أخصائي'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الصف الدراسي</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.grade || ''}
+                      readOnly={!isManualEdit && form.mode !== 'other'}
+                      onChange={e => setForm(f => ({ ...f, grade: e.target.value }))}
+                      placeholder="الصف..."
+                    />
+                  </div>
+
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>المدرسة / المركز</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
+                      value={form.school || ''}
+                      readOnly={!isManualEdit && form.mode !== 'other'}
+                      onChange={e => setForm(f => ({ ...f, school: e.target.value }))}
+                      placeholder="اسم المدرسة أو المركز..."
+                    />
+                  </div>
+
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>صفة الفاحص / المرافق</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      value={form.raterRelation || ''}
+                      onChange={e => setForm(f => ({ ...f, raterRelation: e.target.value }))}
+                      placeholder="الصفة..."
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Subtest Raw Entry Mode */}
+          {/* VIEW MODE & FILTER TOGGLES */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>طريقة التقييم:</span>
+              <button
+                type="button"
+                className={`btn btn-xs ${viewMode === 'items' ? 'btn-p' : 'btn-g'}`}
+                onClick={() => setViewMode('items')}
+                style={{ fontWeight: 700 }}
+              >
+                📋 بنود المقياس (28 بنداً)
+              </button>
+              <button
+                type="button"
+                className={`btn btn-xs ${viewMode === 'subtests_raw' ? 'btn-p' : 'btn-g'}`}
+                onClick={() => setViewMode('subtests_raw')}
+                style={{ fontWeight: 700 }}
+              >
+                📊 إدخال الدرجات الخام المباشرة (7 اختبارات)
+              </button>
+            </div>
+
+            {viewMode === 'items' && (
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <input
+                  type="text"
+                  className="in in-sm"
+                  placeholder="🔍 بحث في البنود..."
+                  style={{ width: 160, fontSize: '.78rem' }}
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* SUBTESTS DIRECT RAW MODE */}
           {viewMode === 'subtests_raw' ? (
-            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    إدخال الدرجات الخام المباشرة للاختبارات الفرعية (Leiter-3 Subtests Raw Scores)
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    أدخل الدرجة الخام المحققة في كل اختبار فرعي ليتم تحويلها تلقائياً إلى معيارية (1-19) وحساب NVIQ و AMI
-                  </p>
-                </div>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 12, padding: 16, marginBottom: 16 }}>
+              <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: 12, color: 'var(--text-main)' }}>
+                إدخال الدرجات الخام المباشرة للاختبارات الفرعية (Leiter-3 Subtests Raw Scores):
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Cognitive Battery Subtests */}
-                <div className="border border-indigo-200 rounded-xl p-4 bg-indigo-50/30 space-y-3">
-                  <h4 className="text-xs font-black text-indigo-900 flex items-center justify-between">
-                    <span>🧩 بطارية الذكاء المعرفي (Cognitive Battery):</span>
-                    <span className="text-[11px] text-indigo-600">تحدد نسبة الذكاء غير اللفظي NVIQ</span>
-                  </h4>
-                  {LEITER3_SUBTESTS.filter(s => s.batteryId === 'cognitive').map(st => {
-                    const currentRes = psychometrics.subtestResults.find(r => r.subtestId === st.id);
-                    return (
-                      <div key={st.id} className="bg-white p-3 rounded-lg border border-slate-200 flex items-center justify-between gap-3">
-                        <div>
-                          <div className="font-bold text-xs text-slate-800">{st.name}</div>
-                          <div className="text-[11px] text-slate-400 font-mono">{st.nameEn}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 14 }}>
+                {/* Cognitive Battery */}
+                <div style={{ background: '#f5f3ff', border: '1px solid #c7d2fe', borderRadius: 10, padding: 12 }}>
+                  <div style={{ fontWeight: 800, fontSize: '0.82rem', color: '#3730a3', marginBottom: 10 }}>
+                    🧩 بطارية الذكاء المعرفي (Cognitive Battery) - NVIQ
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {LEITER3_SUBTESTS.filter(s => s.batteryId === 'cognitive').map(st => {
+                      const currentRes = psychometrics.subtestResults.find(r => r.subtestId === st.id);
+                      return (
+                        <div key={st.id} style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #c7d2fe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: '0.8rem' }}>{st.name}</div>
+                            <div style={{ fontSize: '0.68rem', color: 'var(--text-sub)' }}>{st.nameEn}</div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <small style={{ fontSize: '0.7rem' }}>خام (0-{st.maxRawScore}):</small>
+                            <input
+                              type="number"
+                              min="0"
+                              max={st.maxRawScore}
+                              value={form.rawOverrides[st.id] ?? currentRes?.rawScore ?? ''}
+                              onChange={e => handleRawOverrideChange(st.id, e.target.value)}
+                              className="in in-sm"
+                              style={{ width: 60, textAlign: 'center', fontWeight: 800 }}
+                              placeholder="0"
+                            />
+                            <span className="bdg b-bl" style={{ fontSize: '0.72rem' }}>
+                              معيارية: {currentRes?.scaledScore || 10}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <label className="text-xs text-slate-500">الدرجة الخام (0-{st.maxRawScore}):</label>
-                          <input
-                            type="number"
-                            min="0"
-                            max={st.maxRawScore}
-                            value={form.rawOverrides[st.id] ?? currentRes?.rawScore ?? ''}
-                            onChange={e => handleRawOverrideChange(st.id, e.target.value)}
-                            className="w-16 border border-slate-300 rounded-md p-1.5 text-center font-bold text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
-                            placeholder="0"
-                          />
-                          <span className="text-xs font-extrabold px-2 py-1 rounded bg-indigo-100 text-indigo-800">
-                            معيارية: {currentRes?.scaledScore || 10}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
 
-                {/* Attention & Memory Battery Subtests */}
-                <div className="border border-cyan-200 rounded-xl p-4 bg-cyan-50/30 space-y-3">
-                  <h4 className="text-xs font-black text-cyan-900 flex items-center justify-between">
-                    <span>🎯 بطارية الانتباه والذاكرة (Attention & Memory Battery):</span>
-                    <span className="text-[11px] text-cyan-600">تحدد مؤشر الذاكرة والانتباه AMI</span>
-                  </h4>
-                  {LEITER3_SUBTESTS.filter(s => s.batteryId === 'attention_memory').map(st => {
-                    const currentRes = psychometrics.subtestResults.find(r => r.subtestId === st.id);
-                    return (
-                      <div key={st.id} className="bg-white p-3 rounded-lg border border-slate-200 flex items-center justify-between gap-3">
-                        <div>
-                          <div className="font-bold text-xs text-slate-800">{st.name}</div>
-                          <div className="text-[11px] text-slate-400 font-mono">{st.nameEn}</div>
+                {/* Attention & Memory Battery */}
+                <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: 12 }}>
+                  <div style={{ fontWeight: 800, fontSize: '0.82rem', color: '#92400e', marginBottom: 10 }}>
+                    🎯 بطارية الانتباه والذاكرة (Attention & Memory) - AMI
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {LEITER3_SUBTESTS.filter(s => s.batteryId === 'attention_memory').map(st => {
+                      const currentRes = psychometrics.subtestResults.find(r => r.subtestId === st.id);
+                      return (
+                        <div key={st.id} style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #fde68a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: '0.8rem' }}>{st.name}</div>
+                            <div style={{ fontSize: '0.68rem', color: 'var(--text-sub)' }}>{st.nameEn}</div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <small style={{ fontSize: '0.7rem' }}>خام (0-{st.maxRawScore}):</small>
+                            <input
+                              type="number"
+                              min="0"
+                              max={st.maxRawScore}
+                              value={form.rawOverrides[st.id] ?? currentRes?.rawScore ?? ''}
+                              onChange={e => handleRawOverrideChange(st.id, e.target.value)}
+                              className="in in-sm"
+                              style={{ width: 60, textAlign: 'center', fontWeight: 800 }}
+                              placeholder="0"
+                            />
+                            <span className="bdg b-or" style={{ fontSize: '0.72rem' }}>
+                              معيارية: {currentRes?.scaledScore || 10}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <label className="text-xs text-slate-500">الدرجة الخام (0-{st.maxRawScore}):</label>
-                          <input
-                            type="number"
-                            min="0"
-                            max={st.maxRawScore}
-                            value={form.rawOverrides[st.id] ?? currentRes?.rawScore ?? ''}
-                            onChange={e => handleRawOverrideChange(st.id, e.target.value)}
-                            className="w-16 border border-slate-300 rounded-md p-1.5 text-center font-bold text-sm focus:ring-2 focus:ring-cyan-500 focus:outline-hidden"
-                            placeholder="0"
-                          />
-                          <span className="text-xs font-extrabold px-2 py-1 rounded bg-cyan-100 text-cyan-800">
-                            معيارية: {currentRes?.scaledScore || 10}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
           ) : (
-            /* Items-by-Item Evaluation Mode */
-            <div className="space-y-4">
-              {/* Battery Filter Tabs & Search */}
-              <div className="bg-white p-3.5 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() => { setActiveBatteryFilter('all'); setActiveSubtestFilter('all'); }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                      activeBatteryFilter === 'all'
-                        ? 'bg-indigo-700 text-white shadow-2xs'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
-                  >
-                    الكل (28 بنداً)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setActiveBatteryFilter('cognitive'); setActiveSubtestFilter('all'); }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
-                      activeBatteryFilter === 'cognitive'
-                        ? 'bg-indigo-700 text-white shadow-2xs'
-                        : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-                    }`}
-                  >
-                    <span>🧩</span> بطارية الذكاء NVIQ (16 بنداً)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setActiveBatteryFilter('attention_memory'); setActiveSubtestFilter('all'); }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
-                      activeBatteryFilter === 'attention_memory'
-                        ? 'bg-cyan-700 text-white shadow-2xs'
-                        : 'bg-cyan-50 text-cyan-700 hover:bg-cyan-100'
-                    }`}
-                  >
-                    <span>🎯</span> الانتباه والذاكرة AMI (12 بنداً)
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="🔍 تصفية البنود والمهمات..."
-                    className="border border-slate-300 rounded-lg px-3 py-1.5 text-xs w-48 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery('')}
-                      className="text-xs text-slate-400 hover:text-slate-600"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
+            /* ITEMS EVALUATION MODE */
+            <div style={{ marginBottom: 16 }}>
+              {/* Battery Filter Tabs */}
+              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 6, marginBottom: 10 }}>
+                <button
+                  type="button"
+                  className={`tab ${activeBatteryFilter === 'all' ? 'on' : ''}`}
+                  onClick={() => { setActiveBatteryFilter('all'); setActiveSubtestFilter('all'); }}
+                  style={{ fontSize: '0.78rem', padding: '6px 12px' }}
+                >
+                  الكل (28 بنداً)
+                </button>
+                <button
+                  type="button"
+                  className={`tab ${activeBatteryFilter === 'cognitive' ? 'on' : ''}`}
+                  onClick={() => { setActiveBatteryFilter('cognitive'); setActiveSubtestFilter('all'); }}
+                  style={{ fontSize: '0.78rem', padding: '6px 12px', borderRight: '3px solid #0284c7' }}
+                >
+                  🧩 الذكاء المعرفي NVIQ (16)
+                </button>
+                <button
+                  type="button"
+                  className={`tab ${activeBatteryFilter === 'attention_memory' ? 'on' : ''}`}
+                  onClick={() => { setActiveBatteryFilter('attention_memory'); setActiveSubtestFilter('all'); }}
+                  style={{ fontSize: '0.78rem', padding: '6px 12px', borderRight: '3px solid #d97706' }}
+                >
+                  🎯 الانتباه والذاكرة AMI (12)
+                </button>
               </div>
 
-              {/* Items List */}
-              <div className="space-y-3">
+              {/* Items Grid */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {filteredItems.map(item => {
                   const currentScore = form.scores[item.id];
                   const hasAnswer = currentScore !== undefined && currentScore !== null && currentScore !== '';
@@ -709,36 +839,34 @@ export default function Leiter3AssessmentModal({
                   return (
                     <div
                       key={item.id}
-                      className={`p-4 rounded-xl border transition-all duration-150 ${
-                        hasAnswer
-                          ? 'bg-white border-slate-200 shadow-2xs'
-                          : 'bg-slate-50/90 border-dashed border-slate-300'
-                      }`}
+                      style={{
+                        background: 'var(--bg-card)',
+                        border: hasAnswer ? '1.5px solid #0284c7' : '1px solid var(--border-color)',
+                        borderRadius: 10,
+                        padding: '12px 16px',
+                        transition: 'all 0.15s ease',
+                      }}
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2.5">
-                        <div className="flex items-start gap-2.5">
-                          <span className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-800 text-xs font-black flex items-center justify-center shrink-0">
-                            {item.id}
-                          </span>
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h4 className="text-xs font-extrabold text-slate-900">{item.title}</h4>
-                              <span
-                                className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                style={{
-                                  backgroundColor: item.batteryId === 'cognitive' ? '#eef2ff' : '#ecfeff',
-                                  color: item.batteryId === 'cognitive' ? '#4338ca' : '#0e7490',
-                                }}
-                              >
-                                {subtestMeta?.name || item.subtest}
-                              </span>
-                            </div>
-                            <p className="text-xs text-slate-600 mt-1 leading-relaxed">{item.description}</p>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: 260 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                            <span className="bdg b-bl" style={{ fontWeight: 800, fontSize: '.72rem' }}>
+                              بند #{item.id}
+                            </span>
+                            <span className="bdg" style={{ background: item.batteryId === 'cognitive' ? '#e0f2fe' : '#fef3c7', color: item.batteryId === 'cognitive' ? '#0369a1' : '#92400e', fontSize: '.72rem' }}>
+                              {subtestMeta?.name || item.subtest}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.4 }}>
+                            {item.title}
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-sub)', marginTop: 2 }}>
+                            {item.description}
                           </div>
                         </div>
 
-                        {/* Response Options */}
-                        <div className="flex items-center gap-1.5 shrink-0">
+                        {/* Response Rating Scale */}
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                           {LEITER3_RESPONSE_OPTIONS.map(opt => {
                             const isSelected = Number(currentScore) === opt.value;
                             return (
@@ -746,36 +874,39 @@ export default function Leiter3AssessmentModal({
                                 key={opt.value}
                                 type="button"
                                 onClick={() => handleScoreSelect(item.id, opt.value)}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
-                                  isSelected
-                                    ? opt.value === 3
-                                      ? 'bg-emerald-600 text-white shadow-xs'
-                                      : opt.value === 2
-                                      ? 'bg-blue-600 text-white shadow-xs'
-                                      : opt.value === 1
-                                      ? 'bg-amber-600 text-white shadow-xs'
-                                      : 'bg-rose-600 text-white shadow-xs'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                }`}
+                                className={`btn btn-xs ${isSelected ? 'btn-p' : 'btn-g'}`}
+                                style={{
+                                  padding: '5px 10px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: isSelected ? 800 : 500,
+                                  background: isSelected
+                                    ? (opt.value === 3 ? '#059669' : opt.value === 2 ? '#0284c7' : opt.value === 1 ? '#d97706' : '#dc2626')
+                                    : undefined,
+                                  color: isSelected ? '#fff' : undefined,
+                                }}
                                 title={opt.description}
                               >
-                                <span>{opt.value}</span>
+                                {opt.value} {isSelected && '✓'}
                               </button>
                             );
                           })}
                         </div>
                       </div>
 
-                      {/* Item IEP Goal Note */}
-                      <div className="text-[11px] text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-200/60 mt-2 flex items-center justify-between">
-                        <span>🎯 الهدف المرتبط بالخطة: {item.iepGoal}</span>
+                      {/* Optional Note & IEP Goal */}
+                      <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8, flexWrap: 'wrap' }}>
                         <input
                           type="text"
+                          placeholder="ملاحظات خاصة بالبند..."
                           value={form.itemNotes[item.id] || ''}
                           onChange={e => handleItemNoteChange(item.id, e.target.value)}
-                          placeholder="ملاحظة خاصة بالبند..."
-                          className="text-[11px] border border-slate-300 rounded px-2 py-0.5 bg-white w-44 focus:outline-hidden"
+                          style={{ flex: 1, fontSize: '0.76rem', padding: '4px 8px', borderRadius: 6, border: '1px dashed var(--border-color)', background: 'var(--g0)' }}
                         />
+                        {item.iepGoal && (
+                          <span style={{ fontSize: '0.72rem', color: '#047857', background: '#ecfdf5', padding: '3px 8px', borderRadius: 6, border: '1px solid #a7f3d0' }}>
+                            🎯 الهدف: {item.iepGoal.slice(0, 40)}...
+                          </span>
+                        )}
                       </div>
                     </div>
                   );
@@ -784,92 +915,115 @@ export default function Leiter3AssessmentModal({
             </div>
           )}
 
-          {/* Clinical Summary & Recommendations Generator */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-              <div>
-                <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <span>📝</span> التقرير السريري والتوصيات (Clinical Impression & IEP Bridge):
-                </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  توليد تقرير تشخيصي شامل في ضوء نتائج البطاريتين مع اشتقاق مباشر للأهداف
-                </p>
-              </div>
-
+          {/* CLINICAL SUMMARY & RECOMMENDATIONS TEXTAREAS */}
+          <div
+            style={{
+              background: 'var(--g0)',
+              padding: 16,
+              borderRadius: 12,
+              border: '1px solid var(--border-color)',
+              marginTop: 16,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+              <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                📝 التقرير السريري والتوصيات (Clinical Impression & IEP Bridge):
+              </h3>
               <button
                 type="button"
+                className="btn btn-sm btn-p"
                 onClick={applyAutoClinicalSummary}
-                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-2xs flex items-center gap-1.5"
+                style={{ fontWeight: 800, fontSize: '.78rem', background: '#3730a3', border: 'none' }}
               >
-                <span>✨</span> توليد التقرير السريري تلقائياً
+                ✨ توليد التقرير السريري تلقائياً
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12 }}>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
                   التقرير السريري وتفسير نسبة الذكاء غير اللفظي:
                 </label>
                 <textarea
-                  rows={6}
+                  className="in"
+                  rows={5}
+                  style={{ width: '100%', fontSize: '0.82rem', lineHeight: 1.5 }}
+                  placeholder="سيظهر التقرير هنا تلقائياً..."
                   value={form.clinicalSummary}
                   onChange={e => setForm(f => ({ ...f, clinicalSummary: e.target.value }))}
-                  placeholder="سيظهر التقرير هنا تلقائياً أو يمكنك كتابة ملاحظاتك الإكلينيكية..."
-                  className="w-full border border-slate-300 rounded-lg p-3 text-xs leading-relaxed font-sans focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
                   التوصيات التربوية للخطة الفردية (IEP):
                 </label>
                 <textarea
-                  rows={6}
+                  className="in"
+                  rows={5}
+                  style={{ width: '100%', fontSize: '0.82rem', lineHeight: 1.5 }}
+                  placeholder="التوصيات والتدخلات التعليمية المقترحة..."
                   value={form.recommendations}
                   onChange={e => setForm(f => ({ ...f, recommendations: e.target.value }))}
-                  placeholder="التوصيات والتدخلات التعليمية المقترحة للطالب..."
-                  className="w-full border border-slate-300 rounded-lg p-3 text-xs leading-relaxed font-sans focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
                 />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="p-4 bg-slate-100/80 border-t border-slate-200 flex items-center justify-between shrink-0">
-          <div className="text-xs text-slate-600 flex items-center gap-2">
-            <span>الذكاء غير اللفظي (NVIQ):</span>
-            <strong className="text-indigo-800 text-sm font-black">{psychometrics.nviq}</strong>
-            <span className="text-slate-400">|</span>
-            <span>مؤشر الانتباه (AMI):</span>
-            <strong className="text-cyan-800 text-sm font-black">{psychometrics.ami}</strong>
-          </div>
-
-          <div className="flex items-center gap-2">
+        {/* MODAL FOOTER */}
+        <div
+          style={{
+            padding: '10px 20px',
+            background: 'var(--g0)',
+            borderTop: '1px solid var(--border-color)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexShrink: 0,
+            gap: 10,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>
+              NVIQ: <strong style={{ color: '#0284c7' }}>{psychometrics.nviq}</strong> · AMI: <strong style={{ color: '#d97706' }}>{psychometrics.ami}</strong>
+            </span>
             {onOpenIepBridge && (
               <button
                 type="button"
+                className="btn btn-sm"
                 onClick={() => handleSave(true)}
-                className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-900 text-xs font-bold transition shadow-xs flex items-center gap-1.5"
+                style={{
+                  background: '#f0fdf4',
+                  color: '#15803d',
+                  border: '1px solid #86efac',
+                  fontWeight: 700,
+                  fontSize: '.78rem',
+                }}
               >
-                <span>🎯</span> حفظ ونقل إلى جسر الخطة (IEP)
+                🎯 حفظ ونقل إلى جسر الخطة (IEP)
               </button>
             )}
+          </div>
 
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" className="btn btn-g" onClick={safeClose} style={{ fontWeight: 700 }}>
+              إلغاء وخروج
+            </button>
             <button
               type="button"
-              onClick={handleSave}
-              className="px-5 py-2 rounded-lg bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-bold transition shadow-xs"
+              className="btn btn-p"
+              onClick={() => handleSave(false)}
+              style={{
+                fontWeight: 800,
+                background: 'linear-gradient(135deg, #4338ca 0%, #3730a3 100%)',
+                color: '#fff',
+                border: 'none',
+                padding: '8px 18px',
+              }}
             >
               💾 حفظ النتيجة والتقييم
-            </button>
-
-            <button
-              type="button"
-              onClick={safeClose}
-              className="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold transition"
-            >
-              إلغاء وخروج
             </button>
           </div>
         </div>
