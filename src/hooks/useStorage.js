@@ -3,7 +3,9 @@
  * المزامنة تلقائية عند تسجيل الدخول
  */
 import { uid } from '../utils/dateHelpers';
-import { fbGetAll, fbSet, fbUpdate, fbDelete, fbBatchSet } from '../firebase/db';
+import { fbGetAll, fbGetWhere, fbGetOne, fbSet, fbUpdate, fbDelete, fbBatchSet } from '../firebase/db';
+import { enqueue } from '../utils/offlineQueue';
+import { isTransientError, recordSyncFailure } from '../utils/syncFailures';
 
 export function getCenterId() {
   try {
@@ -64,6 +66,19 @@ export function lsSet(key, data) {
   }
 }
 
+// كتابة السحابة: الأخطاء المؤقتة تدخل الطابور، والنهائية (صلاحيات/حجم) تُعرض للمستخدم
+function cloudWrite(op) {
+  Promise.resolve()
+    .then(() => (op.type === 'delete'
+      ? fbDelete(op.centerId, op.col, op.docId)
+      : fbSet(op.centerId, op.col, op.docId, op.data)))
+    .catch(e => {
+      console.warn(`cloud ${op.type} ${op.col}:`, e);
+      if (isTransientError(e)) enqueue(op);
+      else recordSyncFailure(op, e);
+    });
+}
+
 export function lsAdd(key, item) {
   const cId = getCenterId();
   const newItem = { ...item, id: item.id || uid(), createdAt: item.createdAt || new Date().toISOString() };
@@ -73,7 +88,7 @@ export function lsAdd(key, item) {
   lsWrite(key, list);
 
   if (cId) {
-    fbSet(cId, key, newItem.id, newItem).catch(e => console.warn(`fbAdd ${key}:`, e));
+    cloudWrite({ type: 'set', centerId: cId, col: key, docId: newItem.id, data: newItem });
   }
 
   return newItem;
@@ -95,7 +110,7 @@ export function lsUpd(key, id, data) {
   }
   lsWrite(key, list);
   if (cId) {
-    fbSet(cId, key, id, { ...data, updatedAt: new Date().toISOString() }).catch(e => console.warn(`fbUpd ${key}:`, e));
+    cloudWrite({ type: 'set', centerId: cId, col: key, docId: id, data: { ...data, updatedAt: new Date().toISOString() } });
   }
 }
 
@@ -104,7 +119,7 @@ export function lsDel(key, id) {
   const list = lsGet(key).filter(x => x.id !== id);
   lsWrite(key, list);
   if (cId) {
-    fbDelete(cId, key, id).catch(e => console.warn(`fbDel ${key}:`, e));
+    cloudWrite({ type: 'delete', centerId: cId, col: key, docId: id });
   }
 }
 
@@ -139,6 +154,32 @@ export async function refreshAllSystemData(centerId) {
   return centerData;
 }
 
+// ولي الأمر: يجلب بيانات طفله فقط (يتطابق مع قواعد Firestore) وينظّف أي كاش قديم لغيره
+const PARENT_CHILD_KEYS = {
+  sessions: 'stuId', appointments: 'stuId', iepGoals: 'stuId', stuReports: 'stuId',
+  behaviorPlans: 'stuId', studentFees: 'stuId', payments: 'stuId', attStu: 'kidId',
+};
+const PARENT_SHARED_KEYS = ['centerEvents', 'centerActivities', 'calEvents', 'academicYears', 'centerCalendarConfig'];
+
+async function syncParentData(centerId, studentId) {
+  const keyOf = k => `${centerId}_${k}`;
+  if (!studentId) {
+    SYSTEM_DATA_KEYS.forEach(k => localStorage.removeItem(keyOf(k)));
+    return;
+  }
+  const jobs = [
+    ['students', fbGetOne(centerId, 'students', studentId)],
+    ...Object.entries(PARENT_CHILD_KEYS).map(([k, f]) => [k, fbGetWhere(centerId, k, f, studentId)]),
+    ...PARENT_SHARED_KEYS.map(k => [k, fbGetAll(centerId, k)]),
+  ];
+  const results = await Promise.all(jobs.map(j => j[1]));
+  const allowed = new Set(jobs.map(j => j[0]));
+  jobs.forEach(([k], i) => {
+    if (Array.isArray(results[i])) localStorage.setItem(keyOf(k), JSON.stringify(results[i]));
+  });
+  SYSTEM_DATA_KEYS.forEach(k => { if (!allowed.has(k)) localStorage.removeItem(keyOf(k)); });
+}
+
 export async function syncFromFirebase(centerId, keys, force = false) {
   if (!centerId) return;
 
@@ -148,6 +189,14 @@ export async function syncFromFirebase(centerId, keys, force = false) {
 
   // منع الاستعلامات المكررة إذا تمت المزامنة قبل أقل من 10 دقائق ولم يتم طلب إجبار المزامنة
   if (!force && (now - lastSyncTime < SYNC_COOLDOWN_MS)) {
+    return;
+  }
+
+  // ولي الأمر: مزامنة محصورة بطفله، ولا يرفع أي بيانات للسحابة
+  const sess = (() => { try { return JSON.parse(localStorage.getItem('scs_session') || 'null'); } catch (_) { return null; } })();
+  if (sess?.role === 'parent') {
+    await syncParentData(centerId, sess.studentId);
+    localStorage.setItem(lastSyncKey, String(now));
     return;
   }
 

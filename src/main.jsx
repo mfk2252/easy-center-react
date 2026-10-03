@@ -7,6 +7,9 @@ import './styles/global.css';
 import './styles/components.css';
 import './styles/layout.css';
 import './styles/programs.css';
+import { initOfflineSync } from './utils/offlineQueue';
+
+initOfflineSync();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

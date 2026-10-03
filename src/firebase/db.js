@@ -20,6 +20,22 @@ export async function fbGetAll(centerId, col, maxLimit = null) {
   } catch(e) { return []; }
 }
 
+// قراءة مقيّدة بحقل (تُستخدم لولي الأمر: يرجع null عند الفشل حتى لا نمسح الكاش)
+export async function fbGetWhere(centerId, col, field, value) {
+  try {
+    const snap = await getDocs(query(centerCol(centerId, col), where(field, '==', value)));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) { console.warn(`fbGetWhere ${col}:`, e?.code || e); return null; }
+}
+
+// قراءة مستند واحد بمعرّفه (مصفوفة بعنصر أو فارغة، أو null عند الفشل)
+export async function fbGetOne(centerId, col, docId) {
+  try {
+    const s = await getDoc(centerDoc(centerId, col, docId));
+    return s.exists() ? [{ id: s.id, ...s.data() }] : [];
+  } catch (e) { console.warn(`fbGetOne ${col}:`, e?.code || e); return null; }
+}
+
 export async function fbAdd(centerId, col, data) {
   try {
     const ref = await addDoc(centerCol(centerId, col), {

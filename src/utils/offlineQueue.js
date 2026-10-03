@@ -9,6 +9,9 @@
  * show "N changes pending sync".
  */
 
+import { auth } from '../firebase/config';
+import { isTransientError, recordSyncFailure } from './syncFailures';
+
 const QUEUE_KEY = 'scs_offline_queue';
 let processing = false;
 const listeners = new Set();
@@ -53,6 +56,8 @@ export function onQueueChange(fn) {
 export async function processQueue() {
   if (processing) return;
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+  // لا نعالج الطابور قبل اكتمال تسجيل الدخول، وإلا نُرفض بصلاحيات خاطئة
+  if (!auth.currentUser) return;
 
   const q = readQueue();
   if (q.length === 0) return;
@@ -61,8 +66,11 @@ export async function processQueue() {
   try {
     const { fbSet, fbDelete } = await import('../firebase/db');
     const remaining = [];
+    const currentCenter = localStorage.getItem('scs_current_uid');
 
     for (const op of q) {
+      // عمليات مركز آخر (مستخدم سابق على نفس الجهاز) تبقى ولا تُنفَّذ بحساب مختلف
+      if (op.centerId !== currentCenter) { remaining.push(op); continue; }
       try {
         if (op.type === 'set') {
           await fbSet(op.centerId, op.col, op.docId, op.data);
@@ -70,15 +78,21 @@ export async function processQueue() {
           await fbDelete(op.centerId, op.col, op.docId);
         }
       } catch (e) {
-        op.attempts = (op.attempts || 0) + 1;
-        // Keep retrying for a long time, but don't let a permanently-broken
-        // op (e.g. bad permissions) grow the queue forever.
-        if (op.attempts < 50) remaining.push(op);
-        else console.warn('Dropping offline op after 50 failed attempts:', op);
+        if (isTransientError(e)) {
+          op.attempts = (op.attempts || 0) + 1;
+          if (op.attempts < 50) remaining.push(op);
+          else recordSyncFailure(op, e);
+        } else {
+          // خطأ نهائي (صلاحيات/حجم): إعادة المحاولة لن تنفع، نُبلغ المستخدم
+          recordSyncFailure(op, e);
+        }
       }
     }
 
-    writeQueue(remaining);
+    // عمليات أُضيفت للطابور أثناء المعالجة يجب ألا تُمحى
+    const handled = new Set(q.map(o => o.id));
+    const added = readQueue().filter(o => !handled.has(o.id));
+    writeQueue([...remaining, ...added]);
   } finally {
     processing = false;
   }

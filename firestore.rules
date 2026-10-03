@@ -20,10 +20,7 @@ service cloud.firestore {
           request.auth.token.email_verified == true &&
           request.auth.token.email in ['mfk2252@gmail.com', 'mfekry225@gmail.com']
         ) ||
-        (
-          request.auth.token.firebase.sign_in_provider == 'password' &&
-          request.auth.token.email == 'admin.owner@easycenter.local'
-        )
+        request.auth.uid == 'jebFuJKEFBOYjd864sgtXPIEoY43'
       );
     }
 
@@ -59,25 +56,27 @@ service cloud.firestore {
     function isFeesCol(c) {
       return c in ['studentFees', 'payments'];
     }
-    // ما يُسمح لولي الأمر بقراءته (قراءة فقط)
-    function isParentReadableCol(c) {
-      return c in [
-        'students', 'sessions', 'appointments', 'attStu', 'iepGoals',
-        'stuReports', 'behaviorPlans',
-        'progPrograms', 'progReports', 'progWeeklyReports', 'progMonthlyReports',
-        'progSemiAnnualReports', 'progAnnualReports', 'progParentMeetings',
-        'centerEvents', 'centerActivities', 'calEvents',
-        'academicYears', 'centerCalendarConfig'
-      ];
+    // ولي الأمر محصور بطفله المربوط في users/{uid}.studentId
+    function parentStudentId() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('studentId', '');
+    }
+    function parentCanReadDoc(c, docId) {
+      return parentStudentId() != '' && (
+        c == 'students' ? docId == parentStudentId() :
+        c == 'attStu' ? resource.data.kidId == parentStudentId() :
+        c in ['sessions', 'appointments', 'iepGoals', 'stuReports', 'behaviorPlans', 'studentFees', 'payments']
+          ? resource.data.stuId == parentStudentId() :
+        c in ['centerEvents', 'centerActivities', 'calEvents', 'academicYears', 'centerCalendarConfig']
+      );
     }
 
-    function canReadCol(centerId, c) {
+    function canReadCol(centerId, c, docId) {
       return isPlatformAdmin() || isCenterManager(centerId) || (
         isCenterStaff(centerId) && (
           staffRole() == 'manager' ||
           (
             !isStrictManagerCol(c) && (
-              staffRole() == 'parent' ? isParentReadableCol(c) :
+              staffRole() == 'parent' ? parentCanReadDoc(c, docId) :
               isManagerViceCol(c) ? staffRole() == 'vice' :
               isFeesCol(c) ? staffRole() in ['vice', 'reception', 'secretary'] :
               true
@@ -136,7 +135,7 @@ service cloud.firestore {
 
       // [بند 2] المجموعات الفرعية حسب الدور
       match /{collection}/{docId} {
-        allow read: if canReadCol(centerId, collection);
+        allow read: if canReadCol(centerId, collection, docId);
         allow write: if canWriteCol(centerId, collection);
       }
     }

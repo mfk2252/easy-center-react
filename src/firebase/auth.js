@@ -24,6 +24,20 @@ export function isPlatformAdminEmail(email) {
   return e === 'mfk2252@gmail.com' || e === 'mfekry225@gmail.com' || e === PLATFORM_ADMIN_LOGIN_EMAIL;
 }
 
+/**
+ * تحقق صارم على مستخدم Firebase نفسه (وليس البريد وحده)، ويطابق منطق firestore.rules:
+ * - حسابات Gmail: دخول عبر Google + بريد موثّق.
+ * - الحساب الداخلي: دخول بكلمة مرور فقط ومطابقة UID.
+ */
+export function isVerifiedPlatformAdmin(fbUser) {
+  if (!fbUser || !isPlatformAdminEmail(fbUser.email)) return false;
+  const providers = (fbUser.providerData || []).map(p => p.providerId);
+  if (fbUser.email.trim().toLowerCase() === PLATFORM_ADMIN_LOGIN_EMAIL) {
+    return providers.includes('password') || fbUser.uid === 'jebFuJKEFBOYjd864sgtXPIEoY43';
+  }
+  return fbUser.emailVerified === true && providers.includes('google.com');
+}
+
 /** يتحقق بشكل قاطع أن المستخدم الحالي هو مالك ومطور المنصة الفعلي، وليس مستخدماً أو نائباً */
 export function isCurrentPlatformOwner(user) {
   if (!user) return false;
@@ -176,7 +190,7 @@ export async function signInWithGoogle() {
   const user = result.user;
 
   // فحص الحصانة (Super Admin)
-  if (isPlatformAdminEmail(user.email)) {
+  if (isVerifiedPlatformAdmin(user)) {
     return {
       uid: user.uid,
       email: user.email,
@@ -249,7 +263,7 @@ export async function signInWithEmailPassword(email, password) {
 
   const user = result.user;
 
-  if (isPlatformAdminEmail(user.email)) {
+  if (isVerifiedPlatformAdmin(user)) {
     return {
       uid: user.uid,
       email: user.email,

@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { getCenterSettings } from '../firebase/db';
-import { signOutUser, checkSubscriptionStatus, isPlatformAdminEmail } from '../firebase/auth';
+import { signOutUser, checkSubscriptionStatus, isPlatformAdminEmail, isVerifiedPlatformAdmin } from '../firebase/auth';
 import { syncFromFirebase, SYSTEM_DATA_KEYS } from '../hooks/useStorage';
 import { getWelcomeMessage } from './LanguageContext';
 import { persistCenterMeta, getCenterPrintMeta } from '../utils/centerMeta';
@@ -199,7 +199,7 @@ export function AppProvider({ children }) {
       unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
         clearTimeout(loadingTimeout);
         if (fbUser) {
-          if (isPlatformAdminEmail(fbUser.email)) {
+          if (isVerifiedPlatformAdmin(fbUser)) {
             const adminUser = buildPlatformAdminUser(fbUser);
             localStorage.setItem('scs_current_uid', fbUser.uid);
             localStorage.setItem('scs_session', JSON.stringify(adminUser));
