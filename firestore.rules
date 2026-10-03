@@ -3,27 +3,36 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ===============================================================
-    // دوال الأمان المساعدة (Helper Functions)
+    // دوال مساعدة
     // ===============================================================
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // هل المستخدم هو مالك ومطور المنصة الأساسي (Super Admin)
+    // [بند 3] مالك المنصة: لا نكتفي بمطابقة الإيميل، بل نتحقق من طريقة الدخول.
+    // - حسابا Gmail: يجب أن يكون الدخول عبر Google والإيميل موثّقاً
+    //   (فلا يستطيع أحد إنشاء حساب Email/Password بنفس الإيميل ويصبح مالكاً).
+    // - الحساب الداخلي admin.owner@easycenter.local: دخول بكلمة مرور فقط.
     function isPlatformAdmin() {
       return isSignedIn() && (
-        request.auth.token.email == 'mfk2252@gmail.com' ||
-        request.auth.token.email == 'mfekry225@gmail.com' ||
-        request.auth.token.email == 'admin.owner@easycenter.local'
+        (
+          request.auth.token.firebase.sign_in_provider == 'google.com' &&
+          request.auth.token.email_verified == true &&
+          request.auth.token.email in ['mfk2252@gmail.com', 'mfekry225@gmail.com']
+        ) ||
+        (
+          request.auth.token.firebase.sign_in_provider == 'password' &&
+          request.auth.token.email == 'admin.owner@easycenter.local'
+        )
       );
     }
 
-    // هل المستخدم هو مدير المركز صاحب الوثيقة (UID يطابق centerId)
+    // مدير المركز صاحب الوثيقة (UID يطابق centerId)
     function isCenterManager(centerId) {
       return isSignedIn() && request.auth.uid == centerId;
     }
 
-    // هل المستخدم موظف نشط تابع لهذا المركز ومسجل في كولكشن users
+    // موظف/ولي أمر نشط تابع لهذا المركز
     function isCenterStaff(centerId) {
       return isSignedIn() &&
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
@@ -31,51 +40,122 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active != false;
     }
 
-    // هل للمستخدم صلاحية على بيانات المركز (مدير المركز أو موظف نشط فيه أو مدير المنصة)
-    function canAccessCenter(centerId) {
-      return isPlatformAdmin() || isCenterManager(centerId) || isCenterStaff(centerId);
+    function staffRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
 
     // ===============================================================
-    // 1. قواعد عزْل بيانات المراكز ومجموعاتها الفرعية (Multi-Tenant Isolation)
+    // [بند 2] تصنيف المجموعات حسب الحساسية
+    // ===============================================================
+    // مالية ورواتب: مدير المركز فقط
+    function isStrictManagerCol(c) {
+      return c in ['salaries', 'income', 'expenses', 'invoices', 'financialAccounts', 'bonuses'];
+    }
+    // إنذارات الموظفين: المدير ونائبه
+    function isManagerViceCol(c) {
+      return c in ['warnings'];
+    }
+    // رسوم ودفعات الطلاب: المدير ونائبه والاستقبال والسكرتارية
+    function isFeesCol(c) {
+      return c in ['studentFees', 'payments'];
+    }
+    // ما يُسمح لولي الأمر بقراءته (قراءة فقط)
+    function isParentReadableCol(c) {
+      return c in [
+        'students', 'sessions', 'appointments', 'attStu', 'iepGoals',
+        'stuReports', 'behaviorPlans',
+        'progPrograms', 'progReports', 'progWeeklyReports', 'progMonthlyReports',
+        'progSemiAnnualReports', 'progAnnualReports', 'progParentMeetings',
+        'centerEvents', 'centerActivities', 'calEvents',
+        'academicYears', 'centerCalendarConfig'
+      ];
+    }
+
+    function canReadCol(centerId, c) {
+      return isPlatformAdmin() || isCenterManager(centerId) || (
+        isCenterStaff(centerId) && (
+          staffRole() == 'manager' ||
+          (
+            !isStrictManagerCol(c) && (
+              staffRole() == 'parent' ? isParentReadableCol(c) :
+              isManagerViceCol(c) ? staffRole() == 'vice' :
+              isFeesCol(c) ? staffRole() in ['vice', 'reception', 'secretary'] :
+              true
+            )
+          )
+        )
+      );
+    }
+
+    function canWriteCol(centerId, c) {
+      return isPlatformAdmin() || isCenterManager(centerId) || (
+        isCenterStaff(centerId) && (
+          staffRole() == 'manager' ||
+          (
+            !isStrictManagerCol(c) &&
+            staffRole() != 'parent' && (
+              isManagerViceCol(c) ? staffRole() == 'vice' :
+              isFeesCol(c) ? staffRole() in ['vice', 'reception', 'secretary'] :
+              c == 'employees' ? staffRole() == 'vice' :
+              c == 'leaves' ? staffRole() in ['vice', 'reception', 'secretary'] :
+              true
+            )
+          )
+        )
+      );
+    }
+
+    // [بند 1] إنشاء مركز جديد: يُسمح فقط بفترة تجريبية (أو بلا حقل اشتراك)،
+    // بحيث لا يُنشئ المدير مركزه وهو "active" أو بتجربة طويلة.
+    function validNewSubscription() {
+      return !('subscription' in request.resource.data) || (
+        request.resource.data.subscription.status == 'trial' &&
+        request.resource.data.subscription.trialExpiry is timestamp &&
+        request.resource.data.subscription.trialExpiry <= request.time + duration.value(7, 'd')
+      );
+    }
+
+    // ===============================================================
+    // 1. المراكز وبياناتها (عزل كامل بين المراكز)
     // ===============================================================
     match /centers/{centerId} {
-      // قراءة بيانات المركز: مسموحة فقط للمدير أو منسوبي المركز النشطين أو مدير المنصة
-      allow read: if canAccessCenter(centerId);
+      allow read: if isPlatformAdmin() || isCenterManager(centerId) || isCenterStaff(centerId);
 
-      // إنشاء مركز جديد: مسموح عند التسجيل للمدير نفسه (uid == centerId) أو لمدير المنصة
-      allow create: if isSignedIn() && (request.auth.uid == centerId || isPlatformAdmin());
+      allow create: if isPlatformAdmin() || (
+        isSignedIn() && request.auth.uid == centerId && validNewSubscription()
+      );
 
-      // تعديل أو حذف بيانات المركز: محصورة بمدير المركز نفسه أو مالك المنصة فقط (يُمنع الموظفون)
-      allow update, delete: if isPlatformAdmin() || isCenterManager(centerId);
+      // [بند 1] المدير يعدّل بيانات مركزه لكن لا يلمس حقل الاشتراك أبداً
+      allow update: if isPlatformAdmin() || (
+        isCenterManager(centerId) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['subscription'])
+      );
 
-      // 🛡️ المجموعات الفرعية للبيانات (الطلاب، الموظفون، الحضور، الجلسات، الخطط، التقييمات...)
+      // [بند 1] الحذف لمالك المنصة فقط (حتى لا يحذف المدير مركزه ويعيد إنشاءه بتجربة جديدة)
+      allow delete: if isPlatformAdmin();
+
+      // [بند 2] المجموعات الفرعية حسب الدور
       match /{collection}/{docId} {
-        allow read: if canAccessCenter(centerId);
-        allow write: if canAccessCenter(centerId);
+        allow read: if canReadCol(centerId, collection);
+        allow write: if canWriteCol(centerId, collection);
       }
     }
 
     // ===============================================================
-    // 2. كولكشن حسابات المستخدمين والمنسوبين (users)
+    // 2. حسابات المستخدمين (users)
     // ===============================================================
     match /users/{userId} {
-      // قراءة الملف الشخصي: للمستخدم نفسه، أو مدير مركزه، أو مدير المنصة
       allow read: if isSignedIn() && (
         request.auth.uid == userId ||
         isPlatformAdmin() ||
         (resource != null && isCenterManager(resource.data.centerId))
       );
 
-      // إنشاء حساب موظف جديد: محصور بمدير ذلك المركز أو مالك المنصة
       allow create: if isSignedIn() && (
         isPlatformAdmin() ||
         (request.resource.data.centerId != null && isCenterManager(request.resource.data.centerId))
       );
 
-      // تحديث الحساب:
-      // 1. مالك المنصة أو مدير المركز يملكان صلاحية الإدارة (دون نقله لمركز آخر)
-      // 2. الموظف نفسه يمكنه تعديل بياناته الشخصية، ويُمنع منعاً باتاً من التلاعب بـ centerId أو role أو permissions أو active
       allow update: if isSignedIn() && (
         isPlatformAdmin() ||
         (
@@ -91,7 +171,6 @@ service cloud.firestore {
         )
       );
 
-      // حذف الحساب: محصور بمدير المركز أو مالك المنصة فقط (يُمنع الموظف من حذف حسابه)
       allow delete: if isSignedIn() && (
         isPlatformAdmin() ||
         (resource != null && isCenterManager(resource.data.centerId))
@@ -99,19 +178,16 @@ service cloud.firestore {
     }
 
     // ===============================================================
-    // 3. فهرس تسجيل الدخول لأسماء المستخدمين (staffLoginIndex)
+    // 3. فهرس أسماء المستخدمين (قراءة عامة ضرورية لتسجيل الدخول)
     // ===============================================================
     match /staffLoginIndex/{username} {
-      // قراءة الفهرس مسموحة للتحقق من هوية المستخدم عند تسجيل الدخول
       allow read: if true;
 
-      // حجز اسم المستخدم: مسموح فقط لمدير المركز صاحب الحساب أو مالك المنصة
       allow create: if isSignedIn() && (
         isPlatformAdmin() ||
         (request.resource.data.centerId != null && isCenterManager(request.resource.data.centerId))
       );
 
-      // التحديث أو الحذف: محصور بمدير المركز نفسه المالك للاسم أو مالك المنصة
       allow update, delete: if isSignedIn() && (
         isPlatformAdmin() ||
         (resource != null && isCenterManager(resource.data.centerId))
@@ -119,16 +195,17 @@ service cloud.firestore {
     }
 
     // ===============================================================
-    // 4. طلبات التجربة والعملاء المحتملين (trialLeads)
+    // 4. طلبات التجربة (trialLeads)
     // ===============================================================
     match /trialLeads/{leadId} {
-      // يُسمح للزوار بطلب تجربة مع التحقق من الحقول الأساسية ومكافحة الإغراق
       allow create: if request.resource.data.name is string &&
                        request.resource.data.name.size() > 0 &&
                        request.resource.data.name.size() < 150 &&
-                       request.resource.data.status == 'new';
+                       request.resource.data.status == 'new' &&
+                       request.resource.data.get('email', '').size() < 200 &&
+                       request.resource.data.get('org', '').size() < 200 &&
+                       request.resource.data.get('note', '').size() < 1000;
 
-      // قراءة وإدارة وتعديل العملاء المحتملين محصورة حصرياً بمالك المنصة
       allow read, update, delete: if isPlatformAdmin();
     }
   }
