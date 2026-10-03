@@ -910,6 +910,12 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
       return false;
     }
 
+    const isIntelligenceFeatured = (selectedCategoryFilter === 'all' || selectedCategoryFilter === 'intelligence_cognitive') && !searchTerm;
+    const isIntelligenceScale = ['wisc_5', 'wisc5', 'wisc', 'wechsler'].includes(s.id);
+    if (isIntelligenceFeatured && isIntelligenceScale) {
+      return false;
+    }
+
     return matchCat && matchSearch;
   });
 
