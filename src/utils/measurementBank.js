@@ -8,6 +8,21 @@ import { FAMILY_DISINTEGRATION_ITEMS, calculateFamilyDisintegrationScore } from 
 import { SENSORY_INTEGRATION_ITEMS, calculateSensoryIntegrationScore } from '../data/sensoryIntegrationData';
 import { SENSORY_CHECKLIST_ITEMS, calculateSensoryChecklistScore } from '../data/sensoryChecklistData';
 
+import { ABAS_ITEMS, calculateABASScore } from '../data/abasData';
+import { LIFE_SKILLS_ITEMS, calculateLifeSkillsScore } from '../data/lifeSkillsData';
+import { ASQ3_ITEMS, calculateASQ3Score } from '../data/asq3Data';
+import { DENVER2_ITEMS, calculateDenver2Score } from '../data/denver2Data';
+import { SDQ_ITEMS, calculateSDQScore } from '../data/sdqData';
+import { EMOTIONAL_ADJUSTMENT_ITEMS, calculateEmotionalAdjustmentScore } from '../data/emotionalAdjustmentData';
+import { VANDERBILT_ITEMS, calculateVanderbiltScore } from '../data/vanderbiltAdhdData';
+import { EXECUTIVE_CONTROL_ITEMS, calculateExecutiveControlScore } from '../data/executiveControlData';
+import { EXECUTIVE_PLANNING_ITEMS, calculateExecutivePlanningScore } from '../data/executivePlanningData';
+import { FUNCTIONAL_HEARING_ITEMS, calculateFunctionalHearingScore } from '../data/functionalHearingData';
+import { ORIENTATION_MOBILITY_ITEMS, calculateOrientationMobilityScore } from '../data/orientationMobilityData';
+import { TRANSITION_PLANNING_ITEMS, calculateTransitionPlanningScore } from '../data/transitionPlanningData';
+import { INDEPENDENT_LIVING_ITEMS, calculateIndependentLivingScore } from '../data/independentLivingData';
+import { SYMBOLIC_PLAY_ITEMS, calculateSymbolicPlayScore } from '../data/symbolicPlayData';
+
 import { CONNERS_PARENT_ITEMS, calculateConnersParentScore } from "../data/connersParentData";
 import { MCHAT_ITEMS } from '../data/mchatData';
 import { ATEC_ITEMS } from '../data/atecData';
@@ -988,6 +1003,40 @@ const DEFAULT_SCALE_LIBRARY = [
     thresholdText: 'درجة معيارية تكيفية أقل من 70 تدل على احتياج دعم تكيفي وتأهيلي مكثف',
     isDefault: true,
   },
+  {
+    id: 'abas_3_adaptation',
+    name: 'مقياس السلوك التكيفي للطفولة (ABAS-3 Adaptation)',
+    nameEn: 'Adaptive Behavior Assessment System — Open Access Field Version',
+    category: 'adaptive_behavior',
+    description: 'تقييم شامل ومقنن للسلوك التكيفي عبر المجالات الثلاثة الرئيسية: المفاهيمية اللغوية، الاجتماعية، والعملية الاستقلالية (25 بنداً ملاحظياً)',
+    icon: '🏠',
+    color: '#059669',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 75,
+    items: ABAS_ITEMS,
+    thresholdText: 'الدرجة الخام المرتفعة تشير لدرجة تكيف واستقلالية عالية | الدرجة < 40 تدل على قصور حاد في السلوك التكيفي',
+    isDefault: true,
+  },
+  {
+    id: 'life_skills_scale',
+    name: 'قائمة مهارات الاستقلالية والرعاية الذاتية للطفولة',
+    nameEn: 'Self-Independence & Life Skills Assessment Scale',
+    category: 'adaptive_behavior',
+    description: 'تقييم مهارات النظافة الشخصية، ارتداء الملابس، تناول الطعام، والسلامة العامة والاستقلالية المنزلية (20 بنداً)',
+    icon: '🏠',
+    color: '#059669',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 60,
+    items: LIFE_SKILLS_ITEMS,
+    thresholdText: 'الدرجة المرتفعة تعكس درجة استقلالية ورعاية ذاتية ممتازة | < 27 تدل على احتياج تدريب واستقلالية',
+    isDefault: true,
+  },
 
   // 6. Developmental & Early Intervention Scales (النمو الشامل والتدخل المبكر)
   {
@@ -1012,6 +1061,40 @@ const DEFAULT_SCALE_LIBRARY = [
       { id: 'port_6', text: 'المجال الاجتماعي والانفعالي والتفاعل مع الأسرة', domain: 'social' },
     ],
     thresholdText: 'حساب العمر النمائي ومقارنته بالعمر الزمني لتحديد نسبة التأخر النمائي',
+    isDefault: true,
+  },
+  {
+    id: 'asq3_developmental',
+    name: 'استبيان الأعمار والمراحل النمائية للطفولة المبكرة (ASQ-3)',
+    nameEn: 'Ages & Stages Questionnaires — Open Developmental Screening (ASQ-3)',
+    category: 'developmental_early',
+    description: 'أداة المسح والفرز النمائي الشاملة للأطفال في الطفولة المبكرة عبر 5 أبعاد: التواصل، الحركة الكبرى، الحركة الدقيقة، حل المشكلات، والشخصي الاجتماعي (25 بنداً)',
+    icon: '🌱',
+    color: '#16a34a',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 2,
+    maxScore: 50,
+    items: ASQ3_ITEMS,
+    thresholdText: 'الدرجة < 25 (أقل من 50%): تأخر نمائي يستدعي التقويم المباشر | 25-34: منطقة المتابعة الحذرة | >= 35: نمو طبيعي',
+    isDefault: true,
+  },
+  {
+    id: 'denver2_screening',
+    name: 'مقياس دنفر المطور للفرز النمائي (Denver II)',
+    nameEn: 'Denver II Developmental Screening Scale — Open Field Version',
+    category: 'developmental_early',
+    description: 'مقياس مسح وتقييم المعالم النمائية الرئيسية من الرضاعة حتى ما قبل المدرسة عبر الأبعاد الأربعة المعيارية (25 بنداً ملاحظياً)',
+    icon: '🌱',
+    color: '#16a34a',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 2,
+    maxScore: 50,
+    items: DENVER2_ITEMS,
+    thresholdText: 'الدرجة < 25: تأخر نمائي يستدعي التدخل | 25-34: منطقة متابعة حذرة | >= 35: تطور طبيعي مناسب لعمره',
     isDefault: true,
   },
 
@@ -1042,6 +1125,40 @@ const DEFAULT_SCALE_LIBRARY = [
     thresholdText: 'ارتفاع الدرجات يتطلب إعداد خطة تدخل سلوكي إيجابي (BIP) فورية',
     isDefault: true,
   },
+  {
+    id: 'sdq_strengths_difficulties',
+    name: 'استبيان القوة والصعوبات السلوكية للأطفال (SDQ)',
+    nameEn: 'Strengths and Difficulties Questionnaire (SDQ — Open Access)',
+    category: 'behavioral_emotional',
+    description: 'الأداة العالمية المفتوحة لتقييم الصعوبات الانفعالية والسلوكية والعلاقات مع الأقران والسلوك الاجتماعي الإيجابي (25 فقرة مقننة)',
+    icon: '❤️',
+    color: '#dc2626',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 2,
+    maxScore: 40,
+    items: SDQ_ITEMS,
+    thresholdText: 'مجموع الصعوبات >= 17: صعوبات سلوكية وانفعالية بارزة دالة إكلينيكياً | 14-16: منطقة حدية | < 14: ضمن الحدود الطبيعية',
+    isDefault: true,
+  },
+  {
+    id: 'emotional_adjustment_scale',
+    name: 'مقياس التوافق الانفعالي والقلق للأطفال',
+    nameEn: 'Child Emotional Adjustment & Anxiety Scale',
+    category: 'behavioral_emotional',
+    description: 'تقييم القلق والتوتر والمخاوف والانغلاق الانفعالي والاستقرار النفسي العام لدى الأطفال (20 بنداً)',
+    icon: '❤️',
+    color: '#dc2626',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 60,
+    items: EMOTIONAL_ADJUSTMENT_ITEMS,
+    thresholdText: 'الدرجة المرتفعة >= 35 تشير إلى اضطراب انفعالي وقلق حاد يستدعي الدعم النفسي وإرشاد الأخصائي',
+    isDefault: true,
+  },
 
   // 8. ADHD Scales (فرط الحركة وتشتت الانتباه)
   {
@@ -1064,6 +1181,23 @@ const DEFAULT_SCALE_LIBRARY = [
       domain: 'adhd_parent',
     })),
     thresholdText: 'درجة معيارية تائية (T-Score) أعلى من 65 تشير إلى دلالة إكلينيكية مرتفعة تستدعي خطة تدخل',
+    isDefault: true,
+  },
+  {
+    id: 'vanderbilt_adhd_scale',
+    name: 'مقياس فاندربرلت لتشخيص فرط الحركة وتشتت الانتباه (Vanderbilt ADHD)',
+    nameEn: 'Vanderbilt ADHD Diagnostic Parent Rating Scale (Open Access)',
+    category: 'adhd',
+    description: 'الأداة المعتمدة المفتوحة المصدر لتقييم أعراض قصور الانتباه، فرط الحركة والاندفاعية، والسلوك المعارض وفق معايير DSM (27 بنداً تشخيصياً)',
+    icon: '⚡',
+    color: '#ea580c',
+    scoreMode: 'subscale',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 81,
+    items: VANDERBILT_ITEMS,
+    thresholdText: 'انتباه >= 15 فرط حركة >= 15: نمط مركب | انتباه >= 15: نمط تشتت الانتباه | فرط حركة >= 15: نمط اندفاعي حركي',
     isDefault: true,
   },
   {
@@ -1119,6 +1253,40 @@ const DEFAULT_SCALE_LIBRARY = [
       { id: 'ef_7', text: 'المراقبة الذاتية وملاحظة الأخطاء وتصحيحها', domain: 'self_monitor' },
     ],
     thresholdText: 'مؤشر التنظيم السلوكي والمعرفي يعكس كفاءة الفص الجبهي للتعلم المستقل',
+    isDefault: true,
+  },
+  {
+    id: 'executive_control_scale',
+    name: 'مقياس الذاكرة العاملة والضبط المعرفي للوظائف التنفيذية',
+    nameEn: 'Working Memory & Cognitive Control Executive Functioning Scale',
+    category: 'executive_functioning',
+    description: 'مقياس ميداني لتقييم الذاكرة العاملة، المرونة المعرفية، والتخطيط وكبح الاستجابة السلوكية (20 بنداً ملاحظياً)',
+    icon: '⚙️',
+    color: '#4f46e5',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 60,
+    items: EXECUTIVE_CONTROL_ITEMS,
+    thresholdText: 'الدرجة المرتفعة تعكس كفاءة ممتازة في الضبط التنفيذي | الدرجة < 27 تشير إلى قصور ملحوظ يستدعي التدخل',
+    isDefault: true,
+  },
+  {
+    id: 'executive_planning_scale',
+    name: 'مقياس التخطيط والتنظيم وكبح الاستجابة السلوكية',
+    nameEn: 'Executive Planning, Organization & Response Inhibition Scale',
+    category: 'executive_functioning',
+    description: 'تقييم كفاءة التخطيط المسبق، إدارة الوقت، المراقبة الذاتية للأخطاء، وكبح الاندفاعية (15 بنداً ملاحظياً)',
+    icon: '⚙️',
+    color: '#4f46e5',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 45,
+    items: EXECUTIVE_PLANNING_ITEMS,
+    thresholdText: 'الدرجة المرتفعة تعكس انضباطاً وتخطيطاً ممتازين | < 20 تشير لضعف التخطيط وكبح الاستجابة',
     isDefault: true,
   },
 
@@ -1201,6 +1369,40 @@ const DEFAULT_SCALE_LIBRARY = [
     thresholdText: 'تحديد الوسائل المعينة البصرية وبرنامج التوجه والحركة المناسب',
     isDefault: true,
   },
+  {
+    id: 'functional_hearing_eval',
+    name: 'مقياس التقييم الوظيفي للسمع وضعف السمع (FHA)',
+    nameEn: 'Functional Hearing Assessment Scale (FHA)',
+    category: 'sensory_impairments',
+    description: 'تقييم الاستجابة السمعية، تحديد مصدر الصوت، والتمييز السمعي وفهم الكلام شفهياً في البيئات المختلفة (20 بنداً)',
+    icon: '👂',
+    color: '#9333ea',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 60,
+    items: FUNCTIONAL_HEARING_ITEMS,
+    thresholdText: 'الدرجة الخام المرتفعة تشير لكفاءة سمعية وظيفية ممتازة | < 27 تدل على قصور سمعي وظيفي يتطلب تأهيلاً',
+    isDefault: true,
+  },
+  {
+    id: 'orientation_mobility_scale',
+    name: 'مقياس التوجه والحركة واستقلال الحركة المكاني (O&M)',
+    nameEn: 'Orientation & Mobility Functional Assessment Scale',
+    category: 'sensory_impairments',
+    description: 'تقييم الاستدلال المكاني، استخدام الحواس المتبقية، تقنيات الحماية الذاتية والعصا البيضاء لذوي الإعاقات الحسية (15 بنداً)',
+    icon: '👁️',
+    color: '#9333ea',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 45,
+    items: ORIENTATION_MOBILITY_ITEMS,
+    thresholdText: 'الدرجة المرتفعة تعكس استقلالاً حركياً ومكانياً ممتازاً | < 20 تدل على احتياج تدريب مكثف على الحركة',
+    isDefault: true,
+  },
 
   // 12. Vocational & Transition Scales (التأهيل المهني والتخطيط الانتقالي)
   {
@@ -1227,6 +1429,40 @@ const DEFAULT_SCALE_LIBRARY = [
     thresholdText: 'تحديد مؤشر الجاهزية للتوظيف المدعوم أو التوظيف المستقل في سوق العمل',
     isDefault: true,
   },
+  {
+    id: 'transition_planning_inventory',
+    name: 'قائمة مهارات التخطيط الانتقالي والجاهزية للعمل',
+    nameEn: 'Transition Planning & Employability Skills Inventory',
+    category: 'vocational_transition',
+    description: 'تقييم شامل لعادات العمل، التواصل المهني مع المشرف، والسلامة المهنية وتحديد الاستعداد للتوظيف (20 بنداً)',
+    icon: '💼',
+    color: '#475569',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 60,
+    items: TRANSITION_PLANNING_ITEMS,
+    thresholdText: 'الدرجة المرتفعة تشير لجاهزية توظيف عالية | < 27 تدل على حاجته لبرنامج تأهيل مهني وانتقالي مكثف',
+    isDefault: true,
+  },
+  {
+    id: 'independent_living_scale',
+    name: 'مقياس الميول المهنية والاستقلال في المعيشة المستقلة',
+    nameEn: 'Vocational Interests & Independent Living Assessment Scale',
+    category: 'vocational_transition',
+    description: 'تقييم إدارة النقود، التنقل المستقل، العناية بالمنزل، الميول المهنية، والدفاع عن الذات (20 بنداً)',
+    icon: '💼',
+    color: '#475569',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 60,
+    items: INDEPENDENT_LIVING_ITEMS,
+    thresholdText: 'الدرجة المرتفعة تعكس استقلالاً معيشياً ومهنياً ممتازاً | < 27 تدل على الحاجة لبرنامج استقلالية',
+    isDefault: true,
+  },
 
   // 13. Play & Environmental Scales (اللعب والتقييم البيئي والأسري)
   {
@@ -1251,6 +1487,23 @@ const DEFAULT_SCALE_LIBRARY = [
       { id: 'play_6', text: 'مستوى التفاعل الإيجابي اليومي والدعم بين الأسرة والطفل', domain: 'family_interaction' },
     ],
     thresholdText: 'تحديد مرحلة اللعب الحالية وتوجيه أولياء الأمور لتطوير استراتيجيات اللعب النمائي',
+    isDefault: true,
+  },
+  {
+    id: 'symbolic_play_scale',
+    name: 'مقياس مهارات اللعب الرمزي والتفاعل التشاركي',
+    nameEn: 'Symbolic Play & Social Interaction Assessment Scale',
+    category: 'play_environmental',
+    description: 'تقييم مراحل اللعب الوظيفي، الرمزي، والتخيل التشاركي مع الأقران واشتقاق الخطة الفردية (20 بنداً)',
+    icon: '🎲',
+    color: '#db2777',
+    scoreMode: 'sum',
+    responseType: 'scale',
+    minValue: 0,
+    maxValue: 3,
+    maxScore: 60,
+    items: SYMBOLIC_PLAY_ITEMS,
+    thresholdText: 'الدرجة المرتفعة تدل على تطور ممتاز في اللعب الرمزي والاجتماعي | < 27 تدل على احتياج تدريب نمائي باللعب',
     isDefault: true,
   },
   {
@@ -1419,6 +1672,220 @@ export function buildAssessmentResult(scale, answers = {}) {
       subscales: famResult.subscales,
       isFamilyDisintegration: true,
       theoreticalMean: famResult.theoreticalMean,
+    };
+  }
+
+  if (scale?.id === 'abas_3_adaptation') {
+    const res = calculateABASScore(answers);
+    return {
+      total: res.totalRawScore,
+      score: res.totalRawScore,
+      maxScore: res.maxPossible,
+      percentage: `${res.percentage}%`,
+      percentageNum: res.percentage,
+      level: res.level,
+      color: res.severityColor,
+      severityColor: res.severityColor,
+      note: res.interpretation,
+    };
+  }
+
+  if (scale?.id === 'life_skills_scale') {
+    const res = calculateLifeSkillsScore(answers);
+    return {
+      total: res.totalRawScore,
+      score: res.totalRawScore,
+      maxScore: res.maxPossible,
+      percentage: `${res.percentage}%`,
+      percentageNum: res.percentage,
+      level: res.level,
+      color: res.severityColor,
+      severityColor: res.severityColor,
+      note: res.interpretation,
+    };
+  }
+
+  if (scale?.id === 'asq3_developmental') {
+    const res = calculateASQ3Score(answers);
+    return {
+      total: res.totalRawScore,
+      score: res.totalRawScore,
+      maxScore: res.maxPossible,
+      percentage: `${res.percentage}%`,
+      percentageNum: res.percentage,
+      level: res.level,
+      color: res.severityColor,
+      severityColor: res.severityColor,
+      note: res.interpretation,
+    };
+  }
+
+  if (scale?.id === 'denver2_screening') {
+    const res = calculateDenver2Score(answers);
+    return {
+      total: res.totalRawScore,
+      score: res.totalRawScore,
+      maxScore: res.maxPossible,
+      percentage: `${res.percentage}%`,
+      percentageNum: res.percentage,
+      level: res.level,
+      color: res.severityColor,
+      severityColor: res.severityColor,
+      note: res.interpretation,
+    };
+  }
+
+  if (scale?.id === 'sdq_strengths_difficulties') {
+    const res = calculateSDQScore(answers);
+    return {
+      total: res.totalDifficultiesScore,
+      score: res.totalDifficultiesScore,
+      maxScore: res.maxDifficulties,
+      percentage: `${Math.round((res.totalDifficultiesScore / res.maxDifficulties) * 100)}%`,
+      percentageNum: Math.round((res.totalDifficultiesScore / res.maxDifficulties) * 100),
+      level: res.level,
+      color: res.severityColor,
+      severityColor: res.severityColor,
+      prosocialScore: res.prosocialScore,
+      note: res.interpretation,
+    };
+  }
+
+  if (scale?.id === 'emotional_adjustment_scale') {
+    const res = calculateEmotionalAdjustmentScore(answers);
+    return {
+      total: res.totalRawScore,
+      score: res.totalRawScore,
+      maxScore: res.maxPossible,
+      percentage: `${res.percentage}%`,
+      percentageNum: res.percentage,
+      level: res.level,
+      color: res.severityColor,
+      severityColor: res.severityColor,
+      note: res.interpretation,
+    };
+  }
+
+  if (scale?.id === 'vanderbilt_adhd_scale') {
+    const res = calculateVanderbiltScore(answers);
+    return {
+      total: res.totalRawScore,
+      score: res.totalRawScore,
+      maxScore: res.maxPossible,
+      percentage: `${Math.round((res.totalRawScore / res.maxPossible) * 100)}%`,
+      percentageNum: Math.round((res.totalRawScore / res.maxPossible) * 100),
+      level: res.level,
+      color: res.severityColor,
+      severityColor: res.severityColor,
+      inattentionScore: res.inattentionScore,
+      hyperactivityScore: res.hyperactivityScore,
+      oddConductScore: res.oddConductScore,
+      note: res.interpretation,
+    };
+  }
+
+  if (scale?.id === 'executive_control_scale') {
+    const res = calculateExecutiveControlScore(answers);
+    return {
+      total: res.totalRawScore,
+      score: res.totalRawScore,
+      maxScore: res.maxPossible,
+      percentage: `${res.percentage}%`,
+      percentageNum: res.percentage,
+      level: res.level,
+      color: res.severityColor,
+      severityColor: res.severityColor,
+      note: res.interpretation,
+    };
+  }
+
+  if (scale?.id === 'executive_planning_scale') {
+    const res = calculateExecutivePlanningScore(answers);
+    return {
+      total: res.totalRawScore,
+      score: res.totalRawScore,
+      maxScore: res.maxPossible,
+      percentage: `${res.percentage}%`,
+      percentageNum: res.percentage,
+      level: res.level,
+      color: res.severityColor,
+      severityColor: res.severityColor,
+      note: res.interpretation,
+    };
+  }
+
+  if (scale?.id === 'functional_hearing_eval') {
+    const res = calculateFunctionalHearingScore(answers);
+    return {
+      total: res.totalRawScore,
+      score: res.totalRawScore,
+      maxScore: res.maxPossible,
+      percentage: `${res.percentage}%`,
+      percentageNum: res.percentage,
+      level: res.level,
+      color: res.severityColor,
+      severityColor: res.severityColor,
+      note: res.interpretation,
+    };
+  }
+
+  if (scale?.id === 'orientation_mobility_scale') {
+    const res = calculateOrientationMobilityScore(answers);
+    return {
+      total: res.totalRawScore,
+      score: res.totalRawScore,
+      maxScore: res.maxPossible,
+      percentage: `${res.percentage}%`,
+      percentageNum: res.percentage,
+      level: res.level,
+      color: res.severityColor,
+      severityColor: res.severityColor,
+      note: res.interpretation,
+    };
+  }
+
+  if (scale?.id === 'transition_planning_inventory') {
+    const res = calculateTransitionPlanningScore(answers);
+    return {
+      total: res.totalRawScore,
+      score: res.totalRawScore,
+      maxScore: res.maxPossible,
+      percentage: `${res.percentage}%`,
+      percentageNum: res.percentage,
+      level: res.level,
+      color: res.severityColor,
+      severityColor: res.severityColor,
+      note: res.interpretation,
+    };
+  }
+
+  if (scale?.id === 'independent_living_scale') {
+    const res = calculateIndependentLivingScore(answers);
+    return {
+      total: res.totalRawScore,
+      score: res.totalRawScore,
+      maxScore: res.maxPossible,
+      percentage: `${res.percentage}%`,
+      percentageNum: res.percentage,
+      level: res.level,
+      color: res.severityColor,
+      severityColor: res.severityColor,
+      note: res.interpretation,
+    };
+  }
+
+  if (scale?.id === 'symbolic_play_scale') {
+    const res = calculateSymbolicPlayScore(answers);
+    return {
+      total: res.totalRawScore,
+      score: res.totalRawScore,
+      maxScore: res.maxPossible,
+      percentage: `${res.percentage}%`,
+      percentageNum: res.percentage,
+      level: res.level,
+      color: res.severityColor,
+      severityColor: res.severityColor,
+      note: res.interpretation,
     };
   }
 
