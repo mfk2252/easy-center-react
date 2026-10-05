@@ -631,29 +631,29 @@ export default function PortageAssessmentModal({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 12 }}>
               <div style={{ background: 'var(--bg-card)', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border-color)', textAlign: 'center' }}>
                 <div style={{ fontSize: '.72rem', color: 'var(--text-sub)', fontWeight: 600 }}>العمر النمائي المركب</div>
-                <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#16a34a' }}>
-                  {psychometrics.compositeDevAgeText}
+                <div style={{ fontSize: '1.3rem', fontWeight: 900, color: psychometrics.isUnassessed ? 'var(--text-sub)' : '#16a34a' }}>
+                  {psychometrics.isUnassessed ? '—' : psychometrics.compositeDevAgeText}
                 </div>
               </div>
 
               <div style={{ background: 'var(--bg-card)', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border-color)', textAlign: 'center' }}>
                 <div style={{ fontSize: '.72rem', color: 'var(--text-sub)', fontWeight: 600 }}>حاصل النمو (DQ)</div>
-                <div style={{ fontSize: '1.3rem', fontWeight: 900, color: psychometrics.overallColor }}>
-                  {psychometrics.dqScore}
+                <div style={{ fontSize: '1.3rem', fontWeight: 900, color: psychometrics.isUnassessed ? 'var(--text-sub)' : psychometrics.overallColor }}>
+                  {psychometrics.isUnassessed ? '—' : psychometrics.dqScore}
                 </div>
               </div>
 
               <div style={{ background: 'var(--bg-card)', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border-color)', textAlign: 'center' }}>
                 <div style={{ fontSize: '.72rem', color: 'var(--text-sub)', fontWeight: 600 }}>نسبة الإتقان النمائي</div>
-                <div style={{ fontSize: '1.3rem', fontWeight: 900, color: psychometrics.overallColor }}>
-                  {psychometrics.overallPercentage}%
+                <div style={{ fontSize: '1.3rem', fontWeight: 900, color: psychometrics.isUnassessed ? 'var(--text-sub)' : psychometrics.overallColor }}>
+                  {psychometrics.isUnassessed ? '—' : `${psychometrics.overallPercentage}%`}
                 </div>
               </div>
 
               <div style={{ background: 'var(--bg-card)', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border-color)', textAlign: 'center' }}>
                 <div style={{ fontSize: '.72rem', color: 'var(--text-sub)', fontWeight: 600 }}>المهارات المكتسبة / المقيمة</div>
                 <div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--text-main)' }}>
-                  {psychometrics.totalAcquiredSkills} <span style={{ fontSize: '.8rem', color: 'var(--text-sub)' }}>/ {psychometrics.totalAssessedSkills}</span>
+                  {psychometrics.totalAcquiredSkills} <span style={{ fontSize: '.8rem', color: 'var(--text-sub)' }}>/ {psychometrics.isUnassessed ? psychometrics.totalItems : psychometrics.totalAssessedSkills}</span>
                 </div>
               </div>
             </div>
@@ -661,10 +661,10 @@ export default function PortageAssessmentModal({
             {/* Diagnostic Level Banner */}
             <div
               style={{
-                background: 'var(--bg-card)',
-                borderRadius: 8,
-                padding: '8px 12px',
-                border: `1px solid ${psychometrics.overallColor}`,
+                background: psychometrics.isUnassessed ? '#eff6ff' : 'var(--bg-card)',
+                borderRadius: 10,
+                padding: '10px 14px',
+                border: `1.5px solid ${psychometrics.isUnassessed ? '#93c5fd' : psychometrics.overallColor}`,
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -672,8 +672,9 @@ export default function PortageAssessmentModal({
                 gap: 8,
               }}
             >
-              <div style={{ fontSize: '.82rem', fontWeight: 800, color: psychometrics.overallColor }}>
-                🎯 التصنيف النمائي العام: {psychometrics.overallLevel}
+              <div style={{ fontSize: '.84rem', fontWeight: 800, color: psychometrics.isUnassessed ? '#1e40af' : psychometrics.overallColor, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>{psychometrics.isUnassessed ? 'ℹ️' : '🎯'}</span>
+                <span>{psychometrics.isUnassessed ? 'في انتظار البدء بالتقييم - يرجى تحديد إجابات البنود لحساب المؤشرات النمائية' : `التصنيف النمائي العام: ${psychometrics.overallLevel}`}</span>
               </div>
               <div style={{ fontSize: '.74rem', color: 'var(--text-sub)' }}>
                 العمر الزمني المعتمد: {Math.floor(chronologicalAgeMonths / 12)} سنوات ({chronologicalAgeMonths} شهر)
@@ -797,7 +798,7 @@ export default function PortageAssessmentModal({
                         {item.text}
                       </div>
 
-                      {/* HELPER TEXT BELOW ITEM (إرشادات التطبيق السريري) */}
+                      {/* PROCEDURAL CLINICAL OBJECTIVE (الهدف الإجرائي) */}
                       {item.helperText && (
                         <div
                           style={{
@@ -814,7 +815,7 @@ export default function PortageAssessmentModal({
                           }}
                         >
                           <span>💡</span>
-                          <span><strong>إجراء التطبيق والملاحظة:</strong> {item.helperText}</span>
+                          <span><strong>الهدف الإجرائي:</strong> {item.helperText}</span>
                         </div>
                       )}
                     </div>
