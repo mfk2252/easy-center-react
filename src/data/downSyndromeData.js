@@ -1,13 +1,13 @@
 /**
- * بنود ومقاييس متلازمة داون الـ 14 المعتمدة (Down Syndrome Assessment & Developmental Battery)
+ * بنود ومقاييس متلازمة داون المعتمدة (Down Syndrome Assessment & Developmental Battery)
  * مصممة وفق المعايير النمائية العالمية والطبية لمتلازمة داون:
- * (Palisano CanChild, CDC/AAP Guidelines, Denver-II, WHO Milestones, ELM, Makaton, ASQ-3 Adaptation)
+ * (Palisano CanChild, CDC/AAP Guidelines, WHO Milestones, ELM, Makaton, ASQ-3 Adaptation)
  */
 
 export const DS_COPYRIGHT_INFO = {
   publisherAr: 'منظومة إيزي سنتر لتأهيل وتشخيص متلازمة داون والتربية الخاصة',
   publisherEn: 'Easy Center Diagnostic Battery for Down Syndrome (Clinical & Educational Edition)',
-  academicAttribution: 'إعداد مقنن مستند للمرجعيات العالمية: CanChild Motor Growth (Palisano et al.), CDC Growth Guidelines, Denver-II, WHO Milestones, ASQ-3 & Early Communication Systems',
+  academicAttribution: 'إعداد مقنن مستند للمرجعيات العالمية: CanChild Motor Growth (Palisano et al.), CDC Growth Guidelines, WHO Milestones, ASQ-3 & Early Communication Systems',
   ethicalDisclaimer: 'استمارات تقييم وتشخيص نمائي وتأهيلي إكلينيكي مخصصة للأغراض التربوية والعلاجية وتصميم الخطة التربوية الفردية (IEP) ومتابعة التطور النمائي.',
 };
 
@@ -132,29 +132,7 @@ export const DS_ASQ3_ITEMS = [
   { id: 25, text: 'يعبر بالرفض بهز الرأس أو كلمة "لا" دون اللجوء للغضب الشديد.', domain: 'personal_social', iepGoal: 'التعبير المقبول عن الرفض باستخدام الإشارة أو اللفظ المناسب.' },
 ];
 
-// 6. مقياس دنفر المطور للفرز النمائي (Denver II for DS)
-export const DS_DENVER_ITEMS = [
-  { id: 1, text: 'الابتسام التلقائي والتفاعل البشري الإيجابي مع المحيطين.', domain: 'personal_social', iepGoal: 'تعزيز الابتسام التلقائي والمبادأة بالتواصل البصري.' },
-  { id: 2, text: 'الاستجابة لملامسة اليد بفتحها والإمساك بإصبع الفاحص.', domain: 'personal_social', iepGoal: 'تطوير ردود الفعل اللمسية والتفاعل اليدوي.' },
-  { id: 3, text: 'التلويح باليد مع السلامة (باي باي) عند المغادرة.', domain: 'personal_social', iepGoal: 'استخدام الإيماءات الاجتماعية الوظيفية في المواقف المناسبة.' },
-  { id: 4, text: 'اللعب بلعبة "الغميضة" أو إخفاء الوجه (Peek-a-boo).', domain: 'personal_social', iepGoal: 'المشاركة الفعالة في ألعاب التوقع والتخفي التفاعلية.' },
-  { id: 5, text: 'الإشارة إلى احتياجاته دون بكاء وصراخ.', domain: 'personal_social', iepGoal: 'استخدام الإشارة الهادئة للتعبير عن المطالب اليومية.' },
-  { id: 6, text: 'المتابعة البصرية لمجسم متحرك بزاوية 180 درجة كاملة.', domain: 'fine_motor_adaptive', iepGoal: 'التتبع البصري الكامل بزاوية 180 درجة أفقياً ورأسياً.' },
-  { id: 7, text: 'نقل مكعب صغير من يد إلى يد أخرى بسلاسة.', domain: 'fine_motor_adaptive', iepGoal: 'نقل الأشياء عبر خط منتصف الجسم من يد لأخرى.' },
-  { id: 8, text: 'التقاط خرزة صغيرة أو حبة طعام بالسبابة والإبهام.', domain: 'fine_motor_adaptive', iepGoal: 'إتقان التقاط القطع الدقيقة بالسبابة والإبهام.' },
-  { id: 9, text: 'طرق مكعبين معاً في خط المنتصف لإحداث صوت.', domain: 'fine_motor_adaptive', iepGoal: 'التآزر الحركي الثنائي وطرق الأدوات معاً على خط الوسط.' },
-  { id: 10, text: 'وضع الأوتاد في لوحة الثقوب (Pegboard) بدقة.', domain: 'fine_motor_adaptive', iepGoal: 'تركيب الأوتاد في اللوحة لتنمية التآزر الدقيق.' },
-  { id: 11, text: 'الالتفات الفوري لمصدر صوت الجرس أو الخشخيشة.', domain: 'language', iepGoal: 'تحديد وتوجيه الرأس بدقة نحو مصدر الأصوات الجانبية.' },
-  { id: 12, text: 'إصدار أصوات لغوية متنوعة تشمل الحروف الساكنة والمتحركة.', domain: 'language', iepGoal: 'تنويع المناغاة لتشمل أصواتاً ومقاطع لغوية ثنائية.' },
-  { id: 13, text: 'فهم كلمة "لا" أو التوقف المؤقت عند سماعها.', domain: 'language', iepGoal: 'فهم الكف والاستجابة للتوجيهات اللفظية بالنهي.' },
-  { id: 14, text: 'نطق كلمة واحدة ذات معنى موجهة لغرض محدد.', domain: 'language', iepGoal: 'استخدام كلمات وظيفية واضحة في سياقها الصحيح.' },
-  { id: 15, text: 'تسمية صورة واحدة على الأقل في كتاب مصور (مثل: سيارة، قطة).', domain: 'language', iepGoal: 'تسمية الصور والمجسمات الشائعة عند الإشارة إليها.' },
-  { id: 16, text: 'رفع الرأس والصدر أثناء الاستلقاء على البطن مع الارتكاز.', domain: 'gross_motor', iepGoal: 'التحكم الرأسي والجذعي في وضع الانبطاح لمدة دقيقة.' },
-  { id: 17, text: 'الجلوس المستقر دون دعم لفترة تزيد عن 3 دقائق.', domain: 'gross_motor', iepGoal: 'الثبات الجذعي التام أثناء الجلوس الحر المستقل.' },
-  { id: 18, text: 'الوقوف المستند وتحمل كامل وزن الجسم على الساقين.', domain: 'gross_motor', iepGoal: 'تقوية عضلات الحوض والساقين أثناء الوقوف المدعوم.' },
-  { id: 19, text: 'المشي بخطوات مستقلة دون مساعدة شخص آخر.', domain: 'gross_motor', iepGoal: 'المشي المتزن وتطوير الثقة الحركية في التنقل المستقل.' },
-  { id: 20, text: 'صعود درجات السلم مع وضع كلتا القدمين على الدرجة.', domain: 'gross_motor', iepGoal: 'صعود السلم درجة درجة بأمان مع الاستناد المناسب.' },
-];
+
 
 // 7. قائمة منظمة الصحة العالمية للمحطات النمائية (WHO Developmental Milestones for DS)
 export const DS_WHO_MILESTONES_ITEMS = [
@@ -431,25 +409,7 @@ export const DOWN_SYNDROME_SCALES = [
     hostPlatform: 'منصة إيزي سنتر لتشغيل وتطبيق المقاييس الرقمية (Host Platform)',
     copyrightNotice: 'الأداة الأصلية طوّرت بواسطة (Squires & Bricker) — مكيّفة للاستخدام التنموي لمتلازمة داون.',
   },
-  {
-    id: 'ds_denver_screening',
-    name: 'مقياس دنفر المطور للفرز النمائي (Denver II Screening Checklist)',
-    nameEn: 'Denver Developmental Screening Test II (DS Adaptation)',
-    category: 'developmental_early',
-    icon: '📊',
-    color: '#d97706',
-    description: 'أداة الفرز المقننة لمتابعة التطور الشخصي الاجتماعي، والتآزر الحركي الدقيق، واللغة، والحركة الكبرى.',
-    items: DS_DENVER_ITEMS,
-    maxScore: 20,
-    scoreMode: 'sum',
-    responseType: 'scale_3',
-    thresholdText: '0-8 تأخر نمائي بارز | 9-14 تأخر نمائي بسيط إلى متوسط | 15-20 اكتساب نمائي مستقر ومناسب للعمر',
-    originalAuthor: 'William K. Frankenburg & Josiah B. Dodds',
-    adaptationAndNorms: 'المعايير النمائية العربية المقننة',
-    diagnosticNature: 'مخصص للتشخيص والتقييم التربوي والنمائي المعتمد',
-    hostPlatform: 'منصة إيزي سنتر لتشغيل وتطبيق المقاييس الرقمية (Host Platform)',
-    copyrightNotice: 'مستند إلى مقياس دنفر الثاني للفرز النمائي (Denver II) — مسح شامل لمحطات النمو.',
-  },
+
   {
     id: 'ds_who_milestones',
     name: 'قائمة منظمة الصحة العالمية للمحطات النمائية (WHO Developmental Milestones)',

@@ -11,7 +11,7 @@ import { SENSORY_CHECKLIST_ITEMS, calculateSensoryChecklistScore } from '../data
 import { ABAS_ITEMS, calculateABASScore } from '../data/abasData';
 import { LIFE_SKILLS_ITEMS, calculateLifeSkillsScore } from '../data/lifeSkillsData';
 import { ASQ3_ITEMS, calculateASQ3Score } from '../data/asq3Data';
-import { DENVER2_ITEMS, calculateDenver2Score } from '../data/denver2Data';
+import { VINELAND3_ITEMS, calculateVineland3Score } from '../data/vineland3Data';
 import { SDQ_ITEMS, calculateSDQScore } from '../data/sdqData';
 import { EMOTIONAL_ADJUSTMENT_ITEMS, calculateEmotionalAdjustmentScore } from '../data/emotionalAdjustmentData';
 import { VANDERBILT_ITEMS, calculateVanderbiltScore } from '../data/vanderbiltAdhdData';
@@ -992,20 +992,9 @@ const DEFAULT_SCALE_LIBRARY = [
     responseType: 'scale',
     minValue: 0,
     maxValue: 2,
-    maxScore: 40,
-    items: [
-      { id: 'vin_1', text: 'استقلالية تناول الطعام والشراب باستخدام الأدوات', domain: 'daily_living' },
-      { id: 'vin_2', text: 'استقلالية النظافة الشخصية واستخدام دورة المياه', domain: 'daily_living' },
-      { id: 'vin_3', text: 'ارتداء الملابس وخلعها وربط الأحذية والأزرار', domain: 'daily_living' },
-      { id: 'vin_4', text: 'التعبير عن الاحتياجات الأساسية باللغة أو الإشارة', domain: 'communication' },
-      { id: 'vin_5', text: 'فهم وتطبيق التعليمات المنزلية والصفية', domain: 'communication' },
-      { id: 'vin_6', text: 'المشاركة في الأنشطة الاجتماعية واللعب التعاوني', domain: 'socialization' },
-      { id: 'vin_7', text: 'التحكم بالانفعالات وتجنب إيذاء الذات أو الآخرين', domain: 'socialization' },
-      { id: 'vin_8', text: 'اتباع قواعد السلامة وتجنب المخاطر والأشياء الحارة', domain: 'community' },
-      { id: 'vin_9', text: 'التنقل المستقل داخل المنزل والمركز والشارع', domain: 'community' },
-      { id: 'vin_10', text: 'التعامل مع النقود والأجهزة البسيطة واستخدام الوقت', domain: 'daily_living' },
-    ],
-    thresholdText: 'درجة معيارية تكيفية أقل من 70 تدل على احتياج دعم تكيفي وتأهيلي مكثف',
+    maxScore: 84,
+    items: VINELAND3_ITEMS,
+    thresholdText: 'درجة معيارية تكيفية أقل من 70 تدل على احتياج دعم تكيفي وتأهيلي مكثف (مركب ABC المعياري)',
     isDefault: true,
   },
   {
@@ -1079,23 +1068,6 @@ const DEFAULT_SCALE_LIBRARY = [
     maxScore: 50,
     items: ASQ3_ITEMS,
     thresholdText: 'الدرجة < 25 (أقل من 50%): تأخر نمائي يستدعي التقويم المباشر | 25-34: منطقة المتابعة الحذرة | >= 35: نمو طبيعي',
-    isDefault: true,
-  },
-  {
-    id: 'denver2_screening',
-    name: 'مقياس دنفر المطور للفرز النمائي (Denver II)',
-    nameEn: 'Denver II Developmental Screening Scale — Open Field Version',
-    category: 'developmental_early',
-    description: 'مقياس مسح وتقييم المعالم النمائية الرئيسية من الرضاعة حتى ما قبل المدرسة عبر الأبعاد الأربعة المعيارية (25 بنداً ملاحظياً)',
-    icon: '🌱',
-    color: '#16a34a',
-    scoreMode: 'sum',
-    responseType: 'scale',
-    minValue: 0,
-    maxValue: 2,
-    maxScore: 50,
-    items: DENVER2_ITEMS,
-    thresholdText: 'الدرجة < 25: تأخر نمائي يستدعي التدخل | 25-34: منطقة متابعة حذرة | >= 35: تطور طبيعي مناسب لعمره',
     isDefault: true,
   },
 
@@ -1738,18 +1710,20 @@ export function buildAssessmentResult(scale, answers = {}) {
     };
   }
 
-  if (scale?.id === 'denver2_screening') {
-    const res = calculateDenver2Score(answers);
+  if (scale?.id === 'vineland_3') {
+    const res = calculateVineland3Score(answers);
     return {
       total: res.totalRawScore,
       score: res.totalRawScore,
-      maxScore: res.maxPossible,
-      percentage: `${res.percentage}%`,
-      percentageNum: res.percentage,
+      standardScore: res.abc,
+      percentile: res.percentile,
+      maxScore: 84,
+      percentage: `${res.completionPercentage}%`,
+      percentageNum: res.completionPercentage,
       level: res.level,
       color: res.severityColor,
       severityColor: res.severityColor,
-      note: res.interpretation,
+      note: res.summary,
     };
   }
 

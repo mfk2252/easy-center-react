@@ -79,6 +79,14 @@ import { MCHAT_ITEMS } from '../../data/mchatData';
 import { ATEC_ITEMS } from '../../data/atecData';
 import { SCQ_ITEMS } from '../../data/scqData';
 import { AQ_ITEMS } from '../../data/aqData';
+import UniversalAssessmentModal from '../../components/modals/UniversalAssessmentModal';
+import { vineland3ScaleConfig, VINELAND3_ITEMS } from '../../data/vineland3Data';
+import { abasScaleConfig, ABAS_ITEMS } from '../../data/abasData';
+import { lifeSkillsScaleConfig, LIFE_SKILLS_ITEMS } from '../../data/lifeSkillsData';
+import { asq3ScaleConfig, ASQ3_ITEMS } from '../../data/asq3Data';
+import { sdqScaleConfig, SDQ_ITEMS } from '../../data/sdqData';
+import { vanderbiltScaleConfig, VANDERBILT_ITEMS } from '../../data/vanderbiltAdhdData';
+import { connersParentScaleConfig } from '../../data/connersParentData';
 import InitialAssessmentModal from '../../components/assessments/InitialAssessmentModal';
 import IepBridgeModal from './IepBridgeModal';
 import { extractRecommendedGoals } from '../../utils/iepBridge';
@@ -384,6 +392,30 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
   const [bridgeAssessment, setBridgeAssessment] = useState(null);
   const [bridgeScaleItems, setBridgeScaleItems] = useState([]);
 
+  // Universal Assessment Master Modal States
+  const [universalModalOpen, setUniversalModalOpen] = useState(false);
+  const [universalScaleConfig, setUniversalScaleConfig] = useState(null);
+  const [universalEditData, setUniversalEditData] = useState(null);
+
+  function openUniversalAssessment(config, editItem = null) {
+    setUniversalScaleConfig(config);
+    setUniversalEditData(editItem);
+    setUniversalModalOpen(true);
+  }
+
+  function getUniversalConfigByScaleType(scaleType) {
+    if (!scaleType) return null;
+    const st = String(scaleType).toLowerCase();
+    if (st === 'vineland_3' || st === 'vineland' || st === 'vineland3') return vineland3ScaleConfig;
+    if (st === 'abas_3_adaptation' || st === 'abas' || st === 'abas3' || st === 'abas_3') return abasScaleConfig;
+    if (st === 'life_skills_scale' || st === 'life_skills' || st === 'lifeskills') return lifeSkillsScaleConfig;
+    if (st === 'asq3_screening' || st === 'asq3' || st === 'asq_3' || st === 'asq') return asq3ScaleConfig;
+    if (st === 'sdq_strengths_difficulties' || st === 'sdq_screening' || st === 'sdq') return sdqScaleConfig;
+    if (st === 'vanderbilt_adhd_scale' || st === 'vanderbilt_adhd' || st === 'vanderbilt') return vanderbiltScaleConfig;
+    if (st === 'conners_parent' || st === 'conners' || st === 'conners_parent_scale') return connersParentScaleConfig;
+    return null;
+  }
+
   function reload() {
     setStudents(lsGet('students'));
     setEmps(lsGet('employees'));
@@ -555,6 +587,11 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     if (scaleId === 'portage-guide-v2' || scaleId === 'portage_early' || scaleId === 'portage') {
       setPortageEditData(null);
       setPortageModalOpen(true);
+      return;
+    }
+    const univConfig = getUniversalConfigByScaleType(scaleId);
+    if (univConfig) {
+      openUniversalAssessment(univConfig);
       return;
     }
     const scale = allScales.find(s => s.id === scaleId) || activeScale;
@@ -910,6 +947,18 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     } else if (item.isDownSyndrome || item.category === 'down_syndrome' || item.measureId?.startsWith('ds_')) {
       const currentScale = DOWN_SYNDROME_SCALES.find(s => s.id === (item.measureId || item.scaleId)) || DOWN_SYNDROME_SCALES[0];
       setBridgeScaleItems(currentScale.items || []);
+    } else if (item.measureId === 'vineland_3' || item.scaleType === 'vineland_3' || item.scaleType === 'vineland') {
+      setBridgeScaleItems(VINELAND3_ITEMS);
+    } else if (item.measureId === 'abas_3_adaptation' || item.scaleType === 'abas_3_adaptation' || item.scaleType === 'abas') {
+      setBridgeScaleItems(ABAS_ITEMS);
+    } else if (item.measureId === 'life_skills_scale' || item.scaleType === 'life_skills_scale' || item.scaleType === 'life_skills') {
+      setBridgeScaleItems(LIFE_SKILLS_ITEMS);
+    } else if (item.measureId === 'asq3_screening' || item.scaleType === 'asq3_screening' || item.scaleType === 'asq3') {
+      setBridgeScaleItems(ASQ3_ITEMS);
+    } else if (item.measureId === 'sdq_screening' || item.scaleType === 'sdq_screening' || item.measureId === 'sdq_strengths_difficulties') {
+      setBridgeScaleItems(SDQ_ITEMS);
+    } else if (item.measureId === 'vanderbilt_adhd' || item.scaleType === 'vanderbilt_adhd' || item.measureId === 'vanderbilt_adhd_scale') {
+      setBridgeScaleItems(VANDERBILT_ITEMS);
     } else {
       const scale = allScales.find(s => s.id === item.measureId) || null;
       setBridgeScaleItems(scale?.items || []);
@@ -1037,7 +1086,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     }
 
     const isAdhdFeatured = (selectedCategoryFilter === 'all' || selectedCategoryFilter === 'adhd') && !searchTerm;
-    const isAdhdScale = ['conners_parent', 'conners'].includes(s.id);
+    const isAdhdScale = ['conners_parent', 'conners', 'vanderbilt_adhd', 'vanderbilt_adhd_scale'].includes(s.id);
     if (isAdhdFeatured && isAdhdScale) {
       return false;
     }
@@ -1045,6 +1094,24 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     const isIntelligenceFeatured = (selectedCategoryFilter === 'all' || selectedCategoryFilter === 'intelligence_cognitive') && !searchTerm;
     const isIntelligenceScale = ['wisc_5', 'wisc5', 'wisc', 'wechsler', 'stanford_binet_5', 'sb5', 'stanford_binet', 'binet', 'leiter_3', 'leiter3', 'leiter', 'raven_rpm', 'raven', 'rpm', 'cpm', 'spm'].includes(s.id);
     if (isIntelligenceFeatured && isIntelligenceScale) {
+      return false;
+    }
+
+    const isAdaptiveFeatured = (selectedCategoryFilter === 'all' || selectedCategoryFilter === 'adaptive_behavior') && !searchTerm;
+    const isAdaptiveScale = ['vineland_3', 'vineland', 'vineland3', 'abas_3_adaptation', 'abas', 'life_skills_scale'].includes(s.id);
+    if (isAdaptiveFeatured && isAdaptiveScale) {
+      return false;
+    }
+
+    const isDevEarlyFeatured = (selectedCategoryFilter === 'all' || selectedCategoryFilter === 'developmental_early') && !searchTerm;
+    const isDevEarlyScale = ['asq3_screening', 'asq3', 'portage-guide-v2', 'portage_early', 'portage'].includes(s.id);
+    if (isDevEarlyFeatured && isDevEarlyScale) {
+      return false;
+    }
+
+    const isBehavioralFeatured = (selectedCategoryFilter === 'all' || selectedCategoryFilter === 'behavioral_emotional') && !searchTerm;
+    const isBehavioralScale = ['sdq_strengths_difficulties', 'sdq_screening', 'sdq', 'family_disintegration'].includes(s.id);
+    if (isBehavioralFeatured && isBehavioralScale) {
       return false;
     }
 
@@ -2092,6 +2159,42 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                       🚀 تطبيق وفحص مقياس كونرز (CPRS-R L)
                     </button>
                   </div>
+
+                  {/* Vanderbilt ADHD Diagnostic Scale Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(234, 88, 12, 0.04))',
+                      border: '1.5px solid #7c3aed',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#f5f3ff', color: '#6d28d9', fontWeight: 600, fontSize: '.72rem' }}>الأكاديمية الأمريكية لطب الأطفال (AAP)</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>NICHQ / معايير DSM-5</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        ⚡ مقياس فاندربرلت لتشخيص فرط الحركة وتشتت الانتباه
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        27 بنداً تشخيصياً معتمداً · تحديد الأنماط السريرية (غافل، مفرط الحركة، مركب) وتقييم اضطراب التحدي المعارض والأداء الأكاديمي
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => openUniversalAssessment(vanderbiltScaleConfig)}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص مقياس فاندربرلت (Vanderbilt)
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -2251,10 +2354,298 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                 </div>
               )}
 
+              {/* Featured Adaptive Behavior & Life Skills Cards [Theme: Emerald / Green] */}
+              {(selectedCategoryFilter === 'all' || selectedCategoryFilter === 'adaptive_behavior') && !searchTerm && (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                    gap: 14,
+                    marginBottom: 20,
+                  }}
+                >
+                  {/* Vineland-3 Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.08), rgba(16, 185, 129, 0.04))',
+                      border: '1.5px solid #059669',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#ecfdf5', color: '#047857', fontWeight: 600, fontSize: '.72rem' }}>بيرسون للتقييم الإكلينيكي</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>المعيار الذهبي للسلوك التكيفي</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        🌱 مقياس فاينلاند للسلوك التكيفي (Vineland-3)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        42 بنداً إكلينيكياً مقنناً · 4 مجالات كبرى (التواصل، الحياة اليومية، التنشئة الاجتماعية، الحركي) · استخراج مركب السلوك التكيفي ABC (M=100, SD=15) والرتب المئينية
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => openUniversalAssessment(vineland3ScaleConfig)}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: 'linear-gradient(135deg, #059669, #047857)', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص مقياس فاينلاند (Vineland-3)
+                    </button>
+                  </div>
+
+                  {/* ABAS-3 Adaptation Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.08), rgba(5, 150, 105, 0.04))',
+                      border: '1.5px solid #0d9488',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#f0fdfa', color: '#0f766e', fontWeight: 600, fontSize: '.72rem' }}>تقييم مهارات التكيف الميداني</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>ABAS-3 المقنن</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        🏠 نظام تقييم السلوك التكيفي (ABAS-3 Adaptation)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        25 بنداً عبر المجالات الثلاثة الرئيسية (المفاهيمية، الاجتماعية، والعملية) · درجات معيارية GAC لتحديد مستويات الدعم التكيفي لذوي الإعاقة
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => openUniversalAssessment(abasScaleConfig)}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: 'linear-gradient(135deg, #0d9488, #0f766e)', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص نظام تقييم السلوك التكيفي (ABAS-3)
+                    </button>
+                  </div>
+
+                  {/* Life Skills & Independence Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(4, 120, 87, 0.04))',
+                      border: '1.5px solid #10b981',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#ecfdf5', color: '#065f46', fontWeight: 600, fontSize: '.72rem' }}>العلاج الوظيفي والتربية الخاصة</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>مهارات الاستقلالية</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        🧰 قائمة مهارات الاستقلالية والرعاية الذاتية
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        25 بنداً تقييمياً دقيقاً · 5 مجالات استقلالية (التغذية، النظافة والحمام، ارتداء الملابس، المهارات المنزلية، والمشاركة المجتمعية)
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => openUniversalAssessment(lifeSkillsScaleConfig)}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: 'linear-gradient(135deg, #10b981, #047857)', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق قائمة مهارات الاستقلالية والرعاية الذاتية
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Featured Developmental Screening Cards [Theme: Teal / Cyan] */}
+              {(selectedCategoryFilter === 'all' || selectedCategoryFilter === 'developmental_early') && !searchTerm && (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                    gap: 14,
+                    marginBottom: 20,
+                  }}
+                >
+                  {/* ASQ-3 Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.08), rgba(20, 184, 166, 0.04))',
+                      border: '1.5px solid #0d9488',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#f0fdfa', color: '#0f766e', fontWeight: 600, fontSize: '.72rem' }}>الأكاديمية الأمريكية لطب الأطفال (AAP)</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>ASQ-3 المعياري العالمي</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        🌱 استبيان الأعمار والمراحل النمائية (ASQ-3)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        30 بنداً فرزياً معتمداً · 5 أبعاد نمائية (التواصل، الحركة الكبرى، الحركة الدقيقة، حل المشكلات، والشخصي الاجتماعي) مع عتبات قطع دقيقة
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => openUniversalAssessment(asq3ScaleConfig)}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: 'linear-gradient(135deg, #0d9488, #0f766e)', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص استبيان الأعمار والمراحل (ASQ-3)
+                    </button>
+                  </div>
+
+                  {/* Portage Guide to Early Education Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(14, 165, 233, 0.04))',
+                      border: '1.5px solid #0284c7',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#f0f9ff', color: '#0369a1', fontWeight: 600, fontSize: '.72rem' }}>دليل التدخل المبكر الشامل</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>بورتيدج المطور (580+ بنداً)</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        👶 دليل بورتيدج للتدخل المبكر (Portage Guide)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        التقييم النمائي الشامل للأطفال من الولادة حتى 6 سنوات عبر مجالات الرضيع، المعرفي، اللغوي، الحركي، التنشئة، والعناية الذاتية
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setPortageEditData(null); setPortageModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: 'linear-gradient(135deg, #0284c7, #0369a1)', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص دليل بورتيدج للتدخل المبكر
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Featured Behavioral & Emotional Cards [Theme: Violet / Rose] */}
+              {(selectedCategoryFilter === 'all' || selectedCategoryFilter === 'behavioral_emotional') && !searchTerm && (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                    gap: 14,
+                    marginBottom: 20,
+                  }}
+                >
+                  {/* SDQ Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(139, 92, 246, 0.04))',
+                      border: '1.5px solid #7c3aed',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#f5f3ff', color: '#6d28d9', fontWeight: 600, fontSize: '.72rem' }}>معهد الطب النفسي بلندن (Youthinmind)</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>SDQ المقنن</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        ❤️ استبيان القوة والصعوبات السلوكية (SDQ)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        25 بنداً معيارياً · 5 مقاييس فرعية (الانفعالي، المسلك، فرط الحركة، الأقران، والسلوك الاجتماعي الإيجابي) مع حساب مجموع الصعوبات الكلي
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => openUniversalAssessment(sdqScaleConfig)}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص استبيان القوة والصعوبات (SDQ)
+                    </button>
+                  </div>
+
+                  {/* Family Disintegration & Psychological Climate Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(225, 29, 72, 0.08), rgba(244, 63, 94, 0.04))',
+                      border: '1.5px solid #e11d48',
+                      borderRadius: 14,
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="bdg" style={{ background: '#fff1f2', color: '#be123c', fontWeight: 600, fontSize: '.72rem' }}>المناخ الأسري والتوافق النفسي</span>
+                        <span className="bdg b-gr" style={{ fontWeight: 600, fontSize: '.72rem' }}>مقياس التفكك الأسري</span>
+                      </div>
+                      <h3 style={{ margin: '6px 0 4px 0', fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        🏡 مقياس التفكك الأسري والمناخ النفسي للطفل
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--text-sub)', lineHeight: 1.45, fontWeight: 400 }}>
+                        25 بنداً سيكومترياً · 4 أبعاد أسرية ونفسية (الاستقرار الأسري، الخلافات الوالدية، الإهمال العاطفي، والتواصل الأسري)
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => { setFamilyEditData(null); setFamilyModalOpen(true); }}
+                      style={{ fontWeight: 800, padding: '9px 16px', borderRadius: 9, fontSize: '.86rem', background: 'linear-gradient(135deg, #e11d48, #be123c)', color: '#fff', width: '100%' }}
+                    >
+                      🚀 تطبيق وفحص مقياس التفكك الأسري
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* SCALES GRID */}
               {filteredScales.length === 0 ? (
-                // Only show EmptyState if we are NOT already showing featured cards inside autism or speech or LD or ADHD or Intelligence categories
-                !((selectedCategoryFilter === 'autism' || selectedCategoryFilter === 'speech_language' || selectedCategoryFilter === 'learning_academic' || selectedCategoryFilter === 'adhd' || selectedCategoryFilter === 'intelligence_cognitive') && !searchTerm) && (
+                // Only show EmptyState if we are NOT already showing featured cards inside autism or speech or LD or ADHD or Intelligence or Adaptive or Developmental categories
+                !((['autism', 'speech_language', 'learning_academic', 'adhd', 'intelligence_cognitive', 'adaptive_behavior', 'developmental_early', 'behavioral_emotional'].includes(selectedCategoryFilter)) && !searchTerm) && (
                   <EmptyState
                     icon="🔍"
                     title="لم يتم العثور على مقاييس تطابق البحث أو الفئة المختارة"
@@ -3279,6 +3670,20 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                             ✏️
                           </button>
                         )}
+                        {(() => {
+                          const univCfg = getUniversalConfigByScaleType(item.measureId || item.scaleType || item.scaleId);
+                          if (!univCfg) return null;
+                          return (
+                            <button
+                              type="button"
+                              className="btn btn-xs btn-g"
+                              onClick={() => openUniversalAssessment(univCfg, item)}
+                              title={`تعديل درجات مقياس ${univCfg.title || item.scaleName || ''}`}
+                            >
+                              ✏️
+                            </button>
+                          );
+                        })()}
                       </div>
 
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -4182,6 +4587,26 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
             setPortageReportOpen(false);
             handleOpenBridge(item);
           }}
+        />
+      )}
+
+      {/* UNIVERSAL ASSESSMENT MASTER MODAL */}
+      {universalModalOpen && universalScaleConfig && (
+        <UniversalAssessmentModal
+          isOpen={universalModalOpen}
+          onClose={() => {
+            setUniversalModalOpen(false);
+            setUniversalEditData(null);
+            setUniversalScaleConfig(null);
+          }}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          scaleConfig={universalScaleConfig}
+          students={students}
+          emps={emps}
+          initialData={universalEditData}
         />
       )}
     </div>
