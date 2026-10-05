@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { uid, todayStr, calcAge } from '../../utils/dateHelpers';
 import { printItem } from '../../utils/printUtils';
 import { handleFileInputChange, FILE_ACCEPT_IMAGE } from '../../utils/fileUpload';
 import EmptyState from '../../components/ui/EmptyState';
+import UnifiedPageHeader from '../../components/ui/UnifiedPageHeader';
 import { StudentPicker, validateStudentPick, EMPTY_STU_PICK } from './StudentPicker';
 import { sendReportToWhatsApp } from './programsWhatsApp';
 import CARS2AssessmentModal from '../../components/assessments/CARS2AssessmentModal';
@@ -158,12 +159,27 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudentFilter, setSelectedStudentFilter] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
+  const categoryScrollPosRef = useRef(0);
 
   const isControlled = extActiveCategoryView !== undefined;
   const [internalActiveCategoryView, setInternalActiveCategoryView] = useState(null);
   const activeCategoryView = isControlled ? extActiveCategoryView : internalActiveCategoryView;
 
   const setActiveCategoryView = (cat) => {
+    if (cat) {
+      const scrollY = window.scrollY || window.pageYOffset || 0;
+      categoryScrollPosRef.current = scrollY;
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('scs_prog_category_scroll_y', String(scrollY));
+      }
+    } else {
+      const savedY = categoryScrollPosRef.current || Number(sessionStorage.getItem('scs_prog_category_scroll_y') || 0);
+      if (savedY > 0) {
+        setTimeout(() => {
+          window.scrollTo({ top: savedY, behavior: 'instant' });
+        }, 15);
+      }
+    }
     if (!isControlled) {
       setInternalActiveCategoryView(cat);
     }
@@ -174,6 +190,17 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     setSearchTerm('');
     setSelectedStudentFilter('');
   };
+
+  useEffect(() => {
+    if (activeCategoryView === null) {
+      const savedY = categoryScrollPosRef.current || Number(sessionStorage.getItem('scs_prog_category_scroll_y') || 0);
+      if (savedY > 0) {
+        setTimeout(() => {
+          window.scrollTo({ top: savedY, behavior: 'instant' });
+        }, 20);
+      }
+    }
+  }, [activeCategoryView]);
 
   useEffect(() => {
     if (extActiveCategoryView !== undefined) {
@@ -1355,6 +1382,28 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
           ) : (
             /* Sub-Page for Specific Category View */
             <div>
+              {!isControlled && currentCategoryMeta && (
+                <UnifiedPageHeader
+                  icon={<span style={{ fontSize: '1.45rem' }}>{currentCategoryMeta.icon || '🎯'}</span>}
+                  iconBg={`${currentCategoryMeta.color || 'var(--pr)'}20`}
+                  iconColor={currentCategoryMeta.color || 'var(--pr)'}
+                  accentColor={currentCategoryMeta.color || 'var(--pr)'}
+                  title={currentCategoryMeta.name}
+                  subtitle={currentCategoryMeta.description || 'تصفح المقاييس والأدوات التشخيصية التابعة لهذه الفئة'}
+                  badge={<span className="bdg b-bl">{currentCategoryMeta.name}</span>}
+                  onBack={() => setActiveCategoryView(null)}
+                  backLabel="العودة للفئات التشخيصية"
+                  className="sticky top-0 sm:top-[54px] z-20 backdrop-blur shadow-sm sticky-sub-header"
+                  style={{
+                    position: 'sticky',
+                    top: '54px',
+                    zIndex: 20,
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                  }}
+                />
+              )}
+
               {/* Subtab Compact Filter Bar inside selected Category */}
               <div className="prog-filter-bar">
                 <div className="prog-filter-title">

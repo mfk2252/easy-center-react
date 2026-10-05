@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLang } from '../../context/LanguageContext';
 import { useApp } from '../../context/AppContext';
 import { lsGet } from '../../hooks/useStorage';
@@ -70,6 +70,7 @@ export default function ProgramsReportsHub() {
   });
 
   const [assessmentCategory, setAssessmentCategory] = useState(null);
+  const categoryScrollPosRef = useRef(0);
 
   const [stats, setStats] = useState({
     evalCount: 0,
@@ -109,6 +110,35 @@ export default function ProgramsReportsHub() {
     }
   }, [currentView]);
 
+  // استرجاع موضع التمرير بدقة عند العودة للفئات التشخيصية
+  useEffect(() => {
+    if (currentView === 'assessment' && assessmentCategory === null) {
+      const savedY = categoryScrollPosRef.current || Number(sessionStorage.getItem('scs_prog_category_scroll_y') || 0);
+      if (savedY > 0) {
+        setTimeout(() => {
+          window.scrollTo({ top: savedY, behavior: 'instant' });
+        }, 20);
+      }
+    }
+  }, [assessmentCategory, currentView]);
+
+  function handleCategoryChange(catId) {
+    if (catId && !assessmentCategory) {
+      const scrollY = window.scrollY || window.pageYOffset || 0;
+      categoryScrollPosRef.current = scrollY;
+      sessionStorage.setItem('scs_prog_category_scroll_y', String(scrollY));
+    }
+    setAssessmentCategory(catId);
+  }
+
+  function handleBackToCategories() {
+    const savedY = categoryScrollPosRef.current || Number(sessionStorage.getItem('scs_prog_category_scroll_y') || 0);
+    setAssessmentCategory(null);
+    setTimeout(() => {
+      window.scrollTo({ top: savedY, behavior: 'instant' });
+    }, 15);
+  }
+
   function navigateTo(viewId) {
     setAssessmentCategory(null);
     setCurrentView(viewId);
@@ -137,9 +167,9 @@ export default function ProgramsReportsHub() {
   if (currentView !== 'hub' && activeSectionObj) {
     return (
       <div className="programs-section-page">
-        {/* ترويسة الصفحة الموحدة للأقسام أو الفئات التشخيصية */}
+        {/* ترويسة الصفحة الموحدة للأقسام أو الفئات التشخيصية مع التثبيت الذكي أثناء التمرير */}
         {activeCatMeta ? (
-          /* المسار والترويسة عند الدخول لفئة تشخيصية فرعية */
+          /* المسار والترويسة المثبتة عند الدخول لفئة تشخيصية فرعية */
           <UnifiedPageHeader
             icon={<span style={{ fontSize: '1.45rem' }}>{activeCatMeta.icon || '🎯'}</span>}
             iconBg={`${activeCatMeta.color || 'var(--pr)'}20`}
@@ -148,8 +178,16 @@ export default function ProgramsReportsHub() {
             title={activeCatMeta.name}
             subtitle={activeCatMeta.description || activeSectionObj.subtitle}
             badge={<span className="bdg b-bl">{activeCatMeta.name}</span>}
-            onBack={() => setAssessmentCategory(null)}
+            onBack={handleBackToCategories}
             backLabel="العودة للفئات التشخيصية"
+            className="sticky top-0 sm:top-[54px] z-20 backdrop-blur shadow-sm sticky-sub-header"
+            style={{
+              position: 'sticky',
+              top: '54px',
+              zIndex: 20,
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+            }}
           />
         ) : (
           /* الترويسة الرئيسية الموحدة للقسم مع أزرار التنقل السريع بين الأقسام */
@@ -189,7 +227,7 @@ export default function ProgramsReportsHub() {
             <PillarAssessment
               onDataChange={refreshCounts}
               activeCategoryView={assessmentCategory}
-              onCategoryChange={setAssessmentCategory}
+              onCategoryChange={handleCategoryChange}
             />
           )}
           {currentView === 'plans' && <PillarPlans onDataChange={refreshCounts} />}
