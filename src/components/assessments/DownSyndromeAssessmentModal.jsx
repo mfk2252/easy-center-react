@@ -36,15 +36,16 @@ export default function DownSyndromeAssessmentModal({
   isOpen,
   onClose,
   onSaved,
+  onOpenIepBridge,
   students = [],
   emps = [],
   initialData = null,
-  initialScaleId = 'ds_developmental',
+  initialScaleId = 'ds_scale',
 }) {
   const { toast, currentUser } = useApp();
 
   const [selectedScaleId, setSelectedScaleId] = useState(() => {
-    return initialData?.measureId || initialData?.scaleId || initialScaleId || 'ds_developmental';
+    return initialData?.measureId || initialData?.scaleId || initialScaleId || 'ds_scale';
   });
 
   const activeScale = useMemo(() => {
@@ -221,17 +222,12 @@ export default function DownSyndromeAssessmentModal({
     toast('✨ تم توليد الخلاصة السريرية والأهداف التربوية المقترحة بنجاح', 'ok');
   }
 
-  function handleSave() {
-    if (!validateStudentPick(form)) {
-      toast('⚠️ يرجى اختيار أو كتابة اسم الطالب أولاً', 'er');
-      return;
-    }
-
+  function buildPayload() {
     const cleanedForm = sanitizeAssessmentForm(form);
     const payloadId = initialData?.id || form.id || uid();
     const studentIdVal = cleanedForm.stuId || cleanedForm.studentId || '';
 
-    const payload = {
+    return {
       ...cleanedForm,
       id: payloadId,
       assessmentId: payloadId,
@@ -240,7 +236,7 @@ export default function DownSyndromeAssessmentModal({
       measureId: activeScale.id,
       measureName: activeScale.name,
       measureNameEn: activeScale.nameEn,
-      category: 'down_syndrome',
+      category: activeScale.category || 'down_syndrome',
       isDownSyndrome: true,
       scaleType: 'down_syndrome',
       score: psychometrics.score,
@@ -258,6 +254,15 @@ export default function DownSyndromeAssessmentModal({
       updatedAt: new Date().toISOString(),
       createdAt: initialData?.createdAt || new Date().toISOString(),
     };
+  }
+
+  function handleSave(skipClose = false) {
+    if (!validateStudentPick(form)) {
+      toast('⚠️ يرجى اختيار أو كتابة اسم الطالب أولاً', 'er');
+      return null;
+    }
+
+    const payload = buildPayload();
 
     if (initialData?.id) {
       lsUpd('studentAssessments', initialData.id, payload);
@@ -268,7 +273,16 @@ export default function DownSyndromeAssessmentModal({
     }
 
     if (onSaved) onSaved();
-    onClose();
+    if (!skipClose) onClose();
+    return payload;
+  }
+
+  function handleSaveAndTransferToBridge() {
+    const payload = handleSave(true);
+    if (!payload) return;
+    if (onOpenIepBridge) {
+      onOpenIepBridge(payload);
+    }
   }
 
   return (
@@ -322,10 +336,10 @@ export default function DownSyndromeAssessmentModal({
             <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                  منظومة تقييم وتشخيص متلازمة داون
+                  {activeScale.name.split('(')[0].trim()}
                 </h2>
                 <span className="bdg b-bl" style={{ fontSize: '.72rem', fontWeight: 700 }}>
-                  بطارية الـ 14 مقياساً النمائية
+                  {activeScale.icon} {activeScale.nameEn ? activeScale.nameEn.split('(')[0].trim() : 'مقياس كلينيكي معتمد'}
                 </span>
               </div>
               <div style={{ fontSize: '0.76rem', color: 'var(--text-sub)', marginTop: 2 }}>
@@ -869,11 +883,30 @@ export default function DownSyndromeAssessmentModal({
             الدرجة الكلية: <b style={{ color: '#0891b2' }}>{psychometrics.score}/{psychometrics.maxScore}</b> ({psychometrics.percentage}%) — <b style={{ color: psychometrics.severityColor }}>{psychometrics.level}</b>
           </div>
 
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {onOpenIepBridge && (
+              <button
+                type="button"
+                className="btn btn-p"
+                onClick={handleSaveAndTransferToBridge}
+                style={{
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                  borderColor: '#059669',
+                  fontWeight: 800,
+                  padding: '8px 16px',
+                  borderRadius: 10,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span>🎯</span> حفظ ونقل إلى جسر الخطة (IEP)
+              </button>
+            )}
             <button
               type="button"
               className="btn btn-p"
-              onClick={handleSave}
+              onClick={() => handleSave(false)}
               style={{
                 background: 'linear-gradient(135deg, #0891b2, #0e7490)',
                 borderColor: '#0891b2',

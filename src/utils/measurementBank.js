@@ -62,7 +62,7 @@ export const MEASUREMENT_CATEGORIES = [
     nameEn: 'Down Syndrome Diagnostic & Developmental Scales',
     icon: '🧬',
     color: '#0891b2',
-    description: 'بطاريات تقييم النمو الحركي، التطور اللغوي، المؤشرات الصحية، الاستقلالية الذاتية، والجاهزية للدمج لمتلازمة داون (14 مقياساً مقنناً)',
+    description: 'بطاريات تقييم النمو الحركي، التطور النمائي، المؤشرات الصحية والجسدية، والفحص الطبي الشامل لمتلازمة داون (4 مقاييس متخصصة)',
   },
   {
     id: 'autism',

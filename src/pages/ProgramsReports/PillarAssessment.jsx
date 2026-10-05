@@ -397,7 +397,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
   function openNewScaleAssessment(scaleId) {
     if (scaleId?.startsWith('ds_') || scaleId === 'down_syndrome') {
       setDsEditData(null);
-      setDsInitialScaleId(scaleId?.startsWith('ds_') ? scaleId : 'ds_developmental');
+      setDsInitialScaleId(scaleId?.startsWith('ds_') ? scaleId : 'ds_scale');
       setDsModalOpen(true);
       return;
     }
@@ -769,7 +769,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
 
   function openEditDsAssessment(item) {
     setDsEditData(item);
-    setDsInitialScaleId(item.measureId || item.scaleId || 'ds_developmental');
+    setDsInitialScaleId(item.measureId || item.scaleId || 'ds_scale');
     setDsModalOpen(true);
   }
 
@@ -3873,6 +3873,12 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
           onSaved={() => {
             reload();
             setSubTab('results');
+          }}
+          onOpenIepBridge={(assessmentData) => {
+            setDsModalOpen(false);
+            setDsEditData(null);
+            reload();
+            handleOpenBridge(assessmentData);
           }}
           students={students}
           emps={emps}

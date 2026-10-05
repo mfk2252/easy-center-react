@@ -19,7 +19,7 @@ export default function DownSyndromeReportModal({
 
   const scale = useMemo(() => {
     if (!assessment) return DOWN_SYNDROME_SCALES[0];
-    const measureId = assessment.measureId || assessment.scaleId || 'ds_developmental';
+    const measureId = assessment.measureId || assessment.scaleId || 'ds_scale';
     return DOWN_SYNDROME_SCALES.find(s => s.id === measureId) || DOWN_SYNDROME_SCALES[0];
   }, [assessment]);
 
