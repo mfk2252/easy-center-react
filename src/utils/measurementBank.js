@@ -29,6 +29,11 @@ import { ATEC_ITEMS } from '../data/atecData';
 import { SCQ_ITEMS, calculateSCQScore } from '../data/scqData';
 import { AQ_ITEMS, calculateAQPsychometrics } from '../data/aqData';
 import {
+  PORTAGE_ITEMS,
+  PORTAGE_COPYRIGHT_INFO,
+  calculatePortagePsychometrics,
+} from '../data/portageAssessmentData';
+import {
   DOWN_SYNDROME_SCALES,
   DS_SCALE_3_OPTIONS,
   DS_YESNO_MEDICAL_OPTIONS,
@@ -1040,27 +1045,23 @@ const DEFAULT_SCALE_LIBRARY = [
 
   // 6. Developmental & Early Intervention Scales (النمو الشامل والتدخل المبكر)
   {
-    id: 'portage_early',
-    name: 'مقياس دليل بورتيدج للتدخل المبكر (Portage)',
-    nameEn: 'Portage Guide to Early Intervention',
+    id: 'portage-guide-v2',
+    alias: 'portage_early',
+    name: 'دليل بورتيدج للتدخل المبكر (Portage Guide - Modern Edition)',
+    nameEn: 'Portage Guide to Early Education (Modern Clinical Standard)',
+    author: 'S. Bluma, M. Shearer, A. Frohman, & J. Hilliard',
+    publisher: 'Cooperative Educational Service Agency (CESA 5) — Portage Project',
     category: 'developmental_early',
-    description: 'تقييم شامل للنمو من الولادة حتى 6 سنوات في 5 مجالات نمائية رئيسية بالإضافة للرعاية الوالدية',
+    description: 'بطارية التقييم والفرز النمائي الشامل للأطفال من عمر الولادة حتى 6 سنوات عبر قسم الرضيع و5 مجالات رئيسية (70 بنداً مقنناً مع شروحات التطبيق وحساب العمر النمائي الفوري).',
     icon: '🌱',
     color: '#16a34a',
-    scoreMode: 'sum',
-    responseType: 'scale',
+    scoreMode: 'subscale',
+    responseType: 'scale_3',
     minValue: 0,
-    maxValue: 2,
-    maxScore: 30,
-    items: [
-      { id: 'port_1', text: 'المجال المعرفي والإدراكي (حل المشكلات والتصنيف)', domain: 'cognitive' },
-      { id: 'port_2', text: 'المجال الحركي الكلي (الجلوس، الوقوف، المشي، الجري)', domain: 'gross_motor' },
-      { id: 'port_3', text: 'المجال الحركي الدقيق (مسك الأشياء، التآزر البصري)', domain: 'fine_motor' },
-      { id: 'port_4', text: 'مجال اللغة والتخاطب (المناغاة، الكلمات، الجمل)', domain: 'language' },
-      { id: 'port_5', text: 'مجال الرعاية الذاتية واستقلالية المأكل والملبس', domain: 'self_help' },
-      { id: 'port_6', text: 'المجال الاجتماعي والانفعالي والتفاعل مع الأسرة', domain: 'social' },
-    ],
-    thresholdText: 'حساب العمر النمائي ومقارنته بالعمر الزمني لتحديد نسبة التأخر النمائي',
+    maxValue: 1,
+    maxScore: 70,
+    items: PORTAGE_ITEMS,
+    thresholdText: 'حساب العمر النمائي المركب (Developmental Age)، حاصل النمو النمائي (DQ)، ونسب الإتقان عبر المجالات الستة وتوليد أهداف الخطة الفردية IEP',
     isDefault: true,
   },
   {
@@ -1607,6 +1608,23 @@ function getScaleMax(scale) {
 }
 
 export function buildAssessmentResult(scale, answers = {}) {
+  if (scale?.id === 'portage-guide-v2' || scale?.id === 'portage_early' || scale?.isPortage) {
+    const portResult = calculatePortagePsychometrics(answers);
+    return {
+      total: portResult.totalEarnedScore,
+      score: portResult.totalEarnedScore,
+      maxScore: portResult.totalPossibleScore,
+      percentage: `${portResult.overallPercentage}%`,
+      percentageNum: portResult.overallPercentage,
+      level: portResult.overallLevel,
+      color: portResult.overallColor,
+      severityColor: portResult.overallColor,
+      note: `العمر النمائي: ${portResult.compositeDevAgeText} (حاصل النمو DQ = ${portResult.dqScore})`,
+      isPortage: true,
+      psychometrics: portResult,
+    };
+  }
+
   if (scale?.category === 'down_syndrome' || scale?.id?.startsWith('ds_')) {
     const dsResult = calculateDownSyndromeScore(scale.id, answers);
     return {

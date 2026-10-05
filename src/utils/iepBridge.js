@@ -1658,6 +1658,43 @@ export function extractRecommendedGoals(measureId, responses = {}, items = [], e
         }));
       }
     });
+  } else if (lookupKey === 'portage_early' || rawId.includes('portage')) {
+    items.forEach((it) => {
+      const respVal = responses[it.id] !== undefined && responses[it.id] !== null && Number(responses[it.id]) !== -1 ? Number(responses[it.id]) : null;
+      if (respVal !== null && respVal <= 0.5) {
+        const isCritical = respVal === 0.0;
+        const priorityRank = isCritical ? 1 : 2;
+        const priority = isCritical ? 'critical' : 'high';
+        const itemTitle = it.text || `بند ${it.num || it.id}`;
+
+        const baseline = generatePlepBaseline(
+          itemTitle,
+          respVal,
+          1.0,
+          isCritical
+            ? `قصوراً وعدم اكتساب للمهارة النمائية المبكرة (${itemTitle}) برتبة (0.0/1.0)`
+            : `مهارة نمائية ناشئة وبحاجة لمساعدة وتكرار (${itemTitle}) برتبة (0.5/1.0)`,
+          isCritical
+            ? 'تدريب تدخلي مبكر فردي وتوظيف المعينات الحسية وبطاقات بورتيدج'
+            : 'تعزيز استقلالية الأداء النمائي والتدريب الموجه لتقليل المساعدة'
+        );
+
+        const goalText = it.iepGoal || `أن يكتسب الطفل مهارة (${itemTitle}) ويظهر إتقاناً مستقلاً بنسبة 80% في البيئة الصفية والمنزلية.`;
+
+        recommended.push(buildGoalItem({
+          code: `PORT-${it.domainId ? String(it.domainId).slice(0, 3).toUpperCase() : 'DEV'}-${it.num || it.id}`,
+          domain: it.domain || it.domainId || 'developmental_early',
+          title: itemTitle.length > 35 ? `${itemTitle.slice(0, 35)}...` : itemTitle,
+          text: goalText,
+          mastery: 'إتقان بنسبة 80% عبر 3 جلسات متتالية',
+          reason: `مشتق من دليل بورتيدج للتدخل المبكر (بند #${it.num || it.id}) بدرجة (${respVal === 0.0 ? 'غير مكتسب 0.0' : 'في طور الاكتساب 0.5'})`,
+          priorityRank,
+          priority,
+          baseline,
+          durationWeeks: isCritical ? 10 : 8,
+        }));
+      }
+    });
   } else if (lookupKey === 'conners_parent') {
     Object.entries(responses).forEach(([itemId, score]) => {
       const numScore = Number(score);

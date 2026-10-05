@@ -57,6 +57,9 @@ import Leiter3AssessmentModal from '../../components/assessments/Leiter3Assessme
 import Leiter3ReportModal from '../../components/assessments/Leiter3ReportModal';
 import RavenAssessmentModal from '../../components/assessments/RavenAssessmentModal';
 import RavenReportModal from '../../components/assessments/RavenReportModal';
+import PortageAssessmentModal from '../../components/assessments/PortageAssessmentModal';
+import PortageReportModal from '../../components/assessments/PortageReportModal';
+import { PORTAGE_ITEMS } from '../../data/portageAssessmentData';
 import { RAVEN_CPM_ITEMS, RAVEN_SPM_ITEMS } from '../../data/ravenData';
 import { LEITER3_ITEMS } from '../../data/leiter3Data';
 import { SB5_ITEMS } from '../../data/sb5Data';
@@ -343,6 +346,12 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
   const [dsReportOpen, setDsReportOpen] = useState(false);
   const [selectedDsAssessment, setSelectedDsAssessment] = useState(null);
 
+  // Portage Guide to Early Education States
+  const [portageModalOpen, setPortageModalOpen] = useState(false);
+  const [portageEditData, setPortageEditData] = useState(null);
+  const [portageReportOpen, setPortageReportOpen] = useState(false);
+  const [selectedPortageAssessment, setSelectedPortageAssessment] = useState(null);
+
   // IEP Bridge State
   const [bridgeOpen, setBridgeOpen] = useState(false);
   const [bridgeAssessment, setBridgeAssessment] = useState(null);
@@ -514,6 +523,11 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     if (scaleId === 'conners_parent' || scaleId === 'conners' || scaleId === 'conners_parent_scale') {
       setConnersParentEditData(null);
       setConnersParentModalOpen(true);
+      return;
+    }
+    if (scaleId === 'portage-guide-v2' || scaleId === 'portage_early' || scaleId === 'portage') {
+      setPortageEditData(null);
+      setPortageModalOpen(true);
       return;
     }
     const scale = allScales.find(s => s.id === scaleId) || activeScale;
@@ -778,6 +792,16 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
     setDsReportOpen(true);
   }
 
+  function openEditPortageAssessment(item) {
+    setPortageEditData(item);
+    setPortageModalOpen(true);
+  }
+
+  function openViewPortageReport(item) {
+    setSelectedPortageAssessment(item);
+    setPortageReportOpen(true);
+  }
+
   function handleScaleOptionChange(itemId, value) {
     setScaleResponses(prev => ({
       ...prev,
@@ -854,6 +878,8 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
       setBridgeScaleItems(ATEC_ITEMS);
     } else if (item.measureId === 'scq' || item.scaleType === 'scq') {
       setBridgeScaleItems(SCQ_ITEMS);
+    } else if (item.measureId === 'portage-guide-v2' || item.scaleType === 'portage-guide-v2' || item.measureId === 'portage_early' || item.isPortage || item.measureId?.startsWith('portage')) {
+      setBridgeScaleItems(PORTAGE_ITEMS);
     } else if (item.isDownSyndrome || item.category === 'down_syndrome' || item.measureId?.startsWith('ds_')) {
       const currentScale = DOWN_SYNDROME_SCALES.find(s => s.id === (item.measureId || item.scaleId)) || DOWN_SYNDROME_SCALES[0];
       setBridgeScaleItems(currentScale.items || []);
@@ -2332,6 +2358,7 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                 const isConnersParent = item.measureId === 'conners_parent' || item.scaleType === 'conners_parent' || item.type === 'conners_parent' || item.isConnersParent;
                 const isMChat = item.measureId === 'mchat' || item.scaleType === 'mchat_r_f' || item.scaleType === 'mchat' || item.measureId === 'mchat_r_f' || item.isMChat;
                 const isDownSyndrome = item.isDownSyndrome || item.category === 'down_syndrome' || item.measureId?.startsWith('ds_') || item.scaleType === 'down_syndrome';
+                const isPortage = item.measureId === 'portage-guide-v2' || item.scaleType === 'portage-guide-v2' || item.measureId === 'portage_early' || item.isPortage || item.measureId?.startsWith('portage');
                 const isWisc5 = item.measureId === 'wisc_5' || item.scaleType === 'wisc5' || item.isWisc5 || item.measureId?.includes('wisc');
                 const isSb5 = item.measureId === 'stanford_binet_5' || item.scaleType === 'stanford_binet_5' || item.scaleType === 'sb5' || item.measureId === 'sb5' || item.isSB5 || item.isSb5 || item.measureId?.includes('binet') || item.measureId?.includes('sb5');
                 const isLeiter3 = item.measureId === 'leiter_3' || item.scaleType === 'leiter3' || item.scaleType === 'leiter_3' || item.isLeiter3 || item.measureId?.includes('leiter');
@@ -2341,14 +2368,15 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                     key={item.id}
                     className="prog-item-card"
                     style={{
-                      border: isRaven ? '1.5px solid #2563eb' : isLeiter3 ? '1.5px solid #0891b2' : isSb5 ? '1.5px solid #4f46e5' : isWisc5 ? '1.5px solid #7c3aed' : isDownSyndrome ? '1.5px solid #0891b2' : isScq ? '1.5px solid #059669' : isAtec ? '1.5px solid #1e3a8a' : isMChat ? '1.5px solid #2563eb' : isConnersParent ? '1.5px solid #ea580c' : isSensory ? '1.5px solid #0284c7' : isFamily ? '1.5px solid #7c3aed' : isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
-                      boxShadow: isRaven ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isLeiter3 ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSb5 ? '0 4px 12px rgba(79, 70, 229, 0.08)' : isWisc5 ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isDownSyndrome ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isScq ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isAtec ? '0 4px 12px rgba(30, 58, 138, 0.08)' : isMChat ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isConnersParent ? '0 4px 12px rgba(234, 88, 12, 0.08)' : isSensory ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isFamily ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
+                      border: isPortage ? '1.5px solid #4338ca' : isRaven ? '1.5px solid #2563eb' : isLeiter3 ? '1.5px solid #0891b2' : isSb5 ? '1.5px solid #4f46e5' : isWisc5 ? '1.5px solid #7c3aed' : isDownSyndrome ? '1.5px solid #0891b2' : isScq ? '1.5px solid #059669' : isAtec ? '1.5px solid #1e3a8a' : isMChat ? '1.5px solid #2563eb' : isConnersParent ? '1.5px solid #ea580c' : isSensory ? '1.5px solid #0284c7' : isFamily ? '1.5px solid #7c3aed' : isMyklebust ? '1.5px solid #0891b2' : isSartawi ? '1.5px solid #1e40af' : isLddrs ? '1.5px solid #dc2626' : isDevLd ? '1.5px solid #0d9488' : isLdes ? '1.5px solid #d97706' : isCars ? '1.5px solid var(--pr)' : isGars ? '1.5px solid #0d9488' : isSrs ? '1.5px solid #059669' : isPep3 ? '1.5px solid #2563eb' : isSpeech ? '1.5px solid #0284c7' : isPpvt5 ? '1.5px solid #0f766e' : isAbuhasiba ? '1.5px solid #0369a1' : isPls5 ? '1.5px solid #0e7490' : '1px solid var(--border-color)',
+                      boxShadow: isPortage ? '0 4px 12px rgba(67, 56, 202, 0.12)' : isRaven ? '0 4px 12px rgba(37, 99, 255, 0.08)' : isLeiter3 ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSb5 ? '0 4px 12px rgba(79, 70, 229, 0.08)' : isWisc5 ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isDownSyndrome ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isScq ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isAtec ? '0 4px 12px rgba(30, 58, 138, 0.08)' : isMChat ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isConnersParent ? '0 4px 12px rgba(234, 88, 12, 0.08)' : isSensory ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isFamily ? '0 4px 12px rgba(124, 58, 237, 0.08)' : isMyklebust ? '0 4px 12px rgba(8, 145, 178, 0.08)' : isSartawi ? '0 4px 12px rgba(30, 64, 175, 0.08)' : isLddrs ? '0 4px 12px rgba(220, 38, 38, 0.08)' : isDevLd ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isLdes ? '0 4px 12px rgba(217, 119, 6, 0.08)' : isCars ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isGars ? '0 4px 12px rgba(13, 148, 136, 0.08)' : isSrs ? '0 4px 12px rgba(5, 150, 105, 0.08)' : isPep3 ? '0 4px 12px rgba(37, 99, 235, 0.08)' : isSpeech ? '0 4px 12px rgba(2, 132, 199, 0.08)' : isPpvt5 ? '0 4px 12px rgba(15, 118, 110, 0.08)' : isAbuhasiba ? '0 4px 12px rgba(3, 105, 161, 0.08)' : isPls5 ? '0 4px 12px rgba(14, 116, 144, 0.08)' : 'var(--sh)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
                       <div>
                         <div className="prog-student-name" style={{ fontSize: '1.02rem', display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span>{item.studentName}</span>
+                          {isPortage && <span className="bdg" style={{ background: '#e0e7ff', color: '#3730a3', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>🌟 دليل بورتيدج للتدخل المبكر</span>}
                           {isRaven && <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>مصفوفات رافن (RPM)</span>}
                           {isLeiter3 && <span className="bdg" style={{ background: '#cffafe', color: '#0e7490', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>ليتر-3 غير اللفظي (NVIQ)</span>}
                           {isSb5 && <span className="bdg" style={{ background: '#e0e7ff', color: '#3730a3', fontSize: '.68rem', padding: '1px 6px', fontWeight: 800 }}>ستانفورد بينيه SB5 (IQ)</span>}
@@ -2378,9 +2406,18 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                         <div className="prog-student-meta">{item.measureName} · {item.date}</div>
                       </div>
                       <span className="bdg b-gr" style={{ fontSize: '0.82rem', fontWeight: 800, flexShrink: 0 }}>
-                        {isRaven ? `مصفوفات رافن (الخام: ${item.rawScore || item.score || 0} · مئين: ${item.percentile || item.psychometrics?.percentile || '—'}%)` : isLeiter3 ? `معامل الذكاء غير اللفظي (NVIQ): ${item.nviq || item.psychometrics?.nviq || item.score || '—'}` : isSb5 ? `معامل الذكاء (FSIQ): ${item.fsiq || item.psychometrics?.fsiq || item.score || '—'}` : isWisc5 ? `معامل الذكاء (FSIQ): ${item.fsiq || item.psychometrics?.fsiq || item.score || '—'}` : isAq ? `الدرجة الإجمالية: ${item.score || item.psychometrics?.totalScore || 0} / 50` : isScq ? `النقاط: ${item.score || item.psychometrics?.totalScore || 0} / 39` : isAtec ? `الخام: ${item.score || item.rawScore || 0} / 179` : isMChat ? `النقاط الإيجابية: ${item.score || item.totalFailedCount || 0} / 20` : isConnersParent ? `الخام: ${item.score || 0} / 240` : isSensory ? `الخام: ${item.score || 0} / 90` : isFamily ? `الخام: ${item.score || 0} / 130` : isMyklebust ? `الخام: ${item.score || 0} / 120 (LQ=${item.lq || item.psychometrics?.learningQuotient || '—'})` : isSartawi ? `الخام: ${item.score || 0} / 250 (T=${item.tScore || item.psychometrics?.totalTScore || '—'})` : isLddrs ? `الدرجة الكلية: ${item.score || 0}` : isDevLd ? `الخام: ${item.score} / ${item.maxScore || 160}` : isLdes ? `معامل LDEQ: ${item.ldeq || item.score}` : isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
+                        {isPortage ? `بورتيدج (العمر النمائي: ${item.psychometrics?.compositeDevAgeText || (item.psychometrics?.compositeDevAgeMonths ? `${(item.psychometrics.compositeDevAgeMonths / 12).toFixed(1)} سنة` : `${item.score || 0} نقطة`)} · DQ = ${item.psychometrics?.dqScore || '—'})` : isRaven ? `مصفوفات رافن (الخام: ${item.rawScore || item.score || 0} · مئين: ${item.percentile || item.psychometrics?.percentile || '—'}%)` : isLeiter3 ? `معامل الذكاء غير اللفظي (NVIQ): ${item.nviq || item.psychometrics?.nviq || item.score || '—'}` : isSb5 ? `معامل الذكاء (FSIQ): ${item.fsiq || item.psychometrics?.fsiq || item.score || '—'}` : isWisc5 ? `معامل الذكاء (FSIQ): ${item.fsiq || item.psychometrics?.fsiq || item.score || '—'}` : isAq ? `الدرجة الإجمالية: ${item.score || item.psychometrics?.totalScore || 0} / 50` : isScq ? `النقاط: ${item.score || item.psychometrics?.totalScore || 0} / 39` : isAtec ? `الخام: ${item.score || item.rawScore || 0} / 179` : isMChat ? `النقاط الإيجابية: ${item.score || item.totalFailedCount || 0} / 20` : isConnersParent ? `الخام: ${item.score || 0} / 240` : isSensory ? `الخام: ${item.score || 0} / 90` : isFamily ? `الخام: ${item.score || 0} / 130` : isMyklebust ? `الخام: ${item.score || 0} / 120 (LQ=${item.lq || item.psychometrics?.learningQuotient || '—'})` : isSartawi ? `الخام: ${item.score || 0} / 250 (T=${item.tScore || item.psychometrics?.totalTScore || '—'})` : isLddrs ? `الدرجة الكلية: ${item.score || 0}` : isDevLd ? `الخام: ${item.score} / ${item.maxScore || 160}` : isLdes ? `معامل LDEQ: ${item.ldeq || item.score}` : isGars ? `معامل AQ: ${item.autismQuotient || item.score}` : isSrs ? `الدرجة: ${item.score} / ${item.maxScore}` : isPep3 ? `الخام: ${item.score} / 100` : isSpeech ? `سليم: ${item.score} / ${item.maxScore}` : isPpvt5 ? `الخام: ${item.score} / 96` : isAbuhasiba ? `الخام: ${item.score} / 133` : isPls5 ? `الخام: ${item.score} / 80` : `الدرجة: ${item.score} / ${item.maxScore}`}
                       </span>
                     </div>
+
+                    {isPortage && (
+                      <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                        <span>العمر النمائي المركب: <strong style={{ color: '#4338ca' }}>{item.psychometrics?.compositeDevAgeText || (item.psychometrics?.compositeDevAgeMonths ? `${(item.psychometrics.compositeDevAgeMonths / 12).toFixed(1)} سنة (${item.psychometrics.compositeDevAgeMonths} شهر)` : '—')}</strong></span>
+                        <span>حاصل النمو (DQ): <strong style={{ color: '#4338ca' }}>{item.psychometrics?.dqScore || '—'}</strong></span>
+                        <span>نسبة الإتقان: <strong style={{ color: '#059669' }}>{item.percentage || '—'}</strong></span>
+                        <span>المستوى: <strong style={{ color: item.severityColor || '#4338ca' }}>{item.level || '—'}</strong></span>
+                      </div>
+                    )}
 
                     {isMChat && (
                       <div style={{ display: 'flex', gap: 10, margin: '4px 0 8px 0', fontSize: '.76rem', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
@@ -3147,6 +3184,27 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
                             className="btn btn-xs btn-g"
                             onClick={() => openEditPls5Assessment(item)}
                             title="تعديل درجات البنود"
+                          >
+                            ✏️
+                          </button>
+                        )}
+
+                        {isPortage && (
+                          <button
+                            type="button"
+                            className="btn btn-xs"
+                            onClick={() => openViewPortageReport(item)}
+                            style={{ fontWeight: 800, background: '#4338ca', color: '#fff' }}
+                          >
+                            📄 تقرير بورتيدج
+                          </button>
+                        )}
+                        {isPortage && (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-g"
+                            onClick={() => openEditPortageAssessment(item)}
+                            title="تعديل درجات مقياس بورتيدج"
                           >
                             ✏️
                           </button>
@@ -4036,6 +4094,43 @@ export default function PillarAssessment({ onDataChange, activeCategoryView: ext
           }}
           onOpenIepBridge={(item) => {
             setRavenReportOpen(false);
+            handleOpenBridge(item);
+          }}
+        />
+      )}
+
+      {/* MODAL: PORTAGE GUIDE TO EARLY EDUCATION WORKSTATION */}
+      {portageModalOpen && (
+        <PortageAssessmentModal
+          isOpen={portageModalOpen}
+          onClose={() => {
+            setPortageModalOpen(false);
+            setPortageEditData(null);
+          }}
+          onSaved={() => {
+            reload();
+            setSubTab('results');
+          }}
+          students={students}
+          emps={emps}
+          initialData={portageEditData}
+          onOpenIepBridge={(item) => handleOpenBridge(item)}
+        />
+      )}
+
+      {/* MODAL: PORTAGE GUIDE TO EARLY EDUCATION REPORT & IEP EXPORT */}
+      {portageReportOpen && selectedPortageAssessment && (
+        <PortageReportModal
+          isOpen={portageReportOpen}
+          onClose={() => setPortageReportOpen(false)}
+          assessment={selectedPortageAssessment}
+          assessmentData={selectedPortageAssessment}
+          onEdit={() => {
+            setPortageReportOpen(false);
+            openEditPortageAssessment(selectedPortageAssessment);
+          }}
+          onOpenIepBridge={(item) => {
+            setPortageReportOpen(false);
             handleOpenBridge(item);
           }}
         />
