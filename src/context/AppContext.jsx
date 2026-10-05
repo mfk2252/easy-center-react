@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { getCenterSettings } from '../firebase/db';
-import { signOutUser, checkSubscriptionStatus, isPlatformAdminEmail, isVerifiedPlatformAdmin } from '../firebase/auth';
+import { signOutUser, checkSubscriptionStatus, isVerifiedPlatformAdmin } from '../firebase/auth';
 import { syncFromFirebase, SYSTEM_DATA_KEYS } from '../hooks/useStorage';
 import { getWelcomeMessage } from './LanguageContext';
 import { persistCenterMeta, getCenterPrintMeta } from '../utils/centerMeta';
