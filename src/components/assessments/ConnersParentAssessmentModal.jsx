@@ -166,6 +166,22 @@ export default function ConnersParentAssessmentModal({
     }));
   }
 
+  function stepDomainRaw(domainId, delta) {
+    const domain = CONNERS_PARENT_DOMAINS.find(d => d.id === domainId);
+    const max = domain?.maxRawScore || 30;
+    const current = Number(form.domainRawScores[domainId]) || 0;
+    const nextVal = Math.max(0, Math.min(max, current + delta));
+    handleDomainRawChange(domainId, nextVal);
+  }
+
+  function resetScores() {
+    if (form.inputMode === 'subscales') {
+      setForm(f => ({ ...f, domainRawScores: {} }));
+    } else {
+      setForm(f => ({ ...f, scores: {} }));
+    }
+  }
+
   function handleQuickSample(level = 'mild') {
     if (form.inputMode === 'subscales') {
       const domainRaw = {};
@@ -343,83 +359,70 @@ export default function ConnersParentAssessmentModal({
 
         {/* Real-time Psychometrics & Clinical Metric Strip */}
         <div
-          className="modal-subbar transition-colors bg-slate-50 border-b border-slate-200 dark:bg-slate-900/90 dark:border-slate-800"
-          style={{
-            padding: '10px 18px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: 12,
-            flexWrap: 'wrap',
-            flexShrink: 0,
-          }}
+          className="px-4 sm:px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-sm flex items-center justify-between gap-3 flex-wrap shrink-0"
         >
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* Key Clinical Metrics */}
+          <div className="flex items-center gap-3 flex-wrap">
             {/* ADHD Index Metric */}
-            <div
-              className="rounded-lg px-3 py-1.5 text-center border bg-white border-orange-500 dark:bg-slate-800 dark:border-orange-600"
-            >
-              <span className="text-xs text-slate-500 dark:text-slate-400 block">مؤشر ADHD الكلي (T-Score):</span>
-              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: psychometrics.severityColor }}>
-                T = {psychometrics.adhdTScore}
-              </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 mr-1">
-                (مئيني: {psychometrics.percentile}%)
-              </span>
+            <div className="bg-white dark:bg-slate-800/90 px-3.5 py-1.5 rounded-xl border border-amber-500/30 dark:border-amber-500/40 shadow-xs flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs">
+                T
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium leading-none mb-0.5">
+                  مؤشر ADHD الكلي (T-Score):
+                </span>
+                <div className="flex items-baseline gap-1.5 leading-none">
+                  <span className="text-lg font-black" style={{ color: psychometrics.severityColor }}>
+                    T = {psychometrics.adhdTScore}
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
+                    (مئيني: {psychometrics.percentile}%)
+                  </span>
+                </div>
+              </div>
             </div>
 
-            {/* Input Mode Selector */}
+            {/* Severity Result Badge */}
             <div
-              className="rounded-lg p-1 border flex items-center gap-1 bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700"
+              className="px-3 py-1.5 rounded-xl border flex items-center gap-2 shadow-xs"
+              style={{
+                backgroundColor: `${psychometrics.severityColor}10`,
+                borderColor: `${psychometrics.severityColor}35`,
+              }}
             >
-              <span className="text-xs text-slate-500 dark:text-slate-400 px-1">نمط الإدخال:</span>
+              <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">التصنيف الإكلينيكي:</span>
+              <span className="text-xs font-black" style={{ color: psychometrics.severityColor }}>
+                {psychometrics.level}
+              </span>
+            </div>
+          </div>
+
+          {/* Segmented Mode Controls */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700/80 shadow-2xs flex items-center gap-1">
               <button
                 type="button"
-                className={`btn btn-xs ${form.inputMode === 'subscales' ? 'btn-p' : 'btn-g'}`}
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                  form.inputMode === 'subscales'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:dark:text-white'
+                }`}
                 onClick={() => setForm(f => ({ ...f, inputMode: 'subscales' }))}
-                style={{
-                  padding: '3px 8px',
-                  fontSize: '0.72rem',
-                  fontWeight: form.inputMode === 'subscales' ? 800 : 500,
-                  background: form.inputMode === 'subscales' ? '#ea580c' : undefined,
-                  color: form.inputMode === 'subscales' ? '#fff' : undefined,
-                  border: 'none',
-                }}
               >
                 🧮 حاسبة درجات الفئات (A-G)
               </button>
               <button
                 type="button"
-                className={`btn btn-xs ${form.inputMode === 'items' ? 'btn-p' : 'btn-g'}`}
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                  form.inputMode === 'items'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:dark:text-white'
+                }`}
                 onClick={() => setForm(f => ({ ...f, inputMode: 'items' }))}
-                style={{
-                  padding: '3px 8px',
-                  fontSize: '0.72rem',
-                  fontWeight: form.inputMode === 'items' ? 800 : 500,
-                  background: form.inputMode === 'items' ? '#ea580c' : undefined,
-                  color: form.inputMode === 'items' ? '#fff' : undefined,
-                  border: 'none',
-                }}
               >
                 📋 تفريغ أرقام الكراسة (1-80)
               </button>
-            </div>
-
-            {/* Severity Result Badge */}
-            <div
-              className="rounded-lg px-3 py-1.5 border flex items-center gap-2 bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700"
-            >
-              <span className="text-xs text-slate-500 dark:text-slate-400">التصنيف الإكلينيكي:</span>
-              <span
-                className="px-2 py-0.5 rounded text-xs font-extrabold"
-                style={{
-                  background: `${psychometrics.severityColor}15`,
-                  color: psychometrics.severityColor,
-                  border: `1px solid ${psychometrics.severityColor}40`,
-                }}
-              >
-                {psychometrics.level}
-              </span>
             </div>
           </div>
         </div>
@@ -559,22 +562,26 @@ export default function ConnersParentAssessmentModal({
             )}
           </div>
 
-          {/* 2. MODE A: SUBSCALE RAW SCORE CALCULATOR (CATEGORIES A-G) WITH ACCORDIONS */}
+          {/* 2. MODE A: SUBSCALE RAW SCORE CALCULATOR (CATEGORIES A-G) */}
           {form.inputMode === 'subscales' ? (
-            <div style={{ marginBottom: 20 }}>
-              <div
-                className="rounded-xl p-4 md:p-5 mb-4 border transition-colors bg-orange-50/70 border-orange-400/50 dark:bg-slate-900/90 dark:border-orange-900/50"
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
-                  <div>
-                    <h3 className="text-base font-extrabold text-orange-800 dark:text-orange-300 flex items-center gap-2 m-0">
-                      <span>🧮</span> حاسبة مجموع الدرجات الخام للفئات الفرعية (Conners-3 Subscales A - G)
-                    </h3>
-                    <p className="text-xs text-orange-700 dark:text-orange-400 mt-1 mb-0">
-                      طبّق كراسة التقدير الورقية الأصلية لكونرز، ثم أدخل مجموع الدرجات الخام لكل فئة فرعية أدناه لحساب الدرجات التائية (T-Scores) والمعايير الإكلينيكية تلقائياً.
-                    </p>
+            <div className="mb-6">
+              <div className="bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 md:p-6 shadow-sm">
+                {/* Header row */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
+                  <div className="flex items-start sm:items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl shrink-0">
+                      🧮
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 m-0">
+                        حاسبة مجموع الدرجات الخام للفئات الفرعية (Conners-3 Subscales A - G)
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0 leading-relaxed">
+                        أدخل مجموع الدرجات الخام المستخرجة من كراسة التقدير الورقية الرسمية لكونرز لحساب الدرجات التائية (T-Scores) والمعايير الإكلينيكية تلقائياً
+                      </p>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  <div className="flex items-center gap-2 flex-wrap">
                     <button
                       type="button"
                       className="btn btn-xs btn-g"
@@ -589,107 +596,161 @@ export default function ConnersParentAssessmentModal({
                     >
                       ⚡ تجربة (مؤشرات دالة)
                     </button>
+                    <button
+                      type="button"
+                      className="btn btn-xs btn-g"
+                      onClick={() => handleQuickSample('severe')}
+                    >
+                      ⚡ تجربة (مؤشرات حادة)
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-xs btn-g text-slate-500 dark:text-slate-400"
+                      onClick={resetScores}
+                      title="تصفير الدرجات"
+                    >
+                      ↺ تصفير
+                    </button>
                   </div>
                 </div>
 
                 {/* Subscales Grid Cards */}
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                    gap: 12,
-                  }}
-                >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5 mt-5">
                   {CONNERS_PARENT_DOMAINS.map(dom => {
                     const currentRaw = form.domainRawScores[dom.id] !== undefined ? form.domainRawScores[dom.id] : '';
+                    const numRaw = Number(currentRaw) || 0;
                     const subRes = psychometrics.subscaleResults.find(s => s.id === dom.id);
                     const tScore = subRes?.tScore || 50;
                     const isOpenAcc = openAccordions[dom.id] !== false;
+                    const percentFill = Math.min(100, Math.round((numRaw / dom.maxRawScore) * 100));
 
                     return (
                       <div
                         key={dom.id}
-                        className="rounded-lg p-3.5 flex flex-col justify-between gap-2.5 border shadow-sm transition-colors bg-white border-slate-200 dark:bg-slate-800/90 dark:border-slate-700"
-                        style={{
-                          borderRightWidth: '4px',
-                          borderRightColor: dom.color,
-                        }}
+                        className="bg-slate-50/70 dark:bg-slate-800/60 hover:bg-white hover:dark:bg-slate-800/90 rounded-xl p-4 sm:p-4.5 border border-slate-200/90 dark:border-slate-700/80 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between gap-3 relative overflow-hidden group"
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {/* Top accent line */}
+                        <div
+                          className="absolute top-0 right-0 left-0 h-1 transition-all group-hover:h-1.5"
+                          style={{ backgroundColor: dom.color }}
+                        />
+
+                        {/* Card Top: Code badge, Domain Name, T-Score Chip */}
+                        <div className="flex items-start justify-between gap-3 pt-1">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
                               <span
+                                className="px-2 py-0.5 rounded-md text-[11px] font-black"
                                 style={{
-                                  background: dom.color,
-                                  color: '#fff',
-                                  fontWeight: 800,
-                                  fontSize: '0.72rem',
-                                  padding: '2px 6px',
-                                  borderRadius: 4,
+                                  backgroundColor: `${dom.color}15`,
+                                  color: dom.color,
                                 }}
                               >
                                 فئة {dom.id} · {dom.code}
                               </span>
-                              <strong className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{dom.name}</strong>
+                              <strong className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate block">
+                                {dom.name}
+                              </strong>
                             </div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                              {dom.itemsCount} فقرات بالكراسة · الدرجة القصوى ({dom.maxRawScore})
-                            </div>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 mb-0">
+                              {dom.itemsCount} فقرة بالكراسة · الدرجة القصوى ({dom.maxRawScore})
+                            </p>
                           </div>
 
-                          <div
-                            className="text-center px-2 py-1 rounded border min-w-[70px] dark:bg-slate-900/60 dark:border-slate-700"
-                            style={{
-                              background: 'var(--bg-card)',
-                              borderColor: `${dom.color}50`,
-                            }}
-                          >
-                            <span style={{ fontSize: '0.68rem', color: dom.color, display: 'block', fontWeight: 700 }}>الدرجة التائية:</span>
-                            <span style={{ fontSize: '1.15rem', fontWeight: 900, color: subRes?.severityColor || dom.color }}>
+                          {/* Converted T-Score Metric Chip */}
+                          <div className="bg-white dark:bg-slate-900/90 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80 text-center shrink-0 shadow-2xs min-w-[75px]">
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold">
+                              الدرجة التائية
+                            </span>
+                            <span
+                              className="text-base font-black leading-tight block"
+                              style={{ color: subRes?.severityColor || dom.color }}
+                            >
                               T = {tScore}
                             </span>
-                            <span className="text-xs block text-slate-500 dark:text-slate-400">
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block">
                               {subRes?.severityLabel || 'متوسط'}
                             </span>
                           </div>
                         </div>
 
-                        {/* Raw Score Input */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <label className="text-xs font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">
-                            مجموع الدرجة الخام (0 - {dom.maxRawScore}):
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            max={dom.maxRawScore}
-                            className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded border text-center font-extrabold focus:outline-none"
-                            style={{
-                              width: 90,
-                              height: 34,
-                              fontSize: '0.95rem',
-                              borderColor: dom.color,
-                            }}
-                            placeholder="0"
-                            value={currentRaw}
-                            onChange={e => handleDomainRawChange(dom.id, e.target.value)}
-                          />
+                        {/* Score Stepper & Progress Engine */}
+                        <div className="bg-white dark:bg-slate-900/70 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700/70">
+                          <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                            <span>الدرجة الخام المستخرجة:</span>
+                            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">
+                              {numRaw} / {dom.maxRawScore}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-3">
+                            <button
+                              type="button"
+                              onClick={() => stepDomainRaw(dom.id, -1)}
+                              disabled={numRaw <= 0}
+                              className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 hover:dark:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center font-bold text-base transition-colors"
+                              title="إنقاص درجة"
+                            >
+                              −
+                            </button>
+
+                            <input
+                              type="number"
+                              min="0"
+                              max={dom.maxRawScore}
+                              className="flex-1 h-9 bg-slate-50 dark:bg-slate-800/90 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg text-center font-mono text-base font-black focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                              placeholder="0"
+                              value={currentRaw}
+                              onChange={e => handleDomainRawChange(dom.id, e.target.value)}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => stepDomainRaw(dom.id, 1)}
+                              disabled={numRaw >= dom.maxRawScore}
+                              className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 hover:dark:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center font-bold text-base transition-colors"
+                              title="زيادة درجة"
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          {/* Subtle Range Progress Bar */}
+                          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-2.5">
+                            <div
+                              className="h-full rounded-full transition-all duration-300"
+                              style={{
+                                width: `${percentFill}%`,
+                                backgroundColor: dom.color,
+                              }}
+                            />
+                          </div>
                         </div>
 
                         {/* Accordion Toggle for domain description & IEP target */}
-                        <div className="border-t border-dashed border-slate-200 dark:border-slate-700 pt-2">
+                        <div className="pt-1">
                           <button
                             type="button"
                             onClick={() => toggleAccordion(dom.id)}
-                            className="text-xs font-bold flex items-center justify-between w-full text-slate-600 dark:text-slate-300 hover:text-orange-600"
+                            className="w-full flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 hover:dark:text-slate-200 py-1 transition-colors"
                           >
-                            <span>🎯 الهدف التربوي والتفاصيل:</span>
-                            <span>{isOpenAcc ? '▲ إخفاء' : '▼ إظهار'}</span>
+                            <span className="flex items-center gap-1.5 truncate">
+                              <span>🎯</span>
+                              <span className="truncate">هدف الخطة (IEP) والوصف الإكلينيكي</span>
+                            </span>
+                            <span className="shrink-0 text-slate-400">
+                              {isOpenAcc ? '▲' : '▼'}
+                            </span>
                           </button>
+
                           {isOpenAcc && (
-                            <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed bg-slate-50 dark:bg-slate-900/40 p-2 rounded">
-                              <div><strong>الوصف الإكلينيكي:</strong> {dom.description}</div>
-                              <div className="mt-1 text-orange-700 dark:text-orange-400"><strong>هدف الخطة الفردية (IEP):</strong> {dom.iepTargetArea}</div>
+                            <div className="mt-2 p-2.5 bg-white dark:bg-slate-900/80 rounded-lg border border-slate-200/70 dark:border-slate-700/60 text-xs text-slate-600 dark:text-slate-300 space-y-1.5">
+                              <div>
+                                <strong className="text-slate-700 dark:text-slate-200">الوصف الإكلينيكي:</strong> {dom.description}
+                              </div>
+                              <div className="text-amber-700 dark:text-amber-400">
+                                <strong>هدف الخطة الفردية (IEP):</strong> {dom.iepTargetArea}
+                              </div>
                             </div>
                           )}
                         </div>

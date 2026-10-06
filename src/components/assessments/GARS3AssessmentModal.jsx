@@ -72,6 +72,7 @@ export default function GARS3AssessmentModal({
   const [showCopyrightDetails, setShowCopyrightDetails] = useState(false);
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
   const [isManualEdit, setIsManualEdit] = useState(false);
+  const [openAccordions, setOpenAccordions] = useState({});
 
   function handleSelectStudent(e) {
     const val = e.target.value;
@@ -158,6 +159,29 @@ export default function GARS3AssessmentModal({
         [domainId]: numeric,
       },
     }));
+  }
+
+  function toggleAccordion(domainId) {
+    setOpenAccordions(prev => ({
+      ...prev,
+      [domainId]: !prev[domainId],
+    }));
+  }
+
+  function stepDomainRaw(domainId, delta) {
+    const domain = GARS3_DOMAINS.find(d => d.id === domainId);
+    const max = domain?.maxRawScore || 42;
+    const current = Number(form.domainRawScores[domainId]) || 0;
+    const nextVal = Math.max(0, Math.min(max, current + delta));
+    handleDomainRawChange(domainId, nextVal);
+  }
+
+  function resetScores() {
+    if (form.inputMode === 'subscales') {
+      setForm(f => ({ ...f, domainRawScores: {} }));
+    } else {
+      setForm(f => ({ ...f, scores: {} }));
+    }
   }
 
   function handleItemNoteChange(itemId, noteText) {
@@ -451,123 +475,111 @@ export default function GARS3AssessmentModal({
 
         {/* Real-time Psychometrics & Diagnostic Strip */}
         <div
-          className="modal-subbar"
-          style={{
-            background: 'var(--g0)',
-            padding: '10px 18px',
-            borderBottom: '1px solid var(--border-color)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: 12,
-            flexWrap: 'wrap',
-            flexShrink: 0,
-          }}
+          className="px-4 sm:px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-sm flex items-center justify-between gap-3 flex-wrap shrink-0"
         >
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-            {/* Autism Quotient (AQ) Metric */}
-            <div
-              style={{
-                background: 'var(--bg-card)',
-                padding: '6px 12px',
-                borderRadius: 8,
-                border: '1.5px solid #0d9488',
-                textAlign: 'center',
-              }}
-            >
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>معامل التوحد (AQ):</span>
-              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: psychometrics.severityColor }}>
-                {psychometrics.autismQuotient}
-              </span>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-sub)', marginRight: 4 }}>
-                (مئيني: {psychometrics.overallPercentile}%)
-              </span>
+          {/* Key Clinical Metrics */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Autism Quotient (AQ) Hero Pill */}
+            <div className="bg-white dark:bg-slate-800/90 px-3.5 py-1.5 rounded-xl border border-teal-500/30 dark:border-teal-500/40 shadow-xs flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold text-xs">
+                AQ
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium leading-none mb-0.5">
+                  معامل التوحد (AQ):
+                </span>
+                <div className="flex items-baseline gap-1.5 leading-none">
+                  <span className="text-lg font-black" style={{ color: psychometrics.severityColor }}>
+                    {psychometrics.autismQuotient}
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
+                    (مئيني: {psychometrics.overallPercentile}%)
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Sum of Scaled Scores */}
-            <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-color)', textAlign: 'center' }}>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)', display: 'block' }}>مجموع الدرجات المعيارية:</span>
-              <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f766e' }}>
-                {psychometrics.sumScaledScores} <small style={{ fontSize: '0.7rem', color: 'var(--text-sub)' }}>/ {form.isVerbal ? '120' : '80'}</small>
-              </span>
-            </div>
-
-            {/* Input Mode Toggle (Raw Subscales vs Item Breakdown) */}
-            <div style={{ background: 'var(--bg-card)', padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>نمط الإدخال:</span>
-              <button
-                type="button"
-                className={`btn btn-xs ${form.inputMode === 'subscales' ? 'btn-p' : 'btn-g'}`}
-                onClick={() => setForm(f => ({ ...f, inputMode: 'subscales' }))}
-                style={{
-                  padding: '3px 8px',
-                  fontSize: '0.72rem',
-                  fontWeight: form.inputMode === 'subscales' ? 800 : 500,
-                  background: form.inputMode === 'subscales' ? '#0d9488' : undefined,
-                  color: form.inputMode === 'subscales' ? '#fff' : undefined,
-                  border: form.inputMode === 'subscales' ? 'none' : undefined,
-                }}
-              >
-                🧮 حاسبة الدرجات الخام للمقاييس
-              </button>
-              <button
-                type="button"
-                className={`btn btn-xs ${form.inputMode === 'items' ? 'btn-p' : 'btn-g'}`}
-                onClick={() => setForm(f => ({ ...f, inputMode: 'items' }))}
-                style={{
-                  padding: '3px 8px',
-                  fontSize: '0.72rem',
-                  fontWeight: form.inputMode === 'items' ? 800 : 500,
-                  background: form.inputMode === 'items' ? '#0f766e' : undefined,
-                  color: form.inputMode === 'items' ? '#fff' : undefined,
-                  border: form.inputMode === 'items' ? 'none' : undefined,
-                }}
-              >
-                📋 تفريغ أرقام بنود الكراسة
-              </button>
-            </div>
-
-            {/* Verbal Format Toggle */}
-            <div style={{ background: 'var(--bg-card)', padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>صيغة التطبيق:</span>
-              <button
-                type="button"
-                className={`btn btn-xs ${form.isVerbal ? 'btn-p' : 'btn-g'}`}
-                onClick={() => setForm(f => ({ ...f, isVerbal: true }))}
-                style={{
-                  padding: '3px 8px',
-                  fontSize: '0.72rem',
-                  fontWeight: form.isVerbal ? 800 : 500,
-                  background: form.isVerbal ? '#0d9488' : undefined,
-                  color: form.isVerbal ? '#fff' : undefined,
-                  border: form.isVerbal ? 'none' : undefined,
-                }}
-              >
-                🗣️ ناطق (6 مقاييس)
-              </button>
-              <button
-                type="button"
-                className={`btn btn-xs ${!form.isVerbal ? 'btn-p' : 'btn-g'}`}
-                onClick={() => setForm(f => ({ ...f, isVerbal: false }))}
-                style={{
-                  padding: '3px 8px',
-                  fontSize: '0.72rem',
-                  fontWeight: !form.isVerbal ? 800 : 500,
-                  background: !form.isVerbal ? '#0f766e' : undefined,
-                  color: !form.isVerbal ? '#fff' : undefined,
-                  border: !form.isVerbal ? 'none' : undefined,
-                }}
-              >
-                🤫 غير ناطق (4 مقاييس)
-              </button>
+            <div className="bg-white dark:bg-slate-800/90 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700/80 shadow-xs flex items-center gap-2">
+              <div>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium leading-none mb-0.5">
+                  مجموع المعيارية:
+                </span>
+                <span className="text-sm font-extrabold text-teal-700 dark:text-teal-300">
+                  {psychometrics.sumScaledScores} <span className="text-[10px] font-normal text-slate-400">/ {form.isVerbal ? '120' : '80'}</span>
+                </span>
+              </div>
             </div>
 
             {/* Diagnosis Result Badge */}
-            <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>النتيجة والشدة:</span>
-              <span className={`bdg ${psychometrics.severityKey === 'severe' ? 'b-rd' : psychometrics.severityKey === 'moderate' ? 'b-or' : psychometrics.severityKey === 'mild' ? 'b-bl' : 'b-gr'}`} style={{ fontWeight: 800, fontSize: '0.78rem' }}>
+            <div
+              className="px-3 py-1.5 rounded-xl border flex items-center gap-2 shadow-xs"
+              style={{
+                backgroundColor: `${psychometrics.severityColor}10`,
+                borderColor: `${psychometrics.severityColor}35`,
+              }}
+            >
+              <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">التشخيص:</span>
+              <span className="text-xs font-black" style={{ color: psychometrics.severityColor }}>
                 {psychometrics.probability} · {psychometrics.dsm5Level}
               </span>
+            </div>
+          </div>
+
+          {/* Segmented Mode Controls */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Input Mode Switcher */}
+            <div className="bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700/80 shadow-2xs flex items-center gap-1">
+              <button
+                type="button"
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                  form.inputMode === 'subscales'
+                    ? 'bg-teal-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:dark:text-white'
+                }`}
+                onClick={() => setForm(f => ({ ...f, inputMode: 'subscales' }))}
+              >
+                🧮 حاسبة الدرجات الخام
+              </button>
+              <button
+                type="button"
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                  form.inputMode === 'items'
+                    ? 'bg-teal-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:dark:text-white'
+                }`}
+                onClick={() => setForm(f => ({ ...f, inputMode: 'items' }))}
+              >
+                📋 تفريغ بنود الكراسة
+              </button>
+            </div>
+
+            {/* Verbal Format Switcher */}
+            <div className="bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700/80 shadow-2xs flex items-center gap-1">
+              <button
+                type="button"
+                className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                  form.isVerbal
+                    ? 'bg-teal-700 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:dark:text-white'
+                }`}
+                onClick={() => setForm(f => ({ ...f, isVerbal: true }))}
+                title="تطبيق الـ 6 مقاييس الفرعية"
+              >
+                🗣️ ناطق (6)
+              </button>
+              <button
+                type="button"
+                className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                  !form.isVerbal
+                    ? 'bg-teal-700 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:dark:text-white'
+                }`}
+                onClick={() => setForm(f => ({ ...f, isVerbal: false }))}
+                title="تطبيق الـ 4 مقاييس الفرعية الأساسية"
+              >
+                🤫 غير ناطق (4)
+              </button>
             </div>
           </div>
         </div>
@@ -782,28 +794,32 @@ export default function GARS3AssessmentModal({
             )}
           </div>
 
-          {/* 2. MODE A: DIRECT RAW SUBSCALE SCORE CALCULATOR (RECOMMENDED & IP COMPLIANT) */}
+          {/* 2. MODE A: DIRECT RAW SUBSCALE SCORE CALCULATOR */}
           {form.inputMode === 'subscales' ? (
-            <div style={{ marginBottom: 20 }}>
-              <div
-                className="rounded-xl p-4 md:p-5 mb-4 border transition-colors bg-teal-50/70 border-teal-600/50 dark:bg-slate-900/90 dark:border-teal-700/60"
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-                  <div>
-                    <h3 className="text-base font-extrabold text-teal-800 dark:text-teal-300 flex items-center gap-2 m-0">
-                      <span>🧮</span> حاسبة الدرجات الخام المباشرة للمقاييس الفرعية (GARS-3 Subscale Raw Scores)
-                    </h3>
-                    <p className="text-xs text-teal-700 dark:text-teal-400 mt-1 mb-0">
-                      طبّق كراسة الاستجابة الرسمية، ثم أدخل مجموع الدرجات الخام لكل مقياس فرعي أدناه ليقوم النظام بحساب الدرجات المعيارية والرتب المئينية ومعامل التوحد تلقائياً.
-                    </p>
+            <div className="mb-6">
+              <div className="bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 md:p-6 shadow-sm">
+                {/* Header row */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
+                  <div className="flex items-start sm:items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-teal-500/10 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 flex items-center justify-center text-xl shrink-0">
+                      🧮
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 m-0">
+                        حاسبة الدرجات الخام للمقاييس الفرعية (GARS-3 Subscale Psychometrics)
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-0 leading-relaxed">
+                        أدخل مجموع الدرجات الخام المستخرجة من كراسة الاستجابة الورقية الرسمية لحساب الدرجات المعيارية ومعامل التوحد (AQ) آلياً
+                      </p>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  <div className="flex items-center gap-2 flex-wrap">
                     <button
                       type="button"
                       className="btn btn-xs btn-g"
                       onClick={() => autoFillSample('mild')}
                     >
-                      ⚡ تجربة (طيف بسيط)
+                      ⚡ تجربة (طيف خفيف)
                     </button>
                     <button
                       type="button"
@@ -812,88 +828,164 @@ export default function GARS3AssessmentModal({
                     >
                       ⚡ تجربة (طيف متوسط)
                     </button>
+                    <button
+                      type="button"
+                      className="btn btn-xs btn-g"
+                      onClick={() => autoFillSample('severe')}
+                    >
+                      ⚡ تجربة (طيف شديد)
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-xs btn-g text-slate-500 dark:text-slate-400"
+                      onClick={resetScores}
+                      title="تصفير الدرجات"
+                    >
+                      ↺ تصفير
+                    </button>
                   </div>
                 </div>
 
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                    gap: 12,
-                  }}
-                >
+                {/* Real-time Subscales Grid Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5 mt-5">
                   {displayedDomains.map(dom => {
                     const currentRaw = form.domainRawScores[dom.id] !== undefined ? form.domainRawScores[dom.id] : '';
+                    const numRaw = Number(currentRaw) || 0;
                     const result = psychometrics.domainResults.find(d => d.id === dom.id);
-                    const scaledScore = result?.scaledScore || '—';
-                    const percentile = result?.percentile || '—';
+                    const scaledScore = result?.scaledScore ?? '—';
+                    const percentile = result?.percentile ?? '—';
+                    const isOpenAcc = !!openAccordions[dom.id];
+                    const percentFill = Math.min(100, Math.round((numRaw / dom.maxRawScore) * 100));
 
                     return (
                       <div
                         key={dom.id}
-                        className="rounded-lg p-3.5 flex flex-col justify-between gap-2.5 border shadow-sm transition-colors bg-white border-slate-200 dark:bg-slate-800/90 dark:border-slate-700"
-                        style={{
-                          borderRightWidth: '4px',
-                          borderRightColor: dom.color,
-                        }}
+                        className="bg-slate-50/70 dark:bg-slate-800/60 hover:bg-white hover:dark:bg-slate-800/90 rounded-xl p-4 sm:p-4.5 border border-slate-200/90 dark:border-slate-700/80 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between gap-3 relative overflow-hidden group"
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          <div>
-                            <span
-                              style={{
-                                background: dom.color,
-                                color: '#fff',
-                                fontWeight: 800,
-                                fontSize: '0.72rem',
-                                padding: '2px 6px',
-                                borderRadius: 4,
-                                marginLeft: 6,
-                              }}
-                            >
-                              {dom.code}
-                            </span>
-                            <strong className="text-sm font-bold text-slate-900 dark:text-slate-100">{dom.name}</strong>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                              {dom.itemsCount} بنود في الكراسة · الدرجة القصوى ({dom.maxRawScore})
+                        {/* Top accent line */}
+                        <div
+                          className="absolute top-0 right-0 left-0 h-1 transition-all group-hover:h-1.5"
+                          style={{ backgroundColor: dom.color }}
+                        />
+
+                        {/* Card Top: Code badge, Domain Name, Scaled Score Pill */}
+                        <div className="flex items-start justify-between gap-3 pt-1">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="px-2 py-0.5 rounded-md text-[11px] font-black"
+                                style={{
+                                  backgroundColor: `${dom.color}15`,
+                                  color: dom.color,
+                                }}
+                              >
+                                {dom.code}
+                              </span>
+                              <strong className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate block">
+                                {dom.name}
+                              </strong>
                             </div>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 mb-0">
+                              {dom.itemsCount} فقرة بالكراسة · الدرجة القصوى ({dom.maxRawScore})
+                            </p>
                           </div>
-                          
-                          <div
-                            className="text-center px-2 py-1 rounded border dark:bg-slate-900/60 dark:border-slate-700"
-                            style={{
-                              background: 'var(--bg-card)',
-                              borderColor: dom.borderColor,
-                            }}
+
+                          {/* Standard Scaled Score Metric Chip */}
+                          <div className="bg-white dark:bg-slate-900/90 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80 text-center shrink-0 shadow-2xs min-w-[70px]">
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold">
+                              معيارية (1-20)
+                            </span>
+                            <span
+                              className="text-base font-black leading-tight block"
+                              style={{ color: dom.color }}
+                            >
+                              {scaledScore}
+                            </span>
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block">
+                              مئيني {percentile}%
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Score Stepper & Progress Engine */}
+                        <div className="bg-white dark:bg-slate-900/70 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700/70">
+                          <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                            <span>الدرجة الخام المستخرجة:</span>
+                            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">
+                              {numRaw} / {dom.maxRawScore}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-3">
+                            <button
+                              type="button"
+                              onClick={() => stepDomainRaw(dom.id, -1)}
+                              disabled={numRaw <= 0}
+                              className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 hover:dark:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center font-bold text-base transition-colors"
+                              title="إنقاص درجة"
+                            >
+                              −
+                            </button>
+
+                            <input
+                              type="number"
+                              min="0"
+                              max={dom.maxRawScore}
+                              className="flex-1 h-9 bg-slate-50 dark:bg-slate-800/90 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg text-center font-mono text-base font-black focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                              placeholder="0"
+                              value={currentRaw}
+                              onChange={e => handleDomainRawChange(dom.id, e.target.value)}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => stepDomainRaw(dom.id, 1)}
+                              disabled={numRaw >= dom.maxRawScore}
+                              className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 hover:dark:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center font-bold text-base transition-colors"
+                              title="زيادة درجة"
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          {/* Subtle Range Progress Bar */}
+                          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-2.5">
+                            <div
+                              className="h-full rounded-full transition-all duration-300"
+                              style={{
+                                width: `${percentFill}%`,
+                                backgroundColor: dom.color,
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Accordion Toggle for IEP Target & Clinical Description */}
+                        <div className="pt-1">
+                          <button
+                            type="button"
+                            onClick={() => toggleAccordion(dom.id)}
+                            className="w-full flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 hover:dark:text-slate-200 py-1 transition-colors"
                           >
-                            <span style={{ fontSize: '0.68rem', color: dom.color, display: 'block', fontWeight: 700 }}>معيارية:</span>
-                            <span style={{ fontSize: '1.1rem', fontWeight: 900, color: dom.color }}>{scaledScore}</span>
-                            <span className="text-xs text-slate-500 dark:text-slate-400 block">({percentile}%)</span>
-                          </div>
-                        </div>
+                            <span className="flex items-center gap-1.5 truncate">
+                              <span>🎯</span>
+                              <span className="truncate">هدف الخطة (IEP) والوصف الإكلينيكي</span>
+                            </span>
+                            <span className="shrink-0 text-slate-400">
+                              {isOpenAcc ? '▲' : '▼'}
+                            </span>
+                          </button>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <label className="text-xs font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">
-                            الدرجة الخام (0 - {dom.maxRawScore}):
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            max={dom.maxRawScore}
-                            className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded border text-center font-extrabold focus:outline-none"
-                            style={{
-                              width: 90,
-                              height: 34,
-                              fontSize: '0.95rem',
-                              borderColor: dom.color,
-                            }}
-                            placeholder="0"
-                            value={currentRaw}
-                            onChange={e => handleDomainRawChange(dom.id, e.target.value)}
-                          />
-                        </div>
-
-                        <div className="text-xs text-slate-500 dark:text-slate-400 pt-1.5 border-t border-dashed border-slate-200 dark:border-slate-700">
-                          🎯 هدف الخطة المقترح: {dom.iepTargetArea}
+                          {isOpenAcc && (
+                            <div className="mt-2 p-2.5 bg-white dark:bg-slate-900/80 rounded-lg border border-slate-200/70 dark:border-slate-700/60 text-xs text-slate-600 dark:text-slate-300 space-y-1.5">
+                              <div>
+                                <strong className="text-slate-700 dark:text-slate-200">الوصف:</strong> {dom.description}
+                              </div>
+                              <div className="text-teal-700 dark:text-teal-400">
+                                <strong>هدف الخطة الفردية (IEP):</strong> {dom.iepTargetArea}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
