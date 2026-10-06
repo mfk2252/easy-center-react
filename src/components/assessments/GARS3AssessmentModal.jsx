@@ -30,6 +30,8 @@ const EMPTY_GARS3_FORM = {
   notes: '',
   itemNotes: {},
   scores: {},
+  domainRawScores: {},
+  inputMode: 'subscales', // 'subscales' (حاسبة الدرجات الخام المباشرة) أو 'items' (تفريغ أرقام بنود الكراسة)
   clinicalSummary: '',
   recommendations: '',
 };
@@ -46,12 +48,17 @@ export default function GARS3AssessmentModal({
 
   const [form, setForm] = useState(() => {
     if (initialData) {
+      // استنتاج الدرجات الخام لكل مجال إذا كانت مخزنة مسبقاً
+      const rawScores = initialData.domainRawScores || {};
+      const scores = initialData.results || initialData.scores || {};
       return {
         ...EMPTY_GARS3_FORM,
         ...initialData,
-        scores: initialData.results || initialData.scores || {},
+        scores,
+        domainRawScores: rawScores,
         itemNotes: initialData.itemNotes || {},
         isVerbal: initialData.isVerbal !== undefined ? initialData.isVerbal : true,
+        inputMode: initialData.inputMode || 'subscales',
       };
     }
     return {
@@ -104,8 +111,11 @@ export default function GARS3AssessmentModal({
 
   // Real-time Psychometrics Calculation
   const psychometrics = useMemo(() => {
-    return calculateGARS3Psychometrics(form.scores, form.isVerbal);
-  }, [form.scores, form.isVerbal]);
+    if (form.inputMode === 'subscales') {
+      return calculateGARS3Psychometrics({}, form.isVerbal, form.domainRawScores);
+    }
+    return calculateGARS3Psychometrics(form.scores, form.isVerbal, null);
+  }, [form.scores, form.isVerbal, form.inputMode, form.domainRawScores]);
 
   const displayedDomains = useMemo(() => {
     return form.isVerbal ? GARS3_DOMAINS : GARS3_DOMAINS.filter(d => d.isCore);
@@ -125,11 +135,27 @@ export default function GARS3AssessmentModal({
   if (!isOpen) return null;
 
   function handleScoreSelect(itemId, scoreValue) {
-    setForm(prev => ({
-      ...prev,
-      scores: {
+    setForm(prev => {
+      const newScores = {
         ...prev.scores,
         [itemId]: scoreValue,
+      };
+      return {
+        ...prev,
+        scores: newScores,
+      };
+    });
+  }
+
+  function handleDomainRawChange(domainId, rawVal) {
+    const domain = GARS3_DOMAINS.find(d => d.id === domainId);
+    const max = domain?.maxRawScore || 42;
+    let numeric = rawVal === '' ? '' : Math.max(0, Math.min(max, Number(rawVal) || 0));
+    setForm(prev => ({
+      ...prev,
+      domainRawScores: {
+        ...prev.domainRawScores,
+        [domainId]: numeric,
       },
     }));
   }
@@ -145,37 +171,53 @@ export default function GARS3AssessmentModal({
   }
 
   function autoFillSample(level = 'mild') {
-    const scores = {};
-    const items = form.isVerbal ? GARS3_ITEMS : GARS3_ITEMS.filter(it => it.domainId !== 'cs' && it.domainId !== 'ms');
-
-    items.forEach(it => {
-      if (level === 'mild') {
-        // Mild / Probable Autism
-        scores[it.id] = (it.id % 4 === 0) ? 2 : (it.id % 2 === 0 ? 1 : 0);
-      } else if (level === 'moderate') {
-        // Moderate / Very Likely
-        if (it.domainId === 'rb' || it.domainId === 'si' || it.domainId === 'sc') {
-          scores[it.id] = (it.id % 3 === 0) ? 3 : 2;
+    if (form.inputMode === 'subscales') {
+      // إدخال درجات خام معيارية افتراضية للمجالات
+      const domainRaw = {};
+      displayedDomains.forEach(dom => {
+        if (level === 'mild') {
+          domainRaw[dom.id] = Math.round(dom.maxRawScore * 0.35);
+        } else if (level === 'moderate') {
+          domainRaw[dom.id] = Math.round(dom.maxRawScore * 0.55);
+        } else if (level === 'severe') {
+          domainRaw[dom.id] = Math.round(dom.maxRawScore * 0.85);
         } else {
-          scores[it.id] = (it.id % 2 === 0) ? 2 : 1;
+          domainRaw[dom.id] = Math.round(dom.maxRawScore * 0.15);
         }
-      } else if (level === 'severe') {
-        // Severe / Level 3
-        scores[it.id] = (it.id % 3 === 0) ? 2 : 3;
-      } else {
-        // Unlikely / Normal
-        scores[it.id] = (it.id % 5 === 0) ? 1 : 0;
-      }
-    });
+      });
+      setForm(f => ({ ...f, domainRawScores: domainRaw }));
+    } else {
+      const scores = {};
+      const items = form.isVerbal ? GARS3_ITEMS : GARS3_ITEMS.filter(it => it.domainId !== 'cs' && it.domainId !== 'ms');
 
-    setForm(f => ({ ...f, scores }));
-    toast(`⚡ تم تعبئة استجابات نموذجية (${level === 'unlikely' ? 'أداء طبيعي' : level === 'mild' ? 'طيف توحد خفيف (المستوى 1)' : level === 'moderate' ? 'طيف توحد متوسط (المستوى 2)' : 'طيف توحد شديد (المستوى 3)'}) للتجربة والمعاينة السريعة`, 'ok');
+      items.forEach(it => {
+        if (level === 'mild') {
+          scores[it.id] = (it.id % 4 === 0) ? 2 : (it.id % 2 === 0 ? 1 : 0);
+        } else if (level === 'moderate') {
+          if (it.domainId === 'rb' || it.domainId === 'si' || it.domainId === 'sc') {
+            scores[it.id] = (it.id % 3 === 0) ? 3 : 2;
+          } else {
+            scores[it.id] = (it.id % 2 === 0) ? 2 : 1;
+          }
+        } else if (level === 'severe') {
+          scores[it.id] = (it.id % 3 === 0) ? 2 : 3;
+        } else {
+          scores[it.id] = (it.id % 5 === 0) ? 1 : 0;
+        }
+      });
+      setForm(f => ({ ...f, scores }));
+    }
+    toast(`⚡ تم ضبط استجابات نموذجية (${level === 'unlikely' ? 'أداء طبيعي' : level === 'mild' ? 'طيف توحد خفيف (المستوى 1)' : level === 'moderate' ? 'طيف توحد متوسط (المستوى 2)' : 'طيف توحد شديد (المستوى 3)'}) للتجربة السريعة`, 'ok');
   }
 
   function applyAutoClinicalSummary() {
     const totalRequired = form.isVerbal ? 58 : 44;
-    if (psychometrics.answeredCount < 12) {
-      toast('⚠️ يرجى تقييم عدد كافٍ من العبارات (12 بنداً على الأقل) لتوليد الخلاصة التشخيصية', 'er');
+    const answeredOrValid = form.inputMode === 'subscales'
+      ? displayedDomains.every(d => form.domainRawScores[d.id] !== undefined && form.domainRawScores[d.id] !== '')
+      : psychometrics.answeredCount >= 12;
+
+    if (!answeredOrValid && psychometrics.answeredCount < 12) {
+      toast('⚠️ يرجى تفريغ الدرجات الخام للمقاييس الفرعية أولاً لتوليد التقرير', 'er');
       return;
     }
 
@@ -187,7 +229,7 @@ export default function GARS3AssessmentModal({
       return `• ${d.name} (${d.code}): الدرجة الخام (${d.rawScore}/${d.maxRaw}) ➔ الدرجة المعيارية (${d.scaledScore}) بالرتبة المئينية (${d.percentile}%) - [${severityDesc}]`;
     }).join('\n');
 
-    const verbalStatus = form.isVerbal ? 'نموذج الأطفال الناطقين (تطبيق 6 مقاييس فرعية - 58 بنداً)' : 'نموذج الأطفال غير الناطقين (تطبيق 4 مقاييس فرعية أساسية - 44 بنداً)';
+    const verbalStatus = form.isVerbal ? 'نموذج الأطفال الناطقين (6 مقاييس فرعية)' : 'نموذج الأطفال غير الناطقين (4 مقاييس فرعية أساسية)';
 
     const suggestedSummary = `تقرير التقييم والتشخيص بمقياس جيليام لتقدير اضطراب طيف التوحد — الإصدار الثالث (GARS-3) وفق معايير DSM-5:\n\n` +
       `صيغة التطبيق السيكومتري: ${verbalStatus}.\n` +
@@ -229,13 +271,6 @@ export default function GARS3AssessmentModal({
       return;
     }
 
-    const totalRequired = form.isVerbal ? 58 : 44;
-    if (psychometrics.answeredCount < totalRequired) {
-      if (!window.confirm(`⚠️ تم تقييم ${psychometrics.answeredCount} من أصل ${totalRequired} عبارة. هل تود حفظ المقياس كمسودة؟`)) {
-        return;
-      }
-    }
-
     const payload = {
       ...form,
       measureId: 'autism_spectrum',
@@ -263,6 +298,8 @@ export default function GARS3AssessmentModal({
       severityColor: psychometrics.severityColor,
       results: form.scores,
       scores: form.scores,
+      domainRawScores: form.domainRawScores,
+      inputMode: form.inputMode,
       itemNotes: form.itemNotes,
       clinicalSummary: form.clinicalSummary,
       recommendations: form.recommendations,
@@ -291,8 +328,9 @@ export default function GARS3AssessmentModal({
 
   function handleSafeClose() {
     const answeredCount = Object.keys(form.scores || {}).length;
-    if (answeredCount > 0) {
-      if (window.confirm(`⚠️ تنبيه: تم رصد إجابات لـ (${answeredCount}) بنداً في المقياس. هل أنت متأكد من رغبتك في الإغلاق دون حفظ التغييرات؟`)) {
+    const hasRaw = Object.values(form.domainRawScores || {}).some(v => v !== '' && v !== undefined);
+    if (answeredCount > 0 || hasRaw) {
+      if (window.confirm('⚠️ تنبيه: هل أنت متأكد من رغبتك في الإغلاق دون حفظ التغييرات؟')) {
         onClose();
       }
     } else {
@@ -330,18 +368,18 @@ export default function GARS3AssessmentModal({
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <h2 style={{ fontSize: '1.18rem', fontWeight: 800, margin: 0, color: '#fff' }}>
-                  مقياس جيليام لتقدير اضطراب طيف التوحد (GARS-3)
+                  مقياس جيليام لتقدير اضطراب طيف التوحد (GARS-3) — الحاسبة السيكومترية الرقمية
                 </h2>
                 <span className="bdg" style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>
-                  {form.isVerbal ? '58 بنداً تشخيصياً · 6 مقاييس فرعية (ناطق)' : '44 بنداً تشخيصياً · 4 مقاييس فرعية أساسية (غير ناطق)'}
+                  {form.isVerbal ? '6 مقاييس فرعية (ناطق)' : '4 مقاييس فرعية أساسية (غير ناطق)'}
+                </span>
+                <span className="bdg" style={{ background: '#134e4a', color: '#ccfbf1', fontSize: '0.7rem', fontWeight: 800 }}>
+                  تفريغ معتمد وحساب الدرجات المعيارية DSM-5
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 3 }}>
-                <span className="bdg" style={{ background: '#134e4a', color: '#ccfbf1', fontSize: '0.68rem', fontWeight: 800 }}>
-                  © PRO-ED / د. جيمس إي. جيليام
-                </span>
                 <span style={{ fontSize: '0.76rem', opacity: 0.95 }}>
-                  Gilliam Autism Rating Scale — الأداة المعيارية المعتمدة لتقدير وتشخيص طيف التوحد وفق معايير DSM-5
+                  Gilliam Autism Rating Scale — تحويل الدرجات الخام لحساب معامل التوحد (AQ) والرتب المئينية
                 </span>
               </div>
             </div>
@@ -359,7 +397,7 @@ export default function GARS3AssessmentModal({
                 fontWeight: 700,
               }}
             >
-              📜 {showCopyrightDetails ? 'إخفاء حقوق الملكية' : 'حقوق الملكية الفكرية'}
+              📜 {showCopyrightDetails ? 'إخفاء تنبيه الملكية' : 'تنبيه الملكية الفكرية'}
             </button>
             <button
               type="button"
@@ -386,10 +424,9 @@ export default function GARS3AssessmentModal({
             }}
           >
             <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>📜</span> إشعار حقوق الملكية الفكرية والاعتماد العلمي لمقياس GARS-3:
+              <span>⚖️</span> تنبيه الامتثال وحقوق الملكية الفكرية (GARS-3 IP Notice):
             </div>
 
-            {/* Copyright Banner within details */}
             <div
               style={{
                 background: '#ccfbf1',
@@ -397,24 +434,13 @@ export default function GARS3AssessmentModal({
                 borderRadius: 8,
                 padding: '8px 12px',
                 marginBottom: 10,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: 8,
                 fontSize: '0.8rem',
                 color: '#115e59',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: '1.2rem' }}>⚖️</span>
-                <div>
-                  <strong>إشعار حقوق الملكية الفكرية والاعتماد السيكومتري:</strong> مقياس جيليام لتقدير اضطراب طيف التوحد (GARS-3) — إعداد د. جيمس إي. جيليام (James E. Gilliam, Ph.D.) · دار نشر برو-إد الأمريكية (PRO-ED, Inc.).
-                </div>
+              <div>
+                <strong>طريقة الاستخدام الرسمية:</strong> يتم تطبيق بنود المقياس الـ 58 من خلال كراسة الاستجابة الورقية الرسمية الأصلية المعتمدة الصادرة عن دار النشر PRO-ED أو الوكيل المعتمد. يقوم الفاحص الإكلينيكي المرخص برصد الدرجات وتفريغها في هذه المنصة لحساب المعايير السيكومترية واستخراج التقرير وتصميم الخطة الفردية (IEP).
               </div>
-              <span style={{ fontSize: '0.72rem', background: '#99f6e4', color: '#134e4a', padding: '3px 8px', borderRadius: 6, border: '1px solid #5eead4', fontWeight: 700 }}>
-                مخصص للتشخيص والتقييم السريري المرخص
-              </span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, marginBottom: 8 }}>
@@ -422,13 +448,13 @@ export default function GARS3AssessmentModal({
                 <strong>المؤلف الأصلي:</strong> {GARS3_COPYRIGHT_INFO.authorAr} ({GARS3_COPYRIGHT_INFO.authorEn})
               </div>
               <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #99f6e4' }}>
-                <strong>جهة النشر الأصلية:</strong> {GARS3_COPYRIGHT_INFO.publisherAr}
-              </div>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #99f6e4' }}>
-                <strong>الفئة المستهدفة:</strong> {GARS3_COPYRIGHT_INFO.targetAge}
+                <strong>الناشر التجاري الأصلي:</strong> {GARS3_COPYRIGHT_INFO.publisherAr}
               </div>
               <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #99f6e4' }}>
                 <strong>المرجعية التشخيصية:</strong> {GARS3_COPYRIGHT_INFO.standardsReference}
+              </div>
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #99f6e4' }}>
+                <strong>الفئة المستهدفة:</strong> {GARS3_COPYRIGHT_INFO.targetAge}
               </div>
             </div>
             <div style={{ fontSize: '0.78rem', color: '#115e59', background: '#ccfbf1', padding: '8px 12px', borderRadius: 8 }}>
@@ -482,6 +508,41 @@ export default function GARS3AssessmentModal({
               </span>
             </div>
 
+            {/* Input Mode Toggle (Raw Subscales vs Item Breakdown) */}
+            <div style={{ background: 'var(--bg-card)', padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>نمط الإدخال:</span>
+              <button
+                type="button"
+                className={`btn btn-xs ${form.inputMode === 'subscales' ? 'btn-p' : 'btn-g'}`}
+                onClick={() => setForm(f => ({ ...f, inputMode: 'subscales' }))}
+                style={{
+                  padding: '3px 8px',
+                  fontSize: '0.72rem',
+                  fontWeight: form.inputMode === 'subscales' ? 800 : 500,
+                  background: form.inputMode === 'subscales' ? '#0d9488' : undefined,
+                  color: form.inputMode === 'subscales' ? '#fff' : undefined,
+                  border: form.inputMode === 'subscales' ? 'none' : undefined,
+                }}
+              >
+                🧮 حاسبة الدرجات الخام للمقاييس
+              </button>
+              <button
+                type="button"
+                className={`btn btn-xs ${form.inputMode === 'items' ? 'btn-p' : 'btn-g'}`}
+                onClick={() => setForm(f => ({ ...f, inputMode: 'items' }))}
+                style={{
+                  padding: '3px 8px',
+                  fontSize: '0.72rem',
+                  fontWeight: form.inputMode === 'items' ? 800 : 500,
+                  background: form.inputMode === 'items' ? '#0f766e' : undefined,
+                  color: form.inputMode === 'items' ? '#fff' : undefined,
+                  border: form.inputMode === 'items' ? 'none' : undefined,
+                }}
+              >
+                📋 تفريغ أرقام بنود الكراسة
+              </button>
+            </div>
+
             {/* Verbal Format Toggle */}
             <div style={{ background: 'var(--bg-card)', padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: 4 }}>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>صيغة التطبيق:</span>
@@ -519,27 +580,10 @@ export default function GARS3AssessmentModal({
 
             {/* Diagnosis Result Badge */}
             <div style={{ background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>التصنيف والشدة:</span>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>النتيجة والشدة:</span>
               <span className={`bdg ${psychometrics.severityKey === 'severe' ? 'b-rd' : psychometrics.severityKey === 'moderate' ? 'b-or' : psychometrics.severityKey === 'mild' ? 'b-bl' : 'b-gr'}`} style={{ fontWeight: 800, fontSize: '0.78rem' }}>
                 {psychometrics.probability} · {psychometrics.dsm5Level}
               </span>
-            </div>
-
-            {/* Progress */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>
-                {psychometrics.answeredCount} / {totalRequiredItems} بنداً
-              </span>
-              <div style={{ width: 60, height: 8, background: 'var(--border-color)', borderRadius: 4, overflow: 'hidden' }}>
-                <div
-                  style={{
-                    width: `${psychometrics.completionPercentage}%`,
-                    height: '100%',
-                    background: psychometrics.completionPercentage === 100 ? 'var(--ok)' : '#0d9488',
-                    transition: 'width 0.3s',
-                  }}
-                />
-              </div>
             </div>
           </div>
         </div>
@@ -547,7 +591,7 @@ export default function GARS3AssessmentModal({
         {/* Scrollable Form Body */}
         <div className="modal-body-scroll" style={{ padding: '16px 20px', flex: 1, overflowY: 'auto' }}>
           
-          {/* 1. Student & Assessment Info Card - Compact Refactored Header */}
+          {/* 1. Student & Assessment Info Card */}
           <div
             style={{
               background: 'var(--g0)',
@@ -616,7 +660,6 @@ export default function GARS3AssessmentModal({
 
             {!isHeaderCollapsed && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
-                {/* Mode toggle if other */}
                 {form.mode === 'other' && (
                   <div style={{ marginBottom: 4 }}>
                     <div className="fl full">
@@ -631,7 +674,7 @@ export default function GARS3AssessmentModal({
                   </div>
                 )}
 
-                {/* ROW 1: Clinical Essentials (4 Columns) */}
+                {/* ROW 1: Clinical Essentials */}
                 <div
                   style={{
                     display: 'grid',
@@ -639,62 +682,66 @@ export default function GARS3AssessmentModal({
                     gap: 8,
                   }}
                 >
-                  {/* 1. Student Selection */}
+                  {/* 1. Student Picker */}
                   <div className="fl" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الطالب المسجل <span className="req">*</span></label>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الطالب / المفحوص <span className="req">*</span></label>
                     <select
                       style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
                       value={form.mode === 'other' ? '__other__' : (form.stuId || '')}
                       onChange={handleSelectStudent}
                     >
-                      <option value="">— اختر من الطلاب المسجلين بالمركز —</option>
+                      <option value="">-- اختر طالباً مسجلاً في المركز --</option>
                       {students.map(s => (
-                        <option key={s.id} value={s.id}>
-                          {s.name}
-                        </option>
+                        <option key={s.id} value={s.id}>{s.name} ({s.code || s.id})</option>
                       ))}
-                      <option value="__other__">➕ مستفيد خارجي (غير مسجل)</option>
+                      <option value="__other__">➕ مفحوص خارجي / غير مسجل في المركز</option>
                     </select>
                   </div>
 
-                  {/* 2. Chronological Age */}
+                  {/* 2. Assessment Date */}
                   <div className="fl" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>العمر الزمني</label>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>تاريخ التقييم السريري <span className="req">*</span></label>
                     <input
-                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit ? 'var(--bg-input)' : 'var(--g0)' }}
-                      value={form.age || (form.dob ? calcAge(form.dob) : '')}
-                      readOnly={!isManualEdit}
-                      onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
-                      placeholder="تلقائي حسب تاريخ الميلاد"
-                    />
-                  </div>
-
-                  {/* 3. Medical / Educational Diagnosis */}
-                  <div className="fl" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>التشخيص الطبي / التربوي</label>
-                    <input
-                      style={{ height: 32, fontSize: '0.82rem', background: isManualEdit || form.mode === 'other' ? 'var(--bg-input)' : 'var(--g0)' }}
-                      value={form.diagnosis || ''}
-                      readOnly={!isManualEdit && form.mode !== 'other'}
-                      onChange={e => setForm(f => ({ ...f, diagnosis: e.target.value }))}
-                      placeholder="مثال: اشتباه طيف توحد، اضطراب تواصل..."
-                    />
-                  </div>
-
-                  {/* 4. Assessment Date */}
-                  <div className="fl" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>تاريخ التقييم</label>
-                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
                       type="date"
-                      dir="ltr"
-                      style={{ height: 32, fontSize: '0.82rem', textAlign: 'right', padding: '2px 8px' }}
-                      value={form.date || todayStr()}
+                      value={form.date || ''}
                       onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
                     />
                   </div>
+
+                  {/* 3. Age */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>العمر الزمني</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      type="text"
+                      readOnly={!isManualEdit && form.mode === 'registered'}
+                      placeholder="العمر الزمني للطفل"
+                      value={form.age || ''}
+                      onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* 4. Examiner */}
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الأخصائي الفاحص</label>
+                    <select
+                      style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
+                      value={form.examinerName || ''}
+                      onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
+                    >
+                      <option value="">-- اختر الفاحص --</option>
+                      {emps.map(emp => (
+                        <option key={emp.id} value={emp.name}>{emp.name} ({emp.role || 'أخصائي'})</option>
+                      ))}
+                      {currentUser?.name && !emps.some(e => e.name === currentUser.name) && (
+                        <option value={currentUser.name}>{currentUser.name}</option>
+                      )}
+                    </select>
+                  </div>
                 </div>
 
-                {/* ROW 2: Respondent and Testing Details (4 Columns) */}
+                {/* ROW 2: Respondents and Format */}
                 <div
                   style={{
                     display: 'grid',
@@ -702,21 +749,8 @@ export default function GARS3AssessmentModal({
                     gap: 8,
                   }}
                 >
-                  {/* 1. Examiner Name */}
                   <div className="fl" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>الأخصائي الفاحص</label>
-                    <input
-                      style={{ height: 32, fontSize: '0.82rem' }}
-                      type="text"
-                      placeholder="اسم الأخصائي النفسي / الفاحص"
-                      value={form.examinerName || ''}
-                      onChange={e => setForm(f => ({ ...f, examinerName: e.target.value }))}
-                    />
-                  </div>
-
-                  {/* 2. Respondent Name */}
-                  <div className="fl" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>المستجيب (ولي أمر / معلم)</label>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>المستجيب (ولي الأمر / المعلم)</label>
                     <input
                       style={{ height: 32, fontSize: '0.82rem' }}
                       type="text"
@@ -726,190 +760,309 @@ export default function GARS3AssessmentModal({
                     />
                   </div>
 
-                  {/* 3. Verbal Format / Category */}
                   <div className="fl" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>نموذج التطبيق السيكومتري</label>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>صلة القرابة / دور المستجيب</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      type="text"
+                      placeholder="الأم، الأب، معلم التربية الخاصة..."
+                      value={form.raterRelation || ''}
+                      onChange={e => setForm(f => ({ ...f, raterRelation: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>مدة معرفة المستجيب بسلوك الطفل</label>
+                    <input
+                      style={{ height: 32, fontSize: '0.82rem' }}
+                      type="text"
+                      placeholder="مثال: سنتان، منذ الولادة، عام دراسي..."
+                      value={form.relationshipDuration || ''}
+                      onChange={e => setForm(f => ({ ...f, relationshipDuration: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="fl" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>صيغة التطبيق</label>
                     <select
                       style={{ height: 32, fontSize: '0.82rem', padding: '2px 8px' }}
                       value={form.isVerbal ? 'verbal' : 'nonverbal'}
                       onChange={e => setForm(f => ({ ...f, isVerbal: e.target.value === 'verbal' }))}
                     >
-                      <option value="verbal">🗣️ أطفال ناطقين (6 مقاييس فرعية - 58 بنداً)</option>
-                      <option value="nonverbal">🤫 أطفال غير ناطقين (4 مقاييس فرعية - 44 بنداً)</option>
+                      <option value="verbal">🗣️ أطفال ناطقين (6 مقاييس فرعية)</option>
+                      <option value="nonverbal">🤫 أطفال غير ناطقين (4 مقاييس فرعية)</option>
                     </select>
-                  </div>
-
-                  {/* 4. Relationship / Role */}
-                  <div className="fl" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '0.75rem', marginBottom: 2 }}>صلة القرابة / معرفة السلوك</label>
-                    <input
-                      style={{ height: 32, fontSize: '0.82rem' }}
-                      type="text"
-                      placeholder="مثال: الأم، الأب، معلم التربية الخاصة، الأخصائي الملاحظ..."
-                      value={form.raterRelation || ''}
-                      onChange={e => setForm(f => ({ ...f, raterRelation: e.target.value }))}
-                    />
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* 2. Subscale Navigation Tabs & Filter */}
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
-              <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                📑 بنود المقاييس الفرعية (GARS-3 Subscales):
-              </div>
-              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                اختر 0 (أبداً)، 1 (نادراً)، 2 (أحياناً)، 3 (كثيراً جداً / نعم)
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 6 }}>
-              <button
-                type="button"
-                className={`tab ${activeDomainFilter === 'all' ? 'on' : ''}`}
-                onClick={() => setActiveDomainFilter('all')}
-                style={{ fontSize: '0.78rem', padding: '6px 12px', whiteSpace: 'nowrap' }}
+          {/* 2. MODE A: DIRECT RAW SUBSCALE SCORE CALCULATOR (RECOMMENDED & IP COMPLIANT) */}
+          {form.inputMode === 'subscales' ? (
+            <div style={{ marginBottom: 20 }}>
+              <div
+                style={{
+                  background: '#f0fdfa',
+                  border: '1.5px solid #0d9488',
+                  borderRadius: 12,
+                  padding: '16px 20px',
+                  marginBottom: 16,
+                }}
               >
-                🌐 جميع البنود ({totalRequiredItems})
-              </button>
-              {displayedDomains.map(dom => {
-                const domStat = psychometrics.domainResults.find(d => d.id === dom.id);
-                return (
-                  <button
-                    key={dom.id}
-                    type="button"
-                    className={`tab ${activeDomainFilter === dom.id ? 'on' : ''}`}
-                    onClick={() => setActiveDomainFilter(dom.id)}
-                    style={{
-                      fontSize: '0.78rem',
-                      padding: '6px 12px',
-                      whiteSpace: 'nowrap',
-                      borderRight: `3px solid ${dom.color}`,
-                    }}
-                  >
-                    {dom.name.split(' ')[0]} ({domStat?.answeredCount || 0}/{dom.itemsCount})
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 3. Items Evaluation Grid */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
-            {filteredItems.map(item => {
-              const domain = GARS3_DOMAINS.find(d => d.id === item.domainId);
-              const currentScore = form.scores[item.id];
-              const currentNote = form.itemNotes[item.id] || '';
-
-              return (
-                <div
-                  key={item.id}
-                  style={{
-                    background: 'var(--bg-card)',
-                    border: currentScore !== undefined ? `1.5px solid ${domain?.color || 'var(--pr)'}` : '1px solid var(--border-color)',
-                    borderRadius: 10,
-                    padding: '12px 16px',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1, minWidth: '260px' }}>
-                      <span
-                        style={{
-                          background: domain?.color || 'var(--pr)',
-                          color: '#fff',
-                          fontWeight: 800,
-                          fontSize: '0.74rem',
-                          padding: '3px 8px',
-                          borderRadius: 6,
-                          flexShrink: 0,
-                        }}
-                      >
-                        #{item.id} · {domain?.code || item.domainCode}
-                      </span>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.5 }}>
-                          {item.text}
-                        </div>
-                        {item.example && (
-                          <div
-                            style={{
-                              fontSize: '0.78rem',
-                              color: 'var(--text-sub)',
-                              marginTop: 4,
-                              display: 'flex',
-                              alignItems: 'baseline',
-                              gap: 6,
-                              lineHeight: 1.4,
-                            }}
-                          >
-                            <span style={{ color: '#0d9488', fontWeight: 800, flexShrink: 0, fontSize: '0.74rem' }}>
-                              💡 توضيح سريري:
-                            </span>
-                            <span style={{ color: 'var(--text-sub)' }}>
-                              {item.example}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Rating Scale Buttons */}
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                      {GARS3_RESPONSE_OPTIONS.map(opt => {
-                        const isSelected = currentScore === opt.value;
-                        return (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => handleScoreSelect(item.id, opt.value)}
-                            className={`btn btn-xs ${isSelected ? 'btn-p' : 'btn-g'}`}
-                            style={{
-                              padding: '5px 10px',
-                              fontSize: '0.75rem',
-                              fontWeight: isSelected ? 800 : 500,
-                              background: isSelected
-                                ? (opt.value === 3 ? '#dc2626' : opt.value === 2 ? '#ea580c' : opt.value === 1 ? '#0284c7' : '#059669')
-                                : undefined,
-                              color: isSelected ? '#fff' : undefined,
-                              border: isSelected ? 'none' : undefined,
-                            }}
-                            title={opt.hint || opt.description}
-                          >
-                            {opt.label} ({opt.score}) {isSelected && '✓'}
-                          </button>
-                        );
-                      })}
-                    </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#0f766e', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span>🧮</span> حاسبة الدرجات الخام المباشرة للمقاييس الفرعية (GARS-3 Subscale Raw Scores)
+                    </h3>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#115e59' }}>
+                      طبّق كراسة الاستجابة الرسمية، ثم أدخل مجموع الدرجات الخام لكل مقياس فرعي أدناه ليقوم النظام بحساب الدرجات المعيارية والرتب المئينية ومعامل التوحد تلقائياً.
+                    </p>
                   </div>
-
-                  {/* Optional Item Observation Note */}
-                  <div style={{ marginTop: 6 }}>
-                    <input
-                      type="text"
-                      placeholder="ملاحظات سلوكية أو تفاصيل إضافية لهذا البند (اختياري)..."
-                      value={currentNote}
-                      onChange={e => handleItemNoteChange(item.id, e.target.value)}
-                      style={{
-                        fontSize: '0.76rem',
-                        padding: '4px 8px',
-                        borderRadius: 6,
-                        border: '1px dashed var(--border-color)',
-                        width: '100%',
-                        background: 'var(--g0)',
-                      }}
-                    />
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      type="button"
+                      className="btn btn-xs btn-g"
+                      onClick={() => autoFillSample('mild')}
+                    >
+                      ⚡ تجربة (طيف بسيط)
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-xs btn-g"
+                      onClick={() => autoFillSample('moderate')}
+                    >
+                      ⚡ تجربة (طيف متوسط)
+                    </button>
                   </div>
                 </div>
-              );
-            })}
-          </div>
 
-          {/* 4. Diagnostic Interpretation & Recommendations Section */}
-          <div style={{ background: 'var(--g0)', padding: 16, borderRadius: 12, border: '1px solid var(--border-color)', marginTop: 20 }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                    gap: 12,
+                  }}
+                >
+                  {displayedDomains.map(dom => {
+                    const currentRaw = form.domainRawScores[dom.id] !== undefined ? form.domainRawScores[dom.id] : '';
+                    const result = psychometrics.domainResults.find(d => d.id === dom.id);
+                    const scaledScore = result?.scaledScore || '—';
+                    const percentile = result?.percentile || '—';
+
+                    return (
+                      <div
+                        key={dom.id}
+                        style={{
+                          background: '#fff',
+                          border: `2px solid ${dom.color}`,
+                          borderRadius: 10,
+                          padding: '12px 16px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          gap: 10,
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div>
+                            <span
+                              style={{
+                                background: dom.color,
+                                color: '#fff',
+                                fontWeight: 800,
+                                fontSize: '0.72rem',
+                                padding: '2px 6px',
+                                borderRadius: 4,
+                                marginLeft: 6,
+                              }}
+                            >
+                              {dom.code}
+                            </span>
+                            <strong style={{ fontSize: '0.88rem', color: 'var(--text-main)' }}>{dom.name}</strong>
+                            <div style={{ fontSize: '0.74rem', color: 'var(--text-sub)', marginTop: 2 }}>
+                              {dom.itemsCount} بنود في الكراسة · الدرجة القصوى ({dom.maxRawScore})
+                            </div>
+                          </div>
+                          
+                          <div style={{ textAlign: 'center', background: dom.bgLight, border: `1px solid ${dom.borderColor}`, padding: '4px 8px', borderRadius: 6 }}>
+                            <span style={{ fontSize: '0.68rem', color: dom.color, display: 'block', fontWeight: 700 }}>معيارية:</span>
+                            <span style={{ fontSize: '1.1rem', fontWeight: 900, color: dom.color }}>{scaledScore}</span>
+                            <span style={{ fontSize: '0.68rem', color: 'var(--text-sub)', display: 'block' }}>({percentile}%)</span>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
+                            الدرجة الخام (0 - {dom.maxRawScore}):
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            max={dom.maxRawScore}
+                            style={{
+                              width: 90,
+                              height: 34,
+                              textAlign: 'center',
+                              fontSize: '0.95rem',
+                              fontWeight: 800,
+                              borderColor: dom.color,
+                            }}
+                            placeholder="0"
+                            value={currentRaw}
+                            onChange={e => handleDomainRawChange(dom.id, e.target.value)}
+                          />
+                        </div>
+
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)', borderTop: '1px dashed var(--border-color)', paddingTop: 6 }}>
+                          🎯 هدف الخطة المقترح: {dom.iepTargetArea}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* MODE B: RESPONSE CODES / RECORDING SHEET ENTRY (BY ITEM ID NUMBER ONLY) */
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
+                <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                  📑 كشف تفريغ أرقام بنود الاستجابة (وفق كراسة الفاحص):
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>
+                  تفريغ الاستجابات: 0 (أبداً)، 1 (نادراً)، 2 (أحياناً)، 3 (كثيراً جداً)
+                </div>
+              </div>
+
+              {/* Subscale Navigation Tabs */}
+              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 6, marginBottom: 12 }}>
+                <button
+                  type="button"
+                  className={`tab ${activeDomainFilter === 'all' ? 'on' : ''}`}
+                  onClick={() => setActiveDomainFilter('all')}
+                  style={{ fontSize: '0.78rem', padding: '6px 12px', whiteSpace: 'nowrap' }}
+                >
+                  🌐 جميع البنود ({totalRequiredItems})
+                </button>
+                {displayedDomains.map(dom => {
+                  const domStat = psychometrics.domainResults.find(d => d.id === dom.id);
+                  return (
+                    <button
+                      key={dom.id}
+                      type="button"
+                      className={`tab ${activeDomainFilter === dom.id ? 'on' : ''}`}
+                      onClick={() => setActiveDomainFilter(dom.id)}
+                      style={{
+                        fontSize: '0.78rem',
+                        padding: '6px 12px',
+                        whiteSpace: 'nowrap',
+                        borderRight: `3px solid ${dom.color}`,
+                      }}
+                    >
+                      {dom.name} ({domStat?.answeredCount || 0}/{dom.itemsCount})
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Items Table */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {filteredItems.map(item => {
+                  const domain = GARS3_DOMAINS.find(d => d.id === item.domainId);
+                  const currentScore = form.scores[item.id];
+                  const currentNote = form.itemNotes[item.id] || '';
+
+                  return (
+                    <div
+                      key={item.id}
+                      style={{
+                        background: 'var(--bg-card)',
+                        border: currentScore !== undefined ? `1.5px solid ${domain?.color || 'var(--pr)'}` : '1px solid var(--border-color)',
+                        borderRadius: 8,
+                        padding: '10px 14px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: 12,
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 260 }}>
+                        <span
+                          style={{
+                            background: domain?.color || 'var(--pr)',
+                            color: '#fff',
+                            fontWeight: 800,
+                            fontSize: '0.74rem',
+                            padding: '3px 8px',
+                            borderRadius: 6,
+                          }}
+                        >
+                          بند #{item.id} · {domain?.code}
+                        </span>
+                        <div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                            استجابة كراسة GARS-3 لبند رقم ({item.id}) — {domain?.name}
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>
+                            راجع كراسة التقدير المعتمدة لرصد السلوك المقابل
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        {GARS3_RESPONSE_OPTIONS.map(opt => {
+                          const isSelected = currentScore === opt.value;
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => handleScoreSelect(item.id, opt.value)}
+                              className={`btn btn-xs ${isSelected ? 'btn-p' : 'btn-g'}`}
+                              style={{
+                                padding: '4px 10px',
+                                fontSize: '0.74rem',
+                                fontWeight: isSelected ? 800 : 500,
+                                background: isSelected
+                                  ? (opt.value === 3 ? '#dc2626' : opt.value === 2 ? '#ea580c' : opt.value === 1 ? '#0284c7' : '#059669')
+                                  : undefined,
+                                color: isSelected ? '#fff' : undefined,
+                                border: isSelected ? 'none' : undefined,
+                              }}
+                            >
+                              {opt.label} {isSelected && '✓'}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div style={{ width: '100%', marginTop: 4 }}>
+                        <input
+                          type="text"
+                          placeholder="ملاحظة الأخصائي على هذا البند (اختياري)..."
+                          value={currentNote}
+                          onChange={e => handleItemNoteChange(item.id, e.target.value)}
+                          style={{
+                            fontSize: '0.74rem',
+                            padding: '3px 8px',
+                            borderRadius: 4,
+                            border: '1px dashed var(--border-color)',
+                            width: '100%',
+                            background: 'var(--g0)',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 3. Diagnostic Summary & IEP Recommendations */}
+          <div style={{ background: 'var(--g0)', padding: 16, borderRadius: 12, border: '1px solid var(--border-color)', marginTop: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
               <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f766e', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span>📝</span> الخلاصة التشخيصية والتوصيات السلوكية والتأهيلية المعتمدة
@@ -920,7 +1073,7 @@ export default function GARS3AssessmentModal({
                 onClick={applyAutoClinicalSummary}
                 style={{ fontWeight: 700 }}
               >
-                ✨ إعادة توليد الخلاصة بناءً على الدرجات
+                ✨ توليد الخلاصة بناءً على الدرجات السيكومترية
               </button>
             </div>
 
@@ -966,42 +1119,12 @@ export default function GARS3AssessmentModal({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>
-              تم الإجابة على <strong>{psychometrics.answeredCount}</strong> من <strong>{totalRequiredItems}</strong> بنداً
-            </span>
-            <span className={`bdg ${psychometrics.completionPercentage === 100 ? 'b-gr' : 'b-or'}`} style={{ fontSize: '0.72rem' }}>
-              {psychometrics.completionPercentage}% مكتمل
-            </span>
-
-            {/* Quick Actions in footer */}
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginRight: 6 }}>
-              <button
-                type="button"
-                className="btn btn-xs btn-g"
-                onClick={() => autoFillSample('mild')}
-                title="تعبئة نموذج افتراضي يظهر طيف توحد بسيط (مستوى 1)"
-                style={{ fontSize: '0.74rem' }}
-              >
-                ⚡ تجربة (توحد بسيط)
-              </button>
-              <button
-                type="button"
-                className="btn btn-xs btn-g"
-                onClick={() => autoFillSample('moderate')}
-                title="تعبئة نموذج افتراضي يظهر طيف توحد متوسط (مستوى 2)"
-                style={{ fontSize: '0.74rem' }}
-              >
-                ⚡ تجربة (توحد متوسط)
-              </button>
-              <button
-                type="button"
-                className="btn btn-xs btn-p"
-                onClick={applyAutoClinicalSummary}
-                style={{ fontWeight: 700, fontSize: '0.74rem' }}
-              >
-                ✨ توليد التقرير والتوصيات آلياً
-              </button>
+            <div style={{ fontSize: '0.82rem', color: '#0f766e', fontWeight: 800 }}>
+              معامل التوحد (AQ): <strong>{psychometrics.autismQuotient}</strong> | الرتبة المئينية: <strong>{psychometrics.overallPercentile}%</strong>
             </div>
+            <span className={`bdg ${psychometrics.severityKey === 'severe' ? 'b-rd' : psychometrics.severityKey === 'moderate' ? 'b-or' : psychometrics.severityKey === 'mild' ? 'b-bl' : 'b-gr'}`} style={{ fontSize: '0.72rem' }}>
+              {psychometrics.probability}
+            </span>
           </div>
 
           <div style={{ display: 'flex', gap: 10 }}>

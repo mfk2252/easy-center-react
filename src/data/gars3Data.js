@@ -1,39 +1,33 @@
 /**
- * GARS-3 (Gilliam Autism Rating Scale, Third Edition)
- * مقياس جيليام لتقدير اضطراب طيف التوحد - الإصدار الثالث
- * تعريب وتقنين: أخصائي نفسي سامح محمد عرفة (2019) / أ.د. عادل عبدالله محمد وأ. عبير أبو المجد محمد (2020)
+ * GARS-3 (Gilliam Autism Rating Scale, Third Edition) — المعالج السيكومتري والحاسبة الرقمية
+ * نظام حاسبة الدرجات الخام والتحويل السيكومتري لمعامل التوحد (AQ) والرتب المئينية ومستويات الدعم DSM-5
  * 
- * يتضمن 58 عبارة موزعة على 6 مقاييس فرعية:
- * 1. السلوكيات المقيدة أو التكرارية (RB) - 13 عبارة
- * 2. التفاعل الاجتماعي (SI) - 14 عبارة
- * 3. التواصل الاجتماعي (SC) - 9 عبارات
- * 4. الاستجابة العاطفية / الوجدانية (ER) - 8 عبارات
- * 5. النمط المعرفي (CS) - 7 عبارات
- * 6. اللغة اللاتكيفية / الكلام غير الملائم (MS) - 7 عبارات
- * 
- * جداول التقنين الدقيقة (جدول أ وجدول ب) وفق الدليل التشخيصي والإحصائي الخامس DSM-5
+ * ملاحظة الملكية الفكرية والامتثال القانوني (IP Compliance Notice):
+ * تطبيق بنود المقياس يتم عبر كراسة الاستجابة الورقية الرسمية الأصلية المعتمدة الصادرة عن دار النشر PRO-ED
+ * أو عبر الأخصائي المرخص. يوفر هذا النظام محركاً سيكومترياً وحاسبة درجات خام ومعايير رقمية (Raw Score Entry & Scoring Engine).
+ * لا يحتوي هذا الكود على نصوص بنود اختبارية محمية بحقوق نشر تجارية.
  */
 
 export const GARS3_COPYRIGHT_INFO = {
-  scaleNameAr: 'مقياس جيليام لتقدير اضطراب طيف التوحد — الإصدار الثالث',
-  scaleNameEn: 'Gilliam Autism Rating Scale, Third Edition (GARS-3)',
+  scaleNameAr: 'مقياس جيليام لتقدير اضطراب طيف التوحد — الإصدار الثالث (حاسبة الدرجات السيكومترية)',
+  scaleNameEn: 'Gilliam Autism Rating Scale, Third Edition (GARS-3) — Psychometric Scoring Assistant',
   scaleShortName: 'GARS-3',
   authorAr: 'د. جيمس إي. جيليام (James E. Gilliam, Ph.D.)',
   authorEn: 'James E. Gilliam, Ph.D.',
   publisherAr: 'دار برو-إد للنشر والاختبارات النفسية (PRO-ED, Inc. Austin, Texas)',
   publisherEn: 'PRO-ED, Inc.',
-  adaptationAr: 'التقنين والتعريب المعتمد: أخصائي نفسي سامح محمد عرفة (2019) / أ.د. عادل عبدالله محمد وأ. عبير أبو المجد محمد (2020)',
+  adaptationAr: 'التقنين الإكلينيكي العربي: أخصائي نفسي سامح محمد عرفة (2019) / أ.د. عادل عبدالله محمد وأ. عبير أبو المجد محمد (2020)',
   targetAge: 'من عمر 3 سنوات حتى 22 سنة (الأطفال واليافعين والشباب)',
   standardsReference: 'مقنن بالكامل وفق معايير الدليل التشخيصي والإحصائي الخامس للاضطرابات النفسية (DSM-5)',
-  notice: 'هذا المقياس وأدواته السيكومترية مخصصة للاستخدام الإكلينيكي والتشخيصي والتربوي المرخص للمراكز والمؤسسات التأهيلية وفرق التربية الخاصة والتشخيص النفسي. جميع حقوق الملكية الفكرية محفوظة لدار النشر PRO-ED والمؤلف الأصلي والمقننين المعتمدين، ويخضع تطبيق المقياس واستخراج تقاريره للأمانة العلمية وأخلاقيات التقييم النفسي والتربوي.',
-  disclaimer: 'تنبيه مهني: يعد مقياس GARS-3 أداة تشخيصية وسلوكية مقننة تسهم في تقدير احتمالية وشدة التوحد، ويجب أن تتكامل مع التقييم الطبي العصبي الشامل، وملاحظة السلوك المباشر، وتاريخ الحالة النمائي لتأكيد التشخيص وتصميم الخطة التربوية التأهيلية الفردية (IEP).',
+  notice: 'تنبيه الملكية الفكرية: مقياس GARS-3 هو علامة تجارية ومصنف محمي لدار النشر PRO-ED. هذا النموذج البرمجي يعمل كـ "حاسبة رقمية ومساعد سيكومتري لتفريغ الدرجات الخام وحساب المعايير"؛ ويجب أن يتم تطبيق كراسة البنود الأصلية من خلال الفاحص الإكلينيكي المرخص وفق اللوائح المهنية.',
+  disclaimer: 'تنبيه مهني: يعد مقياس GARS-3 أداة تقدير وسلوكية مقننة تسهم في تقدير احتمالية وشدة التوحد، ويجب أن تتكامل مع التقييم الطبي العصبي الشامل، وملاحظة السلوك المباشر، وتاريخ الحالة النمائي لتأكيد التشخيص وتصميم الخطة التربوية التأهيلية الفردية (IEP).',
 };
 
 export const GARS3_RESPONSE_OPTIONS = [
-  { value: 0, score: 0, label: 'أبداً', description: 'لم يلاحظ السلوك إطلاقاً على الطفل', hint: 'لم يلاحظ السلوك إطلاقاً على الطفل' },
-  { value: 1, score: 1, label: 'نادراً', description: 'يأتي السلوك مرة أو اثنتين في فترات متباعدة', hint: 'يأتي السلوك مرة أو اثنتين في فترات متباعدة' },
-  { value: 2, score: 2, label: 'أحياناً', description: 'يأتي بالسلوك ما بين 3 إلى 4 مرات كل 6 ساعات', hint: 'يأتي بالسلوك ما بين 3 إلى 4 مرات كل 6 ساعات' },
-  { value: 3, score: 3, label: 'كثيراً جداً / نعم', description: 'يأتي بالسلوك من 5 إلى 6 مرات أو أكثر كل 6 ساعات', hint: 'يأتي بالسلوك من 5 إلى 6 مرات أو أكثر كل 6 ساعات' },
+  { value: 0, score: 0, label: 'أبداً (0)', description: 'لم يلاحظ السلوك إطلاقاً على الطفل', hint: 'لم يلاحظ السلوك إطلاقاً على الطفل' },
+  { value: 1, score: 1, label: 'نادراً (1)', description: 'يأتي السلوك مرة أو اثنتين في فترات متباعدة', hint: 'يأتي السلوك مرة أو اثنتين في فترات متباعدة' },
+  { value: 2, score: 2, label: 'أحياناً (2)', description: 'يأتي بالسلوك ما بين 3 إلى 4 مرات كل 6 ساعات', hint: 'يأتي بالسلوك ما بين 3 إلى 4 مرات كل 6 ساعات' },
+  { value: 3, score: 3, label: 'كثيراً جداً (3)', description: 'يأتي بالسلوك من 5 إلى 6 مرات أو أكثر كل 6 ساعات', hint: 'يأتي بالسلوك من 5 إلى 6 مرات أو أكثر كل 6 ساعات' },
 ];
 
 export const GARS3_DOMAINS = [
@@ -43,12 +37,14 @@ export const GARS3_DOMAINS = [
     name: 'السلوكيات المقيدة / التكرارية',
     englishName: 'Restricted / Repetitive Behaviors',
     itemsCount: 13,
+    maxRawScore: 39, // 13 * 3
     itemRange: [1, 13],
     isCore: true, // Always applied (4 & 6 subscales)
     color: '#ef4444',
     bgLight: '#fef2f2',
     borderColor: '#fca5a5',
-    description: 'يقيس السلوكيات النمطية، والاهتمامات المحدودة، والطقوس الحركية المتكررة والحساسيات الحسية.',
+    description: 'يقيس السلوكيات النمطية، الاهتمامات المحدودة، والطقوس الحركية المتكررة والحساسيات الحسية.',
+    iepTargetArea: 'خفض السلوكيات النمطية وتطوير البدائل الوظيفية والتكامل الحسي',
   },
   {
     id: 'si',
@@ -56,12 +52,14 @@ export const GARS3_DOMAINS = [
     name: 'التفاعل الاجتماعي',
     englishName: 'Social Interaction',
     itemsCount: 14,
+    maxRawScore: 42, // 14 * 3
     itemRange: [14, 27],
     isCore: true, // Always applied (4 & 6 subscales)
     color: '#3b82f6',
     bgLight: '#eff6ff',
     borderColor: '#93c5fd',
-    description: 'يقيس العجز في التفاعل الاجتماعي، المبادأة باللعب والمحادثات، وتكوين الصداقات والتواصل غير اللفظي.',
+    description: 'يقيس التفاعل الاجتماعي، المبادأة باللعب والمحادثات، تكوين الصداقات والتواصل غير اللفظي.',
+    iepTargetArea: 'تنمية مهارات التفاعل الاجتماعي واللعب التشاركي والمبادأة مع الأقران',
   },
   {
     id: 'sc',
@@ -69,12 +67,14 @@ export const GARS3_DOMAINS = [
     name: 'التواصل الاجتماعي',
     englishName: 'Social Communication',
     itemsCount: 9,
+    maxRawScore: 27, // 9 * 3
     itemRange: [28, 36],
     isCore: true, // Always applied (4 & 6 subscales)
     color: '#8b5cf6',
     bgLight: '#f5f3ff',
     borderColor: '#c4b5fd',
-    description: 'يقيس مدى فهم النوايا والمشاعر الاجتماعية وروح الدعابة والتعبيرات المجازية ونظرية العقل.',
+    description: 'يقيس فهم النوايا والمشاعر الاجتماعية وروح الدعابة والتعبيرات المجازية ونظرية العقل.',
+    iepTargetArea: 'تطوير الفهم التداولي للغة وفهم المشاعر والنوايا الاجتماعية',
   },
   {
     id: 'er',
@@ -82,12 +82,14 @@ export const GARS3_DOMAINS = [
     name: 'الاستجابات العاطفية / الوجدانية',
     englishName: 'Emotional Responses',
     itemsCount: 8,
+    maxRawScore: 24, // 8 * 3
     itemRange: [37, 44],
     isCore: true, // Always applied (4 & 6 subscales)
     color: '#f59e0b',
     bgLight: '#fffbeb',
     borderColor: '#fcd34d',
     description: 'يقيس نوبات الغضب، الإحباط السريع، الحساسية للأصوات المرتفعة، ومقاومة التغيير في الروتين.',
+    iepTargetArea: 'تنظيم الاستجابات الانفعالية والتدريب على المرونة السلوكية واستراتيجيات التهدئة',
   },
   {
     id: 'cs',
@@ -95,12 +97,14 @@ export const GARS3_DOMAINS = [
     name: 'الأسلوب / النمط المعرفي',
     englishName: 'Cognitive Style',
     itemsCount: 7,
+    maxRawScore: 21, // 7 * 3
     itemRange: [45, 51],
     isCore: false, // For verbal children only (6 subscales)
     color: '#10b981',
     bgLight: '#ecfdf5',
     borderColor: '#6ee7b7',
     description: 'يقيس الاهتمامات الفكرية المحصورة، الدقة اللفظية الزائدة، والتمسك بالمعاني المادية للكلمات.',
+    iepTargetArea: 'توسيع المرونة المعرفية وتنويع الاهتمامات وتعميم المفاهيم التجريدية',
   },
   {
     id: 'ms',
@@ -108,380 +112,38 @@ export const GARS3_DOMAINS = [
     name: 'الكلام غير الملائم / اللغة اللاتكيفية',
     englishName: 'Maladaptive Speech',
     itemsCount: 7,
+    maxRawScore: 21, // 7 * 3
     itemRange: [52, 58],
     isCore: false, // For verbal children only (6 subscales)
     color: '#ec4899',
     bgLight: '#fdf2f8',
     borderColor: '#f472b6',
-    description: 'يقيس المصاداة اللفظية (الإيكولاليا)، استخدام الضمائر المعكوسة، ونبرات الصوت غير الطبيعية.',
-  },
-];
-
-export const GARS3_ITEMS = [
-  // 1. السلوكيات المقيدة أو التكرارية (RB) - 13 عبارة
-  {
-    id: 1,
-    domainId: 'rb',
-    domainCode: 'RB',
-    text: 'يقضي أغلب وقته في أداء سلوكيات نمطية تكرارية إذا ما تُرِك وحيداً.',
-  },
-  {
-    id: 2,
-    domainId: 'rb',
-    domainCode: 'RB',
-    text: 'ينشغل بمثير محدد وبشكل شاذ أو غير عادي.',
-  },
-  {
-    id: 3,
-    domainId: 'rb',
-    domainCode: 'RB',
-    text: 'يحملق أو يمعن النظر في الأيدي والمواد أو الأشياء الموجودة في البيئة لمدة لا تقل عن خمس ثوانٍ.',
-  },
-  {
-    id: 4,
-    domainId: 'rb',
-    domainCode: 'RB',
-    text: 'ينقر (يحرك) بالأصابع سريعاً أمام العين لمدة خمس ثوانٍ أو أكثر.',
-  },
-  {
-    id: 5,
-    domainId: 'rb',
-    domainCode: 'RB',
-    text: 'يتحرك بسرعة واندفاع عند الانتقال من مكان لآخر.',
-  },
-  {
-    id: 6,
-    domainId: 'rb',
-    domainCode: 'RB',
-    text: 'يرفرف بيديه أو بأصابعه أمام الوجه أو بجانب الجسم.',
-  },
-  {
-    id: 7,
-    domainId: 'rb',
-    domainCode: 'RB',
-    text: 'يصدر نبرات صوت عالية حادة (مثل: إييييي) أو أصواتاً أخرى على سبيل الاستثارة الذاتية.',
-  },
-  {
-    id: 8,
-    domainId: 'rb',
-    domainCode: 'RB',
-    text: 'يستخدم الألعاب أو الأشياء بطريقة غير لائقة كأن يجعل عجلات السيارة تدور أو يفكك أجزاء الألعاب المتحركة.',
-  },
-  {
-    id: 9,
-    domainId: 'rb',
-    domainCode: 'RB',
-    text: 'يقوم بعمل الأشياء على شكل طقوس وروتين متكرر لا يحيد عنه.',
-  },
-  {
-    id: 10,
-    domainId: 'rb',
-    domainCode: 'RB',
-    text: 'ينخرط في اللعب بطريقة نمطية تكرارية عندما يستخدم الألعاب أو الأشياء.',
-  },
-  {
-    id: 11,
-    domainId: 'rb',
-    domainCode: 'RB',
-    text: 'يكرر أصواتاً غير مفهومة (هذيان / ثرثرة غير هادفة) مراراً وتكراراً.',
-  },
-  {
-    id: 12,
-    domainId: 'rb',
-    domainCode: 'RB',
-    text: 'يظهر اهتماماً كبيراً وغير عادي بالجوانب الحسية لمواد اللعب أو أجزاء الجسم أو الأشياء (كالشم أو اللمس أو التذوق).',
-  },
-  {
-    id: 13,
-    domainId: 'rb',
-    domainCode: 'RB',
-    text: 'يظهر سلوكيات قهرية متكررة لا يمكن مقاومتها أو التوقف عنها بسهولة.',
-  },
-
-  // 2. التفاعل الاجتماعي (SI) - 14 عبارة
-  {
-    id: 14,
-    domainId: 'si',
-    domainCode: 'SI',
-    text: 'لا يبدأ بالمحادثات أو التواصل مع الأقران أو الآخرين.',
-  },
-  {
-    id: 15,
-    domainId: 'si',
-    domainCode: 'SI',
-    text: 'يعطي القليل من الاهتمام أو لا يهتم إطلاقاً لما يقوم به الأقران.',
-  },
-  {
-    id: 16,
-    domainId: 'si',
-    domainCode: 'SI',
-    text: 'يفشل في تقليد الآخرين أثناء اللعب أو عند أداء الأنشطة التعليمية اليومية.',
-  },
-  {
-    id: 17,
-    domainId: 'si',
-    domainCode: 'SI',
-    text: 'لا يتبع إيماءات وتلميحات الآخرين لتوجيه النظر لشيء ما (كالإشارة باليد أو حركة الرأس).',
-  },
-  {
-    id: 18,
-    domainId: 'si',
-    domainCode: 'SI',
-    text: 'يبدو غير مبالٍ بالحصول على انتباه الآخرين (لا يحاول لفت انتباه شخص آخر أو الحفاظ عليه أو توجيهه).',
-  },
-  {
-    id: 19,
-    domainId: 'si',
-    domainCode: 'SI',
-    text: 'يظهر أدنى حد من الإثارة أو الحماس عند التفاعل المشترك مع الآخرين.',
-  },
-  {
-    id: 20,
-    domainId: 'si',
-    domainCode: 'SI',
-    text: 'يظهر القليل من الاهتمام - وقد لا يظهر تماماً - عند عرض ألعاب أو أشياء الآخرين عليه.',
-  },
-  {
-    id: 21,
-    domainId: 'si',
-    domainCode: 'SI',
-    text: 'يبدو غير مهتم بالإشارة للآخرين عن أشياء محيطة بهم ومثيرة في البيئة (الانتباه المشترك).',
-  },
-  {
-    id: 22,
-    domainId: 'si',
-    domainCode: 'SI',
-    text: 'يبدو وكأنه لا يرغب أو يمانع في الحصول على تفاعل أو تواصل مع الآخرين.',
-  },
-  {
-    id: 23,
-    domainId: 'si',
-    domainCode: 'SI',
-    text: 'يظهر الحد الأدنى من الاستجابة أو لا يستجيب إطلاقاً لمحاولات الآخرين للتفاعل معه.',
-  },
-  {
-    id: 24,
-    domainId: 'si',
-    domainCode: 'SI',
-    text: 'يظهر قليلاً من التواصل الاجتماعي المتبادل وقد لا يظهره إطلاقاً (مثلاً: يرفض التلويح بـ "باي باي" استجابة لشخص يودعه).',
-  },
-  {
-    id: 25,
-    domainId: 'si',
-    domainCode: 'SI',
-    text: 'لا يسعى لإقامة علاقات صداقة مع أشخاص أو أقران آخرين.',
-  },
-  {
-    id: 26,
-    domainId: 'si',
-    domainCode: 'SI',
-    text: 'يفشل في اللعب بشكل إبداعي أو تخيلي رمزي.',
-  },
-  {
-    id: 27,
-    domainId: 'si',
-    domainCode: 'SI',
-    text: 'يظهر القليل من الاهتمام أو لا يهتم نهائياً بالأشخاص الآخرين في المكان.',
-  },
-
-  // 3. التواصل الاجتماعي (SC) - 9 عبارات
-  {
-    id: 28,
-    domainId: 'sc',
-    domainCode: 'SC',
-    text: 'يستجيب بشكل غير لائق للمثيرات التي تتطلب روح الدعابة (مثلاً: لا يضحك على النكات أو الرسوم المتحركة والقصص المضحكة).',
-  },
-  {
-    id: 29,
-    domainId: 'sc',
-    domainCode: 'SC',
-    text: 'يعاني من صعوبة بالغة في فهم النكات والفكاهة والمواقف الطريفة.',
-  },
-  {
-    id: 30,
-    domainId: 'sc',
-    domainCode: 'SC',
-    text: 'يعاني من صعوبة في فهم التعبيرات الدارجة والعامية والمجازية.',
-  },
-  {
-    id: 31,
-    domainId: 'sc',
-    domainCode: 'SC',
-    text: 'يجد صعوبة في معرفة ما إذا كان شخص ما يتعمد مضايقته أو ممازحته.',
-  },
-  {
-    id: 32,
-    domainId: 'sc',
-    domainCode: 'SC',
-    text: 'يجد صعوبة في فهم ما إذا كان موضع سخرية أو تهكم من الآخرين.',
-  },
-  {
-    id: 33,
-    domainId: 'sc',
-    domainCode: 'SC',
-    text: 'يجد صعوبة في فهم السبب وراء عدم حب الناس لتصرفاته أو لماذا يتضايق منه الآخرون.',
-  },
-  {
-    id: 34,
-    domainId: 'sc',
-    domainCode: 'SC',
-    text: 'يفشل في التنبؤ بالعواقب المحتملة للأحداث والمواقف الاجتماعية.',
-  },
-  {
-    id: 35,
-    domainId: 'sc',
-    domainCode: 'SC',
-    text: 'يبدو وكأنه لا يفهم أن الأشخاص الآخرين لديهم أفكار ومشاعر ورغبات مختلفة عن مشاعره (نظرية العقل).',
-  },
-  {
-    id: 36,
-    domainId: 'sc',
-    domainCode: 'SC',
-    text: 'يبدو وكأنه لا يفهم أو يدرك أن الشخص الآخر قد يجهل شيئاً يعرفه هو.',
-  },
-
-  // 4. الاستجابة العاطفية / الوجدانية (ER) - 8 عبارات
-  {
-    id: 37,
-    domainId: 'er',
-    domainCode: 'ER',
-    text: 'يحتاج إلى قدر كبير من الطمأنينة والتهدئة إذا ما تغيرت الأمور أو حدث أي طارئ أو خطأ غير متوقع.',
-  },
-  {
-    id: 38,
-    domainId: 'er',
-    domainCode: 'ER',
-    text: 'يصبح سريع الإحباط وشديد الغضب عندما يفشل في عمل شيء ما.',
-  },
-  {
-    id: 39,
-    domainId: 'er',
-    domainCode: 'ER',
-    text: 'يصاب بنوبات غضب حادة وغير مبررة عندما يشعر بالإحباط.',
-  },
-  {
-    id: 40,
-    domainId: 'er',
-    domainCode: 'ER',
-    text: 'يستاء ويظهر ضيقاً شديداً من أي تغيير في الروتين والبيئة المعتادة.',
-  },
-  {
-    id: 41,
-    domainId: 'er',
-    domainCode: 'ER',
-    text: 'يستجيب بشكل سلبي وعنيف (يرفض) عندما يُقدَّم له النصح أو يطلب منه تنفيذ توجيه معين.',
-  },
-  {
-    id: 42,
-    domainId: 'er',
-    domainCode: 'ER',
-    text: 'يستجيب برد فعل حاد وعنيف (مثل: البكاء الشديد، الصراخ، ونوبات الغضب) عند سماع صوت مرتفع أو ضوضاء غير متوقعة.',
-  },
-  {
-    id: 43,
-    domainId: 'er',
-    domainCode: 'ER',
-    text: 'يصاب بنوبات من الغضب الشديد عندما لا تسير الأمور بطريقته الخاصة.',
-  },
-  {
-    id: 44,
-    domainId: 'er',
-    domainCode: 'ER',
-    text: 'يصاب بنوبة غضب عندما يُطلب منه التوقف عن عمل شيء يكون مستمتعاً ومندمجاً به.',
-  },
-
-  // 5. الأسلوب / النمط المعرفي (CS) - 7 عبارات (للأطفال الناطقين)
-  {
-    id: 45,
-    domainId: 'cs',
-    domainCode: 'CS',
-    text: 'يستخدم أثناء حديثه كلمات دقيقة وبشكل استثنائي غير مألوف لمرحلته العمرية.',
-  },
-  {
-    id: 46,
-    domainId: 'cs',
-    domainCode: 'CS',
-    text: 'يتعلق ويتمسك بشدة بالمعاني الحرفية والملموسة والمادية للكلمات.',
-  },
-  {
-    id: 47,
-    domainId: 'cs',
-    domainCode: 'CS',
-    text: 'يتحدث بشكل مفرط ومستفيض عن موضوع واحد فقط يثير اهتمامه الخاص.',
-  },
-  {
-    id: 48,
-    domainId: 'cs',
-    domainCode: 'CS',
-    text: 'يظهر مهارة أو معرفة تخصصية فائقة وغير عادية بموضوعات محددة وصعبة.',
-  },
-  {
-    id: 49,
-    domainId: 'cs',
-    domainCode: 'CS',
-    text: 'يظهر ذاكرة استثنائية ممتازة لحفظ التفاصيل الدقيقة والأرقام والأحداث.',
-  },
-  {
-    id: 50,
-    domainId: 'cs',
-    domainCode: 'CS',
-    text: 'يظهر اهتماماً مكثفاً وواسعاً بموضوعات فكرية محددة تشغل كل تفكيره.',
-  },
-  {
-    id: 51,
-    domainId: 'cs',
-    domainCode: 'CS',
-    text: 'يعلق بملاحظات ساذجة أو محرجة (غير واعٍ بنتائج وردود أفعال الآخرين تجاه حديثه).',
-  },
-
-  // 6. الكلام غير الملائم / اللغة اللاتكيفية (MS) - 7 عبارات (للأطفال الناطقين)
-  {
-    id: 52,
-    domainId: 'ms',
-    domainCode: 'MS',
-    text: 'يكرر (مصاداة / إيكولاليا) الكلمات أو العبارات شفهياً أو مصحوبة بالإشارات الحركية.',
-  },
-  {
-    id: 53,
-    domainId: 'ms',
-    domainCode: 'MS',
-    text: 'يكرر كلمات خارج السياق (يردد كلمات أو جمل سمعها في وقت سابق من إعلانات أو أفلام).',
-  },
-  {
-    id: 54,
-    domainId: 'ms',
-    domainCode: 'MS',
-    text: 'يتحدث في المواقف بنمط صوتي رتيب وسطحي وغير تفاعلي.',
-  },
-  {
-    id: 55,
-    domainId: 'ms',
-    domainCode: 'MS',
-    text: 'يستخدم (نعم أو لا) بشكل غير مناسب، فيقول: نعم عند سؤاله عن شيء لا يحبه، أو يقول: لا عند الرغبة فيه.',
-  },
-  {
-    id: 56,
-    domainId: 'ms',
-    domainCode: 'MS',
-    text: 'يستخدم الضمائر بشكل معكوس (يقول: "هو" أو "هي" أو يذكر اسمه بدلاً من أن يقول: "أنا" عند الإشارة لنفسه).',
-  },
-  {
-    id: 57,
-    domainId: 'ms',
-    domainCode: 'MS',
-    text: 'يتحدث بنغمة صوت غير طبيعية أو غير مألوفة من حيث الطبقة الصوتية أو المعدل أو الشدة.',
-  },
-  {
-    id: 58,
-    domainId: 'ms',
-    domainCode: 'MS',
-    text: 'ينطق كلمات أو عبارات مميزة ذات جرس خاص ولكن بلا معنى مفهوم للآخرين.',
+    description: 'يقيس المصاداة اللفظية (الإيكولاليا)، استخدام الضمائر المعكوسة، ونبرات الصوت غير النمطية.',
+    iepTargetArea: 'تعديل المصاداة اللفظية واستخدام الضمائر الصحيحة والنطق الوظيفي الملائم',
   },
 ];
 
 /**
+ * بنية رقمية مرجعية لحفظ التوافق مع محركات IEP دون نصوص أسئلة تجارية محمية
+ * كل بند يمثل مؤشراً سلوكياً عاماً مرقماً مطابقاً لتفريغ الكراسة الرسمية
+ */
+export const GARS3_ITEMS = Array.from({ length: 58 }, (_, idx) => {
+  const id = idx + 1;
+  const domain = GARS3_DOMAINS.find(d => id >= d.itemRange[0] && id <= d.itemRange[1]);
+  return {
+    id,
+    domainId: domain?.id || 'rb',
+    domainCode: domain?.code || 'RB',
+    domainName: domain?.name || '',
+    text: `بند استجابة كراسة GARS-3 رقم (${id}) — مجال: ${domain?.name}`,
+    title: `بند ${id} (${domain?.code})`,
+    isProprietary: true,
+  };
+});
+
+/**
  * جدول (أ) تحويل الدرجات الخام للمقاييس الفرعية إلى درجات معيارية (Scaled Scores 1 - 20) ورتب مئينية
- * المستخرج مباشرة من جدول (أ) بكراسة الاستجابة ودليل التقنين
+ * مطابق لمعايير الدليل السيكومتري الرسمي
  */
 export const RAW_TO_SCALED_TABLE = [
   { scaledScore: 1,  percentile: '<1', rb: null, si: null, sc: null, er: null, cs: null, ms: null },
@@ -508,7 +170,6 @@ export const RAW_TO_SCALED_TABLE = [
 
 /**
  * جدول (ب) تحويل مجموع الدرجات المعيارية إلى معامل التوحد والرتب المئينية الكلية
- * للمجموعين (4 مجالات للأطفال غير الناطقين، 6 مجالات للأطفال الناطقين)
  */
 export const SUM_SCALED_TO_AQ_TABLE = [
   { aq: 140, sum6: 87, sum4: null, percentile: '>99' },
@@ -609,7 +270,7 @@ export function getSubscaleScaledScore(domainCode, rawScore) {
         return {
           scaledScore: row.scaledScore,
           percentile: row.percentile,
-          sem: 1, // Standard Error of Measurement is 1 for subscales
+          sem: 1,
         };
       }
     }
@@ -629,7 +290,6 @@ export function getAutismQuotient(sumScaled, isVerbal = true) {
   const is4Comp = !isVerbal;
 
   if (is4Comp) {
-    // 4 Composites Table Lookup
     for (const row of SUM_SCALED_TO_AQ_TABLE) {
       if (row.sum4 !== null && row.sum4 !== '<12') {
         if (sumScaled >= row.sum4) {
@@ -637,10 +297,8 @@ export function getAutismQuotient(sumScaled, isVerbal = true) {
         }
       }
     }
-    if (sumScaled < 12) return { aq: 52, percentile: '<1', sem: 4 };
     return { aq: 52, percentile: '<1', sem: 4 };
   } else {
-    // 6 Composites Table Lookup
     for (const row of SUM_SCALED_TO_AQ_TABLE) {
       if (row.sum6 !== null && row.sum6 !== '<21') {
         if (sumScaled >= row.sum6) {
@@ -648,7 +306,6 @@ export function getAutismQuotient(sumScaled, isVerbal = true) {
         }
       }
     }
-    if (sumScaled < 21) return { aq: 43, percentile: '<1', sem: 4 };
     return { aq: 43, percentile: '<1', sem: 4 };
   }
 }
@@ -663,7 +320,7 @@ export function getGARS3Interpretation(aqScore) {
       probability: 'غير محتمل (Unlikely)',
       dsm5Level: 'غير توحد (Non-Autistic)',
       supportLevel: 'لا يوجد اضطراب توحد / لا يتطلب دعماً نوعياً',
-      color: '#10b981', // green
+      color: '#10b981',
       bg: '#ecfdf5',
       border: '#a7f3d0',
       badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800',
@@ -677,11 +334,11 @@ export function getGARS3Interpretation(aqScore) {
       probability: 'محتمل (Probable)',
       dsm5Level: 'المستوى الأول: بسيط (Level 1: Mild)',
       supportLevel: 'يتطلب حداً أدنى من الدعم (Requires Support)',
-      color: '#3b82f6', // blue
+      color: '#3b82f6',
       bg: '#eff6ff',
       border: '#bfdbfe',
       badgeClass: 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800',
-      description: 'تشير الدرجات إلى احتمال وجود اضطراب طيف التوحد بدرجة بسيطة. يعاني الطفل من صعوبات ملحوظة في المبادأة الاجتماعية والمرونة السلوكية ولكنه يستجيب للتدخل والدعم البسيط.',
+      description: 'تشير الدرجات إلى احتمال وجود اضطراب طيف التوحد بدرجة بسيطة. يعاني المفحوص من صعوبات ملحوظة في المبادأة الاجتماعية والمرونة السلوكية ولكنه يستجيب للتدخل والدعم البسيط.',
     };
   }
 
@@ -691,32 +348,34 @@ export function getGARS3Interpretation(aqScore) {
       probability: 'ملائم / مؤكد (Very Likely)',
       dsm5Level: 'المستوى الثاني: متوسط (Level 2: Moderate)',
       supportLevel: 'يتطلب دعماً كبيراً (Requires Substantial Support)',
-      color: '#f59e0b', // amber
+      color: '#f59e0b',
       bg: '#fffbeb',
       border: '#fde68a',
       badgeClass: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800',
-      description: 'تشير الدرجات إلى تأكيد وجود اضطراب طيف التوحد بدرجة متوسطة. يظهر الطفل عجزاً واضحاً في مهارات التواصل اللفظي وغير اللفظي وسلوكيات نمطية متكررة تتطلب دعماً تأهيلياً كبيراً ومستمراً.',
+      description: 'تشير الدرجات إلى تأكيد وجود اضطراب طيف التوحد بدرجة متوسطة. يظهر المفحوص عجزاً واضحاً في مهارات التواصل اللفظي وغير اللفظي وسلوكيات نمطية متكررة تتطلب دعماً تأهيلياً كبيراً ومستمراً.',
     };
   }
 
-  // aqScore >= 101
   return {
     severityKey: 'severe',
     probability: 'ملائم جداً / حاد (High / Very Likely)',
     dsm5Level: 'المستوى الثالث: شديد (Level 3: Severe)',
     supportLevel: 'يتطلب دعماً كبيراً جداً (Requires Very Substantial Support)',
-    color: '#ef4444', // red
+    color: '#ef4444',
     bg: '#fef2f2',
     border: '#fecaca',
     badgeClass: 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800',
-    description: 'تشير الدرجات إلى وجود اضطراب طيف توحد شديد وحاد. يعاني الطفل من انعدام أو قصور حاد في مهارات التواصل، وانفصال شديد وسلوكيات نمطية وقهرية ملزمة تتطلب رعاية شاملة وتدخلاً سلوكياً مكثفاً للغاية.',
+    description: 'تشير الدرجات إلى وجود اضطراب طيف توحد شديد وحاد. يعاني المفحوص من انعدام أو قصور حاد في مهارات التواصل، وانفصال شديد وسلوكيات نمطية وقهرية ملزمة تتطلب رعاية شاملة وتدخلاً سلوكياً مكثفاً للغاية.',
   };
 }
 
 /**
  * المحرك السيكومتري الشامل لحساب نتائج مقياس جيليام 3
+ * يدعم كلاً من:
+ * 1. الإدخال المباشر للدرجات الخام لكل مجال: domainRawScores: { rb: 15, si: 22, ... }
+ * 2. الإدخال عبر تفريغ استجابات البنود الفردية: scores: { 1: 2, 2: 3, ... }
  */
-export function calculateGARS3Psychometrics(scores = {}, isVerbal = true) {
+export function calculateGARS3Psychometrics(scores = {}, isVerbal = true, domainRawOverrides = null) {
   const applicableDomains = isVerbal
     ? GARS3_DOMAINS
     : GARS3_DOMAINS.filter(d => d.isCore);
@@ -731,13 +390,24 @@ export function calculateGARS3Psychometrics(scores = {}, isVerbal = true) {
     let domainAnswered = 0;
     const [startId, endId] = domain.itemRange;
     const domainTotalItems = endId - startId + 1;
-    const maxRaw = domainTotalItems * 3;
+    const maxRaw = domain.maxRawScore || (domainTotalItems * 3);
 
-    for (let i = startId; i <= endId; i++) {
-      if (scores[i] !== undefined && scores[i] !== null && scores[i] !== '') {
-        const val = Number(scores[i]);
-        domainRaw += val;
-        domainAnswered++;
+    // إذا تم تمرير درجات خام مباشرة لكل مجال (Raw Score Entry Mode)
+    if (domainRawOverrides && domainRawOverrides[domain.id] !== undefined && domainRawOverrides[domain.id] !== '') {
+      domainRaw = Math.min(maxRaw, Math.max(0, Number(domainRawOverrides[domain.id]) || 0));
+      domainAnswered = domainTotalItems;
+    } else if (scores && scores[domain.id] !== undefined && typeof scores[domain.id] === 'number') {
+      // إدخال مباشر كدرجة مجال
+      domainRaw = Math.min(maxRaw, Math.max(0, scores[domain.id]));
+      domainAnswered = domainTotalItems;
+    } else {
+      // حساب من مصفوفة تفريغ أرقام البنود
+      for (let i = startId; i <= endId; i++) {
+        if (scores && scores[i] !== undefined && scores[i] !== null && scores[i] !== '') {
+          const val = Number(scores[i]);
+          domainRaw += val;
+          domainAnswered++;
+        }
       }
     }
 
@@ -762,6 +432,7 @@ export function calculateGARS3Psychometrics(scores = {}, isVerbal = true) {
       scaledScore: scaledInfo.scaledScore,
       percentile: scaledInfo.percentile,
       sem: scaledInfo.sem,
+      iepTargetArea: domain.iepTargetArea,
     };
   });
 

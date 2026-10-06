@@ -24,7 +24,8 @@ export default function GARS3ReportModal({
     if (!assessment) return null;
     return calculateGARS3Psychometrics(
       assessment.results || assessment.scores || {},
-      assessment.isVerbal !== undefined ? assessment.isVerbal : true
+      assessment.isVerbal !== undefined ? assessment.isVerbal : true,
+      assessment.domainRawScores || null
     );
   }, [assessment]);
 
@@ -597,7 +598,7 @@ export default function GARS3ReportModal({
                     <thead>
                       <tr style={{ background: 'var(--g0)', borderBottom: '1px solid var(--border-color)', textAlign: 'right' }}>
                         <th style={{ padding: '6px 12px', width: 50, textAlign: 'center' }}>#</th>
-                        <th style={{ padding: '6px 12px' }}>نص العبارة السلوكية</th>
+                        <th style={{ padding: '6px 12px' }}>بند ومجال كراسة الاستجابة الرسمية</th>
                         <th style={{ padding: '6px 12px', textAlign: 'center', width: 140 }}>الاستجابة المسجلة</th>
                         <th style={{ padding: '6px 12px' }}>ملاحظات الفاحص</th>
                       </tr>

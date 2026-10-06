@@ -542,7 +542,7 @@ const DEFAULT_SCALE_LIBRARY = [
     name: 'جيليام (GARS-3)',
     nameEn: 'GARS-3 (Gilliam Autism Rating Scale, 3rd Ed.)',
     category: 'autism',
-    description: 'مقياس جيليام لتقدير اضطراب طيف التوحد وفق DSM-5 — 58 بنداً مقننة على 6 مقاييس فرعية مع معامل التوحد AQ والرتب المئينية',
+    description: 'الحاسبة السيكومترية لمقياس جيليام لتقدير اضطراب طيف التوحد وفق DSM-5 — تحويل الدرجات الخام للمقاييس الفرعية وحساب معامل التوحد AQ والرتب المئينية',
     icon: '📊',
     color: '#0d9488',
     scoreMode: 'subscale',
