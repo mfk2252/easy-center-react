@@ -23,7 +23,8 @@ export default function ConnersParentReportModal({
     if (assessment.psychometrics && assessment.psychometrics.subscales) {
       return assessment.psychometrics;
     }
-    return calculateConnersParentScore(assessment.scores || assessment.results || {});
+    const rawScores = assessment.domainRawScores || assessment.subscalesRaw || null;
+    return calculateConnersParentScore(assessment.scores || assessment.results || {}, rawScores);
   }, [assessment]);
 
   const recommendedGoals = useMemo(() => {

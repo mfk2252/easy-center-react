@@ -413,30 +413,14 @@ export default function GARS3AssessmentModal({
         {/* EXPANDABLE DETAILED COPYRIGHT NOTICE */}
         {showCopyrightDetails && (
           <div
-            style={{
-              background: '#f0fdfa',
-              padding: '14px 20px',
-              borderBottom: '2px solid #5eead4',
-              fontSize: '0.82rem',
-              color: '#134e4a',
-              lineHeight: 1.6,
-              flexShrink: 0,
-            }}
+            className="p-4 md:p-5 border-b text-xs leading-relaxed bg-teal-50 border-teal-300 text-teal-900 dark:bg-slate-900 dark:border-teal-800 dark:text-teal-200"
           >
-            <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div className="font-extrabold text-sm mb-2 flex items-center gap-1.5 text-teal-950 dark:text-teal-100">
               <span>⚖️</span> تنبيه الامتثال وحقوق الملكية الفكرية (GARS-3 IP Notice):
             </div>
 
             <div
-              style={{
-                background: '#ccfbf1',
-                border: '1px solid #99f6e4',
-                borderRadius: 8,
-                padding: '8px 12px',
-                marginBottom: 10,
-                fontSize: '0.8rem',
-                color: '#115e59',
-              }}
+              className="rounded-lg p-2.5 mb-2.5 border bg-teal-100/70 border-teal-300 text-teal-900 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
             >
               <div>
                 <strong>طريقة الاستخدام الرسمية:</strong> يتم تطبيق بنود المقياس الـ 58 من خلال كراسة الاستجابة الورقية الرسمية الأصلية المعتمدة الصادرة عن دار النشر PRO-ED أو الوكيل المعتمد. يقوم الفاحص الإكلينيكي المرخص برصد الدرجات وتفريغها في هذه المنصة لحساب المعايير السيكومترية واستخراج التقرير وتصميم الخطة الفردية (IEP).
@@ -444,20 +428,20 @@ export default function GARS3AssessmentModal({
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, marginBottom: 8 }}>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #99f6e4' }}>
+              <div className="p-2.5 rounded-lg border bg-white border-teal-200 dark:bg-slate-800/80 dark:border-slate-700 dark:text-slate-200">
                 <strong>المؤلف الأصلي:</strong> {GARS3_COPYRIGHT_INFO.authorAr} ({GARS3_COPYRIGHT_INFO.authorEn})
               </div>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #99f6e4' }}>
+              <div className="p-2.5 rounded-lg border bg-white border-teal-200 dark:bg-slate-800/80 dark:border-slate-700 dark:text-slate-200">
                 <strong>الناشر التجاري الأصلي:</strong> {GARS3_COPYRIGHT_INFO.publisherAr}
               </div>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #99f6e4' }}>
+              <div className="p-2.5 rounded-lg border bg-white border-teal-200 dark:bg-slate-800/80 dark:border-slate-700 dark:text-slate-200">
                 <strong>المرجعية التشخيصية:</strong> {GARS3_COPYRIGHT_INFO.standardsReference}
               </div>
-              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #99f6e4' }}>
+              <div className="p-2.5 rounded-lg border bg-white border-teal-200 dark:bg-slate-800/80 dark:border-slate-700 dark:text-slate-200">
                 <strong>الفئة المستهدفة:</strong> {GARS3_COPYRIGHT_INFO.targetAge}
               </div>
             </div>
-            <div style={{ fontSize: '0.78rem', color: '#115e59', background: '#ccfbf1', padding: '8px 12px', borderRadius: 8 }}>
+            <div className="text-xs p-2.5 rounded-lg bg-teal-100/60 dark:bg-slate-800/70 text-teal-900 dark:text-slate-300 border border-teal-200 dark:border-slate-700">
               {GARS3_COPYRIGHT_INFO.notice}
               <br />
               <strong>{GARS3_COPYRIGHT_INFO.disclaimer}</strong>
@@ -802,20 +786,14 @@ export default function GARS3AssessmentModal({
           {form.inputMode === 'subscales' ? (
             <div style={{ marginBottom: 20 }}>
               <div
-                style={{
-                  background: '#f0fdfa',
-                  border: '1.5px solid #0d9488',
-                  borderRadius: 12,
-                  padding: '16px 20px',
-                  marginBottom: 16,
-                }}
+                className="rounded-xl p-4 md:p-5 mb-4 border transition-colors bg-teal-50/70 border-teal-600/50 dark:bg-slate-900/90 dark:border-teal-700/60"
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#0f766e', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <h3 className="text-base font-extrabold text-teal-800 dark:text-teal-300 flex items-center gap-2 m-0">
                       <span>🧮</span> حاسبة الدرجات الخام المباشرة للمقاييس الفرعية (GARS-3 Subscale Raw Scores)
                     </h3>
-                    <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#115e59' }}>
+                    <p className="text-xs text-teal-700 dark:text-teal-400 mt-1 mb-0">
                       طبّق كراسة الاستجابة الرسمية، ثم أدخل مجموع الدرجات الخام لكل مقياس فرعي أدناه ليقوم النظام بحساب الدرجات المعيارية والرتب المئينية ومعامل التوحد تلقائياً.
                     </p>
                   </div>
@@ -853,16 +831,10 @@ export default function GARS3AssessmentModal({
                     return (
                       <div
                         key={dom.id}
+                        className="rounded-lg p-3.5 flex flex-col justify-between gap-2.5 border shadow-sm transition-colors bg-white border-slate-200 dark:bg-slate-800/90 dark:border-slate-700"
                         style={{
-                          background: '#fff',
-                          border: `2px solid ${dom.color}`,
-                          borderRadius: 10,
-                          padding: '12px 16px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'space-between',
-                          gap: 10,
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                          borderRightWidth: '4px',
+                          borderRightColor: dom.color,
                         }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -880,33 +852,38 @@ export default function GARS3AssessmentModal({
                             >
                               {dom.code}
                             </span>
-                            <strong style={{ fontSize: '0.88rem', color: 'var(--text-main)' }}>{dom.name}</strong>
-                            <div style={{ fontSize: '0.74rem', color: 'var(--text-sub)', marginTop: 2 }}>
+                            <strong className="text-sm font-bold text-slate-900 dark:text-slate-100">{dom.name}</strong>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                               {dom.itemsCount} بنود في الكراسة · الدرجة القصوى ({dom.maxRawScore})
                             </div>
                           </div>
                           
-                          <div style={{ textAlign: 'center', background: dom.bgLight, border: `1px solid ${dom.borderColor}`, padding: '4px 8px', borderRadius: 6 }}>
+                          <div
+                            className="text-center px-2 py-1 rounded border dark:bg-slate-900/60 dark:border-slate-700"
+                            style={{
+                              background: 'var(--bg-card)',
+                              borderColor: dom.borderColor,
+                            }}
+                          >
                             <span style={{ fontSize: '0.68rem', color: dom.color, display: 'block', fontWeight: 700 }}>معيارية:</span>
                             <span style={{ fontSize: '1.1rem', fontWeight: 900, color: dom.color }}>{scaledScore}</span>
-                            <span style={{ fontSize: '0.68rem', color: 'var(--text-sub)', display: 'block' }}>({percentile}%)</span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 block">({percentile}%)</span>
                           </div>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
+                          <label className="text-xs font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">
                             الدرجة الخام (0 - {dom.maxRawScore}):
                           </label>
                           <input
                             type="number"
                             min="0"
                             max={dom.maxRawScore}
+                            className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded border text-center font-extrabold focus:outline-none"
                             style={{
                               width: 90,
                               height: 34,
-                              textAlign: 'center',
                               fontSize: '0.95rem',
-                              fontWeight: 800,
                               borderColor: dom.color,
                             }}
                             placeholder="0"
@@ -915,7 +892,7 @@ export default function GARS3AssessmentModal({
                           />
                         </div>
 
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)', borderTop: '1px dashed var(--border-color)', paddingTop: 6 }}>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 pt-1.5 border-t border-dashed border-slate-200 dark:border-slate-700">
                           🎯 هدف الخطة المقترح: {dom.iepTargetArea}
                         </div>
                       </div>

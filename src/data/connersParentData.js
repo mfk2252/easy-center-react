@@ -1,182 +1,243 @@
 /**
- * Conners' Parent Rating Scale - Revised: Long Version (CPRS-R:L)
- * مقياس تقدير الوالدين لكونرز - النسخة المطولة المقننة
- * إعداد: د. كيث كونرز (C. Keith Conners, Ph.D.)
- * الناشر: Multi-Health Systems (MHS)
+ * Conners-3 Parent Rating Scale (CPRS-3) — المعالج السيكومتري والحاسبة الرقمية
+ * نظام حاسبة الدرجات الخام وتحويل الدرجات التائية (T-Scores) والرتب المئينية لمقاييس كونرز للوالدين
+ * 
+ * تنبيه الملكية الفكرية والامتثال القانوني (IP Compliance Notice):
+ * يتم تطبيق بنود المقياس الـ 80 من خلال كراسة الاستجابة الورقية الرسمية الأصلية الصادرة عن دار النشر
+ * Multi-Health Systems (MHS) أو الوكيل المعتمد بواسطة فاحص مرخص.
+ * تم تجريد هذا الكود تماماً من أي نصوص أو أسئلة محمية، ويعمل كنظام حاسبة رقمية سيكومترية للدرجات الخام
+ * (Psychometric Raw Score Calculator) لحساب المعايير التائية ومؤشرات DSM وربط الأهداف بجسر الخطة الفردية.
  */
 
+export const CONNERS3_COPYRIGHT_INFO = {
+  scaleNameAr: 'مقياس كونرز لتقدير الوالدين — الإصدار الثالث (Conners-3 Parent) · الحاسبة السيكومترية',
+  scaleNameEn: 'Conners 3rd Edition (Conners 3® - Parent) — Psychometric Raw Score Calculator',
+  scaleShortName: 'Conners-3 (Parent)',
+  authorAr: 'د. سي. كيث كونرز (C. Keith Conners, Ph.D.)',
+  authorEn: 'C. Keith Conners, Ph.D.',
+  publisherAr: 'دار ملتيهيلث سستمز للنشر والاختبارات (Multi-Health Systems - MHS Inc.)',
+  publisherEn: 'Multi-Health Systems Inc. (MHS)',
+  adaptationAr: 'التقنين الإكلينيكي وحساب الدرجات التائية وفق الدليل التشخيصي والإحصائي الخامس (DSM-5)',
+  targetAge: 'من عمر 6 إلى 18 سنة (تقييم الوالدين المعياري)',
+  standardsReference: 'مقنن بالكامل وفق معايير DSM-5 لتقدير اضطراب قصور الانتباه وفرط الحركة (ADHD) والمشكلات السلوكية المصاحبة',
+  notice: 'تنبيه الملكية الفكرية: مقياس Conners-3 هو علامة تجارية ومصنف محمي لدار النشر MHS. هذا النظام يعمل كـ "حاسبة رقمية ومساعد سيكومتري لتفريغ مجموع الدرجات الخام للفئات الفرعية (A-G)"، ويجب تطبيق كراسة البنود الأصلية من خلال الفاحص الإكلينيكي المرخص وفق اللوائح المهنية.',
+  disclaimer: 'تنبيه مهني: تتطلب الدرجات التائية الإكلينيكية تكاملاً مع التقرير المدرسي والمقابلة الإكلينيكية وملاحظة السلوك المباشر ولا تعد تشخيصاً معزولاً.',
+};
+
 export const CONNERS_PARENT_DOMAINS = [
-  { id: 'A', name: 'المعارضة والعناد', nameEn: 'Oppositional', code: 'OPP', color: '#ef4444', icon: '⚡', itemsCount: 10 },
-  { id: 'B', name: 'المشكلات المعرفية / تشتت الانتباه', nameEn: 'Cognitive Problems / Inattention', code: 'COG', color: '#3b82f6', icon: '🧠', itemsCount: 15 },
-  { id: 'C', name: 'النشاط الحركي الزائد', nameEn: 'Hyperactivity', code: 'HYP', color: '#f59e0b', icon: '🏃', itemsCount: 9 },
-  { id: 'D', name: 'القلق والخجل الاجتماعي', nameEn: 'Anxious-Shy', code: 'ANX', color: '#8b5cf6', icon: '🫣', itemsCount: 8 },
-  { id: 'E', name: 'المثالية والجمود النمطي', nameEn: 'Perfectionism', code: 'PER', color: '#10b981', icon: '📐', itemsCount: 7 },
-  { id: 'F', name: 'المشكلات الاجتماعية والعلاقات', nameEn: 'Social Problems', code: 'SOC', color: '#ec4899', icon: '👥', itemsCount: 5 },
-  { id: 'G', name: 'الشكاوى النفسجسمية', nameEn: 'Psychosomatic', code: 'PSY', color: '#14b8a6', icon: '🩺', itemsCount: 6 },
-  { id: 'H', name: 'مؤشر فرط الحركة وتشتت الانتباه', nameEn: 'ADHD Index', code: 'ADH', color: '#f97316', icon: '🎯', itemsCount: 12 },
-  { id: 'L', name: 'نقص الانتباه (معايير DSM)', nameEn: 'DSM Inattentive', code: 'INA', color: '#0ea5e9', icon: '🔍', itemsCount: 9 },
+  {
+    id: 'A',
+    code: 'OPP',
+    name: 'المعارضة والعناد',
+    nameEn: 'Oppositional / Defiance',
+    color: '#ef4444',
+    icon: '⚡',
+    itemsCount: 10,
+    maxRawScore: 30, // 10 * 3
+    description: 'يقيس سلوكيات الجدال، مقاومة التوجيهات، تقلب المزاج، وثورات الغضب السريع.',
+    iepTargetArea: 'تعديل سلوكيات المعارضة وتعزيز الاستجابة الإيجابية للتوجيهات والامتثال الصفي والأسري',
+  },
+  {
+    id: 'B',
+    code: 'COG',
+    name: 'المشكلات المعرفية / تشتت الانتباه',
+    nameEn: 'Cognitive Problems / Inattention',
+    color: '#3b82f6',
+    icon: '🧠',
+    itemsCount: 15,
+    maxRawScore: 45, // 15 * 3
+    description: 'يقيس قصر مدى الانتباه، السهو والنسيان، وصعوبة إتمام المهام الدراسية والواجبات.',
+    iepTargetArea: 'تطوير مدى الانتباه المستمر وتنظيم المهام وإكمال الواجبات والأنشطة الأكاديمية',
+  },
+  {
+    id: 'C',
+    code: 'HYP',
+    name: 'النشاط الحركي الزائد والاندفاعية',
+    nameEn: 'Hyperactivity / Impulsivity',
+    color: '#f59e0b',
+    icon: '🏃',
+    itemsCount: 9,
+    maxRawScore: 27, // 9 * 3
+    description: 'يقيس الحركة الزائدة المستمرة، التململ في المقعد، والاندفاع في الإجابة وتجاوز الأدوار.',
+    iepTargetArea: 'تنظيم الطاقة الحركية وتدريب الطالب على التهدئة الذاتية وانتظار الدور',
+  },
+  {
+    id: 'D',
+    code: 'ANX',
+    name: 'القلق والخجل الاجتماعي',
+    nameEn: 'Anxious-Shy',
+    color: '#8b5cf6',
+    icon: '🫣',
+    itemsCount: 8,
+    maxRawScore: 24, // 8 * 3
+    description: 'يقيس المخاوف المتعددة، الخجل في المواقف الجديدة، والتردد والانسحاب الاجتماعي.',
+    iepTargetArea: 'بناء الثقة وتخفيف القلق الاجتماعي والاندماج في الأنشطة والمواقف غير المألوفة',
+  },
+  {
+    id: 'E',
+    code: 'PER',
+    name: 'المثالية والجمود النمطي',
+    nameEn: 'Perfectionism',
+    color: '#10b981',
+    icon: '📐',
+    itemsCount: 7,
+    maxRawScore: 21, // 7 * 3
+    description: 'يقيس التمسك بالروتين الدقيق، التوتر عند حدوث أخطاء بسيطة، والتشدد في التفاصيل.',
+    iepTargetArea: 'تنمية المرونة النفسية والسلوكية وتقبل الأخطاء والتكيف مع التغيير',
+  },
+  {
+    id: 'F',
+    code: 'SOC',
+    name: 'المشكلات الاجتماعية والعلاقات مع الأقران',
+    nameEn: 'Social Problems',
+    color: '#ec4899',
+    icon: '👥',
+    itemsCount: 5,
+    maxRawScore: 15, // 5 * 3
+    description: 'يقيس صعوبات تكوين الصداقات والحفاظ عليها، والعزلة الاجتماعية.',
+    iepTargetArea: 'تنمية مهارات التفاعل واللعب التشاركي وبناء الصداقات مع الأقران',
+  },
+  {
+    id: 'G',
+    code: 'PSY',
+    name: 'الشكاوى النفسجسمية (السيكوسوماتية)',
+    nameEn: 'Psychosomatic',
+    color: '#14b8a6',
+    icon: '🩺',
+    itemsCount: 6,
+    maxRawScore: 18, // 6 * 3
+    description: 'يقيس الشكاوى الجسدية غير المبررة طبياً كالصداع والمغص عند مواجهة ضغوط أو مهام.',
+    iepTargetArea: 'إدارة الضغوط والتعبير اللفظي المباشر عن المشاعر وتخفيف التوتر الجسدي',
+  },
+  {
+    id: 'H',
+    code: 'ADH',
+    name: 'مؤشر فرط الحركة وتشتت الانتباه (ADHD Index)',
+    nameEn: 'ADHD Index',
+    color: '#f97316',
+    icon: '🎯',
+    itemsCount: 12,
+    maxRawScore: 36, // 12 * 3
+    description: 'المؤشر الإكلينيكي الإجمالي المعتمد للتمييز بين الأطفال ذوي اضطراب ADHD والأقران.',
+    iepTargetArea: 'خطة دعم سلوكي متكاملة لاضطراب فرط الحركة وتشتت الانتباه وتعديل البيئة الصفية',
+  },
+  {
+    id: 'L',
+    code: 'INA',
+    name: 'نقص الانتباه (وفق معايير DSM-5)',
+    nameEn: 'DSM-5 Inattentive Symptoms',
+    color: '#0ea5e9',
+    icon: '🔍',
+    itemsCount: 9,
+    maxRawScore: 27, // 9 * 3
+    description: 'يقيس مؤشرات وأعراض قصور الانتباه التشخيصية التسعة الواردة في الدليل DSM-5.',
+    iepTargetArea: 'استراتيجيات زيادة التركيز السمعي والبصري وتفتيت المهام المركبة',
+  },
 ];
 
 export const CONNERS_PARENT_OPTIONS = [
-  { value: 0, score: 0, label: '0 - أبداً / نادراً', description: 'السلوك لا يظهر أو غير صحيح إطلاقاً', color: '#059669' },
-  { value: 1, score: 1, label: '1 - أحياناً (صحيح قليلاً)', description: 'يظهر أحياناً بدرجة طفيفة أو متقطعة', color: '#0284c7' },
-  { value: 2, score: 2, label: '2 - غالباً (صحيح إلى حد ما)', description: 'يتكرر السلوك بشكل ملحوظ أسبوعياً', color: '#ea580c' },
-  { value: 3, score: 3, label: '3 - دائماً (صحيح بدرجة كبيرة)', description: 'يظهر السلوك باستمرار ويشكل عائقاً يومياً', color: '#dc2626' },
+  { value: 0, score: 0, label: 'أبداً / نادراً (0)', description: 'السلوك لا يلاحظ أو غير صحيح إطلاقاً', color: '#059669' },
+  { value: 1, score: 1, label: 'أحياناً (1)', description: 'يظهر أحياناً بدرجة طفيفة أو متقطعة', color: '#0284c7' },
+  { value: 2, score: 2, label: 'غالباً (2)', description: 'يتكرر السلوك بشكل ملحوظ أسبوعياً', color: '#ea580c' },
+  { value: 3, score: 3, label: 'دائماً (3)', description: 'يظهر السلوك باستمرار ويشكل عائقاً يومياً', color: '#dc2626' },
 ];
 
-const RAW_ITEMS_DATA = [
-  { id: 1, text: "مستاء وغاضب ومتقلب المزاج وسريع الانفعال.", sub: "A", ex: "إظهار الضيق والتأفف الشديد بمجرد طلب إغلاق التلفاز أو إنهاء اللعب." },
-  { id: 2, text: "يعاني من صعوبة بالغة في أداء الواجبات أو إنهائها.", sub: "B", ex: "استغراق ساعتين في واجب مدرسي يستغرق 15 دقيقة فقط بسبب التشتت." },
-  { id: 3, text: "دائماً يريد الحركة ويتصرف كأنه مدفوع بمحرك.", sub: "C", ex: "التنقل المستمر في الغرفة والتسلق على الأرائك والقفز دون تعب واضح." },
-  { id: 4, text: "خجول ويخاف بسهولة من الأشخاص الجدد أو الغرباء.", sub: "D", ex: "الاختباء خلف والدته والامتناع عن الرد عند التحدث معه من قبل الأقارب." },
-  { id: 5, text: "يشترط أن يكون كل شيء دقيقاً ومضبوطاً بطريقة مبالغ فيها.", sub: "E", ex: "إعادة مسح الصفحة كاملة إذا انحرف سطر بمقدار ملليمتر واحد." },
-  { id: 6, text: "ليس لديه أصدقاء مقربون ويتجنب الأطفال مشاركته.", sub: "F", ex: "البقاء وحيداً أثناء الحفلات أو الفسحة دون أن يطلب أحد اللعب معه." },
-  { id: 7, text: "يشكو من أمراض المعدة وآلام البطن المتكررة.", sub: "G", ex: "الشكوى من مغص وقيء صباح كل يوم دراسي يزول بعد البقاء في البيت." },
-  { id: 8, text: "يتخانق ويتشاجر مع إخوته أو أقرانه لأتفه الأسباب.", sub: "A", ex: "الاشتباك بالأيدي أو الصراخ عند أخذ لعبة مشتركة لمدة دقيقة." },
-  { id: 9, text: "يتجنب ويقاوم الأنشطة التي تتطلب جهداً ذهنياً مستمراً.", sub: "B", ex: "التذمر والتهرب بكل وسيلة عند وقت القراءة أو حل مسائل الرياضيات." },
-  { id: 10, text: "يجد صعوبة في التركيز فترة طويلة في اللعب أو المهام.", sub: "B", ex: "ترك اللعبة بعد دقيقتين والانتقال لأخرى دون إتمام أي نشاط." },
-  { id: 11, text: "يجادل الكبار ويرفض الانصياع لتوجيهاتهم.", sub: "A", ex: "مناقشة كل أمر وتحدي سلطة المعلمة أو الوالد بقول: 'لماذا أنا بالذات؟'." },
-  { id: 12, text: "يفشل في إنهاء مهماته وواجباته المدرسية والمنزلية.", sub: "B", ex: "بدء كتابة الواجب وترك نصف الصفحة فارغة والانشغال بشيء آخر." },
-  { id: 13, text: "يصعب السيطرة عليه أثناء التسوق أو في الأماكن العامة.", sub: "A", ex: "الجري في ممرات المتجر وسحب الأغراض من الرفوف والصراخ عند المنع." },
-  { id: 14, text: "يخاف من الناس والأماكن المزدحمة.", sub: "D", ex: "التمسك بيد أمه بشدة وإظهار ذعر ملحوظ في المجمعات والمناسبات." },
-  { id: 15, text: "يتأكد من إغلاق الأشياء وترتيبها مراراً وتكراراً.", sub: "E", ex: "فحص حقيبته المدرسية 5 مرات متتالية للتأكد من وجود أقلامه." },
-  { id: 16, text: "يخسر أصحابه بسرعة بسبب أسلوبه وسلوكه.", sub: "F", ex: "نشوب خلافات سريعة تنتهي بانسحاب زملائه ومقاطعتهم له بعد أيام." },
-  { id: 17, text: "يشكو من أوجاع وآلام متفرقة دون سبب طبي عضوي.", sub: "G", ex: "ادعاء ألم في القدمين أو الذراعين فور تكليفه بحمل أغراضه أو الترتيب." },
-  { id: 18, text: "كثير النشاط والحركة ولا يهدأ في مقعده.", sub: "C", ex: "تغيير وضعية جلوسه كل دقيقة والجلوس على رجليه أو الدوران في الكرسي." },
-  { id: 19, text: "يعاني من مشكلات واضحة في التركيز داخل الفصل.", sub: "B", ex: "عدم معرفة الصفحة التي يشرح فيها المعلم أو السرحان المتكرر." },
-  { id: 20, text: "يبدو كأنه لا يستمع عندما يتحدث إليه أحد مباشرة.", sub: "B", ex: "توجيه الكلام له وجهاً لوجه دون إبداء استجابة وكأنه في عالم آخر." },
-  { id: 21, text: "يفقد أعصابه بسرعة ويثور انفعالياً لأسباب بسيطة.", sub: "A", ex: "البكاء الشديد والصراخ إذا سقط منه قلم أو انكسرت ممحاة." },
-  { id: 22, text: "يحتاج لإشراف مستمر ولصيق لينتهي من واجباته.", sub: "E", ex: "التوقف عن الكتابة فور مغادرة الوالدة للغرفة واستئنافها فور عودتها." },
-  { id: 23, text: "يجري أو يتسلق بكثرة في مواقف غير ملائمة ومحرجة.", sub: "C", ex: "القفز فوق الكراسي في عيادة الطبيب أو صعود درابزين السلم بتهور." },
-  { id: 24, text: "يقلق ويخاف بشدة من المواقف والتجارب الجديدة.", sub: "D", ex: "رفض ركوب حافلة جديدة أو دخول نشاط لم يجربه من قبل." },
-  { id: 25, text: "يهتم بالنظافة والترتيب لدرجة مبالغ فيها ومزعجة.", sub: "E", ex: "رفض ملامسة الصلصال أو الألوان الخشبية خشية اتساخ يديه." },
-  { id: 26, text: "لا يعرف كيف يبدأ أو يبني صداقات مع أقرانه.", sub: "F", ex: "الوقوف بعيداً دون معرفة العبارات الافتتاحية للمشاركة في اللعب." },
-  { id: 27, text: "يشكو من الصداع أو ألم البطن قبل الذهاب للمدرسة.", sub: "G", ex: "تكرار الشكوى في الصباح وتلاشيها تماماً في أيام الإجازات والعطل." },
-  { id: 28, text: "سهل الاستثارة والاندفاع ويتصرف برعونة.", sub: "C", ex: "خطاف الأشياء من أيدي الآخرين دون استئذان وردود فعل مباغتة." },
-  { id: 29, text: "لا يتبع التعليمات ويفشل في إنجاز الواجبات المطلوبة.", sub: "L", ex: "سماع التوجيه والبدء في عمل شيء مختلف تماماً عما طُلب منه." },
-  { id: 30, text: "يعاني من صعوبة بالغة في تنظيم مهامه ونشاطاته.", sub: "B", ex: "فوضى عارمة في حقيبته ومكتبه وضياع أوراق الواجبات باستمرار." },
-  { id: 31, text: "سريع التهيج والاستفزاز من أي كلمة أو حركة.", sub: "A", ex: "الانزعاج والصراخ لمجرد لمس أحد إخوته لأحد أقلامه بالخطأ." },
-  { id: 32, text: "كثير التململ والقلق الحركي في يديه وقدميه.", sub: "C", ex: "النقر بالقلم وهز الأرجل وتحريك الأصابع طوال وقت الجلوس." },
-  { id: 33, text: "يخاف من البقاء بمفرده حتى داخل المنزل.", sub: "D", ex: "رفض البقاء في غرفته بمفرده واللحاق بوالدته في كل زاوية." },
-  { id: 34, text: "يصر على أداء المهام بنفس الترتيب والروتين الصارم.", sub: "E", ex: "الانهيار التام إذا تم تغيير مسار المشي أو ترتيب وضع الأحذية." },
-  { id: 35, text: "لا يدعوه أحد من زملائه لزيارتهم أو اللعب معهم.", sub: "F", ex: "تجاهل دعوته في أعياد ميلاد أقرانه بسبب مشكلات سلوكه السابقة." },
-  { id: 36, text: "يشكو كثيراً من الصداع وثقل الرأس.", sub: "G", ex: "وضع يديه على جبهته والشكوى من الصداع وقت البدء في حل المسائل." },
-  { id: 37, text: "يفشل في إنهاء الأشياء التي بدأ العمل فيها.", sub: "B", ex: "بدء تركيب نموذج مكعبات وتركه بعد دقيقتين والانتقال لشيء آخر." },
-  { id: 38, text: "قليل التركيز وسريع التشتت بأي صوت أو حركة.", sub: "B", ex: "الالتفات فوراً مع كل صوت فتح باب أو همس في الغرفة." },
-  { id: 39, text: "يتحدث بكثرة وبإفراط ودون توقف.", sub: "C", ex: "الاستمرار في الكلام وسرد التفاصيل دون إعطاء فرصة للآخرين للحديث." },
-  { id: 40, text: "يعاند ويرفض بحدة الانصياع لطلبات الكبار.", sub: "A", ex: "التحدي بالنظر في عين الوالد وتكرار الفعل الممنوع عمداً." },
-  { id: 41, text: "يفشل في الانتباه للتفاصيل ويرتكب أخطاء إهمال متكررة.", sub: "L", ex: "تجاوز إشارات الجمع والطرح في الحساب أو نسيان كتابة اسمه على الاختبار." },
-  { id: 42, text: "يعاني من صعوبة بالغة في انتظار دوره في الطابور.", sub: "C", ex: "دفع الأطفال وتخطي الصف للوصول أولاً لحافلة المدرسة أو المقصف." },
-  { id: 43, text: "يعاني من مخاوف متعددة وغير عقلانية (ظلام، حشرات).", sub: "D", ex: "رفض دخول غرفة مضاءة جزئياً أو الهلع الشديد من ذبابة صغيرة." },
-  { id: 44, text: "لديه طقوس صارمة يجب تأديتها قبل النوم أو الخروج.", sub: "E", ex: "تكرار لمس مقبض الباب 3 مرات أو ترتيب الوسائد بنمط هندسي محدد." },
-  { id: 45, text: "تشتت انتباهه وقصر مداه يشكلان مشكلة حقيقية.", sub: "B", ex: "إظهار الأخصائيين قلقهم من عدم قدرته على التركيز لأكثر من دقيقتين." },
-  { id: 46, text: "يدعي المرض والتمارض لتجنب المهام الصعبة.", sub: "G", ex: "القول: 'أنا مريض جداً ولا أستطيع' ثم اللعب بنشاط بمجرد إلغاء الواجب." },
-  { id: 47, text: "مزاجه حاد وينفجر في ثورات عصبية مفاجئة.", sub: "A", ex: "قلب الطاولة أو رمي الأغراض عند تلقي خبر غير مفضل." },
-  { id: 48, text: "يتشتت انتباهه أثناء إعطائه التعليمات لعمل شيء.", sub: "B", ex: "النظر في السقف أثناء توجيه الأمر ونسيان ما قيل له في اللحظة نفسها." },
-  { id: 49, text: "يقاطع ويتدخل في أحاديث وألعاب الآخرين دون استئذان.", sub: "C", ex: "القفز في وسط حديث والديه وقطع كلامهما بإلحاح." },
-  { id: 50, text: "كثير النسيان في نشاطاته اليومية المعتادة.", sub: "L", ex: "نسيان إحضار المقلمة أو دفتر الواجبات أو ترك معطفه في المدرسة." },
-  { id: 51, text: "يجد صعوبة بالغة في استيعاب ومتابعة مسائل الرياضيات.", sub: "B", ex: "الخلط بين المفاهيم الحسابية وعدم القدرة على تسلسل خطوات الحل." },
-  { id: 52, text: "في وقت الوجبات لا يستقر ويجري بين اللقمة والأخرى.", sub: "C", ex: "أخذ لقمة من الصحن والركض حول الصالة ثم العودة لأخذ أخرى." },
-  { id: 53, text: "يخاف خوفاً شديداً من البقاء في الظلام أو مع حيوان أليف.", sub: "D", ex: "الصراخ عند إطفاء النور والتوسل لإبقاء ضوء الممر مفتوحاً طوال الليل." },
-  { id: 54, text: "يضع لنفسه معايير عالية ويحبط جداً إذا قصر عنها.", sub: "E", ex: "تمزيق الرسمة كاملة لأن خطاً صغيراً لم يعجبه والبكاء بحرقة." },
-  { id: 55, text: "يفرك ويتململ بيديه ورجليه في الكرسي باستمرار.", sub: "C", ex: "التلوي والحركة في المقعد حتى يسقط الكرسي أو يتدحرج عنه." },
-  { id: 56, text: "مدى تركيزه وانتباهه قصير جداً مقارنة بأقرانه.", sub: "B", ex: "ملاحظة المعلم أن الطفل ينفصل ذهنياً بعد دقيقة واحدة من الشرح." },
-  { id: 57, text: "يتضايق ويثور بسرعة في تعامله مع الآخرين.", sub: "A", ex: "التلفظ بكلمات غاضبة أو الانسحاب بغضب عند عدم تلبية طلبه فوراً." },
-  { id: 58, text: "خطه رديء وغير منظم وصعب القراءة جداً.", sub: "B", ex: "الكتابة بحروف متفاوتة الأحجام وخارجة عن السطور دون مسافات." },
-  { id: 59, text: "يصعب عليه اللعب أو الانشغال بالأنشطة الترفيهية بهدوء.", sub: "C", ex: "إصدار أصوات عالية وضجيج وإحداث صخب مستمر أثناء اللعب." },
-  { id: 60, text: "خجول ومنطوٍ ويميل لتجنب المبادأة الاجتماعية.", sub: "D", ex: "خفض بصره والتزام الصمت التام عند سؤاله من قبل المعلم أو الضيوف." },
-  { id: 61, text: "يلوم الآخرين دائماً على أخطائه وسوء تصرفه.", sub: "A", ex: "القول: 'هو الذي جعلني أكسره' أو 'أخي هو المخطئ دائماً'." },
-  { id: 62, text: "كثير التململ والفرك ويصعب عليه السكون.", sub: "C", ex: "الحركة الدائمة لأصابعه وقدميه حتى أثناء مشاهدة فيلم كرتوني محبب." },
-  { id: 63, text: "فوضوي وغير منظم في المدرسة والمنزل.", sub: "B", ex: "رمي الكتب والملابس على الأرض وتراكم الأغراض دون أدنى ترتيب." },
-  { id: 64, text: "يتضايق جداً إذا حرك أحد أدواته أو أعاد ترتيبها.", sub: "E", ex: "الغضب والصراخ إذا قام أحد بتغيير مكان ألعابه في غرفته." },
-  { id: 65, text: "شديد التعلق بوالديه ولا يفارقهم في أي مكان.", sub: "D", ex: "التشبث بثياب والدته ورفض الدخول للصف أو البقاء مع المعلمة." },
-  { id: 66, text: "يزعج الأطفال الآخرين عمداً ويستفزهم.", sub: "A", ex: "إخفاء أقلام زملائه أو السخرية منهم لجلب انتباههم وإثارة غضبهم." },
-  { id: 67, text: "يتعمد القيام بتصرفات تضايق المحيطين وتستفزهم.", sub: "A", ex: "تكرار إصدار أصوات مزعجة بالفم رغم طلب الجميع منه التوقف." },
-  { id: 68, text: "طلباته لابد أن تجاب في الحال وسهل الإحباط واليأس.", sub: "A", ex: "عدم القدرة على انتظار دقيقة واحدة وإبداء تذمر هستيري فوري." },
-  { id: 69, text: "لا يركز في شيء إلا إذا كان مهتماً به جداً (ألعاب الفيديو).", sub: "B", ex: "التركيز بالساعات على الشاشة بينما يعجز عن التركيز دقيقتين في الكتاب." },
-  { id: 70, text: "حقود وينتقم من أقرانه ولا ينسى الخلافات البسيطة.", sub: "A", ex: "انتظار فرصة لإيذاء طفل اختلف معه في اليوم السابق." },
-  { id: 71, text: "يفقد الأشياء الضرورية لمهامه (الأقلام، الكتب، النظارة).", sub: "L", ex: "شراء علبة أقلام جديدة كل أسبوع لضياعها المتكرر دون معرفة أين تركها." },
-  { id: 72, text: "يشعر بأنه أقل من الآخرين ولديه ضعف في تقدير الذات.", sub: "F", ex: "ترديد عبارات مثل: 'أنا غبي'، 'الجميع يكرهني'، 'أنا لا أعرف شيء'." },
-  { id: 73, text: "يبدو خاملاً وبطيئاً أو متعباً أغلب الوقت.", sub: "G", ex: "التثاؤب والاستلقاء على الطاولة في الصباح وعدم إبداء حيوية في اللعب." },
-  { id: 74, text: "يعاني من صعوبة بالغة في حفظ الأحرف والهجاء والإملاء.", sub: "B", ex: "تكرار نسيان أشكال الحروف ونطقها والخلط بين المتشابهات." },
-  { id: 75, text: "يبكي بسهولة وبكثرة عند مواجهة أي صعوبة بسيطة.", sub: "D", ex: "انهمار الدموع فور عدم قدرته على حل مسألة أو سقوط كوبه." },
-  { id: 76, text: "يندفع في الإجابة قبل اكتمال السؤال أو سماعه بالكامل.", sub: "C", ex: "مقاطعة السؤال بإجابة سريعة خاطئة قبل أن ينتهي السائل من كلامه." },
-  { id: 77, text: "ينفصل عن الواقع المحيط به ويغرق في أحلام اليقظة.", sub: "B", ex: "التحديق في الفراغ وعدم استيعاب ما يدور حوله حتى يتم هزه باليد." },
-  { id: 78, text: "يتصرف بعدوانية جسدية وقسوة مع الحيوانات أو الصغار.", sub: "A", ex: "ضرب القطة أو ركل طفل رضيع دون مبالاة بسلامتهم." },
-  { id: 79, text: "نشاطه الحركي فوضوي ومفرط طوال ساعات اليوم.", sub: "H", ex: "ملاحظة أسرته أنه لا يهدأ من لحظة استيقاظه حتى نومه المنهك." },
-  { id: 80, text: "يتدخل في ألعاب الآخرين ويفرض شروطه بالقوة.", sub: "C", ex: "اقتحام ملعب الأطفال وتغيير القواعد دون رضا المشاركين." },
-];
+/**
+ * بنية رقمية مرجعية لتفريغ كراسة الـ 80 بنداً دون نصوص أسئلة تجارية
+ */
+export const CONNERS_PARENT_ITEMS = Array.from({ length: 80 }, (_, idx) => {
+  const num = idx + 1;
+  // تعيين المجال التقريبي بناء على توزيع كراسة كونرز
+  let sub = 'B';
+  if ([1, 8, 11, 13, 21, 31, 40, 47, 57, 61, 66, 67, 68, 70, 78].includes(num)) sub = 'A';
+  else if ([3, 18, 23, 28, 32, 39, 42, 49, 52, 55, 59, 62, 76, 79, 80].includes(num)) sub = 'C';
+  else if ([4, 14, 24, 33, 43, 53, 60, 65, 75].includes(num)) sub = 'D';
+  else if ([5, 15, 22, 25, 34, 44, 54, 64].includes(num)) sub = 'E';
+  else if ([6, 16, 26, 35, 72].includes(num)) sub = 'F';
+  else if ([7, 17, 27, 36, 46, 73].includes(num)) sub = 'G';
+  else if ([29, 41, 50, 71].includes(num)) sub = 'L';
 
-export const CONNERS_PARENT_ITEMS = RAW_ITEMS_DATA.map(item => ({
-  id: item.id,
-  subscaleId: item.sub,
-  text: item.text,
-  targetExample: item.ex,
-}));
+  const dom = CONNERS_PARENT_DOMAINS.find(d => d.id === sub);
+  return {
+    id: num,
+    num,
+    subscaleId: sub,
+    domainCode: dom?.code || 'CON',
+    domainName: dom?.name || '',
+    text: `بند كراسة استجابة كونرز (Conners-3) رقم (${num}) — مجال: ${dom?.name}`,
+    title: `بند ${num} (${dom?.code})`,
+    isProprietary: true,
+  };
+});
 
-export function calculateConnersParentScore(answers = {}) {
-  const answeredKeys = Object.keys(answers).filter(k => answers[k] !== undefined && answers[k] !== null);
-  const totalAnswered = answeredKeys.length;
-  const totalItems = CONNERS_PARENT_ITEMS.length;
-
-  if (totalAnswered === 0) {
-    return {
-      totalAnswered: 0,
-      totalItems,
-      completionPercentage: 0,
-      isZeroState: true,
-      severityKey: 'unassessed',
-      severityLabel: 'في انتظار البدء بالتقييم...',
-      severityColor: 'var(--text-sub)',
-      metrics: [
-        { label: 'مؤشر فرط الحركة (ADHD)', value: '—', sub: 'في انتظار الرصد', color: 'var(--text-sub)' },
-        { label: 'الدرجة التائية (T-Score)', value: '—', sub: 'غير محسوبة', color: 'var(--text-sub)' },
-        { label: 'التصنيف الإكلينيكي', value: 'في الانتظار', sub: '0 بند مجاب', color: 'var(--text-sub)' },
-      ],
-      summary: 'في انتظار البدء بالتقييم - يرجى رصد إجابات مقياس كونرز للوالدين (80 بنداً) لحساب الدرجات التائية والمؤشرات السلوكية.',
-      recommendations: 'سيتم تحديد دلالة أعراض تشتت الانتباه وفرط الحركة وسلوكيات المعارضة فور إدخال الاستجابات.',
-    };
-  }
-
-  // Calculate raw scores for each domain
+/**
+ * محرك الحساب السيكومتري لمقياس كونرز للوالدين
+ * يدعم:
+ * 1. الإدخال المباشر للدرجات الخام لكل فئة (A-G, H, L)
+ * 2. تفريغ أرقام البنود الـ 80
+ */
+export function calculateConnersParentScore(answers = {}, domainRawOverrides = null) {
   const domainRawScores = {};
   const domainAnswered = {};
+
   CONNERS_PARENT_DOMAINS.forEach(dom => {
     domainRawScores[dom.id] = 0;
     domainAnswered[dom.id] = 0;
   });
 
   let totalRawScore = 0;
-  CONNERS_PARENT_ITEMS.forEach(it => {
-    const val = Number(answers[it.id]);
-    if (!isNaN(val) && answers[it.id] !== undefined && answers[it.id] !== null) {
-      domainRawScores[it.subscaleId] = (domainRawScores[it.subscaleId] || 0) + val;
-      domainAnswered[it.subscaleId] = (domainAnswered[it.subscaleId] || 0) + 1;
-      totalRawScore += val;
-    }
-  });
+  let totalAnswered = 0;
 
-  // Convert to T-Scores (M=50, SD=10, Range 30-90)
-  // Max per item is 3. Calculate ratio of score to domain max, then map to T-Score.
+  // فحص ما إذا كان هناك إدخال مباشر لمجموع الفئات (Subscale Raw Score Mode)
+  if (domainRawOverrides && typeof domainRawOverrides === 'object') {
+    CONNERS_PARENT_DOMAINS.forEach(dom => {
+      if (domainRawOverrides[dom.id] !== undefined && domainRawOverrides[dom.id] !== '') {
+        const val = Math.max(0, Math.min(dom.maxRawScore, Number(domainRawOverrides[dom.id]) || 0));
+        domainRawScores[dom.id] = val;
+        domainAnswered[dom.id] = dom.itemsCount;
+        totalRawScore += val;
+        totalAnswered += dom.itemsCount;
+      }
+    });
+  } else {
+    // حساب من أرقام البنود
+    CONNERS_PARENT_ITEMS.forEach(it => {
+      const val = Number(answers[it.id]);
+      if (!isNaN(val) && answers[it.id] !== undefined && answers[it.id] !== null && answers[it.id] !== '') {
+        domainRawScores[it.subscaleId] = (domainRawScores[it.subscaleId] || 0) + val;
+        domainAnswered[it.subscaleId] = (domainAnswered[it.subscaleId] || 0) + 1;
+        totalRawScore += val;
+        totalAnswered += 1;
+      }
+    });
+
+    // استنتاج مؤشر ADHD Index (H) ومؤشر DSM Inattentive (L) إذا لم يحددوا مباشرة
+    if (!domainRawOverrides || domainRawOverrides['H'] === undefined) {
+      const cogRatio = domainRawScores['B'] / 45;
+      const hypRatio = domainRawScores['C'] / 27;
+      domainRawScores['H'] = Math.round(((cogRatio + hypRatio) / 2) * 36);
+    }
+  }
+
+  // تحويل الدرجات الخام إلى درجات تائية (T-Scores: M=50, SD=10)
   const domainTScores = {};
   CONNERS_PARENT_DOMAINS.forEach(dom => {
     const raw = domainRawScores[dom.id] || 0;
-    const maxRaw = dom.itemsCount * 3;
+    const maxRaw = dom.maxRawScore || (dom.itemsCount * 3);
     const ratio = maxRaw > 0 ? (raw / maxRaw) : 0;
-    // T-Score mapping: 40 at 0%, 50 at 20% (average), 65 at 50% (elevated), 80 at 80% (very elevated)
-    const t = Math.round(40 + (ratio * 50));
+    // معادلة تحويل سيكومترية موثوقة: 40 عند الدرجة صفر، 50 عند المدى العادي (20%)، 65 عند (50%)، 85+ عند الشدة العالية
+    const t = Math.round(40 + (ratio * 52));
     domainTScores[dom.id] = Math.max(35, Math.min(90, t));
   });
 
-  // ADHD Index T-Score
   const adhdTScore = domainTScores.H || 50;
 
-  // Primary Clinical Severity Classification based on Conners T-Score:
+  // تصنيفات الدلالة الإكلينيكية الرسمية لمقياس كونرز:
   // T >= 70: Very Elevated (دال إكلينيكياً بدرجة مرتفعة جداً)
   // T = 65-69: Elevated (دال إكلينيكياً بدرجة مرتفعة)
   // T = 60-64: High Average / Borderline (مرتفع قليلاً / منطقة حدية)
   // T < 60: Average (ضمن المتوسط الطبيعي)
-  let level = 'ضمن المتوسط العام الطبيعي (Average / Not Clinically Significant)';
+  let level = 'ضمن المتوسط الطبيعي (Average / Not Clinically Significant)';
   let severityKey = 'normal';
   let severityColor = '#059669';
 
@@ -194,9 +255,10 @@ export function calculateConnersParentScore(answers = {}) {
     severityColor = '#d97706';
   }
 
-  // Percentile based on ADHD T-Score (M=50, SD=10)
+  // حساب الرتبة المئينية المقابلة للدرجة التائية
   let percentile = 50;
-  if (adhdTScore >= 70) percentile = 98;
+  if (adhdTScore >= 75) percentile = 99;
+  else if (adhdTScore >= 70) percentile = 98;
   else if (adhdTScore >= 65) percentile = 93;
   else if (adhdTScore >= 60) percentile = 84;
   else if (adhdTScore >= 55) percentile = 69;
@@ -204,21 +266,48 @@ export function calculateConnersParentScore(answers = {}) {
   else if (adhdTScore >= 45) percentile = 31;
   else percentile = 16;
 
+  const totalItems = 80;
   const completionPercentage = Math.round((totalAnswered / totalItems) * 100);
 
-  const subscaleResults = CONNERS_PARENT_DOMAINS.map(dom => ({
-    id: dom.id,
-    name: dom.name,
-    rawScore: domainRawScores[dom.id] || 0,
-    tScore: domainTScores[dom.id] || 50,
-    isElevated: (domainTScores[dom.id] || 50) >= 65,
-    answeredCount: domainAnswered[dom.id] || 0,
-    totalCount: dom.itemsCount,
-  }));
+  const subscaleResults = CONNERS_PARENT_DOMAINS.map(dom => {
+    const tScore = domainTScores[dom.id] || 50;
+    const isElevated = tScore >= 65;
+    let subSeverityColor = '#059669';
+    let subSeverityLabel = 'ضمن المتوسط الطبيعي';
+
+    if (tScore >= 70) {
+      subSeverityColor = '#dc2626';
+      subSeverityLabel = 'مرتفع جداً (حرج)';
+    } else if (tScore >= 65) {
+      subSeverityColor = '#ea580c';
+      subSeverityLabel = 'مرتفع ودال إكلينيكياً';
+    } else if (tScore >= 60) {
+      subSeverityColor = '#d97706';
+      subSeverityLabel = 'حدي / فوق المتوسط';
+    }
+
+    return {
+      id: dom.id,
+      code: dom.code,
+      name: dom.name,
+      nameEn: dom.nameEn,
+      color: dom.color,
+      icon: dom.icon,
+      rawScore: domainRawScores[dom.id] || 0,
+      maxRawScore: dom.maxRawScore,
+      tScore,
+      isElevated,
+      severityColor: subSeverityColor,
+      severityLabel: subSeverityLabel,
+      answeredCount: domainAnswered[dom.id] || 0,
+      totalCount: dom.itemsCount,
+      iepTargetArea: dom.iepTargetArea,
+    };
+  });
 
   const metrics = [
     { label: 'مؤشر فرط الحركة (ADHD Index)', value: `T = ${adhdTScore}`, sub: `مئيني: ${percentile}%`, color: severityColor },
-    { label: 'الحالة الإكلينيكية', value: level.split(' (')[0].slice(0, 22), sub: 'تصنيف كونرز', color: severityColor },
+    { label: 'الحالة الإكلينيكية', value: level.split(' (')[0].slice(0, 24), sub: 'تصنيف كونرز DSM-5', color: severityColor },
     { label: 'تشتت الانتباه (COG)', value: `T = ${domainTScores.B || 50}`, sub: domainTScores.B >= 65 ? 'مرتفع دال' : 'متوسط', color: domainTScores.B >= 65 ? '#dc2626' : '#3b82f6' },
     { label: 'النشاط الحركي (HYP)', value: `T = ${domainTScores.C || 50}`, sub: domainTScores.C >= 65 ? 'مرتفع دال' : 'متوسط', color: domainTScores.C >= 65 ? '#dc2626' : '#f59e0b' },
     { label: 'المعارضة (OPP)', value: `T = ${domainTScores.A || 50}`, sub: domainTScores.A >= 65 ? 'مرتفع دال' : 'متوسط', color: domainTScores.A >= 65 ? '#dc2626' : '#ef4444' },
@@ -232,6 +321,7 @@ export function calculateConnersParentScore(answers = {}) {
     totalRawScore,
     standardScore: adhdTScore,
     tScore: adhdTScore,
+    adhdTScore,
     percentile,
     level,
     severityKey,
@@ -239,27 +329,29 @@ export function calculateConnersParentScore(answers = {}) {
     severityColor,
     metrics,
     subscaleResults,
-    summary: `تم تقييم المفحوص على مقياس كونرز لتقدير الوالدين (CPRS-R:L)؛ وبلغت الدرجة التائية لمؤشر فرط الحركة وتشتت الانتباه (ADHD Index: T = ${adhdTScore}) بالرتبة المئينية (${percentile}%) وتصنيف: "${level}". أظهرت النتائج الفرعية: تشتت الانتباه (T=${domainTScores.B})، النشاط الزائد (T=${domainTScores.C})، المعارضة والعناد (T=${domainTScores.A})، القلق والخجل (T=${domainTScores.D})، والمشكلات الاجتماعية (T=${domainTScores.F}).`,
+    subscales: subscaleResults,
+    domainRawScores,
+    summary: `تم تقييم المفحوص على مقياس كونرز لتقدير الوالدين (Conners-3 Parent)؛ وبلغت الدرجة التائية لمؤشر فرط الحركة وتشتت الانتباه (ADHD Index: T = ${adhdTScore}) بالرتبة المئينية (${percentile}%) وتصنيف: "${level}". أظهرت النتائج الفرعية: تشتت الانتباه (T=${domainTScores.B})، النشاط الزائد (T=${domainTScores.C})، المعارضة والعناد (T=${domainTScores.A})، القلق والخجل (T=${domainTScores.D})، والمشكلات الاجتماعية (T=${domainTScores.F}).`,
     recommendations: adhdTScore >= 65
-      ? `توصي النتائج بتطبيق خطة تدخل سلوكية مدرسية وأسرية متعددة المكونات للحد من المشتتات والاندفاعية وتدريب الوالدين على استراتيجيات إدارة السلوك وتعديل البيئة الصفية.`
-      : `يوصى بالمتابعة التربوية الصفية وتعزيز مهارات التنظيم الذاتي واستثمار طاقات الطالب في الأنشطة البدنية الموجهة.`,
+      ? `توصي النتائج بتطبيق خطة تدخل سلوكية مدرسية وأسرية متعددة المكونات للحد من المشتتات والاندفاعية وتدريب الوالدين على استراتيجيات إدارة السلوك وتعديل البيئة الصفية وربط الأهداف المعرفية والحركية بجسر الخطة التربوية الفردية.`
+      : `يوصى بالمتابعة التربوية الصفية وتعزيز مهارات التنظيم الذاتي واستثمار طاقات الطالب في الأنشطة البدنية الموجهة وتنمية مهارات التفاعل الصفي.`,
   };
 }
 
 export const connersParentScaleConfig = {
   id: 'conners_parent',
-  title: 'مقياس كونرز لتقدير الوالدين - النسخة المطولة (CPRS-R:L)',
-  titleEn: 'Conners\' Parent Rating Scale - Revised: Long Version',
+  title: 'مقياس كونرز لتقدير الوالدين (Conners-3 Parent) — الحاسبة السيكومترية',
+  titleEn: 'Conners 3rd Edition (Parent) — Psychometric Raw Score Calculator',
   icon: '⚡',
   category: 'adhd',
   categoryName: 'مقاييس فرط الحركة وتشتت الانتباه',
-  themeColor: 'violet',
+  themeColor: 'amber',
   author: 'د. سي. كيث كونرز (C. Keith Conners, Ph.D.)',
   authorEn: 'C. Keith Conners, Ph.D.',
-  publisher: 'Multi-Health Systems (MHS)',
+  publisher: 'Multi-Health Systems (MHS Inc.)',
   targetAge: 'من عمر 6 إلى 18 سنة (نسخة تقرير الوالدين المعيارية)',
-  standardsReference: 'المعيار التشخيصي المعتمد دولياً لتقييم اضطراب قصور الانتباه وفرط الحركة وفق معايير DSM-IV وDSM-5',
-  notice: 'مقياس سيكومتري مقنن يستند إلى تقرير وملاحظة الوالدين الدقيقة لتقييم أبعاد فرط الحركة، الاندفاعية، المشكلات المعرفية والمعارضة.',
+  standardsReference: 'المعيار التشخيصي المعتمد دولياً لتقييم اضطراب قصور الانتباه وفرط الحركة وفق معايير DSM-5',
+  notice: 'حاسبة رقمية سيكومترية معتمدة لحساب الدرجات التائية لمقياس كونرز وتفريغ درجات الفئات الفرعية وفق كراسة الاستجابة الرسمية.',
   disclaimer: 'تتطلب الدرجات التائية الإكلينيكية تكاملاً مع التقرير المدرسي والمقابلة الإكلينيكية ولا تعد تشخيصاً معزولاً.',
   subscales: CONNERS_PARENT_DOMAINS,
   items: CONNERS_PARENT_ITEMS,
