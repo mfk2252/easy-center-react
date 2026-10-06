@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { calcAge, formatDate, todayStr, uid, nowTimeStr } from '../../utils/dateHelpers';
 import StudentTimeline from '../../components/students/StudentTimeline';
-import { handleFileInputChange } from '../../utils/fileUpload';
+import { handleFileInputChange, uploadErrorMessage } from '../../utils/fileUpload';
 import { GoalPickerModal } from '../ProgramsReports/GoalsBank';
 import { centerWhatsAppUrl, parentCanViewStudent } from '../../utils/parentAccess';
 import { getCurrencySymbol } from '../../utils/constants';
@@ -334,7 +334,7 @@ export default function StudentDetail({ stuId, onBack, onEdit, onDelete }) {
       const res = await handleFileInputChange(e, { allowPdf: true, allowDoc: true });
       if (res) setSessForm(fm => ({ ...fm, attachmentData: res.data, attachmentName: res.name }));
     } catch (ex) {
-      toast('⚠️ ' + (ex.i18nKey === 'file.tooLarge' ? 'حجم الملف يتجاوز 2 ميجابايت' : 'نوع الملف غير مدعوم'), 'er');
+      toast('⚠️ ' + uploadErrorMessage(ex), 'er');
     }
   }
   const fldA = k => e => setApptForm(f=>({...f,[k]:e.target.value}));

@@ -4,7 +4,7 @@ import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { todayStr, uid } from '../../utils/dateHelpers';
 import { printItem } from '../../utils/printUtils';
 import EmptyState from '../../components/ui/EmptyState';
-import { handleFileInputChange } from '../../utils/fileUpload';
+import { handleFileInputChange, uploadErrorMessage } from '../../utils/fileUpload';
 import AttachmentField from '../../components/ui/AttachmentField';
 import { CUSTODY_CATEGORIES } from '../../utils/custodyCategories';
 import { getCurrencySymbol } from '../../utils/constants';
@@ -256,7 +256,7 @@ export default function CenterPage() {
       const res = await handleFileInputChange(e, { allowPdf: true, allowDoc: true });
       if (res) setDocForm(fm => ({ ...fm, fileData: res.data, fileName: res.name }));
     } catch (ex) {
-      toast('⚠️ ' + (ex.i18nKey === 'file.tooLarge' ? 'حجم الملف يتجاوز 2 ميجابايت' : 'نوع الملف غير مدعوم'), 'er');
+      toast('⚠️ ' + uploadErrorMessage(ex), 'er');
     }
   }
 
@@ -317,7 +317,7 @@ export default function CenterPage() {
       const res = await handleFileInputChange(e, { allowPdf: true });
       if (res) setFinanceForm(v => ({ ...v, fileData: res.data, fileName: res.name }));
     } catch (ex) {
-      toast('⚠️ ' + (ex.i18nKey === 'file.tooLarge' ? 'حجم الملف يتجاوز 2 ميجابايت' : 'نوع الملف غير مدعوم'), 'er');
+      toast('⚠️ ' + uploadErrorMessage(ex), 'er');
     }
   }
 

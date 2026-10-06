@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { uid, todayStr, calcAge } from '../../utils/dateHelpers';
 import { lsAdd, lsUpd } from '../../hooks/useStorage';
 import { printHtmlContent } from '../../utils/printUtils';
-import { handleFileInputChange, FILE_ACCEPT_IMAGE } from '../../utils/fileUpload';
+import { handleFileInputChange, FILE_ACCEPT_IMAGE, uploadErrorMessage } from '../../utils/fileUpload';
 import { validateStudentPick } from '../../pages/ProgramsReports/StudentPicker';
 
 export const PROGRAM_DOMAINS = [
@@ -133,7 +133,7 @@ export default function InitialAssessmentModal({
         toast('📸 تم تحميل صورة التقييم بنجاح', 'ok');
       }
     } catch (ex) {
-      toast('⚠️ ' + (ex.i18nKey === 'file.tooLarge' ? 'حجم الصورة يتجاوز 2 ميجابايت' : 'نوع الملف غير مدعوم'), 'er');
+      toast('⚠️ ' + uploadErrorMessage(ex), 'er');
     }
   }
 

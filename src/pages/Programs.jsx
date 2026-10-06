@@ -4,6 +4,7 @@ import { lsGet, lsAdd, lsUpd, lsDel } from '../hooks/useStorage';
 import { todayStr, uid } from '../utils/dateHelpers';
 import EmptyState from '../components/ui/EmptyState';
 import UnifiedPageHeader from '../components/ui/UnifiedPageHeader';
+import { handleFileInputChange, uploadErrorMessage } from '../utils/fileUpload';
 
 const EMPTY_ACT = { name:'', date:'', year:'', section:'', image:'', participantIds:[], responsibleEmpIds:[], notes:'', fileData:'', fileName:'' };
 
@@ -35,8 +36,18 @@ export default function Programs() {
   const fld = k => e => setForm(f=>({...f,[k]:e.target.value}));
   function toggleParticipant(id) { setForm(f=>{ const p=f.participantIds||[]; return {...f,participantIds:p.includes(id)?p.filter(x=>x!==id):[...p,id]}; }); }
   function toggleResponsibleEmp(id) { setForm(f=>{ const p=f.responsibleEmpIds||[]; return {...f,responsibleEmpIds:p.includes(id)?p.filter(x=>x!==id):[...p,id]}; }); }
-  function handleImage(e) { const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=ev=>setForm(fm=>({...fm,image:ev.target.result})); r.readAsDataURL(f); }
-  function handleFile(e) { const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=ev=>setForm(fm=>({...fm,fileData:ev.target.result,fileName:f.name})); r.readAsDataURL(f); }
+  async function handleImage(e) {
+    try {
+      const res = await handleFileInputChange(e, { imagesOnly: true, preset: 'photo' });
+      if (res) setForm(fm => ({ ...fm, image: res.data }));
+    } catch (ex) { toast('⚠️ ' + uploadErrorMessage(ex), 'er'); }
+  }
+  async function handleFile(e) {
+    try {
+      const res = await handleFileInputChange(e, { allowPdf: true, allowDoc: true });
+      if (res) setForm(fm => ({ ...fm, fileData: res.data, fileName: res.name }));
+    } catch (ex) { toast('⚠️ ' + uploadErrorMessage(ex), 'er'); }
+  }
 
   function save() {
     if(!form.name.trim()||!form.date){toast('⚠️ أدخل اسم النشاط والتاريخ','er');return;}

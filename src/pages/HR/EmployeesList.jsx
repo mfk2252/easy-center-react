@@ -11,6 +11,7 @@ import {
 import EmptyState from '../../components/ui/EmptyState';
 import UnifiedPageHeader from '../../components/ui/UnifiedPageHeader';
 import UnifiedBackButton from '../../components/ui/UnifiedBackButton';
+import { handleFileInputChange, uploadErrorMessage } from '../../utils/fileUpload';
 
 function roleLabel(r) { return ROLES[r] || r || '—'; }
 const isSpec = r => SPECIALIST_ROLES.includes(r);
@@ -84,11 +85,21 @@ export default function EmployeesList() {
     if(!window.confirm(`⚠️ تحذير: هل أنت متأكد من حذف الموظف ${empName ? `"${empName}"` : ''} نهائياً؟\nلا يمكن التراجع عن هذا الإجراء.`))return;
     lsDel('employees',id);toast('🗑️ تم الحذف','ok');reload();setDetailId(null);setShowForm(false);
   }
-  function handlePhoto(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setForm(fm=>({...fm,photo:ev.target.result}));r.readAsDataURL(f);}
-  function addEmpAttachments(e){
-    const files=e.target.files;if(!files?.length)return;
-    Array.from(files).forEach(f=>{const r=new FileReader();r.onload=ev=>setForm(fm=>({...fm,attachments:[...(fm.attachments||[]),{id:uid(),name:f.name,data:ev.target.result,label:'مرفق'}]}));r.readAsDataURL(f);});
-    e.target.value='';
+  async function handlePhoto(e){
+    try {
+      const res = await handleFileInputChange(e, { imagesOnly: true, preset: 'avatar' });
+      if (res) setForm(fm => ({ ...fm, photo: res.data }));
+    } catch (ex) { toast('⚠️ ' + uploadErrorMessage(ex), 'er'); }
+  }
+  async function addEmpAttachments(e){
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    for (const f of files) {
+      try {
+        const res = await handleFileInputChange({ target: { files: [f], value: '' } }, { allowPdf: true, allowDoc: true });
+        if (res) setForm(fm => ({ ...fm, attachments: [...(fm.attachments || []), { id: uid(), name: res.name, data: res.data, label: 'مرفق' }] }));
+      } catch (ex) { toast(`⚠️ ${f.name}: ` + uploadErrorMessage(ex), 'er'); }
+    }
   }
   function removeEmpAtt(aid){setForm(f=>({...f,attachments:(f.attachments||[]).filter(a=>a.id!==aid)}));}
 

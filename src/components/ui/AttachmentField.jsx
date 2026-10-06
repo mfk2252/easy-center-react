@@ -1,4 +1,4 @@
-import { handleFileInputChange, FILE_ACCEPT_DOCS } from '../../utils/fileUpload';
+import { handleFileInputChange, FILE_ACCEPT_DOCS, uploadErrorMessage } from '../../utils/fileUpload';
 
 export default function AttachmentField({ fileData, fileName, onAttach, onClear, onError, label = 'إضافة مرفق' }) {
   async function onFile(e) {
@@ -6,9 +6,7 @@ export default function AttachmentField({ fileData, fileName, onAttach, onClear,
       const res = await handleFileInputChange(e, { allowPdf: true, allowDoc: true });
       if (res) onAttach(res.data, res.name);
     } catch (ex) {
-      const msg = ex.i18nKey === 'file.tooLarge'
-        ? 'حجم الملف يتجاوز 2 ميجابايت'
-        : 'نوع الملف غير مدعوم';
+      const msg = uploadErrorMessage(ex);
       throw new Error(msg);
     }
   }

@@ -100,7 +100,7 @@ export const translations = {
       coming: 'سيتم تفعيل هذا القسم قريباً',
     },
     file: {
-      tooLarge: 'حجم الملف يتجاوز 2 ميجابايت',
+      tooLarge: 'الملف كبير جداً — الحد الأقصى للمستندات 500 كيلوبايت (الصور تُضغط تلقائياً)',
       invalidType: 'نوع الملف غير مدعوم',
     },
     blocked: 'لا تملك صلاحية للوصول لهذا القسم',
@@ -207,7 +207,7 @@ export const translations = {
       coming: 'This section will be available soon',
     },
     file: {
-      tooLarge: 'File exceeds 2 MB',
+      tooLarge: 'File too large — documents are limited to 500 KB (images are compressed automatically)',
       invalidType: 'File type not supported',
     },
     blocked: 'You do not have access to this section',

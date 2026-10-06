@@ -55,7 +55,10 @@ export function lsWrite(key, data) {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('scs_data_updated', { detail: { key } }));
     }
-  } catch(e) {}
+  } catch(e) {
+    // غالباً امتلاء localStorage (حد ~5MB): لا نبتلع الخطأ، نُبلغ المستخدم
+    recordSyncFailure({ col: key, docId: '*', type: 'local' }, { code: 'local-quota', message: String(e?.message || '') });
+  }
 }
 
 export function lsSet(key, data) {

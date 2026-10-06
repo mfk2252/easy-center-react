@@ -12,6 +12,7 @@ import StudentDetail from './StudentDetail';
 import { parentCanViewStudent, centerWhatsAppUrl } from '../../utils/parentAccess';
 import UnifiedBackButton from '../../components/ui/UnifiedBackButton';
 import UnifiedPageHeader from '../../components/ui/UnifiedPageHeader';
+import { handleFileInputChange, uploadErrorMessage } from '../../utils/fileUpload';
 
 // Student Statuses
 const STATUSES = {
@@ -683,12 +684,13 @@ export default function StudentsPage() {
     setShowConsult(false);
   }
 
-  function handlePhoto(e) {
-    const f = e.target.files[0];
-    if (!f) return;
-    const r = new FileReader();
-    r.onload = ev => setForm(fm => ({ ...fm, photo: ev.target.result }));
-    r.readAsDataURL(f);
+  async function handlePhoto(e) {
+    try {
+      const res = await handleFileInputChange(e, { imagesOnly: true, preset: 'avatar' });
+      if (res) setForm(fm => ({ ...fm, photo: res.data }));
+    } catch (ex) {
+      toast('⚠️ ' + uploadErrorMessage(ex), 'er');
+    }
   }
 
   if (detailId) {

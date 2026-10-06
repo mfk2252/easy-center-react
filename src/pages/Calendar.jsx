@@ -11,6 +11,7 @@ import {
   OCCASION_CATEGORIES
 } from '../data/internationalDays';
 import UnifiedPageHeader from '../components/ui/UnifiedPageHeader';
+import { handleFileInputChange, uploadErrorMessage } from '../utils/fileUpload';
 
 const DAYS_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 const MONTHS_AR = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
@@ -502,13 +503,13 @@ export default function Calendar() {
     setShowStuSess(true);
   }
 
-  function sessAttach(e) {
-    const f = e.target.files[0];
-    if (!f) return;
-    const r = new FileReader();
-    r.onload = ev => setStuSessForm(fm => ({ ...fm, attachData: ev.target.result, attachName: f.name }));
-    r.readAsDataURL(f);
-    e.target.value = '';
+  async function sessAttach(e) {
+    try {
+      const res = await handleFileInputChange(e, { allowPdf: true, allowDoc: true });
+      if (res) setStuSessForm(fm => ({ ...fm, attachData: res.data, attachName: res.name }));
+    } catch (ex) {
+      toast('⚠️ ' + uploadErrorMessage(ex), 'er');
+    }
   }
 
   function saveStuSess() {
