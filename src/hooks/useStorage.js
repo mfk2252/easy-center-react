@@ -3,8 +3,9 @@
  * المزامنة تلقائية عند تسجيل الدخول
  */
 import { uid } from '../utils/dateHelpers';
-import { fbGetAll, fbGetWhere, fbGetOne, fbSet, fbUpdate, fbDelete, fbBatchSet } from '../firebase/db';
-import { enqueue } from '../utils/offlineQueue';
+import { fbGetAll, fbGetAllStrict, fbGetWhere, fbGetOne, fbSet, fbUpdate, fbDelete, fbBatchSet } from '../firebase/db';
+import { enqueue, getPendingOps } from '../utils/offlineQueue';
+import { reconcileCollection } from '../utils/syncReconcile';
 import { isTransientError, recordSyncFailure } from '../utils/syncFailures';
 
 export function getCenterId() {
@@ -203,31 +204,47 @@ export async function syncFromFirebase(centerId, keys, force = false) {
     return;
   }
 
-  // معالجة المجموعات في دفعات (Chunks) تجنباً لإرسال 43 استعلاماً متزامناً في نفس اللحظة
+  // معالجة المجموعات في دفعات (Chunks) تجنباً لإرسال عشرات الاستعلامات المتزامنة
   const CHUNK_SIZE = 8;
+  let allOk = true;
   for (let i = 0; i < keys.length; i += CHUNK_SIZE) {
     const chunk = keys.slice(i, i + CHUNK_SIZE);
     await Promise.all(chunk.map(async (key) => {
       try {
-        const data = await fbGetAll(centerId, key);
-        if (Array.isArray(data) && data.length > 0) {
-          localStorage.setItem(`${centerId}_${key}`, JSON.stringify(data));
-        } else {
-          const localRaw = localStorage.getItem(`${centerId}_${key}`);
-          if (localRaw) {
-            try {
-              const parsed = JSON.parse(localRaw);
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                localStorage.setItem(`${centerId}_${key}`, JSON.stringify(parsed));
-                // استخدام الكتابة المجمعة بدلاً من الحلقات الفردية
-                await fbBatchSet(centerId, key, parsed).catch(() => {});
-              }
-            } catch (_) {}
+        const storeKey = `${centerId}_${key}`;
+        const seenKey = `scs_seen_cloud_${centerId}_${key}`;
+        const cloud = await fbGetAllStrict(centerId, key);
+        if (cloud === null) { allOk = false; return; } // فشل الجلب: نُبقي المحلي كما هو
+
+        let local = [];
+        try { local = JSON.parse(localStorage.getItem(storeKey) || '[]'); } catch (_) {}
+
+        const res = reconcileCollection({
+          cloud,
+          local,
+          pendingOps: getPendingOps(centerId, key),
+          seenCloud: localStorage.getItem(seenKey) === '1',
+        });
+
+        if (res.action === 'replace') {
+          localStorage.setItem(storeKey, JSON.stringify(res.list));
+          localStorage.setItem(seenKey, '1');
+        } else if (res.action === 'migrate') {
+          // ترحيل لمرة واحدة فقط: جهاز لديه بيانات ولم يرَ السحابة من قبل
+          try {
+            await fbBatchSet(centerId, key, res.list);
+            localStorage.setItem(seenKey, '1');
+          } catch (e) {
+            allOk = false;
+            recordSyncFailure({ col: key, docId: '*', type: 'migrate' }, e);
           }
         }
-      } catch(e) { console.warn(`sync ${key}:`, e); }
+      } catch(e) { allOk = false; console.warn(`sync ${key}:`, e); }
     }));
   }
+
+  // إن فشل جزء، لا نُفعّل فترة الانتظار حتى تُعاد المحاولة قريباً
+  if (!allOk) return;
 
   localStorage.setItem(lastSyncKey, String(now));
 }

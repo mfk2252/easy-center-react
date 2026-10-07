@@ -43,6 +43,11 @@ export function enqueue(op) {
   writeQueue(q);
 }
 
+/** العمليات المعلّقة (لم تصل للسحابة) لمجموعة معيّنة في مركز معيّن */
+export function getPendingOps(centerId, col) {
+  return readQueue().filter(op => op.centerId === centerId && op.col === col);
+}
+
 export function getPendingCount() {
   return readQueue().length;
 }

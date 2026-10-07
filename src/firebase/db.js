@@ -20,6 +20,14 @@ export async function fbGetAll(centerId, col, maxLimit = null) {
   } catch(e) { return []; }
 }
 
+// جلب مجموعة كاملة مع التمييز بين "فارغة" (مصفوفة) و"فشل" (null)
+export async function fbGetAllStrict(centerId, col) {
+  try {
+    const snap = await getDocs(centerCol(centerId, col));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) { console.warn(`fbGetAllStrict ${col}:`, e?.code || e); return null; }
+}
+
 // قراءة مقيّدة بحقل (تُستخدم لولي الأمر: يرجع null عند الفشل حتى لا نمسح الكاش)
 export async function fbGetWhere(centerId, col, field, value) {
   try {
