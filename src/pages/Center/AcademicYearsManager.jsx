@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { lsGet } from '../../hooks/useStorage';
-import { todayStr } from '../../utils/dateHelpers';
+import { todayStr, localDateStr } from '../../utils/dateHelpers';
 import {
   getAcademicYears,
   saveAcademicYears,
@@ -118,8 +118,8 @@ const MODE_PRESETS = {
       const start = new Date(latestDate.getTime() + 86400000);
       const end = new Date(start);
       end.setMonth(end.getMonth() + 3);
-      const startStr = start.toISOString().split('T')[0];
-      const endStr = end.toISOString().split('T')[0];
+      const startStr = localDateStr(start);
+      const endStr = localDateStr(end);
       const count = existingYears.length + 1;
       return {
         name: `الدورة التأهيلية (${count}) - ${start.getFullYear()}`,

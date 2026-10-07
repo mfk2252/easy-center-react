@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { todayStr } from '../../utils/dateHelpers';
 import {
   SB5_DOMAINS,
   SB5_FACTORS,
@@ -51,7 +52,7 @@ export default function StanfordBinet5ReportModal({
   const studentName = targetData.studentName || 'غير محدد';
   const age = targetData.age || 'غير محدد';
   const examinerName = targetData.examinerName || targetData.specialistName || currentUser?.name || 'الأخصائي النفسي';
-  const assessmentDate = targetData.date || new Date().toISOString().split('T')[0];
+  const assessmentDate = targetData.date || todayStr();
 
   function handlePrint() {
     window.print();

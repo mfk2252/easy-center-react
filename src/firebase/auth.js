@@ -387,7 +387,13 @@ export async function signUpManagerWithEmailPassword(emailOrOptions, passwordArg
 // ============================================================
 function buildStaffAuthEmail(centerId, username) {
   const clean = username.trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
-  return `${clean}@${centerId}.staff.easycenter.local`;
+  // لاحقة عشوائية: حذف موظف لا يحذف حساب Firebase Auth (يحتاج صلاحية خادم)، فلو كان
+  // البريد ثابتاً لفشل إنشاء موظف جديد بنفس اسم المستخدم لاحقاً (email-already-in-use).
+  // تسجيل الدخول لا يُعيد بناء البريد؛ يقرؤه من staffLoginIndex، فهذا آمن للحسابات القديمة.
+  const bytes = new Uint8Array(4);
+  crypto.getRandomValues(bytes);
+  const suffix = Array.from(bytes, x => x.toString(16).padStart(2, '0')).join('');
+  return `${clean}_${suffix}@${centerId}.staff.easycenter.local`;
 }
 
 // ============================================================

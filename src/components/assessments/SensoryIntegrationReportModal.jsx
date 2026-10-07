@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { todayStr } from '../../utils/dateHelpers';
 import {
   SENSORY_INTEGRATION_DOMAINS,
   SENSORY_INTEGRATION_ITEMS,
@@ -28,7 +29,7 @@ export default function SensoryIntegrationReportModal({
     const studentName = assessment.studentName || 'الطالب';
     const text = `📄 *تقرير تشخيص التكامل الحسي للأطفال (Sensory Integration Profile)*
 👤 *الطالب:* ${studentName}
-📅 *التاريخ:* ${assessment.date || new Date().toISOString().split('T')[0]}
+📅 *التاريخ:* ${assessment.date || todayStr()}
 👨‍⚕️ *الفاحص:* ${assessment.evaluator || 'أخصائي العلاج الوظيفي'}
 📊 *الدرجة الكلية:* ${scoreResult.totalRawScore} من 90 (${scoreResult.percentage}%)
 🎯 *المستوى التشخيصي:* ${scoreResult.level}
@@ -152,7 +153,7 @@ export default function SensoryIntegrationReportModal({
 
             <div style={{ textAlign: 'left' }}>
               <div style={{ fontSize: '.76rem', color: 'var(--text-sub)' }}>رقم التقرير: <strong style={{ color: 'var(--text-main)' }}>SI-{assessment.id?.slice(-6) || '2026'}</strong></div>
-              <div style={{ fontSize: '.76rem', color: 'var(--text-sub)' }}>تاريخ الفحص: <strong style={{ color: 'var(--text-main)' }}>{assessment.date || new Date().toISOString().split('T')[0]}</strong></div>
+              <div style={{ fontSize: '.76rem', color: 'var(--text-sub)' }}>تاريخ الفحص: <strong style={{ color: 'var(--text-main)' }}>{assessment.date || todayStr()}</strong></div>
               <div style={{ fontSize: '.76rem', color: 'var(--text-sub)' }}>حالة التقرير: <strong style={{ color: '#059669' }}>معتمد رسمياً</strong></div>
             </div>
           </div>

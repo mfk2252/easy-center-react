@@ -1,5 +1,6 @@
 import React from 'react';
 import { lsGet } from '../../hooks/useStorage';
+import { localDateStr } from '../../utils/dateHelpers';
 
 /**
  * محور ذكاء الأعمال والرسوم البيانية المصغرة (Visual Analytics Hub)
@@ -39,7 +40,7 @@ export default function VisualAnalyticsHub({ data, go }) {
     for (let i = numDays - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const iso = d.toISOString().split('T')[0];
+      const iso = localDateStr(d);
       const dayName = d.toLocaleDateString('ar-SA', { weekday: 'short' });
       days.push({ iso, dayName });
     }

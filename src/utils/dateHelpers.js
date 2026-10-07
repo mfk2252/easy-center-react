@@ -1,5 +1,15 @@
+/** تاريخ محلي بصيغة yyyy-mm-dd (وليس UTC: بتوقيت السعودية يختلف اليوم بين 12 و3 صباحاً) */
+export function localDateStr(d = new Date()) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+/** يحوّل yyyy-mm-dd إلى Date محلي عند الظهر (آمن من انزلاق المنطقة الزمنية) */
+export function parseLocalDate(iso) {
+  return new Date(iso + 'T12:00:00');
+}
+
 export function todayStr() {
-  return new Date().toISOString().split('T')[0];
+  return localDateStr();
 }
 
 export function formatDate(d, locale = 'ar-SA') {
@@ -122,7 +132,7 @@ export function addDays(isoDate, n) {
   if (!isoDate) return '';
   const d = new Date(isoDate + 'T12:00:00');
   d.setDate(d.getDate() + n);
-  return d.toISOString().split('T')[0];
+  return localDateStr(d);
 }
 
 export function daysFromToday(isoDate) {

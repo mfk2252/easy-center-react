@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { lsGet, lsAdd, lsUpd } from '../../hooks/useStorage';
-import { todayStr, nowTimeStr, uid } from '../../utils/dateHelpers';
+import { todayStr, nowTimeStr, uid, localDateStr, parseLocalDate } from '../../utils/dateHelpers';
 import { CalendarCheck, ChevronRight, ChevronLeft, Calendar, Palmtree, AlertTriangle, Clock, CheckCircle2, XCircle, ArrowRight, UserCheck, Sparkles } from 'lucide-react';
 import UnifiedPageHeader from '../../components/ui/UnifiedPageHeader';
 
@@ -34,9 +34,9 @@ export default function AttendancePage() {
   }
 
   function navDate(n) {
-    const d = new Date(dateStr);
+    const d = parseLocalDate(dateStr);
     d.setDate(d.getDate() + n);
-    setDateStr(d.toISOString().split('T')[0]);
+    setDateStr(localDateStr(d));
   }
 
   // Leaves integration helpers
@@ -130,18 +130,18 @@ export default function AttendancePage() {
         notes: (leave.notes ? leave.notes + ' | ' : '') + `أُلغيت الإجازة لحضور الموظف في ${dateStr}`
       });
     } else if (leave.from === dateStr) {
-      const nextDay = new Date(dateStr);
+      const nextDay = parseLocalDate(dateStr);
       nextDay.setDate(nextDay.getDate() + 1);
-      const nextDayStr = nextDay.toISOString().split('T')[0];
+      const nextDayStr = localDateStr(nextDay);
       lsUpd('leaves', leave.id, {
         ...leave,
         from: nextDayStr,
         notes: (leave.notes ? leave.notes + ' | ' : '') + `تم تعديل البداية لـ ${nextDayStr} لحضور الموظف في ${dateStr}`
       });
     } else if (leave.to === dateStr) {
-      const prevDay = new Date(dateStr);
+      const prevDay = parseLocalDate(dateStr);
       prevDay.setDate(prevDay.getDate() - 1);
-      const prevDayStr = prevDay.toISOString().split('T')[0];
+      const prevDayStr = localDateStr(prevDay);
       lsUpd('leaves', leave.id, {
         ...leave,
         to: prevDayStr,

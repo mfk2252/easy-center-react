@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { lsGet, lsAdd, lsUpd } from '../../hooks/useStorage';
+import { todayStr } from '../../utils/dateHelpers';
 import {
   SENSORY_INTEGRATION_DOMAINS,
   SENSORY_INTEGRATION_ITEMS,
@@ -18,7 +19,7 @@ export default function SensoryIntegrationAssessmentModal({
   const { toast } = useApp();
   const [selectedStudentId, setSelectedStudentId] = useState(initialData?.studentId || (students[0]?.id ? String(students[0].id) : ''));
   const [examinerName, setExaminerName] = useState(initialData?.evaluator || initialData?.examinerName || (emps[0]?.name || 'أخصائي العلاج الوظيفي والتكامل الحسي'));
-  const [assessmentDate, setAssessmentDate] = useState(initialData?.date || new Date().toISOString().split('T')[0]);
+  const [assessmentDate, setAssessmentDate] = useState(initialData?.date || todayStr());
   const [activeDomainTab, setActiveDomainTab] = useState('all');
   const [responses, setResponses] = useState({});
   const [clinicalNotes, setClinicalNotes] = useState(initialData?.notes || '');
@@ -30,7 +31,7 @@ export default function SensoryIntegrationAssessmentModal({
     if (initialData) {
       setSelectedStudentId(initialData.studentId ? String(initialData.studentId) : '');
       setExaminerName(initialData.evaluator || initialData.examinerName || '');
-      setAssessmentDate(initialData.date || new Date().toISOString().split('T')[0]);
+      setAssessmentDate(initialData.date || todayStr());
       setClinicalNotes(initialData.notes || '');
       if (initialData.responses || initialData.answers) {
         setResponses(initialData.responses || initialData.answers || {});

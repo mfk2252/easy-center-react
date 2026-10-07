@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { useApp } from '../../context/AppContext';
+import { todayStr } from '../../utils/dateHelpers';
 
 export default function SensoryChecklistReportModal({ isOpen, onClose, assessment }) {
   const { center } = useApp();
@@ -48,7 +49,7 @@ export default function SensoryChecklistReportModal({ isOpen, onClose, assessmen
             </div>
             <div style={{ textAlign: 'left', lineHeight: 1.6 }}>
               <div style={{ fontSize: '.76rem', color: 'var(--text-sub)' }}>رقم التقرير: <strong style={{ color: 'var(--text-main)' }}>SC-{assessment.id?.slice(-6) || '2026'}</strong></div>
-              <div style={{ fontSize: '.76rem', color: 'var(--text-sub)' }}>تاريخ الفحص: <strong style={{ color: 'var(--text-main)' }}>{assessment.date || new Date().toISOString().split('T')[0]}</strong></div>
+              <div style={{ fontSize: '.76rem', color: 'var(--text-sub)' }}>تاريخ الفحص: <strong style={{ color: 'var(--text-main)' }}>{assessment.date || todayStr()}</strong></div>
               <div style={{ fontSize: '.76rem', color: 'var(--text-sub)' }}>حالة التقرير: <strong style={{ color: '#059669' }}>معتمد رسمياً</strong></div>
             </div>
           </div>

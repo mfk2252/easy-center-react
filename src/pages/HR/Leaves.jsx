@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
-import { todayStr, calcDays, uid } from '../../utils/dateHelpers';
+import { todayStr, calcDays, uid, localDateStr, parseLocalDate } from '../../utils/dateHelpers';
 import { Palmtree, Plus, CheckCircle2, XCircle, Clock, Calendar, Search, Edit3, Trash2, User, AlertTriangle, AlertCircle } from 'lucide-react';
 import EmptyState from '../../components/ui/EmptyState';
 import UnifiedPageHeader from '../../components/ui/UnifiedPageHeader';
@@ -109,10 +109,10 @@ export default function Leaves() {
 
     const attEmpList = lsGet('attEmp') || [];
     try {
-      const cur = new Date(leave.from);
-      const end = new Date(leave.to);
+      const cur = parseLocalDate(leave.from);
+      const end = parseLocalDate(leave.to);
       while (cur <= end) {
-        const dStr = cur.toISOString().split('T')[0];
+        const dStr = localDateStr(cur);
         const existing = attEmpList.find(a => a.empId === leave.empId && a.date === dStr);
 
         if (!existing) {

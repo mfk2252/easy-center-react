@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { todayStr } from '../../utils/dateHelpers';
 import {
   RAVEN_COPYRIGHT_INFO,
   RAVEN_VERSIONS,
@@ -54,7 +55,7 @@ export default function RavenReportModal({
   const studentName = targetData.studentName || 'غير محدد';
   const age = targetData.age || 'غير محدد';
   const examinerName = targetData.examinerName || targetData.specialistName || currentUser?.name || 'الأخصائي النفسي';
-  const assessmentDate = targetData.date || new Date().toISOString().split('T')[0];
+  const assessmentDate = targetData.date || todayStr();
 
   function handlePrint() {
     window.print();
