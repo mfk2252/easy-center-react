@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { lsGet, lsSet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { todayStr, uid } from '../../utils/dateHelpers';
-import { getAcademicYears } from '../../utils/academicYears';
+import { getAcademicYears, getAcademicYearFromDate, isEventInCurrentPeriod, isEventInPastPeriod } from '../../utils/academicYears';
 import { INTERNATIONAL_DAYS, getInternationalDayDate, OCCASION_CATEGORIES } from '../../data/internationalDays';
 import EmptyState from '../../components/ui/EmptyState';
 import {
@@ -78,7 +78,7 @@ export default function CenterEventsTab() {
   const [academicYears, setAcademicYears] = useState([]);
 
   // Filter States
-  const [selectedYear, setSelectedYear] = useState('');
+  const [yearFilterTab, setYearFilterTab] = useState('current'); // 'current' | 'past'
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
@@ -112,30 +112,40 @@ export default function CenterEventsTab() {
 
     const yearsList = getAcademicYears();
     setAcademicYears(yearsList);
-
-    // Default filter to current active year if set
-    const currentYearObj = yearsList.find(y => y.isCurrent);
-    if (currentYearObj && !selectedYear) {
-      setSelectedYear(currentYearObj.name);
-    }
   }
 
   useEffect(() => {
     reload();
   }, []);
 
-  // Compute unique year options from events + configured academic years
-  const availableYears = useMemo(() => {
+  // Compute counts for Current Year and Past Year
+  const currentEventsCount = useMemo(() => {
+    return events.filter(e => isEventInCurrentPeriod(e, academicYears)).length;
+  }, [events, academicYears]);
+
+  const pastEventsCount = useMemo(() => {
+    return events.filter(e => isEventInPastPeriod(e, academicYears)).length;
+  }, [events, academicYears]);
+
+  // Academic year options for the form modal
+  const formYearOptions = useMemo(() => {
     const fromConfig = academicYears.map(y => y.name);
-    const fromEvents = events.map(e => e.academicYear || (e.date && e.date.slice(0, 4))).filter(Boolean);
-    return Array.from(new Set([...fromConfig, ...fromEvents])).filter(Boolean);
-  }, [academicYears, events]);
+    const curDate = form.date || todayStr();
+    const curAy = getAcademicYearFromDate(curDate);
+    const curCalYear = String(new Date().getFullYear());
+    const pastCalYear = String(new Date().getFullYear() - 1);
+    const set = new Set([curAy, curCalYear, pastCalYear, ...fromConfig]);
+    if (form.academicYear) set.add(form.academicYear);
+    return Array.from(set).filter(Boolean);
+  }, [academicYears, form.date, form.academicYear]);
 
   // Filtered Events
   const filteredEvents = useMemo(() => {
     return events.filter(evt => {
-      const evtYear = evt.academicYear || (evt.date && evt.date.slice(0, 4)) || '';
-      const matchYear = !selectedYear || evtYear === selectedYear || evt.academicYearId === selectedYear;
+      const matchYear = yearFilterTab === 'current'
+        ? isEventInCurrentPeriod(evt, academicYears)
+        : isEventInPastPeriod(evt, academicYears);
+
       const matchCat = !selectedCategory || evt.category === selectedCategory;
       const matchStatus = !selectedStatus || evt.status === selectedStatus;
       const matchSearch = !searchQuery.trim() ||
@@ -146,7 +156,7 @@ export default function CenterEventsTab() {
 
       return matchYear && matchCat && matchStatus && matchSearch;
     }).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  }, [events, selectedYear, selectedCategory, selectedStatus, searchQuery]);
+  }, [events, yearFilterTab, academicYears, selectedCategory, selectedStatus, searchQuery]);
 
   // Stats calculation
   const stats = useMemo(() => {
@@ -198,17 +208,12 @@ export default function CenterEventsTab() {
     toast(`✨ تم استيراد بيانات (${selected.name}) كدليل استرشادي، يرجى مراجعة وتحديد العنوان والوقت والمكان والأهداف الخاصة بالمركز`, 'ok');
   };
 
-  // Adopt directly from the International Days Browser Modal
   const handleAdoptInternationalDay = (dayObj) => {
-    const activeYr = academicYears.find(y => y.isCurrent)?.name || (availableYears[0] || '2025 / 2026');
-    const activeYrId = academicYears.find(y => y.isCurrent)?.id || '';
-    
     let targetYear = new Date().getFullYear();
-    if (activeYr) {
-      const yrMatch = activeYr.match(/\b(20\d\d)\b/);
-      if (yrMatch) targetYear = parseInt(yrMatch[1], 10);
-    }
     const computedDate = getInternationalDayDate(dayObj, targetYear);
+    const computedAy = getAcademicYearFromDate(computedDate);
+    const activeYr = academicYears.find(y => y.isCurrent)?.name || computedAy || String(targetYear);
+    const activeYrId = academicYears.find(y => y.isCurrent)?.id || '';
     const cat = dayObj.category === 'holidays' ? 'holidays'
       : dayObj.category === 'national' ? 'national'
       : dayObj.category === 'medical' ? 'medical'
@@ -378,14 +383,16 @@ export default function CenterEventsTab() {
 
   // Open Add Modal
   const handleOpenNew = () => {
-    const activeYr = academicYears.find(y => y.isCurrent)?.name || (availableYears[0] || '2025 / 2026');
+    const curDate = todayStr();
+    const curAy = getAcademicYearFromDate(curDate);
+    const activeYr = academicYears.find(y => y.isCurrent)?.name || curAy || String(new Date().getFullYear());
     const activeYrId = academicYears.find(y => y.isCurrent)?.id || '';
 
     setForm({
       ...EMPTY_EVENT_FORM,
       academicYear: activeYr,
       academicYearId: activeYrId,
-      date: todayStr(),
+      date: curDate,
     });
     setEditId(null);
     setShowModal(true);
@@ -432,10 +439,11 @@ export default function CenterEventsTab() {
       return;
     }
 
+    const computedAy = getAcademicYearFromDate(form.date) || String(new Date().getFullYear());
     const payload = {
       ...form,
       name: form.name.trim(),
-      academicYear: form.academicYear || (form.date ? form.date.slice(0, 4) : ''),
+      academicYear: form.academicYear || computedAy,
       budgetEst: Number(form.budgetEst) || 0,
       budgetActual: Number(form.budgetActual) || 0,
       participantCountEst: Number(form.participantCountEst) || form.participantStudentIds.length || 0,
@@ -611,7 +619,7 @@ export default function CenterEventsTab() {
             )}
           </div>
 
-          {/* Quick Year Pill Selectors (تصفية العام الذكية) */}
+          {/* Quick Year Pill Selectors (تصفية العام: السنة الحالية / السنة الماضية فقط) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', paddingTop: 4 }}>
             <span style={{ fontSize: '.8rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 5 }}>
               <Calendar style={{ width: 15, height: 15, color: 'var(--pr)' }} />
@@ -620,40 +628,37 @@ export default function CenterEventsTab() {
 
             <button
               type="button"
-              className={`btn btn-xs ${!selectedYear ? 'btn-p' : 'btn-g'}`}
-              onClick={() => setSelectedYear('')}
-              style={{ fontWeight: 700, borderRadius: 20, padding: '4px 12px' }}
+              className={`btn btn-xs ${yearFilterTab === 'current' ? 'btn-p' : 'btn-g'}`}
+              onClick={() => setYearFilterTab('current')}
+              style={{
+                fontWeight: 700,
+                borderRadius: 20,
+                padding: '5px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
             >
-              جميع السنوات ({events.length})
+              <span>📅 السنة الحالية</span>
+              <span style={{ fontSize: '.72rem', opacity: 0.9 }}>({currentEventsCount})</span>
             </button>
 
-            {availableYears.map(yr => {
-              const isSelected = selectedYear === yr;
-              const countInYr = events.filter(e => (e.academicYear || (e.date && e.date.slice(0, 4))) === yr).length;
-              const isCurrent = academicYears.find(y => y.name === yr)?.isCurrent;
-
-              return (
-                <button
-                  key={yr}
-                  type="button"
-                  className={`btn btn-xs ${isSelected ? 'btn-p' : 'btn-g'}`}
-                  onClick={() => setSelectedYear(yr)}
-                  style={{
-                    fontWeight: 700,
-                    borderRadius: 20,
-                    padding: '4px 12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 5,
-                    border: isCurrent && !isSelected ? '1px dashed var(--pr)' : undefined
-                  }}
-                >
-                  <span>{yr}</span>
-                  {isCurrent && <span style={{ fontSize: '.68rem' }}>⭐</span>}
-                  <span style={{ fontSize: '.68rem', opacity: 0.85 }}>({countInYr})</span>
-                </button>
-              );
-            })}
+            <button
+              type="button"
+              className={`btn btn-xs ${yearFilterTab === 'past' ? 'btn-p' : 'btn-g'}`}
+              onClick={() => setYearFilterTab('past')}
+              style={{
+                fontWeight: 700,
+                borderRadius: 20,
+                padding: '5px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              <span>🕰️ السنة الماضية</span>
+              <span style={{ fontSize: '.72rem', opacity: 0.9 }}>({pastEventsCount})</span>
+            </button>
           </div>
 
           {/* Filters Row */}
@@ -695,7 +700,7 @@ export default function CenterEventsTab() {
               <option value="cancelled">ملغاة ❌</option>
             </select>
 
-            {(searchQuery || selectedCategory || selectedStatus || selectedYear) && (
+            {(searchQuery || selectedCategory || selectedStatus || yearFilterTab !== 'current') && (
               <button
                 type="button"
                 className="btn btn-sm btn-g"
@@ -703,7 +708,7 @@ export default function CenterEventsTab() {
                   setSearchQuery('');
                   setSelectedCategory('');
                   setSelectedStatus('');
-                  setSelectedYear('');
+                  setYearFilterTab('current');
                 }}
                 style={{ fontSize: '.78rem' }}
               >
@@ -1075,7 +1080,7 @@ export default function CenterEventsTab() {
                     onChange={e => setForm(f => ({ ...f, academicYear: e.target.value }))}
                     style={{ background: 'var(--bg-input)', color: 'var(--text-main)' }}
                   >
-                    {availableYears.map(yr => (
+                    {formYearOptions.map(yr => (
                       <option key={yr} value={yr}>{yr}</option>
                     ))}
                   </select>

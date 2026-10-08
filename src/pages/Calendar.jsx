@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { lsGet, lsSet, lsAdd, lsUpd, lsDel } from '../hooks/useStorage';
 import { todayStr, uid, daysUntilDate, nextAnnualOccurrenceDate, nowTimeStr, parseDob } from '../utils/dateHelpers';
+import { getAcademicYearFromDate } from '../utils/academicYears';
 import { SPECIALIST_ROLES } from '../utils/constants';
 import {
   INTERNATIONAL_DAYS,
@@ -545,14 +546,16 @@ export default function Calendar() {
 
   function openAdoptInternationalDayModal(iday, targetDate) {
     if (!iday) return;
+    const dateToUse = targetDate || todayStr();
+    const computedAy = getAcademicYearFromDate(dateToUse);
     const evtYear = targetDate ? targetDate.slice(0, 4) : String(new Date().getFullYear());
     setAdoptForm({
       name: `فعالية بمناسبة ${iday.name}`,
-      date: targetDate || todayStr(),
+      date: dateToUse,
       time: '',
       location: iday.suggestedLocation || 'مقر المركز',
       locationType: 'internal',
-      academicYear: evtYear,
+      academicYear: computedAy || evtYear,
       targetAudience: iday.targetAudience || 'all',
       supervisorEmpIds: [],
       objectives: iday.objectives || '',
@@ -583,6 +586,7 @@ export default function Calendar() {
       ? 'education'
       : 'awareness';
 
+    const computedAy = getAcademicYearFromDate(adoptForm.date) || String(new Date().getFullYear());
     const newEvt = {
       id: `evt_${Date.now()}_${uid()}`,
       name: adoptForm.name.trim(),
@@ -591,7 +595,7 @@ export default function Calendar() {
       time: adoptForm.time?.trim() || '',
       location: adoptForm.location?.trim() || 'مقر المركز',
       locationType: adoptForm.locationType || 'internal',
-      academicYear: adoptForm.academicYear || String(new Date().getFullYear()),
+      academicYear: adoptForm.academicYear || computedAy,
       targetAudience: adoptForm.targetAudience || 'all',
       parentsInvited: true,
       objectives: adoptForm.objectives?.trim() || '',
