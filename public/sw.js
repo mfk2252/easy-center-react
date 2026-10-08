@@ -16,7 +16,8 @@ const APP_SHELL = [
 ];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  // لا skipWaiting هنا: النسخة الجديدة تنتظر حتى يضغط المستخدم "تحديث" (تجنباً لفقدان ما يكتبه).
+  // التفعيل يتم عبر رسالة SKIP_WAITING في الأسفل.
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL).catch(() => {}))
   );
