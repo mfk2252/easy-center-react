@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1a56db"/>
     <meta name="apple-mobile-web-app-capable" content="yes"/>
     <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
@@ -19,37 +19,47 @@
     <link id="app-favicon" rel="icon" type="image/png" href="/pwa-192x192.png"/>
     <title>Easy Center - نظام إدارة مركز التأهيل والتربية الخاصة</title>
     <script>
-      // تسجيل Service Worker مع تحديث تلقائي فوري
+      // تسجيل Service Worker بدون إعادة تحميل تلقائية (كانت تمسح ما يكتبه المستخدم).
+      // عند ظهور نسخة جديدة نُبلغ التطبيق ليعرض شريط "تحديث متاح"،
+      // ولا يُعاد تحميل الصفحة إلا حين يضغط المستخدم بنفسه.
       if ('serviceWorker' in navigator) {
+        window.__scsApplyingUpdate = false;
+        window.__scsSwWaiting = null;
+
+        const announceUpdate = (worker) => {
+          window.__scsSwWaiting = worker;
+          window.dispatchEvent(new CustomEvent('scs_sw_update'));
+        };
+
         window.addEventListener('load', async () => {
           try {
             const reg = await navigator.serviceWorker.register('/sw.js');
-            
-            // تحديث فوري عند وجود نسخة جديدة
+
+            // نسخة جديدة كانت بانتظار التفعيل من زيارة سابقة
+            if (reg.waiting && navigator.serviceWorker.controller) announceUpdate(reg.waiting);
+
             reg.addEventListener('updatefound', () => {
-              const newWorker = reg.installing;
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  newWorker.postMessage({ type: 'SKIP_WAITING' });
-                  window.location.reload();
-                }
+              const nw = reg.installing;
+              if (!nw) return;
+              nw.addEventListener('statechange', () => {
+                if (nw.state === 'installed' && navigator.serviceWorker.controller) announceUpdate(nw);
               });
             });
 
-            // تحقق من التحديثات عند كل تحميل
-            reg.update();
-          } catch(e) {
+            // فحص التحديثات عند الفتح، ثم كل 30 دقيقة للجلسات الطويلة
+            reg.update().catch(() => {});
+            setInterval(() => reg.update().catch(() => {}), 30 * 60 * 1000);
+          } catch (e) {
             console.warn('SW registration failed:', e);
           }
         });
 
-        // إعادة التحميل عند تغيير الـ SW
+        // نُعيد التحميل فقط عندما طلب المستخدم التحديث صراحةً
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-          if (!refreshing) {
-            refreshing = true;
-            window.location.reload();
-          }
+          if (refreshing || !window.__scsApplyingUpdate) return;
+          refreshing = true;
+          window.location.reload();
         });
       }
     </script>

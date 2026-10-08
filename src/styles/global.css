@@ -404,3 +404,14 @@ body.dark .sw-sec{background:var(--bg-input);border-color:var(--border-color);}
   .page { padding: 0; }
   .wg { box-shadow: none; border: 1px solid #ddd; }
 }
+
+/* ===== الشاشات الكبيرة (1440px فما فوق): تكبير تدريجي للخط + توسيع عرض المحتوى =====
+   حجم الخط الذي يختاره المستخدم من الإعدادات (--fs) يبقى محترماً: نضربه في معامل --ui-scale. */
+:root { --ui-scale: 1; --page-max: 1280px; }
+@media (min-width: 1440px) { :root { --ui-scale: 1.08; --page-max: 1440px; } }
+@media (min-width: 1700px) { :root { --ui-scale: 1.18; --page-max: 1640px; } }
+@media (min-width: 2100px) { :root { --ui-scale: 1.35; --page-max: 1900px; } }
+@media (min-width: 2600px) { :root { --ui-scale: 1.6;  --page-max: 2300px; } }
+html { font-size: calc(var(--fs, 16px) * var(--ui-scale)); }
+body { font-size: calc(var(--fs, 16px) * var(--ui-scale)); }
+
