@@ -9,6 +9,7 @@ import InstallPWA from './components/ui/InstallPWA';
 import SubscriptionScreen from './components/layout/SubscriptionScreen';
 import TrialBanner from './components/layout/TrialBanner';
 import OfflineBanner from './components/layout/OfflineBanner';
+import UpdateBanner from './components/layout/UpdateBanner';
 
 export default function App() {
   const { screen, center, subscriptionStatus } = useApp();
@@ -39,6 +40,7 @@ export default function App() {
   return (
     <>
       <OfflineBanner/>
+      <UpdateBanner/>
       <TrialBanner/>
 
       <div className="print-brand" aria-hidden="true">
