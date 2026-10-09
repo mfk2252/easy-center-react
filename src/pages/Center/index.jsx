@@ -4,7 +4,7 @@ import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { todayStr, uid } from '../../utils/dateHelpers';
 import { printItem } from '../../utils/printUtils';
 import EmptyState from '../../components/ui/EmptyState';
-import { handleFileInputChange, uploadErrorMessage } from '../../utils/fileUpload';
+import { uploadErrorMessage, handleFileInputChange } from '../../utils/fileUpload';
 import AttachmentField from '../../components/ui/AttachmentField';
 import { CUSTODY_CATEGORIES } from '../../utils/custodyCategories';
 import { getCurrencySymbol } from '../../utils/constants';

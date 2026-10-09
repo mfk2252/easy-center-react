@@ -245,7 +245,6 @@ export async function syncFromFirebase(centerId, keys, force = false) {
 
   // إن فشل جزء، لا نُفعّل فترة الانتظار حتى تُعاد المحاولة قريباً
   if (!allOk) return;
-
   localStorage.setItem(lastSyncKey, String(now));
 }
 

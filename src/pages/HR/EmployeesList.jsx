@@ -96,6 +96,7 @@ export default function EmployeesList() {
     e.target.value = '';
     for (const f of files) {
       try {
+        // نمرّر الملف عبر نفس مسار التحقق والضغط
         const res = await handleFileInputChange({ target: { files: [f], value: '' } }, { allowPdf: true, allowDoc: true });
         if (res) setForm(fm => ({ ...fm, attachments: [...(fm.attachments || []), { id: uid(), name: res.name, data: res.data, label: 'مرفق' }] }));
       } catch (ex) { toast(`⚠️ ${f.name}: ` + uploadErrorMessage(ex), 'er'); }
