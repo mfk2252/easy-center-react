@@ -10,8 +10,8 @@
     "properties": {
       "program": {
         "type": "string",
-        "enum": ["lovaas", "portage", "ablls", "pep3", "help", "custom"],
-        "description": "رمز البرنامج: lovaas | portage | ablls | pep3 | help | custom"
+        "enum": ["teacch", "custom"],
+        "description": "رمز البرنامج: teacch | custom"
       },
       "domain": {
         "type": "string",
@@ -32,7 +32,7 @@
       "code": {
         "type": "string",
         "description": "الكود المرجعي في الدليل الأصلي",
-        "examples": ["ABLLS:C14", "Portage:Cog-03", "Lovaas:L2-04", "PEP3:B12"]
+        "examples": ["LNG-01", "MOT-07", "SOC-03"]
       },
       "text": {
         "type": "string",
@@ -58,7 +58,7 @@
   "_csvColumns": {
     "description": "ترتيب أعمدة ملف CSV عند الاستيراد عبر BulkImporter",
     "order": ["program", "domain", "code", "text", "mastery", "tools", "ageRange"],
-    "example": "ablls,receptive_language,ABLLS:C14,يتبع تعليمة ثنائية الخطوات,4/5 عشوائي,أشياء يومية,2-3 سنوات"
+    "example": "custom,receptive_language,LNG-01,يتبع تعليمة ثنائية الخطوات,4/5 عشوائي,أشياء يومية,2-3 سنوات"
   },
   "_notes": [
     "السطر الأول في CSV يُتجاهل تلقائياً إن كان رأساً (header)",
