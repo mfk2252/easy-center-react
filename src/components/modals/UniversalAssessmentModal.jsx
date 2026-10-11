@@ -112,7 +112,7 @@ export default function UniversalAssessmentModal({
   const scaleTitle = config.title || config.name || 'المقياس التشخيصي المعتمد';
   const scaleTitleEn = config.titleEn || config.nameEn || '';
   const scaleIcon = config.icon || '📘';
-  const scaleCategoryName = config.categoryName || config.category || 'تشخيص مقنن';
+  const scaleCategoryName = config.categoryName || config.category || 'تقييم';
   
   // Theme resolution
   const activeThemeKey = overrideThemeColor || config.themeColor || 'amber';
