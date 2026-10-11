@@ -390,7 +390,7 @@ export default function ProgramDetailModal({
                         {/* Baseline & Strategies Section */}
                         {g.baseline && (
                           <div style={{ fontSize: '.78rem', background: 'var(--g0)', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-color)', color: 'var(--text-sub)' }}>
-                            <strong style={{ color: 'var(--pr)' }}>📌 الخط القاعدي المقنن (PLEP):</strong> {g.baseline}
+                            <strong style={{ color: 'var(--pr)' }}>📌 الخط القاعدي (PLEP):</strong> {g.baseline}
                           </div>
                         )}
 

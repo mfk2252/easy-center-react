@@ -175,7 +175,7 @@ export default function BulkImporter({ onClose, onDone }) {
                 <strong>مثال CSV:</strong><br />
                 <code style={{ direction: 'ltr', display: 'block', marginTop: 4 }}>
                   program,domain,code,text,mastery,tools,ageRange<br />
-                  ablls,receptive_language,ABLLS:C14,يتبع تعليمة ثنائية الخطوات,4/5 عشوائي,أشياء يومية,2-3 سنوات
+                  custom,receptive_language,LNG-01,يتبع تعليمة ثنائية الخطوات,4/5 عشوائي,أشياء يومية,2-3 سنوات
                 </code>
               </div>
             </div>

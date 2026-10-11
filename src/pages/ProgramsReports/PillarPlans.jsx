@@ -1123,7 +1123,7 @@ export default function PillarPlans({ onDataChange }) {
           <div className="card" style={{ marginBottom: 16, background: 'var(--pr-l)', border: '1px solid var(--pr)' }}>
             <h3 style={{ margin: '0 0 6px 0', color: 'var(--pr)' }}>🎯 بنك الأهداف التخصصي للمركز</h3>
             <p style={{ fontSize: '0.86rem', color: 'var(--text-main)', margin: 0 }}>
-              يحتوي على مئات الأهداف الإجرائية المقننة والموزعة حسب البرامج العالمية (لوفاس، بورتاج، إيبلز، بيب-3، هيلب) والمجالات النمائية.
+              يحتوي على مئات الأهداف الإجرائية الموزعة حسب المجالات النمائية.
               يمكنك ربطها مباشرة بأي خطة فردية (IEP)، أو تخصيص بنك الأهداف الخاص بمركزك.
             </p>
           </div>

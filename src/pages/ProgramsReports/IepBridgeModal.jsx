@@ -25,7 +25,7 @@ export default function IepBridgeModal({
       return {
         stuId: assessment.stuId || assessment.studentId || student?.studentId || '',
         studentName: assessment.studentName || student?.studentName || '',
-        measureId: assessment.measureId || assessment.scaleId || scaleType || 'cars',
+        measureId: assessment.measureId || assessment.scaleId || scaleType || '',
         measureName: assessment.measureName || assessment.scaleName || 'التقييم التشخيصي',
         date: assessment.date || todayStr(),
         score: assessment.score || 0,
@@ -38,7 +38,7 @@ export default function IepBridgeModal({
   const activeRecommendedGoals = useMemo(() => {
     if (recommendedGoals && recommendedGoals.length > 0) return recommendedGoals;
 
-    const measureId = activeAssessmentData?.measureId || scaleType || 'cars';
+    const measureId = activeAssessmentData?.measureId || scaleType || '';
     const responses = activeAssessmentData?.results || activeAssessmentData?.scores || activeAssessmentData?.responses || {};
 
     return extractRecommendedGoals(measureId, responses, scaleItems, activeAssessmentData);
@@ -181,7 +181,7 @@ export default function IepBridgeModal({
       activities: g.selectedActivities || [],
       materials: g.selectedMaterials || [],
       status: 'قيد التدريب',
-      sourceAssessment: assessmentData?.measureName || 'تقييم تشخيصي مقنن',
+      sourceAssessment: assessmentData?.measureName || 'تقييم',
       sourceMeasureId: assessmentData?.measureId || '',
       createdAt: todayStr(),
       sessions: [], // Ready for session tracking
@@ -233,7 +233,7 @@ export default function IepBridgeModal({
       specialistName: assessmentData?.specialistName || '',
       goals,
       activities: strategiesText,
-      notes: `خطة تربوية فردية مشتقة إكلينيكياً من تقييم (${assessmentData?.measureName || 'المقياس المقنن'}) عبر محرك الربط والاعتماد السيكومتري (Assessment ➔ IEP Bridge).`,
+      notes: `خطة تربوية فردية مشتقة إكلينيكياً من تقييم (${assessmentData?.measureName || 'المقياس'}) عبر محرك الربط والاعتماد السيكومتري (Assessment ➔ IEP Bridge).`,
       status: 'active',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -505,7 +505,7 @@ export default function IepBridgeModal({
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, marginBottom: 12 }}>
                             {/* Mastery Criteria */}
                             <div>
-                              <label style={{ fontSize: '.76rem', fontWeight: 700, color: 'var(--text-sub)', display: 'block', marginBottom: 2 }}>معيار الإتقان المقنن:</label>
+                              <label style={{ fontSize: '.76rem', fontWeight: 700, color: 'var(--text-sub)', display: 'block', marginBottom: 2 }}>معيار الإتقان:</label>
                               <select
                                 value={g.mastery}
                                 onChange={e => updateGoalField(g.id, 'mastery', e.target.value)}

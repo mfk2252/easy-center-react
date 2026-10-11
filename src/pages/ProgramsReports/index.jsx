@@ -18,13 +18,13 @@ const SECTIONS = [
   {
     id: 'assessment',
     title: 'مركز التقييم والتشخيص',
-    subtitle: 'المقاييس المقننة، التقييم المبدئي الشامل، وتحديد مستوى الأداء الحالي ونقاط القوة والاحتياج لكل طالب',
+    subtitle: 'المقاييس، التقييم المبدئي الشامل، وتحديد مستوى الأداء الحالي ونقاط القوة والاحتياج لكل طالب',
     icon: '🎯',
     tag: 'تشخيص ومقاييس',
     color: 'var(--pr)',
     accentBg: 'var(--pr-l)',
     badgeClass: 'b-bl',
-    features: ['التقييم والتشخيص المبدئي', 'مكتبة المقاييس المقننة', 'سجل النتائج ونسب الإتقان', 'إرسال الملخص لواتساب'],
+    features: ['التقييم والتشخيص المبدئي', 'مكتبة المقاييس', 'سجل النتائج ونسب الإتقان', 'إرسال الملخص لواتساب'],
   },
   {
     id: 'plans',
@@ -256,7 +256,7 @@ export default function ProgramsReportsHub() {
         <div className="unified-stat-box" style={{ cursor: 'pointer' }} onClick={() => navigateTo('assessment')}>
           <div className="stat-label">🎯 تقييمات وتشخيصات</div>
           <div className="stat-val" style={{ color: 'var(--pr)' }}>{stats.evalCount}</div>
-          <div className="stat-sub">سجل تشخيص واختبار مقنن</div>
+          <div className="stat-sub">سجل التقييمات</div>
         </div>
         <div className="unified-stat-box" style={{ cursor: 'pointer' }} onClick={() => navigateTo('plans')}>
           <div className="stat-label">📋 خطط فردية وبرامج</div>

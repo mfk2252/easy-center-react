@@ -3,96 +3,9 @@ import { useApp } from '../../context/AppContext';
 import { lsGet, lsAdd, lsUpd, lsDel } from '../../hooks/useStorage';
 import { uid } from '../../utils/dateHelpers';
 import { PROGRAMS, DOMAINS, SEED_GOALS, programLabel, programColor, domainLabel, domainsForProgram } from '../../utils/goalsBank';
-import { ALL_PORTAGE_GOALS } from '../../data/portageGoals';
-import { ALL_ABLLS_GOALS } from '../../data/abllsGoals';
-import { ALL_LOVAAS_GOALS } from '../../data/lovaasGoals';
-import { ALL_VBMAPP_GOALS } from '../../data/vbmappGoals';
-import { ALL_HELP_GOALS, HELP_DOMAINS, HELP_AGE_MATRIX, HELP_SCORING_KEYS } from '../../data/helpGoals';
 import { ALL_TEACCH_GOALS, TEACCH_AGE_MATRIX, TEACCH_SCORING_KEYS, TEACCH_STRUCTURE_PILLARS } from '../../data/teacchGoals';
-import { ALL_PEP3_GOALS, PEP3_AGE_MATRIX, PEP3_SCORING_KEYS, PEP3_DEVELOPMENTAL_COMPOSITES } from '../../data/pep3Goals';
 
 // Pre-compute static goals ONCE at module load to avoid 1500+ object re-allocations on every render
-const PORTAGE_MASTER_GOALS = (ALL_PORTAGE_GOALS || []).map((g) => {
-  const normalizedDomain = (g.domain === 'gross_motor' || g.domain === 'fine_motor' || g.domain === 'motor') ? 'motor' : g.domain;
-  const ageGroup = g.ageGroup || (g.ageRange ? g.ageRange.replace(' سنة', '').replace(' سنوات', '').trim() : '0-1');
-  const ageRange = g.ageRange || (g.ageGroup ? `${g.ageGroup} سنوات` : '');
-
-  return {
-    id: g.id,
-    program: 'portage',
-    domain: normalizedDomain,
-    subDomain: g.domain,
-    text: g.text || g.title,
-    goalCode: g.goalCode || `P-${normalizedDomain.slice(0, 3).toUpperCase()}-${g.goalNumber}`,
-    ageGroup: ageGroup,
-    ageRange: ageRange,
-    mastery: '3 محاولات متتالية',
-    isSeed: true,
-  };
-});
-
-const ABLLS_MASTER_GOALS = (ALL_ABLLS_GOALS || []).map((g) => ({
-  id: g.id,
-  program: 'ablls',
-  domain: g.domain,
-  text: g.text || g.title,
-  goalCode: `ABLLS:${g.goalCode}`,
-  ageGroup: 'مستمر',
-  ageRange: 'تقييم شامل',
-  scoreScale: g.scoreScale || '0-2',
-  mastery: g.mastery || 'إتقان تام للاستجابة',
-  tools: 'بيئة طبيعية وأدوات تدريب',
-  isSeed: true,
-}));
-
-const LOVAAS_MASTER_GOALS = (ALL_LOVAAS_GOALS || []).map((g) => ({
-  id: g.id,
-  program: 'lovaas',
-  domain: g.domain,
-  text: g.text || g.title,
-  goalCode: `LOV:${g.goalCode}`,
-  ageGroup: 'مستمر',
-  ageRange: 'ABA / تدخل مبكر',
-  scoreScale: g.scoreScale || 'ضعيف / متوسط / جيد',
-  mastery: g.mastery || 'استجابة صحيحة ومستقلة 80% أو أكثر',
-  tools: 'أدوات تحليل السلوك التطبيقي والبيئة الطبيعية',
-  isSeed: true,
-}));
-
-const VBMAPP_MASTER_GOALS = (ALL_VBMAPP_GOALS || []).map((g) => ({
-  id: g.id,
-  program: 'vbmapp',
-  domain: g.domain,
-  level: g.level,
-  milestoneCode: g.milestoneCode,
-  subGoals: g.subGoals,
-  text: g.text || g.title,
-  goalCode: g.goalCode || `VBM:${g.milestoneCode || g.id}`,
-  ageGroup: g.ageGroup || (g.level === 1 ? '0-18 شهر' : g.level === 2 ? '18-30 شهر' : '30-48 شهر'),
-  ageRange: g.ageRange || `المستوى ${g.level} (${g.level === 1 ? '0-18 شهر' : g.level === 2 ? '18-30 شهر' : '30-48 شهر'})`,
-  scoreScale: g.scoreScale || '0 - 0.5 - 1',
-  mastery: g.mastery || 'إتقان تام للاستجابة المعلمية المستقلة',
-  tools: g.tools || 'بيئة التقييم وأدوات السلوك اللفظي المعتمدة',
-  isSeed: true,
-}));
-
-const HELP_MASTER_GOALS = (ALL_HELP_GOALS || []).map((g) => ({
-  id: g.id,
-  program: 'help',
-  domain: g.domain,
-  subDomain: g.subDomain,
-  stage: g.stage,
-  text: g.text,
-  goalCode: g.goalCode || g.code,
-  ageGroup: g.ageGroup,
-  ageRange: g.ageRange,
-  ageMonths: g.ageMonths,
-  scoreScale: g.scoreScale || '0: غير مناسب | ×: غير موجود | 1: محاولة مبدئية | 2: جزئي | 3: بنجاح تام',
-  mastery: g.mastery,
-  tools: g.tools,
-  isSeed: true,
-}));
-
 const TEACCH_MASTER_GOALS = (ALL_TEACCH_GOALS || []).map((g) => ({
   id: g.id,
   program: 'teacch',
@@ -107,30 +20,10 @@ const TEACCH_MASTER_GOALS = (ALL_TEACCH_GOALS || []).map((g) => ({
   isSeed: true,
 }));
 
-const PEP3_MASTER_GOALS = (ALL_PEP3_GOALS || []).map((g) => ({
-  id: g.id,
-  program: 'pep3',
-  domain: g.domain,
-  text: g.text,
-  goalCode: g.goalCode || `PEP3:${g.id}`,
-  ageGroup: g.ageGroup,
-  ageRange: g.ageRange,
-  scoreScale: g.scoreScale || 'P: منجز | E: بزوغ | F: إخفاق',
-  mastery: g.mastery,
-  tools: g.tools,
-  isSeed: true,
-}));
-
-const SEEDS_MASTER_GOALS = SEED_GOALS.filter(g => g.program !== 'pep3').map((g, i) => ({ ...g, id: `seed-${i}`, isSeed: true }));
+const SEEDS_MASTER_GOALS = SEED_GOALS.map((g, i) => ({ ...g, id: `seed-${i}`, isSeed: true }));
 
 const STATIC_MASTER_GOALS = [
-  ...PORTAGE_MASTER_GOALS,
-  ...ABLLS_MASTER_GOALS,
-  ...LOVAAS_MASTER_GOALS,
-  ...VBMAPP_MASTER_GOALS,
-  ...HELP_MASTER_GOALS,
   ...TEACCH_MASTER_GOALS,
-  ...PEP3_MASTER_GOALS,
   ...SEEDS_MASTER_GOALS,
 ];
 
@@ -144,10 +37,10 @@ const INITIAL_RENDER_LIMIT = 40;
 export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelected = [], onConfirm, onSelect, onClose }) {
   const [checked, setChecked] = useState(() => new Set((alreadySelected || []).map(g => `${g.program}::${g.domain}::${g.text}`)));
   const [customText, setCustomText] = useState('');
-  const [customProgram, setCustomProgram] = useState(program !== 'all' ? program : 'portage');
+  const [customProgram, setCustomProgram] = useState(program !== 'all' ? program : 'custom');
   const [goalCode, setGoalCode] = useState('');
   const [customDomain, setCustomDomain] = useState(() => {
-    const avail = domainsForProgram(program !== 'all' ? program : 'portage');
+    const avail = domainsForProgram(program !== 'all' ? program : 'custom');
     return (domain !== 'all' && avail.some(d => d.key === domain)) ? domain : (avail[0]?.key || DOMAINS[0].key);
   });
   const [saveToBank, setSaveToBank] = useState(true);
@@ -352,66 +245,7 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
             </div>
           </div>
 
-          {/* HELP Program Developmental Matrix and Scoring Guide Banner */}
-          {programFilter === 'help' && (
-            <div style={{ background: '#fdf2f8', border: '1px solid #fbcfe8', borderRadius: 12, padding: '12px 16px', marginBottom: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: '1.2rem' }}>🌺</span>
-                  <div>
-                    <strong style={{ color: '#be185d', fontSize: '.92rem' }}>مقياس هيلب النمائي والتطوري (Hawaii Early Learning Profile)</strong>
-                    <div style={{ fontSize: '.75rem', color: '#9d174d' }}>مصفوفة المهارات والمجالات من سن الولادة حتى 6 سنوات (تدخل مبكر + روضة)</div>
-                  </div>
-                </div>
-                <span style={{ fontSize: '.75rem', background: '#f472b6', color: '#fff', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>
-                  برنامج HELP المقنن
-                </span>
-              </div>
-
-              {/* Age Bands Matrix */}
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-                {HELP_AGE_MATRIX.map(mat => (
-                  <button
-                    key={mat.key}
-                    type="button"
-                    onClick={() => {
-                      if (mat.key.includes('0-6m') || mat.key.includes('6-12m')) setAgeFilter('0-1');
-                      else if (mat.key.includes('1-2y')) setAgeFilter('1-2');
-                      else if (mat.key.includes('2-3y')) setAgeFilter('2-3');
-                      else if (mat.key.includes('3-4y')) setAgeFilter('3-4');
-                      else if (mat.key.includes('4-5y')) setAgeFilter('4-5');
-                      else if (mat.key.includes('5-6y')) setAgeFilter('5-6');
-                      setDisplayLimit(INITIAL_RENDER_LIMIT);
-                    }}
-                    style={{
-                      fontSize: '.74rem',
-                      padding: '3px 8px',
-                      borderRadius: 6,
-                      border: '1px solid #f472b6',
-                      background: '#fff',
-                      color: '#9d174d',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                    }}
-                  >
-                    👶 {mat.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* HELP Scoring Legend */}
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', background: '#fff', padding: '6px 10px', borderRadius: 8, border: '1px solid #fce7f3' }}>
-                <span style={{ fontSize: '.72rem', fontWeight: 800, color: '#831843' }}>مفاتيح التقييم الخماسية:</span>
-                {HELP_SCORING_KEYS.map(sk => (
-                  <span key={sk.symbol} style={{ fontSize: '.7rem', color: 'var(--text-sub)' }}>
-                    <strong style={{ color: sk.color, fontWeight: 900 }}>{sk.symbol}</strong> {sk.label}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* TEACCH Program Developmental Matrix and Scoring Guide Banner */}
+                    {/* TEACCH Program Developmental Matrix and Scoring Guide Banner */}
           {programFilter === 'teacch' && (
             <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 12, padding: '12px 16px', marginBottom: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
@@ -478,74 +312,7 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
             </div>
           )}
 
-          {/* PEP-3 Program Developmental Matrix and Scoring Guide Banner */}
-          {programFilter === 'pep3' && (
-            <div style={{ background: '#ecfeff', border: '1px solid #cffafe', borderRadius: 12, padding: '12px 16px', marginBottom: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: '1.2rem' }}>📊</span>
-                  <div>
-                    <strong style={{ color: '#0891b2', fontSize: '.92rem' }}>ملف التقييم النفسي التربوي - الإصدار الثالث (PEP-3)</strong>
-                    <div style={{ fontSize: '.75rem', color: '#0e7490' }}>أداة التقييم والتعليم الفردي المقننة للأطفال ذوي التوحد واضطرابات التواصل النمائية (6 أشهر - 7.5 سنوات)</div>
-                  </div>
-                </div>
-                <span style={{ fontSize: '.75rem', background: '#0891b2', color: '#fff', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>
-                  دليل تقييم PEP-3 المعتمد
-                </span>
-              </div>
-
-              {/* Age Bands Matrix */}
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-                {PEP3_AGE_MATRIX.map(mat => (
-                  <button
-                    key={mat.key}
-                    type="button"
-                    onClick={() => {
-                      if (mat.range) setAgeFilter(mat.range);
-                      setDisplayLimit(INITIAL_RENDER_LIMIT);
-                    }}
-                    style={{
-                      fontSize: '.74rem',
-                      padding: '4px 8px',
-                      borderRadius: 6,
-                      border: '1px solid #0891b2',
-                      background: '#fff',
-                      color: '#0e7490',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                    }}
-                    title={mat.desc}
-                  >
-                    👶 {mat.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* PEP-3 Scoring Legend */}
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', background: '#fff', padding: '6px 10px', borderRadius: 8, border: '1px solid #ecfeff' }}>
-                <span style={{ fontSize: '.72rem', fontWeight: 800, color: '#0891b2' }}>مفاتيح تقييم بيب-3 الأساسية:</span>
-                {PEP3_SCORING_KEYS.map(sk => (
-                  <span key={sk.symbol} style={{ fontSize: '.7rem', color: 'var(--text-sub)' }}>
-                    <strong style={{ color: sk.color || '#0891b2', fontWeight: 900 }}>{sk.symbol}</strong> {sk.label}
-                  </span>
-                ))}
-              </div>
-
-              {/* Developmental Composites */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8, marginTop: 10 }}>
-                {PEP3_DEVELOPMENTAL_COMPOSITES.map((p, i) => (
-                  <div key={i} style={{ background: '#fff', padding: 8, borderRadius: 8, border: '1px solid #ecfeff' }}>
-                    <div style={{ fontSize: '.75rem', fontWeight: 800, color: '#0891b2', display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <span>🎯</span> <span>{p.title}</span>
-                    </div>
-                    <div style={{ fontSize: '.68rem', color: 'var(--text-sub)', marginTop: 2, lineHeight: 1.3 }}>{p.desc}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Quick Action Bar for Select All */}
+                    {/* Quick Action Bar for Select All */}
           {visibleGoals.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--g0)', borderRadius: 10, marginBottom: 14, border: '1px solid var(--border-color)', flexWrap: 'wrap', gap: 10 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontWeight: 700, fontSize: '.88rem', margin: 0, color: 'var(--text-main)' }}>
@@ -670,7 +437,7 @@ export function GoalPickerModal({ domain = 'all', program = 'all', alreadySelect
                   {domainsForProgram(customProgram).map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
                 </select>
               </div>
-              <div className="fl"><label>رمز الهدف</label><input value={goalCode} onChange={e => setGoalCode(e.target.value)} placeholder="مثل ABLLS: C14" /></div>
+              <div className="fl"><label>رمز الهدف</label><input value={goalCode} onChange={e => setGoalCode(e.target.value)} placeholder="مثل: LNG-01" /></div>
               <div className="fl"><label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <input type="checkbox" checked={saveToBank} onChange={e => setSaveToBank(e.target.checked)} />
                 احفظه في بنك المركز لإعادة استخدامه لاحقاً
@@ -699,7 +466,7 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
   const [filterProgram, setFilterProgram] = useState(defaultProgram || 'all');
   const [filterAge, setFilterAge] = useState('all');
   const [customBank, setCustomBank] = useState(lsGet('progGoalsBank') || []);
-  const [newProgram, setNewProgram] = useState(defaultProgram !== 'all' ? defaultProgram : 'portage');
+  const [newProgram, setNewProgram] = useState(defaultProgram !== 'all' ? defaultProgram : 'custom');
   const availableDomains = domainsForProgram(newProgram);
   const [newDomain, setNewDomain] = useState(availableDomains[0]?.key || DOMAINS[0].key);
   const [newText, setNewText] = useState('');
@@ -721,8 +488,8 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
 
   function resetForm() {
     setEditingId(null);
-    setNewProgram('portage');
-    setNewDomain(domainsForProgram('portage')[0]?.key || DOMAINS[0].key);
+    setNewProgram('custom');
+    setNewDomain(domainsForProgram('custom')[0]?.key || DOMAINS[0].key);
     setNewText('');
     setNewCode('');
   }
@@ -955,66 +722,7 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
             </div>
           </div>
 
-          {/* HELP Program Developmental Matrix and Scoring Guide Banner in Manager */}
-          {filterProgram === 'help' && (
-            <div style={{ background: '#fdf2f8', border: '1px solid #fbcfe8', borderRadius: 12, padding: '12px 16px', marginBottom: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: '1.2rem' }}>🌺</span>
-                  <div>
-                    <strong style={{ color: '#be185d', fontSize: '.92rem' }}>مقياس هيلب النمائي والتطوري (Hawaii Early Learning Profile)</strong>
-                    <div style={{ fontSize: '.75rem', color: '#9d174d' }}>مصفوفة المهارات والمجالات من سن الولادة حتى 6 سنوات (تدخل مبكر + روضة)</div>
-                  </div>
-                </div>
-                <span style={{ fontSize: '.75rem', background: '#f472b6', color: '#fff', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>
-                  برنامج HELP المقنن
-                </span>
-              </div>
-
-              {/* Age Bands Matrix */}
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-                {HELP_AGE_MATRIX.map(mat => (
-                  <button
-                    key={mat.key}
-                    type="button"
-                    onClick={() => {
-                      if (mat.key.includes('0-6m') || mat.key.includes('6-12m')) setFilterAge('0-1');
-                      else if (mat.key.includes('1-2y')) setFilterAge('1-2');
-                      else if (mat.key.includes('2-3y')) setFilterAge('2-3');
-                      else if (mat.key.includes('3-4y')) setFilterAge('3-4');
-                      else if (mat.key.includes('4-5y')) setFilterAge('4-5');
-                      else if (mat.key.includes('5-6y')) setFilterAge('5-6');
-                      setDisplayLimit(INITIAL_RENDER_LIMIT);
-                    }}
-                    style={{
-                      fontSize: '.74rem',
-                      padding: '3px 8px',
-                      borderRadius: 6,
-                      border: '1px solid #f472b6',
-                      background: '#fff',
-                      color: '#9d174d',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                    }}
-                  >
-                    👶 {mat.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* HELP Scoring Legend */}
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', background: '#fff', padding: '6px 10px', borderRadius: 8, border: '1px solid #fce7f3' }}>
-                <span style={{ fontSize: '.72rem', fontWeight: 800, color: '#831843' }}>مفاتيح التقييم الخماسية:</span>
-                {HELP_SCORING_KEYS.map(sk => (
-                  <span key={sk.symbol} style={{ fontSize: '.7rem', color: 'var(--text-sub)' }}>
-                    <strong style={{ color: sk.color, fontWeight: 900 }}>{sk.symbol}</strong> {sk.label}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* TEACCH Program Developmental Matrix and Scoring Guide Banner in Manager */}
+                    {/* TEACCH Program Developmental Matrix and Scoring Guide Banner in Manager */}
           {filterProgram === 'teacch' && (
             <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 12, padding: '12px 16px', marginBottom: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
@@ -1081,74 +789,7 @@ export function GoalsBankManagerModal({ defaultProgram = 'all', onClose }) {
             </div>
           )}
 
-          {/* PEP-3 Program Developmental Matrix and Scoring Guide Banner in Manager */}
-          {filterProgram === 'pep3' && (
-            <div style={{ background: '#ecfeff', border: '1px solid #cffafe', borderRadius: 12, padding: '12px 16px', marginBottom: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: '1.2rem' }}>📊</span>
-                  <div>
-                    <strong style={{ color: '#0891b2', fontSize: '.92rem' }}>ملف التقييم النفسي التربوي - الإصدار الثالث (PEP-3)</strong>
-                    <div style={{ fontSize: '.75rem', color: '#0e7490' }}>أداة التقييم والتعليم الفردي المقننة للأطفال ذوي التوحد واضطرابات التواصل النمائية (6 أشهر - 7.5 سنوات)</div>
-                  </div>
-                </div>
-                <span style={{ fontSize: '.75rem', background: '#0891b2', color: '#fff', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>
-                  دليل تقييم PEP-3 المعتمد
-                </span>
-              </div>
-
-              {/* Age Bands Matrix */}
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-                {PEP3_AGE_MATRIX.map(mat => (
-                  <button
-                    key={mat.key}
-                    type="button"
-                    onClick={() => {
-                      if (mat.range) setFilterAge(mat.range);
-                      setDisplayLimit(INITIAL_RENDER_LIMIT);
-                    }}
-                    style={{
-                      fontSize: '.74rem',
-                      padding: '4px 8px',
-                      borderRadius: 6,
-                      border: '1px solid #0891b2',
-                      background: '#fff',
-                      color: '#0e7490',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                    }}
-                    title={mat.desc}
-                  >
-                    👶 {mat.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* PEP-3 Scoring Legend */}
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', background: '#fff', padding: '6px 10px', borderRadius: 8, border: '1px solid #ecfeff' }}>
-                <span style={{ fontSize: '.72rem', fontWeight: 800, color: '#0891b2' }}>مفاتيح تقييم بيب-3 الأساسية:</span>
-                {PEP3_SCORING_KEYS.map(sk => (
-                  <span key={sk.symbol} style={{ fontSize: '.7rem', color: 'var(--text-sub)' }}>
-                    <strong style={{ color: sk.color || '#0891b2', fontWeight: 900 }}>{sk.symbol}</strong> {sk.label}
-                  </span>
-                ))}
-              </div>
-
-              {/* Developmental Composites */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8, marginTop: 10 }}>
-                {PEP3_DEVELOPMENTAL_COMPOSITES.map((p, i) => (
-                  <div key={i} style={{ background: '#fff', padding: 8, borderRadius: 8, border: '1px solid #ecfeff' }}>
-                    <div style={{ fontSize: '.75rem', fontWeight: 800, color: '#0891b2', display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <span>🎯</span> <span>{p.title}</span>
-                    </div>
-                    <div style={{ fontSize: '.68rem', color: 'var(--text-sub)', marginTop: 2, lineHeight: 1.3 }}>{p.desc}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {filtered.length === 0 ? (
+                    {filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--g4)' }}>لا توجد بنود مطابقة لهذا الفلتر</div>
           ) : (
             renderedFiltered.map(g => (

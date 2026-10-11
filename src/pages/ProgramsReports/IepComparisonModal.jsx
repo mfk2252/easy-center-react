@@ -277,7 +277,7 @@ export default function IepComparisonModal({ student, initialPlanAId, initialPla
           <div className="wg" style={{ margin: 0, padding: 16, borderRadius: 12, border: '1px solid var(--border-color)' }}>
             <div style={{ fontWeight: 800, fontSize: '0.95rem', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
               <Award style={{ width: 18, height: 18, color: 'var(--pur, #7c3aed)' }} />
-              <span>مؤشرات المقاييس والتقييمات المقننة المسجلة للطالب:</span>
+              <span>مؤشرات المقاييس والتقييمات المسجلة للطالب:</span>
             </div>
 
             {studentAssessments.length === 0 ? (
