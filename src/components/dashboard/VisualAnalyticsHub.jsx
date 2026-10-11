@@ -85,7 +85,7 @@ export default function VisualAnalyticsHub({ data, go }) {
       id: a.id,
       stuId: a.stuId || a.studentId,
       studentName: a.studentName || a.stuName || students.find(s => s.id === (a.stuId || a.studentId))?.name || 'طالب',
-      scaleName: a.scaleName || a.scaleId || 'مقياس مقنن',
+      scaleName: a.scaleName || a.scaleId || 'أداة تقييم',
       date: a.date || a.createdAt?.split('T')[0] || '',
       score: a.totalScore !== undefined ? `${a.totalScore} درجة` : (a.level || 'مكتمل'),
       type: 'scale'
@@ -361,7 +361,7 @@ export default function VisualAnalyticsHub({ data, go }) {
                   رادار المقاييس والتشخيص السيكومتري
                 </h3>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>
-                  المقاييس المقننة، التقييم المبدئي، واختبارات الأداء
+                  المقاييس، التقييم المبدئي، واختبارات الأداء
                 </div>
               </div>
             </div>
@@ -385,7 +385,7 @@ export default function VisualAnalyticsHub({ data, go }) {
                   type="button"
                   className="btn btn-g btn-xs"
                   onClick={() => openAssessmentCenter('autism')}
-                  title="مقاييس التوحد: CARS-2، GARS-3، PEP-3"
+                  title="قوائم الملاحظة والتقييم النمائي"
                   style={{ fontSize: '0.72rem' }}
                 >
                   🧩 التوحد
@@ -394,7 +394,7 @@ export default function VisualAnalyticsHub({ data, go }) {
                   type="button"
                   className="btn btn-g btn-xs"
                   onClick={() => openAssessmentCenter('speech')}
-                  title="مقاييس التخاطب واللغة: أبو حسيبة، اختبار النطق، PLS-5"
+                  title="مقاييس التخاطب واللغة: أبو حسيبة، اختبار النطق"
                   style={{ fontSize: '0.72rem' }}
                 >
                   🗣️ التخاطب
@@ -427,7 +427,7 @@ export default function VisualAnalyticsHub({ data, go }) {
               </div>
               {recentAssessmentsList.length === 0 ? (
                 <div style={{ padding: '8px 12px', background: 'var(--bg-input)', borderRadius: 'var(--r2)', border: '1px solid var(--border-color)', fontSize: '0.74rem', color: 'var(--text-sub)', textAlign: 'center' }}>
-                  لا توجد اختبارات مقننة مسجلة بعد.
+                  لا توجد تقييمات مسجلة بعد.
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

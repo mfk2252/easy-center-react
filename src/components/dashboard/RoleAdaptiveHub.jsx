@@ -278,7 +278,7 @@ export default function RoleAdaptiveHub({ currentUser, data, today, go }) {
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 }}
-                title="اضغط لفتح مركز التقييم والتشخيص والمقاييس المقننة"
+                title="اضغط لفتح مركز التقييم والتشخيص والمقاييس"
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)', fontWeight: 600 }}>🎯 المقاييس والتقييمات</span>
@@ -288,7 +288,7 @@ export default function RoleAdaptiveHub({ currentUser, data, today, go }) {
                   {studentAssessments.length + progEvaluations.length}
                 </div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--pur, #7c3aed)', fontWeight: 700, marginTop: 4 }}>
-                  اختبارات مقننة وتقييمات مسجلة
+                  تقييمات مسجلة
                 </div>
               </div>
             </div>
