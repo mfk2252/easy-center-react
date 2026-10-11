@@ -179,7 +179,7 @@ export const STRATEGY_DOMAINS = {
       { id: 'spatial_rotation_puzzles', title: 'ألغاز التدوير الفراغي وتطابق الأشكال', desc: 'مطابقة الأشكال المنعكسة والمدورة وتوقع الشكل المتمم.' },
       { id: 'visual_analogy_cards', title: 'بطاقات التماثل الشكلي (أ : ب كـ ج : د)', desc: 'اكتشاف العلاقة التحويلية بين زوج الأشكال الأول وتطبيقها على الزوج الثاني.' },
     ],
-    materials: ['مصفوفات رافن وليتر التدريبية الملونة', 'ألواح الأشكال الهندسية ومكعبات كوهز', 'بطاقات الدوران المكاني والمرايا البصرية', 'برمجيات التفكير المنطقي التفاعلية']
+    materials: ['مصفوفات تدريبية ملونة للتفكير البصري', 'ألواح الأشكال الهندسية ومكعبات كوهز', 'بطاقات الدوران المكاني والمرايا البصرية', 'برمجيات التفكير المنطقي التفاعلية']
   }
 };
 
@@ -191,7 +191,7 @@ export function getStrategiesForDomain(domainKey) {
   
   const key = String(domainKey).toLowerCase();
 
-  if (key.includes('cognit') || key.includes('reason') || key.includes('matrix') || key.includes('raven') || key.includes('leiter') || key.includes('wisc') || key.includes('binet') || key.includes('intel') || key.includes('معرفي') || key.includes('استدلال') || key.includes('ذكاء')) {
+  if (key.includes('cognit') || key.includes('reason') || key.includes('matrix') || key.includes('binet') || key.includes('intel') || key.includes('معرفي') || key.includes('استدلال') || key.includes('ذكاء')) {
     return STRATEGY_DOMAINS.cognitive_reasoning;
   }
   if (key.includes('auditory') || key.includes('comp') || key.includes('listen') || key.includes('سمع')) {
@@ -215,7 +215,7 @@ export function getStrategiesForDomain(domainKey) {
   if (key.includes('motor') || key.includes('balance') || key.includes('fine') || key.includes('حرك') || key.includes('توازن')) {
     return STRATEGY_DOMAINS.motor_coordination;
   }
-  if (key.includes('autism') || key.includes('cars') || key.includes('gars') || key.includes('pecs') || key.includes('توحد')) {
+  if (key.includes('autism') || key.includes('pecs') || key.includes('توحد')) {
     return STRATEGY_DOMAINS.autism_communication;
   }
 

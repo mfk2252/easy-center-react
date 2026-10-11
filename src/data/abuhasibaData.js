@@ -10,9 +10,9 @@ export const ABUHASIBA_COPYRIGHT_INFO = {
   authorAr: "د. أحمد أبو حسيبة (استشاري وأستاذ أمراض التخاطب واللغة)",
   authorEn: "Dr. Ahmed Abu-Hassiba (Ph.D., Speech-Language Consultant)",
   publisher: "دار النشر والتوزيع للأدوات الإكلينيكية / حقوق الطبع والنشر محفوظة للمؤلف",
-  adaptation: "النسخة العربية المقننة للأطفال والبيئة الإكلينيكية العربية لمقياس لغة الأطفال (PLS)",
+  adaptation: "النسخة العربية للأطفال والبيئة الإكلينيكية العربية لمقياس لغة الأطفال (PLS)",
   ageRange: "من شهرين وحتى 7 سنوات و5 أشهر (2 - 89 شهراً)",
-  normSamples: "معايير سيكومترية مقننة (درجات معيارية، رتب مئينية، أعمار لغوية مكافئة LAE ونقاط حد فاصل)",
+  normSamples: "معايير سيكومترية (درجات معيارية، رتب مئينية، أعمار لغوية مكافئة LAE ونقاط حد فاصل)",
   structure: "133 بنداً تشخيصياً (62 بنداً استقبالياً + 71 بنداً تعبيرياً عبر 17 مرحلة عمرية)",
   scoringSystem: "سلم ثنائي (1 = متقن/صحيح، 0 = غير متقن/خاطئ)",
   basalCeilingRules: "الخط القاعدي (Basal): 3 بنود متتالية صحيحة (1) · سقف التوقف (Ceiling): 5 بنود متتالية خاطئة (0)",
@@ -497,7 +497,7 @@ export function calculateAbuHasibaPsychometrics(receptiveAnswers = {}, expressiv
   const expressiveDelayGapMonths = Math.max(0, ageMonths - expressiveLAEMonths);
 
   // 6. استخراج الدرجات المعيارية (Standard Scores - SS) والرتب المئينية
-  // نموذج حسابي سيكومتري مقنن: متوسط 100 وانحراف معياري 15
+  // نموذج حسابي سيكومتري: متوسط 100 وانحراف معياري 15
   // الدرجات المتوقعة في السن الحالي:
   const expectedReceptiveRaw = receptiveStart + 2;
   const expectedExpressiveRaw = expressiveStart + 2;

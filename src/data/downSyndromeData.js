@@ -1,13 +1,13 @@
 /**
  * بنود ومقاييس متلازمة داون المعتمدة (Down Syndrome Assessment & Developmental Battery)
  * مصممة وفق المعايير النمائية العالمية والطبية لمتلازمة داون:
- * (Palisano CanChild, CDC/AAP Guidelines, WHO Milestones, ELM, Makaton, ASQ-3 Adaptation)
+ * (Palisano CanChild, CDC/AAP Guidelines, WHO Milestones, ELM, Makaton)
  */
 
 export const DS_COPYRIGHT_INFO = {
   publisherAr: 'منظومة إيزي سنتر لتأهيل وتشخيص متلازمة داون والتربية الخاصة',
   publisherEn: 'Easy Center Diagnostic Battery for Down Syndrome (Clinical & Educational Edition)',
-  academicAttribution: 'إعداد مقنن مستند للمرجعيات العالمية: CanChild Motor Growth (Palisano et al.), CDC Growth Guidelines, WHO Milestones, ASQ-3 & Early Communication Systems',
+  academicAttribution: 'إعداد مستند للمرجعيات العالمية: CanChild Motor Growth (Palisano et al.), CDC Growth Guidelines, WHO Milestones, Early Communication Systems',
   ethicalDisclaimer: 'استمارات تقييم وتشخيص نمائي وتأهيلي إكلينيكي مخصصة للأغراض التربوية والعلاجية وتصميم الخطة التربوية الفردية (IEP) ومتابعة التطور النمائي.',
 };
 
@@ -103,7 +103,7 @@ export const DS_HEALTH_SCREENING_ITEMS = [
   { id: 16, text: 'الالتزام بجدول الزيارات الطبية والمتابعة مع فريق التأهيل متعدد التخصصات.', domain: 'multidisciplinary', iepGoal: 'تكامل خطة التأهيل بين العلاج الطبيعي والوظيفي والنطق والتربية الخاصة.' },
 ];
 
-// 5. استبيان العمر والمراحل النمائية التكيفي (ASQ-3 Adaptation for DS)
+// 5. استبيان العمر والمراحل النمائية التكيفي 
 export const DS_ASQ3_ITEMS = [
   { id: 1, text: 'يلتفت ويبتسم استجابةً لابتسامة وصوت القائم بالرعاية.', domain: 'communication', iepGoal: 'الابتسام الاجتماعي والاستجابة التفاعلية مع البالغين.' },
   { id: 2, text: 'يصدر أصواتاً متكررة (مثل با-با، ما-ما، دا-دا) عند محادثته.', domain: 'communication', iepGoal: 'تطوير المقاطع الصوتية المكررة والتفاعل الصوتي.' },
@@ -262,7 +262,7 @@ export const DS_HOME_ADAPTIVE_ITEMS = [
   { id: 18, text: 'يظهر وعياً بقواعد الخروج في الأماكن العامة ويمسك بيد الوالدين في السوق.', domain: 'community_safety', iepGoal: 'الإمساك بيد الوالدين والبقاء بجوارهم في الأسواق والأماكن العامة.' },
 ];
 
-// 13. مقياس السلوك التكيفي الأكاديمي المقنن (Academic Adaptive for DS)
+// 13. مقياس السلوك التكيفي الأكاديمي (Academic Adaptive for DS)
 export const DS_ACADEMIC_ADAPTIVE_ITEMS = [
   { id: 1, text: 'يجلس على مقعده الصفي وينتبه للمعلم أثناء الشرح لمدة 10 إلى 15 دقيقة متصلة.', domain: 'classroom_attention', iepGoal: 'زيادة فترة الانتباه والتركيز الصفي المستقر إلى 15 دقيقة.' },
   { id: 2, text: 'يفتح حقيبته المدرسية ويخرج الدفتر أو الأدوات المطلوبة استجابة لتعليمات المعلم.', domain: 'readiness_tools', iepGoal: 'إخراج الأدوات والدفاتر المدرسية المطلوبة بشكل مستقل.' },
@@ -392,7 +392,7 @@ export const DOWN_SYNDROME_SCALES = [
   },
   {
     id: 'ds_asq3_adaptation',
-    name: 'استبيان العمر والمراحل النمائية التكيفي (ASQ-3 Adaptation)',
+    name: 'استبيان العمر والمراحل النمائية التكيفي ',
     nameEn: 'Ages & Stages Questionnaires (Adapted for Down Syndrome & Early Intervention)',
     category: 'developmental_early',
     icon: '🌱',
@@ -461,7 +461,7 @@ export const DOWN_SYNDROME_SCALES = [
     scoreMode: 'sum',
     responseType: 'scale_3',
     thresholdText: '0-7 اعتماد كامل على الغير | 8-14 استقلالية جزئية بمساعدة خفيفة | 15-20 استقلالية ذاتية كاملة',
-    originalAuthor: 'Adaptive Behavior Assessment Systems (ABAS / Vineland Models)',
+    originalAuthor: 'قائمة ملاحظة مبنية على مجالات السلوك التكيفي العامة',
     adaptationAndNorms: 'إعداد قسم التأهيل والاستقلالية',
     diagnosticNature: 'مخصص للتشخيص والتقييم التربوي والنمائي المعتمد',
     hostPlatform: 'منصة إيزي سنتر لتشغيل وتطبيق المقاييس الرقمية (Host Platform)',
@@ -526,7 +526,7 @@ export const DOWN_SYNDROME_SCALES = [
   },
   {
     id: 'ds_academic_adaptive',
-    name: 'مقياس السلوك التكيفي الأكاديمي المقنن (Academic Adaptive Scale)',
+    name: 'مقياس السلوك التكيفي الأكاديمي (Academic Adaptive Scale)',
     nameEn: 'Standardized Academic Adaptive & Pre-School Cognitive Scale for DS',
     category: 'learning_academic',
     icon: '📘',
