@@ -161,7 +161,7 @@ export default function SensoryIntegrationReportModal({
           {/* ACADEMIC CITATION BADGE */}
           <div style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: 8, padding: '8px 14px', marginBottom: 18, fontSize: '.76rem', color: 'var(--text-sub)', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
             <div>
-              📖 <strong>المرجع المقنن:</strong> مقياس التكامل الحسي للأطفال وخصائصه السيكومترية - مجلة الإرشاد النفسي (ع 49، 2017).
+              📖 <strong>المرجع:</strong> مقياس التكامل الحسي للأطفال وخصائصه السيكومترية - مجلة الإرشاد النفسي (ع 49، 2017).
             </div>
             <div>
               ✍️ <strong>إعداد:</strong> أ. داليا طعيمة · د. محمود الطنطاوي · أ.د. عبد العزيز الشخص (جامعة عين شمس).

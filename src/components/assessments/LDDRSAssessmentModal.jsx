@@ -298,7 +298,7 @@ export default function LDDRSAssessmentModal({
                   بطارية مقاييس التقدير التشخيصية لصعوبات التعلم (LDDRS)
                 </h2>
                 <span className="bdg" style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>
-                  8 مقاييس تشخيصية مقننة
+                  8 مقاييس تشخيصية
                 </span>
                 <span className="bdg" style={{ background: '#fee2e2', color: '#991b1b', fontSize: '0.7rem', fontWeight: 800 }}>
                   أ.د. فتحي مصطفى الزيات

@@ -82,7 +82,7 @@ export default function LDESReportModal({
         <div style="border-bottom:3px solid #d97706;padding-bottom:12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
           <div>
             <h1 style="color:#b45309;font-size:22px;margin:0 0 4px 0;">📘 تقرير التقييم والتشخيص لصعوبات التعلم (LDES)</h1>
-            <p style="margin:0;font-size:13px;color:#64748b;">Learning Disabilities Evaluation Scale — مقياس التقدير التشخيصي المقنن</p>
+            <p style="margin:0;font-size:13px;color:#64748b;">Learning Disabilities Evaluation Scale — مقياس التقدير التشخيصي</p>
           </div>
           <div style="text-align:left;font-size:12px;color:#475569;">
             <div><b>التاريخ:</b> ${assessment.date || '—'}</div>
@@ -329,7 +329,7 @@ export default function LDESReportModal({
               </div>
             </div>
             <span style={{ fontSize: '0.7rem', background: '#fef3c7', padding: '2px 8px', borderRadius: 4, border: '1px solid #fcd34d', fontWeight: 700 }}>
-              النسخة المقننة للتربية الخاصة وغرف المصادر
+              النسخة للتربية الخاصة وغرف المصادر
             </span>
           </div>
 

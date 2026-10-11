@@ -473,7 +473,7 @@ export default function DownSyndromeReportModal({
               <div style={{ fontWeight: 800, color: '#0e7490', marginBottom: 4 }}>
                 ⚖️ الاعتماد العلمي وحقوق الملكية الفكرية ({scale.name}):
               </div>
-              <div><b>المؤلف والجهة الأصلية:</b> {scale.originalAuthor || 'المرجعيات النمائية العالمية'} · <b>التقنين:</b> {scale.adaptationAndNorms || 'معايير التأهيل المقننة'}</div>
+              <div><b>المؤلف والجهة الأصلية:</b> {scale.originalAuthor || 'المرجعيات النمائية العالمية'} · <b>التقنين:</b> {scale.adaptationAndNorms || 'معايير التأهيل'}</div>
               <div style={{ marginTop: 3, fontStyle: 'italic' }}>{scale.copyrightNotice}</div>
             </div>
 

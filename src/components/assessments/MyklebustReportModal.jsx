@@ -202,7 +202,7 @@ export default function MyklebustReportModal({
           {/* KPI Psychometric Box */}
           <div style={{ background: '#ecfeff', border: '1.5px solid #a5f3fc', borderRadius: 10, padding: 14, marginBottom: 20 }}>
             <h4 style={{ margin: '0 0 10px 0', color: '#0e7490', fontSize: '14px', fontWeight: 800 }}>
-              📊 المؤشرات السيكومترية والدرجات المقننة لمقياس مايكل بيست:
+              📊 المؤشرات السيكومترية والدرجات لمقياس مايكل بيست:
             </h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10, textAlign: 'center' }}>
               <div style={{ background: '#fff', padding: '10px 14px', borderRadius: 8, border: '1px solid #cffafe' }}>
@@ -295,7 +295,7 @@ export default function MyklebustReportModal({
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
                   <th style={{ padding: '6px 8px', width: '30px', textAlign: 'center' }}>#</th>
-                  <th style={{ padding: '6px 8px', width: '160px', textAlign: 'right' }}>البند المقنن</th>
+                  <th style={{ padding: '6px 8px', width: '160px', textAlign: 'right' }}>البند</th>
                   <th style={{ padding: '6px 8px', width: '90px', textAlign: 'center' }}>البعد</th>
                   <th style={{ padding: '6px 8px', width: '50px', textAlign: 'center' }}>الدرجة</th>
                   <th style={{ padding: '6px 8px', textAlign: 'right' }}>السلوك الملاحظ والتقدير الإكلينيكي</th>

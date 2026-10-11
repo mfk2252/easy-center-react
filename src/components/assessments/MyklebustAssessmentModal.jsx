@@ -176,7 +176,7 @@ export default function MyklebustAssessmentModal({
       ? `المجال غير اللفظي: يظهر قصوراً دالاً (الدرجة: ${psychometrics.nonVerbalScore} / 75 - أقل من الحد الفاصل 45).`
       : `المجال غير اللفظي: يقع ضمن المستوى الطبيعي المناسب للعمر (${psychometrics.nonVerbalScore} / 75).`;
 
-    const summary = `تقرير تشخيصي مقنن بمقياس مايكل بيست لتقدير السمات السلوكية (Myklebust PRS):\n\n` +
+    const summary = `تقرير تشخيصي بمقياس مايكل بيست لتقدير السمات السلوكية (Myklebust PRS):\n\n` +
       `- الدرجة الخام الكلية: (${psychometrics.totalRawScore} / 120) بنسبة تحقق (${psychometrics.overallPercentage}%).\n` +
       `- ${verbalStatus}\n` +
       `- ${nonVerbalStatus}\n\n` +

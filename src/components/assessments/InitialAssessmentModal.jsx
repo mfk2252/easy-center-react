@@ -495,7 +495,7 @@ export default function InitialAssessmentModal({
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, marginBottom: 8 }}>
               <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #bfdbfe' }}>
-                <strong>الهدف من التقييم:</strong> رصد مستوى الأداء الحالي بدقة، وتحديد أسباب الإحالة، وتوجيه فريق التدخل نحو الأدوات المتخصصة (PEP-3, LDES, CARS-2).
+                <strong>الهدف من التقييم:</strong> رصد مستوى الأداء الحالي بدقة، وتحديد أسباب الإحالة، وتوجيه فريق التدخل نحو الأدوات المتخصصة المناسبة للحالة.
               </div>
               <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #bfdbfe' }}>
                 <strong>التكامل مع خطة IEP:</strong> التوصيات المدونة في نهاية هذا التقييم تستخرج تلقائياً كأهداف علاجية وسلوكية في الخطة الفردية للطالب.
@@ -1076,7 +1076,7 @@ export default function InitialAssessmentModal({
                   </h3>
                 </div>
                 <span style={{ fontSize: '0.74rem', color: 'var(--text-sub)' }}>
-                  💡 مثال توضيحي: مقياس بورتيج، كارز-2، بيب-3، فاينلاند، أو استمارات المقابلة
+                  💡 مثال توضيحي: قائمة ملاحظة نمائية، أو استمارة مقابلة الأسرة
                 </span>
               </div>
 
@@ -1089,7 +1089,7 @@ export default function InitialAssessmentModal({
                     value={form.appliedTools}
                     onChange={e => setForm(f => ({ ...f, appliedTools: e.target.value }))}
                     rows={3}
-                    placeholder="مثال: مقياس بورتيج، كارز-2، بيب-3، مقياس صعوبات التعلم LDES..."
+                    placeholder="مثال: قائمة ملاحظة نمائية، مقياس صعوبات التعلم LDES..."
                     style={{
                       width: '100%',
                       padding: '8px 12px',

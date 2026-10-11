@@ -42,7 +42,7 @@ export default function SartawiReportModal({
   }
 
   function handleShareWhatsApp() {
-    const text = `📋 *تقرير مقياس صعوبات التعلم المقنن (د. زيدان السرطاوي)*\n` +
+    const text = `📋 *تقرير مقياس صعوبات التعلم (د. زيدان السرطاوي)*\n` +
       `👤 *اسم التلميذ:* ${assessment.studentName || '—'}\n` +
       `📅 *تاريخ الفحص:* ${assessment.date || '—'}\n` +
       `--------------------------------\n` +
@@ -84,10 +84,10 @@ export default function SartawiReportModal({
             <span style={{ fontSize: '1.4rem' }}>📑</span>
             <div>
               <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#fff' }}>
-                تقرير مقياس صعوبات التعلم المقنن (د. زيدان السرطاوي)
+                تقرير مقياس صعوبات التعلم (د. زيدان السرطاوي)
               </h3>
               <span style={{ fontSize: '.74rem', opacity: 0.9 }}>
-                استمارة تفريغ ونتائج مقياس صعوبات التعلم · 50 عبارة مقننة
+                استمارة تفريغ ونتائج مقياس صعوبات التعلم · 50 عبارة
               </span>
             </div>
           </div>

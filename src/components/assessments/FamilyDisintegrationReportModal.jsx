@@ -96,7 +96,7 @@ export default function FamilyDisintegrationReportModal({
           <div>
             <h1 style="color:#6d28d9;margin:0 0 6px 0;font-size:1.6rem;">${center?.name || 'مركز التأهيل والرعاية المتخصصة'}</h1>
             <h2 style="color:var(--text-main);margin:0;font-size:1.2rem;">تقرير تشخيص وتقييم مقياس التفكك الأسري</h2>
-            <div style="font-size:0.85rem;color:var(--text-sub);margin-top:4px;">مقياس تشخيصي مقنن للبيئة والمناخ الأسري · 26 فقرة</div>
+            <div style="font-size:0.85rem;color:var(--text-sub);margin-top:4px;">مقياس تشخيصي للبيئة والمناخ الأسري · 26 فقرة</div>
           </div>
           <div style="text-align:left;">
             <div style="font-size:0.9rem;font-weight:bold;color:#6d28d9;">تاريخ التقرير: ${assessment.date || ''}</div>

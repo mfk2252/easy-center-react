@@ -160,7 +160,7 @@ export default function SartawiAssessmentModal({
       ? `الأبعاد التي تظهر صعوبات واضحة تتطلب تدخلاً علاجياً:\n` + psychometrics.deficitDimensions.map(d => `- ${d.name} (T = ${d.tScore})`).join('\n')
       : 'لا توجد أبعاد تقع في النطاق الحرج لصعوبات التعلم.';
 
-    const summary = `تقرير التقييم بمقياس صعوبات التعلم المقنن - إعداد وتقنين أ.د. زيدان أحمد السرطاوي (50 عبارة):\n\n` +
+    const summary = `تقرير التقييم بمقياس صعوبات التعلم - إعداد وتقنين أ.د. زيدان أحمد السرطاوي (50 عبارة):\n\n` +
       `- الدرجة الخام الكلية للمقياس: (${psychometrics.totalRawScore} / 250).\n` +
       `- الدرجة التائية المعيارية الإجمالية: (T = ${psychometrics.totalTScore}) برتبة مئينية (${psychometrics.percentile}%).\n\n` +
       `القرار التشخيصي الإكلينيكي:\n` +
@@ -169,7 +169,7 @@ export default function SartawiAssessmentModal({
       `${dimensionDetails}\n\n` +
       `${deficitsText}\n\n` +
       `الخلاصة:\n` +
-      `استناداً إلى معايير مقياس السرطاوي المقنن للبيئة العربية، ${psychometrics.conclusionText}`;
+      `استناداً إلى معايير مقياس السرطاوي للبيئة العربية، ${psychometrics.conclusionText}`;
 
     const recs = psychometrics.overallKey === 'severe' || psychometrics.overallKey === 'borderline'
       ? `1. تسجيل الطالب في برنامج صعوبات التعلم وغرف المصادر لتلقي التدريس الفردي المباشر.\n` +
@@ -285,13 +285,13 @@ export default function SartawiAssessmentModal({
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <h2 style={{ fontSize: '1.18rem', fontWeight: 800, margin: 0, color: '#fff' }}>
-                  مقياس تشخيص صعوبات التعلم المقنن (أ.د. زيدان أحمد السرطاوي)
+                  مقياس تشخيص صعوبات التعلم (أ.د. زيدان أحمد السرطاوي)
                 </h2>
                 <span className="bdg" style={{ background: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>
                   50 عبارة تقييمية · 3 أبعاد رئيسية
                 </span>
                 <span className="bdg" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '0.7rem', fontWeight: 800 }}>
-                  معايير T-Score مقننة
+                  معايير T-Score
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 3 }}>
@@ -299,7 +299,7 @@ export default function SartawiAssessmentModal({
                   © أ.د. زيدان أحمد السرطاوي / جامعة الملك سعود
                 </span>
                 <span style={{ fontSize: '0.76rem', opacity: 0.95 }}>
-                  أداة الفرز والتشخيص المقننة لصعوبات التعلم الأكاديمية والسلوكية والإدراكية الحركية
+                  أداة الفرز والتشخيص لصعوبات التعلم الأكاديمية والسلوكية والإدراكية الحركية
                 </span>
               </div>
             </div>
@@ -370,13 +370,13 @@ export default function SartawiAssessmentModal({
                 </div>
               </div>
               <span style={{ fontSize: '0.72rem', background: '#eff6ff', padding: '3px 8px', borderRadius: 6, border: '1px solid #93c5fd', fontWeight: 700 }}>
-                مقياس رسمي مقنن لفرز وتشخيص صعوبات التعلم
+                مقياس رسمي لفرز وتشخيص صعوبات التعلم
               </span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, marginBottom: 8 }}>
               <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #bfdbfe' }}>
-                <strong>المؤلف والمقنن:</strong> {SARTAWI_COPYRIGHT_INFO.authorAr}
+                <strong>المؤلف:</strong> {SARTAWI_COPYRIGHT_INFO.authorAr}
               </div>
               <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #bfdbfe' }}>
                 <strong>الجهة والاعتماد:</strong> {SARTAWI_COPYRIGHT_INFO.authorTitle}

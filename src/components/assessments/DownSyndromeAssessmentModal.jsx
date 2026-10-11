@@ -423,7 +423,7 @@ export default function DownSyndromeAssessmentModal({
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontSize: '1.2rem' }}>⚖️</span>
                   <div>
-                    <strong>إشعار حقوق الملكية الفكرية والاعتماد العلمي:</strong> {activeScale.name} — إعداد {activeScale.originalAuthor || 'المؤسسات العلمية المعنية'} · {activeScale.adaptationAndNorms || 'معايير التأهيل المقننة'}.
+                    <strong>إشعار حقوق الملكية الفكرية والاعتماد العلمي:</strong> {activeScale.name} — إعداد {activeScale.originalAuthor || 'المؤسسات العلمية المعنية'} · {activeScale.adaptationAndNorms || 'معايير التأهيل'}.
                   </div>
                 </div>
                 <span style={{ fontSize: '.72rem', background: '#fef3c7', padding: '3px 8px', borderRadius: 6, border: '1px solid #fcd34d', fontWeight: 700 }}>
@@ -437,7 +437,7 @@ export default function DownSyndromeAssessmentModal({
                   <strong>المؤلف الأصلي / الجهة:</strong> {activeScale.originalAuthor || 'المرجعيات النمائية العالمية'}
                 </div>
                 <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #fde68a' }}>
-                  <strong>التقنين والتكييف:</strong> {activeScale.adaptationAndNorms || 'النسخ المقننة لمتلازمة داون'}
+                  <strong>التقنين والتكييف:</strong> {activeScale.adaptationAndNorms || 'نسخ مخصصة لمتلازمة داون'}
                 </div>
                 <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #fde68a' }}>
                   <strong>صفة التشخيص:</strong> {activeScale.diagnosticNature || 'مخصص للتشخيص والتقييم التربوي والنمائي المعتمد'}

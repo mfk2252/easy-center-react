@@ -168,11 +168,11 @@ export default function FamilyDisintegrationAssessmentModal({
                 مقياس التفكك الأسري
               </h2>
               <span className="bdg" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', fontSize: '.75rem' }}>
-                26 فقرة مقننة
+                26 فقرة
               </span>
             </div>
             <p style={{ margin: '4px 0 0', color: 'rgba(255,255,255,0.9)', fontSize: '.84rem' }}>
-              تقييم علمي مقنن لتشخيص درجة التصدع والمناخ الأسري والنزاعات والانفصال والإنفاق المنزلي
+              تقييم علمي لتشخيص درجة التصدع والمناخ الأسري والنزاعات والانفصال والإنفاق المنزلي
             </p>
           </div>
           <button
